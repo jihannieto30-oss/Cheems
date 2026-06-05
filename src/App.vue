@@ -1,49 +1,63 @@
 <template>
   <div id="app">
-    <AppHeader />
-    <MarketSummary />
-    <main class="main">
-      <div class="section-label">
-        <span>Índices Principales</span>
-        <span class="date-label">{{ todayDate }}</span>
+    <div class="brand-bar">
+      <div class="brand">
+        <span class="brand-logo">🐕</span>
+        <span class="brand-name">Cheems</span>
+        <span class="brand-tag">Plataforma</span>
       </div>
-      <IndexCards />
-      <StockTable />
-    </main>
-    <footer class="footer">
-      <span>MarketView US &copy; 2026 &mdash; Datos simulados con fines educativos. No constituye asesoramiento financiero.</span>
-    </footer>
+      <nav class="brand-nav">
+        <button
+          class="brand-link"
+          :class="{ active: vista === 'mercado' }"
+          @click="vista = 'mercado'"
+        >📈 Bolsa de Valores</button>
+        <button
+          class="brand-link"
+          :class="{ active: vista === 'aduana' }"
+          @click="vista = 'aduana'"
+        >🛃 Comercio Exterior</button>
+      </nav>
+    </div>
+
+    <MarketView v-if="vista === 'mercado'" />
+    <PedimentoSimulator v-else />
   </div>
 </template>
 
 <script setup>
-import AppHeader from './components/AppHeader.vue'
-import MarketSummary from './components/MarketSummary.vue'
-import IndexCards from './components/IndexCards.vue'
-import StockTable from './components/StockTable.vue'
+import { ref } from 'vue'
+import MarketView from './components/MarketView.vue'
+import PedimentoSimulator from './components/customs/PedimentoSimulator.vue'
 
-const todayDate = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+const vista = ref('aduana')
 </script>
 
 <style>
-.main { max-width: 1400px; margin: 0 auto; }
-.section-label {
+.brand-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 20px 24px 0;
-  font-size: 12px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  font-weight: 600;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 48px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
 }
-.date-label { text-transform: none; letter-spacing: 0; font-weight: 400; }
-.footer {
-  border-top: 1px solid var(--border);
-  padding: 16px 24px;
-  text-align: center;
-  font-size: 11px;
-  color: var(--text-muted);
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand-logo { font-size: 20px; }
+.brand-name { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
+.brand-tag {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--text-muted); background: var(--bg-card);
+  padding: 2px 7px; border-radius: 10px; font-weight: 600;
 }
+.brand-nav { display: flex; gap: 4px; }
+.brand-link {
+  padding: 6px 14px; border-radius: 7px; cursor: pointer;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text-secondary); font-size: 13px; font-weight: 600;
+  transition: all 0.15s; font-family: inherit;
+}
+.brand-link:hover { color: var(--text-primary); background: var(--bg-hover); }
+.brand-link.active { color: var(--text-primary); background: var(--bg-card); border-color: var(--border); }
 </style>
