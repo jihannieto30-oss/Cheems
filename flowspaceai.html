@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlowSpace AI — No busques espacio. Anticípalo.</title>
+  <meta name="description" content="FlowSpace AI optimiza el uso de espacios urbanos en tiempo real mediante inteligencia artificial predictiva. Encuentra el espacio perfecto antes de salir de casa." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --blue:    #1a6bff;
+      --blue-d:  #0e4fd6;
+      --blue-l:  #e8f0ff;
+      --purple:  #7c3aed;
+      --purple-d:#5b21b6;
+      --purple-l:#f3f0ff;
+      --white:   #ffffff;
+      --gray-50: #f9fafb;
+      --gray-100:#f3f4f6;
+      --gray-200:#e5e7eb;
+      --gray-400:#9ca3af;
+      --gray-600:#4b5563;
+      --gray-800:#1f2937;
+      --gray-900:#111827;
+      --gradient: linear-gradient(135deg, #1a6bff 0%, #7c3aed 100%);
+      --gradient-soft: linear-gradient(135deg, #e8f0ff 0%, #f3f0ff 100%);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+      --shadow-md: 0 4px 20px rgba(0,0,0,.10);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,.14);
+      --shadow-xl: 0 20px 60px rgba(26,107,255,.18);
+      --radius:   16px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--white);
+      color: var(--gray-900);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    img { max-width: 100%; display: block; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ─── NAV ─── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 6%; height: 68px;
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0,0,0,.07);
+      transition: box-shadow .3s;
+    }
+    .nav.scrolled { box-shadow: var(--shadow-md); }
+    .nav-brand { display: flex; align-items: center; gap: 10px; }
+    .nav-logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--gradient);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 900; color: #fff; letter-spacing: -1px;
+    }
+    .nav-name { font-size: 18px; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links { display: flex; align-items: center; gap: 32px; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: var(--gray-600); transition: color .2s; }
+    .nav-links a:hover { color: var(--blue); }
+    .nav-cta { display: flex; gap: 10px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px; border-radius: 10px; font-size: 14px;
+      font-weight: 600; cursor: pointer; transition: all .2s; border: none; font-family: inherit;
+    }
+    .btn-ghost { background: transparent; color: var(--gray-700); border: 1.5px solid var(--gray-200); }
+    .btn-ghost:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-l); }
+    .btn-primary { background: var(--gradient); color: #fff; box-shadow: 0 4px 14px rgba(26,107,255,.35); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,107,255,.45); }
+    .btn-lg { padding: 14px 32px; font-size: 16px; border-radius: 12px; }
+    .btn-xl { padding: 16px 40px; font-size: 17px; border-radius: 14px; }
+    .nav-hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
+    .nav-hamburger span { width: 24px; height: 2px; background: var(--gray-800); border-radius: 2px; transition: .3s; }
+
+    /* ─── HERO ─── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 100px 6% 60px;
+      position: relative; overflow: hidden;
+      background: linear-gradient(160deg, #f8faff 0%, #f4f0ff 50%, #fff 100%);
+    }
+    .hero-bg {
+      position: absolute; inset: 0; pointer-events: none;
+      overflow: hidden;
+    }
+    .hero-orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); opacity: .35;
+    }
+    .hero-orb-1 { width: 600px; height: 600px; background: #1a6bff; top: -200px; right: -100px; }
+    .hero-orb-2 { width: 400px; height: 400px; background: #7c3aed; bottom: -100px; left: -50px; }
+    .hero-orb-3 { width: 300px; height: 300px; background: #06b6d4; top: 30%; left: 30%; }
+    .hero-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      align-items: center; gap: 60px;
+      width: 100%; max-width: 1280px; margin: 0 auto;
+      position: relative; z-index: 1;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(26,107,255,.1); border: 1px solid rgba(26,107,255,.2);
+      color: var(--blue); padding: 6px 14px; border-radius: 100px;
+      font-size: 13px; font-weight: 600; margin-bottom: 20px;
+    }
+    .hero-badge span { width: 7px; height: 7px; background: var(--blue); border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+    .hero h1 {
+      font-size: clamp(36px, 5vw, 62px); font-weight: 900; line-height: 1.08;
+      letter-spacing: -2px; margin-bottom: 20px;
+    }
+    .hero h1 .grad { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-sub { font-size: clamp(16px, 2vw, 19px); color: var(--gray-600); max-width: 520px; margin-bottom: 36px; line-height: 1.7; }
+    .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 48px; }
+    .hero-stats { display: flex; gap: 32px; flex-wrap: wrap; }
+    .hero-stat-val { font-size: 28px; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-stat-lbl { font-size: 12px; color: var(--gray-500); font-weight: 500; margin-top: 2px; }
+    .hero-visual { position: relative; }
+    .hero-app-mockup {
+      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 100%);
+      border-radius: 28px; padding: 24px;
+      box-shadow: 0 30px 80px rgba(26,107,255,.3), 0 0 0 1px rgba(255,255,255,.1);
+      position: relative; overflow: hidden;
+    }
+    .hero-app-mockup::before {
+      content:''; position:absolute; inset:0;
+      background: linear-gradient(135deg, rgba(26,107,255,.15) 0%, rgba(124,58,237,.15) 100%);
+    }
+    .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: relative; }
+    .app-header-title { font-size: 16px; font-weight: 700; color: #fff; }
+    .app-header-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; }
+    .app-search {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px; padding: 12px 16px;
+      color: rgba(255,255,255,.5); font-size: 13px;
+      display: flex; align-items: center; gap: 10px; margin-bottom: 20px; position: relative;
+    }
+    .app-map {
+      height: 160px; border-radius: 14px;
+      background: linear-gradient(160deg, #0f3460 0%, #1a1a4e 100%);
+      position: relative; overflow: hidden; margin-bottom: 20px;
+    }
+    .map-dot {
+      position: absolute; width: 12px; height: 12px; border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .map-dot::after { content:''; position:absolute; inset:-6px; border-radius:50%; border: 2px solid currentColor; opacity: .4; animation: ripple 2s infinite; }
+    @keyframes ripple { 0%{transform:scale(.8);opacity:.8} 100%{transform:scale(2);opacity:0} }
+    .map-dot.green  { background:#22c55e; color:#22c55e; top:40%; left:35%; }
+    .map-dot.yellow { background:#f59e0b; color:#f59e0b; top:60%; left:55%; }
+    .map-dot.red    { background:#ef4444; color:#ef4444; top:30%; left:65%; }
+    .map-dot.blue   { background:#3b82f6; color:#3b82f6; top:70%; left:25%; }
+    .map-grid-line {
+      position: absolute; background: rgba(255,255,255,.05);
+    }
+    .app-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .app-card {
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 12px; padding: 12px;
+    }
+    .app-card-name { font-size: 11px; color: rgba(255,255,255,.5); margin-bottom: 4px; }
+    .app-card-val { font-size: 15px; font-weight: 700; }
+    .app-card-val.green { color: #22c55e; }
+    .app-card-val.yellow { color: #f59e0b; }
+    .app-card-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,.1); margin-top: 8px; overflow: hidden; }
+    .app-card-fill { height: 100%; border-radius: 2px; }
+    .floating-badge {
+      position: absolute; display: flex; align-items: center; gap: 8px;
+      background: #fff; border-radius: 12px; padding: 10px 14px;
+      box-shadow: var(--shadow-lg); font-size: 13px; font-weight: 600;
+    }
+    .floating-badge-1 { top: -20px; right: -20px; }
+    .floating-badge-2 { bottom: -16px; left: -20px; }
+    .badge-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+    /* ─── SECTIONS ─── */
+    section { padding: 100px 6%; }
+    .section-inner { max-width: 1280px; margin: 0 auto; }
+    .section-tag {
+      display: inline-block; background: var(--gradient-soft);
+      color: var(--blue); font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      padding: 5px 14px; border-radius: 100px; margin-bottom: 14px;
+    }
+    .section-title { font-size: clamp(28px, 4vw, 44px); font-weight: 800; letter-spacing: -1px; line-height: 1.15; margin-bottom: 16px; }
+    .section-sub { font-size: 17px; color: var(--gray-500); max-width: 600px; line-height: 1.7; }
+    .section-center { text-align: center; }
+    .section-center .section-sub { margin: 0 auto 60px; }
+
+    /* ─── ABOUT / HISTORIA ─── */
+    .about { background: var(--gray-50); }
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+    .about-text .section-sub { max-width: none; }
+    .about-values { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 32px; }
+    .value-card {
+      background: var(--white); border: 1px solid var(--gray-200);
+      border-radius: 14px; padding: 18px;
+      transition: all .25s;
+    }
+    .value-card:hover { border-color: var(--blue); box-shadow: 0 4px 16px rgba(26,107,255,.12); transform: translateY(-2px); }
+    .value-icon { font-size: 22px; margin-bottom: 8px; }
+    .value-name { font-size: 13px; font-weight: 700; color: var(--gray-800); margin-bottom: 4px; }
+    .value-desc { font-size: 12px; color: var(--gray-500); line-height: 1.5; }
+    .about-visual { position: relative; }
+    .about-card {
+      background: var(--white); border-radius: 20px; padding: 28px;
+      box-shadow: var(--shadow-lg); border: 1px solid var(--gray-100);
+    }
+    .about-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .about-card-logo { width: 44px; height: 44px; border-radius: 12px; background: var(--gradient); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; font-weight: 900; }
+    .about-card-title { font-size: 15px; font-weight: 700; }
+    .about-card-sub { font-size: 12px; color: var(--gray-400); }
+    .about-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .about-stat { text-align: center; padding: 16px 8px; background: var(--gray-50); border-radius: 12px; }
+    .about-stat-val { font-size: 22px; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .about-stat-lbl { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+    .foda-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+    .foda-item { padding: 12px 14px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+    .foda-f { background: #dcfce7; color: #166534; }
+    .foda-o { background: #dbeafe; color: #1e40af; }
+    .foda-d { background: #fef9c3; color: #92400e; }
+    .foda-a { background: #fee2e2; color: #991b1b; }
+    .foda-label { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+
+    /* ─── FEATURES ─── */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 60px; }
+    .feature-card {
+      background: var(--white); border: 1px solid var(--gray-100);
+      border-radius: 20px; padding: 28px;
+      transition: all .3s;
+      position: relative; overflow: hidden;
+    }
+    .feature-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--gradient); transform: scaleX(0); transition: transform .3s; transform-origin: left;
+    }
+    .feature-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-4px); border-color: transparent; }
+    .feature-card:hover::before { transform: scaleX(1); }
+    .feature-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: var(--gradient-soft);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin-bottom: 18px;
+    }
+    .feature-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+    .feature-desc { font-size: 14px; color: var(--gray-500); line-height: 1.65; }
+
+    /* ─── HOW IT WORKS ─── */
+    .how { background: var(--gray-900); color: var(--white); }
+    .how .section-tag { background: rgba(26,107,255,.15); color: #60a5fa; }
+    .how .section-title { color: var(--white); }
+    .how .section-sub { color: var(--gray-400); }
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 60px; }
+    .step { text-align: center; position: relative; }
+    .step::after {
+      content: ''; position: absolute; top: 26px; left: calc(50% + 36px);
+      width: calc(100% - 72px); height: 2px;
+      background: linear-gradient(90deg, rgba(26,107,255,.5), rgba(124,58,237,.5));
+    }
+    .step:last-child::after { display: none; }
+    .step-num {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--gradient); color: #fff;
+      font-size: 18px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px; box-shadow: 0 0 24px rgba(26,107,255,.4);
+    }
+    .step-title { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .step-desc { font-size: 13px; color: var(--gray-400); line-height: 1.6; }
+
+    /* ─── PRICING ─── */
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 60px; }
+    .pricing-card {
+      background: var(--white); border: 1.5px solid var(--gray-200);
+      border-radius: 24px; padding: 32px;
+      transition: all .3s; position: relative;
+    }
+    .pricing-card.popular {
+      border-color: var(--blue);
+      box-shadow: 0 12px 40px rgba(26,107,255,.2);
+      transform: scale(1.03);
+    }
+    .pricing-card:hover:not(.popular) { box-shadow: var(--shadow-lg); transform: translateY(-4px); }
+    .popular-tag {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: var(--gradient); color: #fff;
+      font-size: 12px; font-weight: 700; padding: 4px 16px;
+      border-radius: 100px; white-space: nowrap;
+    }
+    .pricing-name { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .pricing-target { font-size: 13px; color: var(--gray-400); margin-bottom: 20px; }
+    .pricing-price { margin-bottom: 6px; }
+    .pricing-price .amount { font-size: 42px; font-weight: 900; letter-spacing: -2px; }
+    .pricing-price .amount.grad { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .pricing-price .period { font-size: 14px; color: var(--gray-400); margin-left: 4px; }
+    .pricing-desc { font-size: 13px; color: var(--gray-500); margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--gray-100); }
+    .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+    .pricing-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; }
+    .pricing-features li::before { content: '✓'; color: var(--blue); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .pricing-features li.no::before { content: '✕'; color: var(--gray-300); }
+    .pricing-features li.no { color: var(--gray-300); }
+    .pricing-btn { width: 100%; text-align: center; justify-content: center; }
+    .pricing-enterprise { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+    .enterprise-card {
+      background: linear-gradient(135deg, #f8faff 0%, #f3f0ff 100%);
+      border: 1.5px solid rgba(26,107,255,.15);
+      border-radius: 20px; padding: 28px;
+      display: flex; align-items: center; gap: 20px;
+    }
+    .enterprise-icon { width: 52px; height: 52px; border-radius: 14px; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .enterprise-price { font-size: 20px; font-weight: 800; margin: 4px 0; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .enterprise-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .enterprise-desc { font-size: 13px; color: var(--gray-500); }
+
+    /* ─── TEAM ─── */
+    .team { background: var(--gray-50); }
+    .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 60px; }
+    .team-card {
+      background: var(--white); border: 1px solid var(--gray-100);
+      border-radius: 20px; padding: 28px; text-align: center;
+      transition: all .3s;
+    }
+    .team-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-4px); }
+    .team-avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: var(--gradient);
+      margin: 0 auto 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; font-weight: 800; color: #fff;
+      box-shadow: 0 6px 20px rgba(26,107,255,.3);
+    }
+    .team-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .team-role {
+      display: inline-block; font-size: 12px; font-weight: 600;
+      background: var(--gradient-soft); color: var(--blue);
+      padding: 3px 12px; border-radius: 100px; margin-bottom: 12px;
+    }
+    .team-desc { font-size: 13px; color: var(--gray-500); line-height: 1.6; margin-bottom: 16px; }
+    .team-stake {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--gray-50); border-radius: 10px; padding: 10px 14px;
+      font-size: 13px;
+    }
+    .team-stake-label { color: var(--gray-400); font-weight: 500; }
+    .team-stake-val { font-weight: 700; color: var(--blue); }
+    .team-stake-bar { height: 4px; border-radius: 2px; background: var(--gray-200); margin-top: 6px; overflow: hidden; }
+    .team-stake-fill { height: 100%; background: var(--gradient); border-radius: 2px; }
+    .team-invest { font-size: 12px; color: var(--gray-400); margin-top: 6px; }
+    .team-card.ceo .team-avatar { width: 84px; height: 84px; font-size: 30px; box-shadow: 0 8px 28px rgba(124,58,237,.4); }
+
+    /* ─── CONTACT ─── */
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; }
+    .contact-info { display: flex; flex-direction: column; gap: 24px; margin-top: 32px; }
+    .contact-item { display: flex; gap: 16px; align-items: flex-start; }
+    .contact-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--gradient-soft); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .contact-item-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .contact-item-val { font-size: 14px; color: var(--gray-500); }
+    .contact-form { background: var(--white); border: 1px solid var(--gray-200); border-radius: 24px; padding: 36px; box-shadow: var(--shadow-sm); }
+    .form-group { margin-bottom: 18px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: var(--gray-700); margin-bottom: 6px; }
+    input, select, textarea {
+      width: 100%; padding: 12px 16px;
+      border: 1.5px solid var(--gray-200); border-radius: 10px;
+      font-size: 14px; font-family: inherit; background: var(--white);
+      color: var(--gray-900); outline: none; transition: border-color .2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,107,255,.08); }
+    textarea { resize: vertical; min-height: 110px; }
+    .form-success {
+      display: none; text-align: center; padding: 20px;
+      background: #dcfce7; border-radius: 12px; color: #166534;
+      font-size: 14px; font-weight: 600; margin-top: 12px;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--gray-900); color: var(--gray-400);
+      padding: 60px 6% 32px;
+    }
+    .footer-grid { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+    .footer-brand { }
+    .footer-brand-name { font-size: 20px; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+    .footer-brand-desc { font-size: 14px; line-height: 1.7; max-width: 260px; }
+    .footer-slogan { margin-top: 16px; font-size: 13px; font-style: italic; color: #60a5fa; }
+    .footer-social { display: flex; gap: 10px; margin-top: 20px; }
+    .social-btn {
+      width: 36px; height: 36px; border-radius: 9px;
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; cursor: pointer; transition: all .2s;
+    }
+    .social-btn:hover { background: var(--blue); border-color: var(--blue); }
+    .footer-col-title { font-size: 13px; font-weight: 700; color: var(--white); margin-bottom: 16px; text-transform: uppercase; letter-spacing: .5px; }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer-links a { font-size: 14px; transition: color .2s; }
+    .footer-links a:hover { color: var(--white); }
+    .footer-bottom { max-width: 1280px; margin: 0 auto; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 13px; }
+    .footer-legal { display: flex; gap: 24px; }
+    .footer-legal a { transition: color .2s; }
+    .footer-legal a:hover { color: var(--white); }
+    .footer-rfc { font-size: 12px; color: rgba(255,255,255,.3); }
+
+    /* ─── BANNER DESCUENTO ─── */
+    .promo-banner {
+      background: var(--gradient); color: #fff;
+      text-align: center; padding: 12px 24px;
+      font-size: 14px; font-weight: 600; position: relative; z-index: 999;
+    }
+    .promo-banner a { color: #fff; text-decoration: underline; margin-left: 8px; }
+    .promo-close { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; opacity: .7; }
+
+    /* ─── TRUST STRIP ─── */
+    .trust { padding: 40px 6%; background: var(--white); border-bottom: 1px solid var(--gray-100); }
+    .trust-inner { max-width: 1280px; margin: 0 auto; text-align: center; }
+    .trust-label { font-size: 13px; color: var(--gray-400); font-weight: 500; margin-bottom: 24px; }
+    .trust-logos { display: flex; justify-content: center; align-items: center; gap: 48px; flex-wrap: wrap; }
+    .trust-logo { font-size: 14px; font-weight: 700; color: var(--gray-300); letter-spacing: -0.5px; }
+
+    /* ─── COUNTERS ─── */
+    .counter-strip { background: var(--gradient); padding: 60px 6%; }
+    .counter-inner { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; text-align: center; }
+    .counter-val { font-size: 42px; font-weight: 900; color: #fff; letter-spacing: -1px; }
+    .counter-lbl { font-size: 14px; color: rgba(255,255,255,.7); margin-top: 4px; }
+
+    /* ─── TESTIMONIALS ─── */
+    .testimonials { background: var(--gray-50); }
+    .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 60px; }
+    .testimonial-card {
+      background: var(--white); border: 1px solid var(--gray-100);
+      border-radius: 20px; padding: 28px;
+    }
+    .testimonial-stars { color: #f59e0b; font-size: 16px; margin-bottom: 14px; }
+    .testimonial-text { font-size: 15px; color: var(--gray-700); line-height: 1.7; margin-bottom: 20px; font-style: italic; }
+    .testimonial-author { display: flex; align-items: center; gap: 12px; }
+    .testimonial-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: #fff; }
+    .testimonial-name { font-size: 14px; font-weight: 600; }
+    .testimonial-position { font-size: 12px; color: var(--gray-400); }
+
+    /* ─── FAQ ─── */
+    .faq-list { max-width: 720px; margin: 60px auto 0; display: flex; flex-direction: column; gap: 12px; }
+    .faq-item { border: 1.5px solid var(--gray-200); border-radius: 14px; overflow: hidden; }
+    .faq-question {
+      padding: 18px 22px; font-size: 15px; font-weight: 600;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      background: var(--white); transition: background .2s;
+    }
+    .faq-question:hover { background: var(--gray-50); }
+    .faq-question .faq-arrow { transition: transform .3s; color: var(--blue); font-size: 18px; }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height .4s ease, padding .3s; padding: 0 22px; font-size: 14px; color: var(--gray-500); line-height: 1.7; background: var(--white); }
+    .faq-item.open .faq-answer { max-height: 300px; padding: 0 22px 18px; }
+
+    /* ─── CTA FINAL ─── */
+    .cta-final {
+      background: linear-gradient(135deg, #0a1628 0%, #1a0a3d 100%);
+      text-align: center; padding: 100px 6%; position: relative; overflow: hidden;
+    }
+    .cta-final::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(26,107,255,.2) 0%, transparent 70%);
+    }
+    .cta-final-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
+    .cta-final h2 { font-size: clamp(30px, 4vw, 48px); font-weight: 900; color: #fff; margin-bottom: 16px; letter-spacing: -1px; }
+    .cta-final p { font-size: 18px; color: rgba(255,255,255,.6); margin-bottom: 40px; }
+    .cta-final-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn-white { background: #fff; color: var(--blue); }
+    .btn-white:hover { background: var(--blue-l); }
+    .btn-outline-white { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,.3); }
+    .btn-outline-white:hover { border-color: #fff; background: rgba(255,255,255,.08); }
+
+    /* ─── MOBILE ─── */
+    .mobile-menu {
+      display: none; position: fixed; top: 68px; left: 0; right: 0;
+      background: rgba(255,255,255,.97); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--gray-200); z-index: 999;
+      padding: 20px 6% 24px; flex-direction: column; gap: 8px;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { padding: 12px 0; font-size: 16px; font-weight: 600; color: var(--gray-700); border-bottom: 1px solid var(--gray-100); }
+
+    @media (max-width: 1024px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 440px; margin-left: auto; margin-right: auto; }
+      .pricing-card.popular { transform: none; }
+      .team-grid { grid-template-columns: repeat(2, 1fr); }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .nav-links, .nav-cta { display: none; }
+      .nav-hamburger { display: flex; }
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+      .about-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: repeat(2, 1fr); }
+      .step::after { display: none; }
+      .counter-inner { grid-template-columns: repeat(2, 1fr); }
+      .contact-grid { grid-template-columns: 1fr; }
+      .testimonials-grid { grid-template-columns: 1fr; }
+      .team-grid { grid-template-columns: 1fr; }
+      .pricing-enterprise { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+      .footer-bottom { flex-direction: column; text-align: center; }
+      .features-grid { grid-template-columns: 1fr; }
+      .hero-stats { gap: 20px; }
+      .about-values { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- PROMO BANNER -->
+<div class="promo-banner" id="promoBanner">
+  🎓 Primer mes Pro GRATIS con correo institucional (.edu.mx) — Regístrate ahora
+  <button class="promo-close" onclick="document.getElementById('promoBanner').style.display='none'">×</button>
+</div>
+
+<!-- NAV -->
+<nav class="nav" id="mainNav">
+  <div class="nav-brand">
+    <div class="nav-logo">F</div>
+    <span class="nav-name">FlowSpace AI</span>
+  </div>
+  <div class="nav-links">
+    <a href="#inicio">Inicio</a>
+    <a href="#nosotros">Nosotros</a>
+    <a href="#caracteristicas">Características</a>
+    <a href="#precios">Precios</a>
+    <a href="#equipo">Equipo</a>
+    <a href="#contacto">Contacto</a>
+  </div>
+  <div class="nav-cta">
+    <button class="btn btn-ghost" onclick="scrollToContact()">Ingresar</button>
+    <button class="btn btn-primary" onclick="scrollToContact()">Comenzar gratis</button>
+  </div>
+  <button class="nav-hamburger" onclick="toggleMenu()" id="hamburger">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#inicio" onclick="closeMenu()">Inicio</a>
+  <a href="#nosotros" onclick="closeMenu()">Nosotros</a>
+  <a href="#caracteristicas" onclick="closeMenu()">Características</a>
+  <a href="#precios" onclick="closeMenu()">Precios</a>
+  <a href="#equipo" onclick="closeMenu()">Equipo</a>
+  <a href="#contacto" onclick="closeMenu()">Contacto</a>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="inicio">
+  <div class="hero-bg">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-orb hero-orb-3"></div>
+  </div>
+  <div class="hero-grid">
+    <div class="hero-content">
+      <div class="hero-badge"><span></span> Lanzando — CDMX 2026</div>
+      <h1>No busques espacio.<br><span class="grad">Anticípalo.</span></h1>
+      <p class="hero-sub">
+        FlowSpace AI usa inteligencia artificial predictiva para mostrarte dónde hay espacio disponible
+        antes de que salgas de casa. Menos estrés, más productividad.
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-xl" onclick="scrollToContact()">
+          Obtén acceso gratuito →
+        </button>
+        <button class="btn btn-ghost btn-xl" onclick="document.getElementById('caracteristicas').scrollIntoView({behavior:'smooth'})">
+          Ver características
+        </button>
+      </div>
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-val">30–50%</div>
+          <div class="hero-stat-lbl">Reducción de tiempo muerto</div>
+        </div>
+        <div>
+          <div class="hero-stat-val">90%</div>
+          <div class="hero-stat-lbl">Precisión de predicción</div>
+        </div>
+        <div>
+          <div class="hero-stat-val">5,000+</div>
+          <div class="hero-stat-lbl">Usuarios objetivo año 1</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-app-mockup">
+        <div class="app-header">
+          <div class="app-header-title">Dynamic Space Navigator</div>
+          <div class="app-header-dot"></div>
+        </div>
+        <div class="app-search">
+          <span>🔍</span> Buscar espacio en CDMX...
+        </div>
+        <div class="app-map">
+          <div style="position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(5,1fr);opacity:.15">
+            <div style="border:1px solid #fff"></div><div style="border:1px solid #fff"></div>
+            <div style="border:1px solid #fff"></div><div style="border:1px solid #fff"></div>
+            <div style="border:1px solid #fff"></div><div style="border:1px solid #fff"></div>
+            <div style="border:1px solid #fff"></div><div style="border:1px solid #fff"></div>
+          </div>
+          <div class="map-dot green"></div>
+          <div class="map-dot yellow"></div>
+          <div class="map-dot red"></div>
+          <div class="map-dot blue"></div>
+          <div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.5);border-radius:8px;padding:6px 10px;font-size:11px;color:#fff;">Santa Fe, CDMX</div>
+        </div>
+        <div class="app-cards">
+          <div class="app-card">
+            <div class="app-card-name">WeWork Santa Fe</div>
+            <div class="app-card-val green">Disponible</div>
+            <div class="app-card-bar"><div class="app-card-fill" style="width:25%;background:#22c55e"></div></div>
+          </div>
+          <div class="app-card">
+            <div class="app-card-name">UNAM Bibliob.</div>
+            <div class="app-card-val yellow">Moderado</div>
+            <div class="app-card-bar"><div class="app-card-fill" style="width:65%;background:#f59e0b"></div></div>
+          </div>
+          <div class="app-card">
+            <div class="app-card-name">Previsión 3pm</div>
+            <div class="app-card-val" style="color:#3b82f6">Libre ↓</div>
+            <div class="app-card-bar"><div class="app-card-fill" style="width:20%;background:#3b82f6"></div></div>
+          </div>
+          <div class="app-card">
+            <div class="app-card-name">Ruido estimado</div>
+            <div class="app-card-val green">Silencioso</div>
+            <div class="app-card-bar"><div class="app-card-fill" style="width:15%;background:#22c55e"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="floating-badge floating-badge-1">
+        <div class="badge-icon" style="background:#dcfce7">🧠</div>
+        <div>
+          <div style="font-size:12px;color:#666">IA Activa</div>
+          <div style="font-size:13px">Predicción en tiempo real</div>
+        </div>
+      </div>
+      <div class="floating-badge floating-badge-2">
+        <div class="badge-icon" style="background:#dbeafe">⚡</div>
+        <div>
+          <div style="font-size:12px;color:#666">Precisión</div>
+          <div style="font-size:13px">90% de exactitud</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST STRIP -->
+<div class="trust">
+  <div class="trust-inner">
+    <div class="trust-label">Diseñado para integrarse con los espacios que ya conoces</div>
+    <div class="trust-logos">
+      <div class="trust-logo">UNAM</div>
+      <div class="trust-logo">WeWork</div>
+      <div class="trust-logo">IPN</div>
+      <div class="trust-logo">TEC DE MONTERREY</div>
+      <div class="trust-logo">UAM</div>
+      <div class="trust-logo">Google Maps API</div>
+    </div>
+  </div>
+</div>
+
+<!-- NOSOTROS -->
+<section class="about" id="nosotros">
+  <div class="section-inner">
+    <div class="about-grid">
+      <div class="about-text">
+        <div class="section-tag">Nuestra Historia</div>
+        <h2 class="section-title">Nacimos de la frustración operativa</h2>
+        <p class="section-sub" style="margin-bottom:16px">
+          FlowSpace AI no nace de una teoría, sino de observar cómo comunidades enteras se saturan
+          en puntos específicos mientras áreas aledañas permanecen subutilizadas.
+        </p>
+        <p class="section-sub" style="margin-bottom:32px">
+          El problema no es la infraestructura: es la <strong>ceguera logística</strong>.
+          Somos los "ojos" del usuario, usando IA no solo para ver el vacío, sino para
+          <strong>anticipar el flujo</strong> de personas y optimizar cada metro cuadrado.
+        </p>
+        <div class="about-values">
+          <div class="value-card">
+            <div class="value-icon">🤝</div>
+            <div class="value-name">Honestidad</div>
+            <div class="value-desc">Transparencia total con el equipo y el usuario. Sin letra chica.</div>
+          </div>
+          <div class="value-card">
+            <div class="value-icon">💡</div>
+            <div class="value-name">Empatía</div>
+            <div class="value-desc">Diseñamos pensando en personas reales que sienten estrés y frustración.</div>
+          </div>
+          <div class="value-card">
+            <div class="value-icon">⏱️</div>
+            <div class="value-name">Respeto al Tiempo</div>
+            <div class="value-desc">El tiempo es sagrado. Cada segundo ahorrado es misión cumplida.</div>
+          </div>
+          <div class="value-card">
+            <div class="value-icon">🏙️</div>
+            <div class="value-name">Comunidad</div>
+            <div class="value-desc">No solo una app — hacemos que la ciudad funcione mejor para todos.</div>
+          </div>
+          <div class="value-card">
+            <div class="value-icon">🦾</div>
+            <div class="value-name">Valentía</div>
+            <div class="value-desc">Nos atrevemos a romper lo establecido donde otros solo ven caos.</div>
+          </div>
+          <div class="value-card">
+            <div class="value-icon">🔒</div>
+            <div class="value-name">Lealtad Colectiva</div>
+            <div class="value-desc">Equipo sólido — nos respaldamos en las malas y crecemos juntos.</div>
+          </div>
+        </div>
+      </div>
+      <div class="about-visual">
+        <div class="about-card">
+          <div class="about-card-header">
+            <div class="about-card-logo">F</div>
+            <div>
+              <div class="about-card-title">FlowSpace AI S. de R.L.</div>
+              <div class="about-card-sub">RFC: FAI260601MX3 · Santa Fe, CDMX</div>
+            </div>
+          </div>
+          <div class="about-stat-grid">
+            <div class="about-stat">
+              <div class="about-stat-val">$250K</div>
+              <div class="about-stat-lbl">Capital inicial (MXN)</div>
+            </div>
+            <div class="about-stat">
+              <div class="about-stat-val">6</div>
+              <div class="about-stat-lbl">Socios fundadores</div>
+            </div>
+            <div class="about-stat">
+              <div class="about-stat-val">2026</div>
+              <div class="about-stat-lbl">Año de fundación</div>
+            </div>
+          </div>
+          <div style="margin-top:20px">
+            <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px">Análisis FODA</div>
+            <div class="foda-grid">
+              <div class="foda-item foda-f">
+                <div class="foda-label">Fortaleza</div>
+                IA predictiva diferenciada
+              </div>
+              <div class="foda-item foda-o">
+                <div class="foda-label">Oportunidad</div>
+                Mercado Smart Cities emergente
+              </div>
+              <div class="foda-item foda-d">
+                <div class="foda-label">Debilidad</div>
+                Capital inicial limitado
+              </div>
+              <div class="foda-item foda-a">
+                <div class="foda-label">Amenaza</div>
+                Competidores consolidados
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:20px;padding:14px;background:#f8faff;border-radius:12px">
+            <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">Misión</div>
+            <div style="font-size:13px;color:#6b7280;line-height:1.6">
+              Revolucionar la interacción humana con el entorno físico mediante Big Data e IA,
+              transformando la incertidumbre en eficiencia.
+            </div>
+          </div>
+          <div style="margin-top:12px;padding:14px;background:#f3f0ff;border-radius:12px">
+            <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">Visión</div>
+            <div style="font-size:13px;color:#6b7280;line-height:1.6">
+              Ser la plataforma estándar de gestión de espacios a nivel mundial y el motor de las Smart Cities.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CARACTERÍSTICAS -->
+<section id="caracteristicas">
+  <div class="section-inner">
+    <div class="section-center">
+      <div class="section-tag">Dynamic Space Navigator</div>
+      <h2 class="section-title">Todo lo que necesitas para encontrar<br>el espacio perfecto</h2>
+      <p class="section-sub">
+        Nuestra plataforma combina geolocalización predictiva, análisis de flujo en tiempo real
+        y recomendaciones inteligentes personalizadas.
+      </p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3 class="feature-title">Predicción con IA</h3>
+        <p class="feature-desc">
+          Algoritmos que proyectan la ocupación futura basándose en tendencias históricas
+          y datos actuales. Conoce qué tan lleno estará un lugar antes de salir.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3 class="feature-title">Análisis de Flujo</h3>
+        <p class="feature-desc">
+          Monitoreo constante del movimiento de personas para evitar aglomeraciones.
+          Datos en tiempo real actualizados cada minuto.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3 class="feature-title">Filtros de Micro-entorno</h3>
+        <p class="feature-desc">
+          Búsqueda avanzada por nivel de ruido, iluminación, disponibilidad de enchufes
+          o tipo de actividad (estudio, trabajo, deporte).
+        </p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✨</div>
+        <h3 class="feature-title">Recomendaciones Inteligentes</h3>
+        <p class="feature-desc">
+          Motor de sugerencias que aprende de tus hábitos para ofrecerte el lugar ideal
+          según tu ubicación, hora y preferencias personales.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⭐</div>
+        <h3 class="feature-title">Reputación Centralizada</h3>
+        <p class="feature-desc">
+          Sistema de reseñas verificadas que centraliza la reputación de cada espacio.
+          Toma decisiones informadas con la experiencia de la comunidad.
+        </p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h3 class="feature-title">Notificaciones Inteligentes</h3>
+        <p class="feature-desc">
+          Alertas proactivas cuando el espacio que te gusta está a punto de llenarse
+          o cuando el ideal para ti acaba de quedar disponible.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how">
+  <div class="section-inner">
+    <div class="section-center">
+      <div class="section-tag">¿Cómo funciona?</div>
+      <h2 class="section-title">Anticipa en 4 pasos</h2>
+      <p class="section-sub">
+        En menos de 30 segundos encuentras el espacio perfecto para lo que necesitas hacer.
+      </p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Abre la app</div>
+        <p class="step-desc">Descárgala en App Store o Google Play. Crea tu perfil en 60 segundos.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">Define tu necesidad</div>
+        <p class="step-desc">¿Estudiar? ¿Trabajar? ¿Reunión? Selecciona tipo, horario y filtros.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">La IA predice</div>
+        <p class="step-desc">Nuestro algoritmo analiza ocupación actual y proyectada para ti.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-title">Ve directo al lugar</div>
+        <p class="step-desc">Navega con certeza. Sin sorpresas, sin esperas, sin estrés.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COUNTERS -->
+<div class="counter-strip">
+  <div class="counter-inner">
+    <div>
+      <div class="counter-val" data-target="90">0%</div>
+      <div class="counter-lbl">Precisión del algoritmo</div>
+    </div>
+    <div>
+      <div class="counter-val" data-target="50">0%</div>
+      <div class="counter-lbl">Reducción de tiempo perdido</div>
+    </div>
+    <div>
+      <div class="counter-val" data-target="5000">0</div>
+      <div class="counter-lbl">Usuarios año 1</div>
+    </div>
+    <div>
+      <div class="counter-val" data-target="10">0</div>
+      <div class="counter-lbl">Instituciones piloto</div>
+    </div>
+  </div>
+</div>
+
+<!-- PRECIOS -->
+<section id="precios">
+  <div class="section-inner">
+    <div class="section-center">
+      <div class="section-tag">Planes & Precios</div>
+      <h2 class="section-title">Elige el plan que se adapta<br>a tu ritmo</h2>
+      <p class="section-sub">
+        Desde usuarios individuales hasta universidades completas. Todos los planes incluyen acceso a la IA predictiva.
+      </p>
+    </div>
+    <div class="pricing-grid">
+      <!-- FREE -->
+      <div class="pricing-card">
+        <div class="pricing-name">Plan Gratuito</div>
+        <div class="pricing-target">Para explorar FlowSpace AI</div>
+        <div class="pricing-price">
+          <span class="amount">$0</span><span class="period">para siempre</span>
+        </div>
+        <div class="pricing-desc">
+          Acceso básico al mapa de espacios con disponibilidad en tiempo real.
+        </div>
+        <ul class="pricing-features">
+          <li>Mapa de espacios en tiempo real</li>
+          <li>Búsqueda básica por zona</li>
+          <li>5 búsquedas/día con IA</li>
+          <li>Reseñas de espacios</li>
+          <li class="no">Predicción avanzada</li>
+          <li class="no">Filtros de micro-entorno</li>
+          <li class="no">Notificaciones inteligentes</li>
+        </ul>
+        <button class="btn btn-ghost pricing-btn" onclick="scrollToContact()">Comenzar gratis</button>
+      </div>
+      <!-- PRO ESTUDIANTE -->
+      <div class="pricing-card popular">
+        <div class="popular-tag">⭐ Más popular</div>
+        <div class="pricing-name">Plan Pro · Estudiante</div>
+        <div class="pricing-target">Para estudiantes con correo .edu</div>
+        <div class="pricing-price">
+          <span class="amount grad">$49</span><span class="period">/mes MXN</span>
+        </div>
+        <div class="pricing-desc">
+          Acceso completo con IA predictiva. Primer mes gratis con correo institucional.
+        </div>
+        <ul class="pricing-features">
+          <li>Todo del plan gratuito</li>
+          <li>Predicción IA sin límite</li>
+          <li>Filtros de micro-entorno completos</li>
+          <li>Notificaciones inteligentes</li>
+          <li>Motor de recomendaciones</li>
+          <li>Historial de espacios visitados</li>
+          <li>Soporte prioritario</li>
+        </ul>
+        <button class="btn btn-primary pricing-btn" onclick="scrollToContact()">Primer mes GRATIS →</button>
+      </div>
+      <!-- PRO PROFESIONAL -->
+      <div class="pricing-card">
+        <div class="pricing-name">Plan Pro · Profesional</div>
+        <div class="pricing-target">Para freelancers y profesionistas</div>
+        <div class="pricing-price">
+          <span class="amount">$89</span><span class="period">/mes MXN</span>
+        </div>
+        <div class="pricing-desc">
+          Funcionalidades avanzadas para maximizar tu productividad laboral.
+        </div>
+        <ul class="pricing-features">
+          <li>Todo del Plan Pro Estudiante</li>
+          <li>Reserva anticipada de espacios</li>
+          <li>Dashboard de productividad</li>
+          <li>Integración con calendario</li>
+          <li>Análisis de tus hábitos</li>
+          <li>Descuentos en espacios aliados</li>
+          <li>API personal (100 calls/mes)</li>
+        </ul>
+        <button class="btn btn-ghost pricing-btn" onclick="scrollToContact()">Comenzar ahora</button>
+      </div>
+    </div>
+    <!-- ENTERPRISE -->
+    <div style="margin-top:40px">
+      <div class="section-center" style="margin-bottom:32px">
+        <h3 style="font-size:22px;font-weight:700">Soluciones para Instituciones</h3>
+        <p style="font-size:15px;color:var(--gray-500);margin-top:8px">Optimiza el uso de espacios en tu institución o empresa</p>
+      </div>
+      <div class="pricing-enterprise">
+        <div class="enterprise-card">
+          <div class="enterprise-icon">🏫</div>
+          <div>
+            <div class="enterprise-name">Licencia Universitaria</div>
+            <div class="enterprise-price">$8,500/año</div>
+            <div class="enterprise-desc">Campus completo. Dashboard admin, datos de flujo, integración con sistemas universitarios, reportes de ocupación y hasta 1,000 usuarios.</div>
+          </div>
+        </div>
+        <div class="enterprise-card">
+          <div class="enterprise-icon">🏢</div>
+          <div>
+            <div class="enterprise-name">Licencia Coworking / PYME</div>
+            <div class="enterprise-price">$4,200/año</div>
+            <div class="enterprise-desc">Gestión inteligente de tu espacio. Panel de control en tiempo real, análisis de flujo, sistema de reservas y perfil verificado en la plataforma.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- API & SERVICIOS -->
+    <div style="margin-top:24px;background:var(--gray-50);border-radius:20px;padding:32px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px" class="api-grid">
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:28px;margin-bottom:8px">🔌</div>
+        <div style="font-weight:700;margin-bottom:4px">API de Datos</div>
+        <div style="font-size:20px;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent">$3,500/mes</div>
+        <div style="font-size:13px;color:var(--gray-400);margin-top:4px">Datos de ocupación en tiempo real para tus propias apps</div>
+      </div>
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:28px;margin-bottom:8px">🚀</div>
+        <div style="font-weight:700;margin-bottom:4px">Consultoría</div>
+        <div style="font-size:20px;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent">$6,000/evento</div>
+        <div style="font-size:13px;color:var(--gray-400);margin-top:4px">Implementación personalizada para tu espacio o institución</div>
+      </div>
+      <div style="text-align:center;padding:16px">
+        <div style="font-size:28px;margin-bottom:8px">🎓</div>
+        <div style="font-weight:700;margin-bottom:4px">Capacitación</div>
+        <div style="font-size:20px;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent">$2,500/evento</div>
+        <div style="font-size:13px;color:var(--gray-400);margin-top:4px">Formación a equipos e instituciones en optimización de espacios</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div class="section-inner">
+    <div class="section-center">
+      <div class="section-tag">Testimonios</div>
+      <h2 class="section-title">Lo que dirán nuestros usuarios</h2>
+      <p class="section-sub">Beta testers del campus piloto ya experimentaron la diferencia.</p>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">
+          "Antes llegaba a la biblioteca y estaba llena. Ahora abro FlowSpace AI y sé exactamente
+          adónde ir. Me ahorra fácil 45 minutos al día."
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">A</div>
+          <div>
+            <div class="testimonial-name">Ana García</div>
+            <div class="testimonial-position">Estudiante, UNAM — Beta Tester</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">
+          "Implementamos la licencia en nuestro coworking y la ocupación mejoró un 40%.
+          Los miembros ya no chocan en horas pico. Es increíble."
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">M</div>
+          <div>
+            <div class="testimonial-name">Marco Herrera</div>
+            <div class="testimonial-position">Manager, Coworking Hub CDMX</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">
+          "La IA predijo correctamente que el área de estudio grupal estaría libre a las 7pm.
+          Llegué y era verdad. Nunca vi algo igual."
+        </p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">R</div>
+          <div>
+            <div class="testimonial-name">Ricardo Soto</div>
+            <div class="testimonial-position">Freelancer, CDMX — Plan Pro</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EQUIPO -->
+<section class="team" id="equipo">
+  <div class="section-inner">
+    <div class="section-center">
+      <div class="section-tag">Equipo Fundador</div>
+      <h2 class="section-title">Las personas detrás de FlowSpace AI</h2>
+      <p class="section-sub">
+        6 socios fundadores con visión compartida, habilidades complementarias y
+        $250,000 MXN de inversión inicial propia.
+      </p>
+    </div>
+    <div class="team-grid">
+      <!-- CEO -->
+      <div class="team-card ceo" style="border: 2px solid rgba(26,107,255,.2); background: linear-gradient(160deg, #f8faff, #fff);">
+        <div class="team-avatar" style="background: linear-gradient(135deg, #7c3aed, #1a6bff);">JN</div>
+        <div class="team-name">Nieto Díaz Jihan</div>
+        <div class="team-role">CEO · Director General</div>
+        <p class="team-desc">
+          Representante legal y líder estratégico de FlowSpace AI. Define la visión y roadmap del producto,
+          coordina al equipo fundador y gestiona relaciones con inversores y aliados institucionales.
+        </p>
+        <div class="team-stake">
+          <span class="team-stake-label">Participación</span>
+          <span class="team-stake-val">60.0%</span>
+        </div>
+        <div class="team-stake-bar"><div class="team-stake-fill" style="width:60%"></div></div>
+        <div class="team-invest">Inversión: $150,000 MXN</div>
+      </div>
+      <!-- OPS -->
+      <div class="team-card">
+        <div class="team-avatar" style="background: linear-gradient(135deg, #0891b2, #1a6bff);">VR</div>
+        <div class="team-name">Reyes Salgado Vanesa</div>
+        <div class="team-role">Directora de Operaciones</div>
+        <p class="team-desc">
+          Gestión de procesos internos, flujos de trabajo y coordinación logística.
+          Responsable de la eficiencia operativa, políticas internas y presupuesto operativo.
+        </p>
+        <div class="team-stake">
+          <span class="team-stake-label">Participación</span>
+          <span class="team-stake-val">12.0%</span>
+        </div>
+        <div class="team-stake-bar"><div class="team-stake-fill" style="width:12%"></div></div>
+        <div class="team-invest">Inversión: $30,000 MXN</div>
+      </div>
+      <!-- TECH -->
+      <div class="team-card">
+        <div class="team-avatar" style="background: linear-gradient(135deg, #059669, #1a6bff);">CC</div>
+        <div class="team-name">Clemente Jiménez Carlos R.</div>
+        <div class="team-role">Director de Tecnología</div>
+        <p class="team-desc">
+          Desarrollo y mantenimiento de la plataforma. Arquitectura de sistemas, integración de APIs,
+          infraestructura cloud y seguridad técnica de la plataforma.
+        </p>
+        <div class="team-stake">
+          <span class="team-stake-label">Participación</span>
+          <span class="team-stake-val">8.0%</span>
+        </div>
+        <div class="team-stake-bar"><div class="team-stake-fill" style="width:8%"></div></div>
+        <div class="team-invest">Inversión: $20,000 MXN</div>
+      </div>
+      <!-- MARKETING -->
+      <div class="team-card">
+        <div class="team-avatar" style="background: linear-gradient(135deg, #db2777, #7c3aed);">VS</div>
+        <div class="team-name">Sánchez Cruz Valeria</div>
+        <div class="team-role">Directora de Marketing</div>
+        <p class="team-desc">
+          Estrategia de comunicación y marca, gestión de redes sociales, campañas digitales
+          y análisis de mercado. Lidera la campaña "Recupera tu tiempo".
+        </p>
+        <div class="team-stake">
+          <span class="team-stake-label">Participación</span>
+          <span class="team-stake-val">8.0%</span>
+        </div>
+        <div class="team-stake-bar"><div class="team-stake-fill" style="width:8%"></div></div>
+        <div class="team-invest">Inversión: $20,000 MXN</div>
+      </div>
+      <!-- FINANZAS -->
+      <div class="team-card">
+        <div class="team-avatar" style="background: linear-gradient(135deg, #d97706, #1a6bff);">CA</div>
+        <div class="team-name">Aragón Bello Carlos S.</div>
+        <div class="team-role">Director de Finanzas</div>
+        <p class="team-desc">
+          Monitoreo de KPIs, control financiero y reportes de desempeño. Responsable del modelo
+          de suscripción y la sostenibilidad financiera de FlowSpace AI.
+        </p>
+        <div class="team-stake">
+          <span class="team-stake-label">Participación</span>
+          <span class="team-stake-val">10.0%</span>
+        </div>
+        <div class="team-stake-bar"><div class="team-stake-fill" style="width:10%"></div></div>
+        <div class="team-invest">Inversión: $25,000 MXN</div>
+      </div>
+      <!-- FUNDADOR -->
+      <div class="team-card">
+        <div class="team-avatar" style="background: linear-gradient(135deg, #7c3aed, #db2777);">BS</div>
+        <div class="team-name">Sierra Fuentes Bruno</div>
+        <div class="team-role">Socio Fundador · Tecnología</div>
+        <p class="team-desc">
+          Desarrollo frontend, UX/UI y control de calidad del software. Preserva la visión original
+          y lideró el desarrollo del algoritmo de predicción de ocupación.
+        </p>
+        <div class="team-stake">
+          <span class="team-stake-label">Participación</span>
+          <span class="team-stake-val">2.0%</span>
+        </div>
+        <div class="team-stake-bar"><div class="team-stake-fill" style="width:2%"></div></div>
+        <div class="team-invest">Inversión: $5,000 MXN</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section>
+  <div class="section-inner">
+    <div class="section-center">
+      <div class="section-tag">Preguntas Frecuentes</div>
+      <h2 class="section-title">Todo lo que necesitas saber</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          ¿Cómo funciona la predicción de IA? <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          Nuestro algoritmo analiza datos históricos de ocupación, patrones de comportamiento de usuarios,
+          horarios, eventos especiales y flujo en tiempo real para proyectar con 90% de precisión cuán
+          lleno estará un espacio en los próximos 30-120 minutos.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          ¿Mis datos están seguros? <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          Absolutamente. FlowSpace AI está en proceso de certificación ISO/GDPR y cumple con la
+          Ley Federal de Protección de Datos Personales (LFPDPPP). Nunca vendemos datos individuales.
+          El algoritmo trabaja con datos agregados y anonimizados.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          ¿Cómo obtengo el mes gratis de Plan Pro? <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          Regístrate con tu correo institucional que termine en .edu o .edu.mx y automáticamente
+          activamos tu mes gratuito del Plan Pro Estudiante ($49 MXN de valor). Sin tarjeta requerida
+          para el periodo de prueba.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          ¿En qué ciudades está disponible? <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          El lanzamiento es en Ciudad de México (agosto 2026), comenzando con campus piloto en Santa Fe
+          y Coyoacán. La expansión nacional está planeada para 2027, con ciudades como Monterrey y Guadalajara,
+          seguida de internacionalización en ciudades de alta densidad.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          ¿Puedo integrar FlowSpace AI en mis propias aplicaciones? <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          Sí. Ofrecemos una API de Datos de Ocupación desde $3,500 MXN/mes con datos en tiempo real,
+          predicciones y análisis de flujo para integraciones empresariales. Contáctanos para acceso
+          a documentación técnica y entornos sandbox.
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          ¿Cómo mi universidad puede asociarse? <span class="faq-arrow">▾</span>
+        </div>
+        <div class="faq-answer">
+          La Licencia Universitaria ($8,500 MXN/año) incluye implementación guiada, capacitación al
+          personal, dashboard administrativo y acceso para hasta 1,000 usuarios. Contáctanos en
+          contacto@flowspaceai.mx para una demo personalizada.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACTO -->
+<section id="contacto" style="background: var(--gray-50);">
+  <div class="section-inner">
+    <div class="contact-grid">
+      <div>
+        <div class="section-tag">Contacto</div>
+        <h2 class="section-title">Hablemos de tu<br>espacio ideal</h2>
+        <p class="section-sub" style="max-width:none">
+          Ya seas estudiante, empresa, universidad o inversionista —
+          nos encantaría mostrarte cómo FlowSpace AI puede transformar tu experiencia.
+        </p>
+        <div class="contact-info">
+          <div class="contact-item">
+            <div class="contact-icon">📧</div>
+            <div>
+              <div class="contact-item-title">Correo electrónico</div>
+              <div class="contact-item-val">contacto@flowspaceai.mx</div>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">📞</div>
+            <div>
+              <div class="contact-item-title">Teléfono</div>
+              <div class="contact-item-val">55 1744 5308</div>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">📍</div>
+            <div>
+              <div class="contact-item-title">Oficinas</div>
+              <div class="contact-item-val">WeWork Santa Fe · Javier Barros Sierra 540, Piso 6<br>Col. Santa Fe, Álvaro Obregón, CDMX</div>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">🏛️</div>
+            <div>
+              <div class="contact-item-title">Datos fiscales</div>
+              <div class="contact-item-val">FlowSpace AI S. de R.L. · RFC: FAI260601MX3<br>Clase 42 IMPI · Marca registrada en trámite</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="contact-form">
+        <h3 style="font-size:20px;font-weight:700;margin-bottom:6px">Envíanos un mensaje</h3>
+        <p style="font-size:14px;color:var(--gray-400);margin-bottom:24px">Respondemos en menos de 24 horas hábiles.</p>
+        <form id="contactForm" onsubmit="submitForm(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fname">Nombre *</label>
+              <input type="text" id="fname" placeholder="Tu nombre" required />
+            </div>
+            <div class="form-group">
+              <label for="lname">Apellido *</label>
+              <input type="text" id="lname" placeholder="Tu apellido" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="email">Correo electrónico *</label>
+            <input type="email" id="email" placeholder="tu@correo.com" required />
+          </div>
+          <div class="form-group">
+            <label for="tipo">Tipo de interés *</label>
+            <select id="tipo" required>
+              <option value="">Selecciona una opción</option>
+              <option>Plan Pro Estudiante</option>
+              <option>Plan Pro Profesional</option>
+              <option>Licencia Universitaria</option>
+              <option>Licencia Coworking / PYME</option>
+              <option>API de Datos</option>
+              <option>Alianza estratégica</option>
+              <option>Inversión / Fondeo</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="org">Organización (opcional)</label>
+            <input type="text" id="org" placeholder="Universidad, empresa, etc." />
+          </div>
+          <div class="form-group">
+            <label for="msg">Mensaje *</label>
+            <textarea id="msg" placeholder="Cuéntanos cómo podemos ayudarte..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center">
+            Enviar mensaje →
+          </button>
+          <div class="form-success" id="formSuccess">
+            ✅ ¡Mensaje enviado! Te contactaremos pronto en <strong id="confirmEmail"></strong>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final">
+  <div class="cta-final-inner">
+    <div style="font-size:48px;margin-bottom:16px">🚀</div>
+    <h2>Anticipa. No busques.</h2>
+    <p>Únete a los primeros usuarios de FlowSpace AI y transforma cómo interactúas con los espacios a tu alrededor.</p>
+    <div class="cta-final-actions">
+      <button class="btn btn-white btn-xl" onclick="scrollToContact()">Comenzar gratis ahora</button>
+      <button class="btn btn-outline-white btn-xl" onclick="scrollToContact()">Hablar con el equipo</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="footer-brand-name">FlowSpace AI</div>
+      <p class="footer-brand-desc">
+        Plataforma de optimización de espacios urbanos mediante inteligencia artificial predictiva.
+        Smart Cities, mejor vida.
+      </p>
+      <div class="footer-slogan">"No busques espacio. Anticípalo."</div>
+      <div class="footer-social">
+        <div class="social-btn">📘</div>
+        <div class="social-btn">📸</div>
+        <div class="social-btn">🎵</div>
+        <div class="social-btn">🔗</div>
+        <div class="social-btn">𝕏</div>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Producto</div>
+      <ul class="footer-links">
+        <li><a href="#caracteristicas">Características</a></li>
+        <li><a href="#precios">Precios</a></li>
+        <li><a href="#precios">Plan Gratuito</a></li>
+        <li><a href="#precios">Para Empresas</a></li>
+        <li><a href="#precios">API de Datos</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Empresa</div>
+      <ul class="footer-links">
+        <li><a href="#nosotros">Nosotros</a></li>
+        <li><a href="#equipo">Equipo</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+        <li><a href="#contacto">Inversores</a></li>
+        <li><a href="#contacto">Prensa</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Legal</div>
+      <ul class="footer-links">
+        <li><a href="#">Términos de Uso</a></li>
+        <li><a href="#">Aviso de Privacidad</a></li>
+        <li><a href="#">Política de Cookies</a></li>
+        <li><a href="#">LFPDPPP</a></li>
+      </ul>
+      <div style="margin-top:20px">
+        <div class="footer-col-title">Contacto Directo</div>
+        <ul class="footer-links">
+          <li><a href="mailto:contacto@flowspaceai.mx">contacto@flowspaceai.mx</a></li>
+          <li><a href="tel:5517445308">55 1744 5308</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div>© 2026 FlowSpace AI S. de R.L. Todos los derechos reservados.</div>
+    <div class="footer-rfc">RFC: FAI260601MX3 · WeWork Santa Fe, CDMX · Clase 42 IMPI</div>
+    <div class="footer-legal">
+      <a href="#">Privacidad</a>
+      <a href="#">Términos</a>
+      <a href="#">Cookies</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ─── NAV scroll effect
+  const nav = document.getElementById('mainNav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+  });
+
+  // ─── Mobile menu
+  function toggleMenu() {
+    document.getElementById('mobileMenu').classList.toggle('open');
+  }
+  function closeMenu() {
+    document.getElementById('mobileMenu').classList.remove('open');
+  }
+
+  // ─── Scroll to contact
+  function scrollToContact() {
+    document.getElementById('contacto').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // ─── FAQ accordion
+  function toggleFaq(el) {
+    const item = el.parentElement;
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+
+  // ─── Contact form
+  function submitForm(e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    document.getElementById('confirmEmail').textContent = email;
+    document.getElementById('formSuccess').style.display = 'block';
+    document.getElementById('contactForm').reset();
+    setTimeout(() => {
+      document.getElementById('formSuccess').style.display = 'none';
+    }, 5000);
+  }
+
+  // ─── Counter animation
+  function animateCounter(el) {
+    const target = parseInt(el.dataset.target);
+    const suffix = el.textContent.includes('%') ? '%' : (target >= 100 ? '+' : '');
+    let current = 0;
+    const duration = 2000;
+    const step = target / (duration / 16);
+    const timer = setInterval(() => {
+      current = Math.min(current + step, target);
+      el.textContent = Math.floor(current).toLocaleString() + suffix;
+      if (current >= target) clearInterval(timer);
+    }, 16);
+  }
+
+  // ─── Intersection Observer for counters
+  const counters = document.querySelectorAll('.counter-val');
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !entry.target.dataset.animated) {
+        entry.target.dataset.animated = 'true';
+        animateCounter(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  counters.forEach(c => counterObserver.observe(c));
+
+  // ─── Fade-in on scroll
+  const fadeEls = document.querySelectorAll('.feature-card, .team-card, .pricing-card, .testimonial-card, .step');
+  const fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = entry.target.style.transform?.includes('scale') ? entry.target.style.transform : 'translateY(0)';
+        fadeObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  fadeEls.forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = `opacity .5s ease ${(i % 3) * .1}s, transform .5s ease ${(i % 3) * .1}s, box-shadow .3s, border-color .3s`;
+    fadeObserver.observe(el);
+  });
+
+  // ─── Active nav link
+  const sections = document.querySelectorAll('section[id], div[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 100) current = s.id;
+    });
+    navLinks.forEach(link => {
+      link.style.color = link.getAttribute('href') === '#' + current ? 'var(--blue)' : '';
+    });
+  });
+</script>
+</body>
+</html>
