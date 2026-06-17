@@ -173,9 +173,52 @@
     .footer-links { display: flex; gap: 22px; }
     .footer-links a { font-size: 13px; color: var(--text-dim); transition: color .2s; }
     .footer-links a:hover { color: var(--text); }
+
+    /* ─── GATE ─── */
+    #gate {
+      position: fixed; inset: 0; z-index: 5000; background: #000;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .gate-inner { text-align: center; padding: 24px; }
+    .gate-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin: 0 auto 28px; box-shadow: 0 0 14px var(--accent); }
+    .gate-line { font-family: var(--mono); font-size: 13px; color: var(--text-dim); margin-bottom: 28px; letter-spacing: .01em; }
+    .gate-box {
+      border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px;
+      width: 280px; max-width: 80vw; transition: border-color .2s;
+    }
+    .gate-box:focus-within { border-color: var(--accent); }
+    .gate-box input {
+      width: 100%; background: transparent; border: none; outline: none;
+      color: var(--text); font-family: var(--mono); font-size: 14px; text-align: center;
+    }
+    .gate-box input::placeholder { color: var(--text-dim2); }
+    .gate-error {
+      font-family: var(--mono); font-size: 11px; color: var(--accent);
+      margin-top: 14px; opacity: 0; transition: opacity .15s;
+    }
+    .gate-error.show { opacity: 1; }
+    .gate-inner.shake { animation: shake .35s; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
   </style>
 </head>
 <body>
+
+  <div id="gate">
+    <div class="gate-inner">
+      <div class="gate-dot"></div>
+      <p class="gate-line">Esto no es un catálogo. Es conocimiento.</p>
+      <div class="gate-box">
+        <input id="gate-input" type="text" placeholder="Escribe un código o proceso" autocomplete="off" spellcheck="false" />
+      </div>
+      <p class="gate-error" id="gate-error">acceso denegado</p>
+    </div>
+  </div>
+
+  <div id="site" hidden>
 
   <nav class="nav">
     <div class="nav-inner">
@@ -310,7 +353,47 @@
     </div>
   </footer>
 
+  </div>
+
   <script>
+    const VALID_KEYS = [
+      "e6010","e6011","e6013","e7016","e7018","e7024",
+      "er70s-2","er70s-6","e8018-c3","e9018-b3","e10018-d2","e11018-g",
+      "er80s-d2","er90s-b3","e308l-16","e309l-16","e316l-16","er308l","er316l",
+      "er4043","er5356","rbcuzn-c","bag-5","nicrbsi","fe-cr",
+      "smaw","gmaw","gtaw","fcaw","saw","aws"
+    ];
+
+    const gate = document.getElementById('gate');
+    const gateInner = document.querySelector('.gate-inner');
+    const gateInput = document.getElementById('gate-input');
+    const gateError = document.getElementById('gate-error');
+    const site = document.getElementById('site');
+
+    function unlock() {
+      sessionStorage.setItem('soldadura_unlocked', '1');
+      gate.remove();
+      site.hidden = false;
+    }
+
+    if (sessionStorage.getItem('soldadura_unlocked') === '1') {
+      unlock();
+    } else {
+      gateInput.focus();
+      gateInput.addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        const v = gateInput.value.trim().toLowerCase().replace(/\s+/g, '');
+        if (VALID_KEYS.some(k => v === k.replace(/-/g, ''))) {
+          unlock();
+        } else {
+          gateError.classList.add('show');
+          gateInner.classList.add('shake');
+          setTimeout(() => gateInner.classList.remove('shake'), 350);
+          gateInput.value = '';
+        }
+      });
+    }
+
     const DATA = [
       { code: "E6010", cat: "Acero al carbono", process: "SMAW", position: "Todas", current: "CD+", desc: "Arco profundo y penetrante, recubrimiento celulósico. Tubería y pase de raíz en campo." },
       { code: "E6011", cat: "Acero al carbono", process: "SMAW", position: "Todas", current: "CA / CD+", desc: "Versión CA del 6010. Mantenimiento general y campo con fuentes limitadas." },
