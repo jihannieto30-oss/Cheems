@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Soldadura — Conocimiento técnico de consumibles de soldadura</title>
+  <meta name="description" content="Referencia técnica de consumibles de soldadura: electrodos, alambres MIG/TIG, recubrimiento duro y soldadura de plata. Busca por clasificación AWS, material o proceso." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #000000;
+      --surface:   #0a0a0a;
+      --surface-2: #111111;
+      --border:    rgba(255,255,255,.09);
+      --border-h:  rgba(255,255,255,.18);
+      --text:      #f5f5f5;
+      --text-dim:  #8a8a8a;
+      --text-dim2: #5e5e5e;
+      --accent:    #ff5a1f;
+      --accent-d:  #c9420f;
+      --mono: 'JetBrains Mono', monospace;
+      --radius: 14px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { text-decoration: none; color: inherit; }
+    ::selection { background: var(--accent); color: #000; }
+
+    /* background grid texture */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+    }
+
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    /* ─── NAV ─── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; height: 64px;
+      background: rgba(0,0,0,.7);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner { max-width: 1180px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-weight: 700; font-size: 15px; letter-spacing: -.02em; }
+    .nav-brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a { font-size: 13.5px; font-weight: 500; color: var(--text-dim); transition: color .2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 8px;
+      border: 1px solid var(--border-h); color: var(--text); transition: all .2s; font-family: var(--mono);
+    }
+    .nav-cta:hover { border-color: var(--accent); color: var(--accent); }
+    @media (max-width: 760px) { .nav-links { display: none; } }
+
+    /* ─── HERO ─── */
+    .hero { padding: 168px 0 90px; text-align: center; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 12px; color: var(--text-dim);
+      border: 1px solid var(--border); padding: 6px 14px; border-radius: 999px;
+      margin-bottom: 28px; letter-spacing: .02em;
+    }
+    .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    h1 {
+      font-size: clamp(34px, 5.4vw, 64px); font-weight: 800; letter-spacing: -.035em;
+      line-height: 1.06; margin-bottom: 22px;
+    }
+    h1 span { color: var(--text-dim2); }
+    .hero-sub {
+      max-width: 620px; margin: 0 auto 44px; color: var(--text-dim);
+      font-size: 17px; line-height: 1.65;
+    }
+
+    /* search */
+    .search-shell { max-width: 640px; margin: 0 auto; position: relative; }
+    .search-box {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px 20px; transition: border-color .2s, box-shadow .2s;
+    }
+    .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(255,90,31,.08); }
+    .search-box svg { flex-shrink: 0; color: var(--text-dim2); }
+    .search-box input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-size: 15px; font-family: var(--mono);
+    }
+    .search-box input::placeholder { color: var(--text-dim2); }
+    .search-box kbd {
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      border: 1px solid var(--border); padding: 3px 7px; border-radius: 6px;
+    }
+    .search-meta { margin-top: 14px; font-family: var(--mono); font-size: 12px; color: var(--text-dim2); }
+    .search-meta b { color: var(--accent); font-weight: 600; }
+
+    /* quick filters */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 22px; }
+    .chip {
+      font-family: var(--mono); font-size: 12px; color: var(--text-dim);
+      border: 1px solid var(--border); padding: 7px 13px; border-radius: 999px;
+      cursor: pointer; transition: all .15s; background: transparent;
+    }
+    .chip:hover { color: var(--text); border-color: var(--border-h); }
+    .chip.active { color: #000; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+    /* ─── SECTION HEADERS ─── */
+    .section { padding: 80px 0; border-top: 1px solid var(--border); }
+    .section-head { margin-bottom: 44px; max-width: 640px; }
+    .section-tag { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-bottom: 12px; letter-spacing: .03em; }
+    .section-head h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 700; letter-spacing: -.025em; margin-bottom: 12px; }
+    .section-head p { color: var(--text-dim); font-size: 15px; line-height: 1.6; }
+
+    /* ─── CATALOG GRID ─── */
+    #count-label { font-family: var(--mono); font-size: 12px; color: var(--text-dim2); margin-bottom: 18px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 22px; transition: border-color .2s, transform .2s;
+    }
+    .card:hover { border-color: var(--border-h); transform: translateY(-2px); }
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+    .card-code { font-family: var(--mono); font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
+    .card-cat {
+      font-family: var(--mono); font-size: 10.5px; color: var(--accent); white-space: nowrap;
+      border: 1px solid rgba(255,90,31,.3); padding: 3px 8px; border-radius: 6px; text-transform: uppercase;
+    }
+    .card-desc { font-size: 13.5px; color: var(--text-dim); line-height: 1.55; margin-bottom: 16px; min-height: 42px; }
+    .card-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid var(--border); padding-top: 14px; }
+    .meta-item { font-size: 11.5px; }
+    .meta-item .k { color: var(--text-dim2); font-family: var(--mono); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
+    .meta-item .v { color: var(--text); font-weight: 500; }
+    .empty-state { text-align: center; padding: 70px 0; color: var(--text-dim2); font-family: var(--mono); font-size: 13px; }
+
+    /* ─── PROCESS / KNOWLEDGE ─── */
+    .proc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 14px; }
+    .proc-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; background: var(--surface); }
+    .proc-card .num { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-bottom: 14px; }
+    .proc-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; letter-spacing: -.01em; }
+    .proc-card p { font-size: 13.5px; color: var(--text-dim); line-height: 1.6; }
+
+    /* ─── CATEGORIES STRIP ─── */
+    .cat-strip { display: flex; flex-wrap: wrap; gap: 10px; }
+    .cat-pill {
+      flex: 1; min-width: 150px; border: 1px solid var(--border); border-radius: 12px;
+      padding: 18px; cursor: pointer; transition: all .2s; background: var(--surface);
+    }
+    .cat-pill:hover { border-color: var(--accent); }
+    .cat-pill .n { font-size: 22px; font-weight: 800; font-family: var(--mono); color: var(--accent); }
+    .cat-pill .l { font-size: 12.5px; color: var(--text-dim); margin-top: 4px; }
+
+    /* ─── FOOTER ─── */
+    footer { border-top: 1px solid var(--border); padding: 50px 0 40px; }
+    .footer-inner { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px; align-items: center; }
+    .footer-left { font-family: var(--mono); font-size: 12px; color: var(--text-dim2); }
+    .footer-links { display: flex; gap: 22px; }
+    .footer-links a { font-size: 13px; color: var(--text-dim); transition: color .2s; }
+    .footer-links a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#" class="nav-brand"><span class="dot"></span> SOLDADURA.REF</a>
+      <div class="nav-links">
+        <a href="#catalogo">Catálogo</a>
+        <a href="#procesos">Procesos</a>
+        <a href="#categorias">Materiales</a>
+        <a href="#conocimiento">Conocimiento</a>
+      </div>
+      <a href="#buscar" class="nav-cta">Buscar →</a>
+    </div>
+  </nav>
+
+  <header class="hero" id="buscar">
+    <div class="wrap">
+      <div class="eyebrow"><span class="dot"></span> Referencia técnica, no catálogo comercial</div>
+      <h1>Entiende la soldadura<br><span>antes de comprarla.</span></h1>
+      <p class="hero-sub">Una base de consulta abierta sobre consumibles de soldadura: clasificaciones AWS, procesos, materiales base y cuándo usar cada uno. Sin marca de por medio.</p>
+
+      <div class="search-shell">
+        <div class="search-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="search" type="text" placeholder="Busca por código AWS, material o proceso… ej. ER70S, inoxidable, TIG" autocomplete="off" />
+          <kbd>/</kbd>
+        </div>
+        <div class="chips" id="chips"></div>
+        <div class="search-meta" id="search-meta"></div>
+      </div>
+    </div>
+  </header>
+
+  <section class="section" id="categorias">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-tag">01 — Materiales base</div>
+        <h2>Clasifica por lo que vas a soldar</h2>
+        <p>Cada material base requiere una familia distinta de consumibles. Haz clic para filtrar el catálogo.</p>
+      </div>
+      <div class="cat-strip" id="cat-strip"></div>
+    </div>
+  </section>
+
+  <section class="section" id="catalogo">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-tag">02 — Catálogo de referencia</div>
+        <h2>Consumibles por clasificación AWS</h2>
+        <p>Ficha técnica resumida: proceso, posición, corriente y aplicación típica.</p>
+      </div>
+      <div id="count-label"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <section class="section" id="procesos">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-tag">03 — Procesos</div>
+        <h2>Cómo se aplica cada consumible</h2>
+        <p>El consumible correcto depende tanto del material como del proceso de soldadura disponible.</p>
+      </div>
+      <div class="proc-grid">
+        <div class="proc-card">
+          <div class="num">SMAW</div>
+          <h3>Electrodo revestido</h3>
+          <p>Arco manual con electrodo recubierto. Versátil, portátil, ideal para campo y mantenimiento. Base de las series E60XX–E120XX.</p>
+        </div>
+        <div class="proc-card">
+          <div class="num">GMAW</div>
+          <h3>MIG / alambre sólido</h3>
+          <p>Arco continuo con gas de protección. Alta productividad en taller. Series ER70S, ER80S, ER100S y aluminio ER4043/ER5356.</p>
+        </div>
+        <div class="proc-card">
+          <div class="num">GTAW</div>
+          <h3>TIG</h3>
+          <p>Arco de tungsteno con varilla de aporte separada. Máximo control y acabado, usado en inoxidable, aluminio y tubería crítica.</p>
+        </div>
+        <div class="proc-card">
+          <div class="num">FCAW</div>
+          <h3>Alambre tubular</h3>
+          <p>Núcleo con fundente o metálico. Mayor depósito que MIG sólido, usado en estructura pesada y recubrimiento duro.</p>
+        </div>
+        <div class="proc-card">
+          <div class="num">SAW</div>
+          <h3>Arco sumergido</h3>
+          <p>Arco cubierto por fundente granular. Alta velocidad de depósito para placa gruesa, tanques y tubería de gran diámetro.</p>
+        </div>
+        <div class="proc-card">
+          <div class="num">BRAZE</div>
+          <h3>Soldadura de plata / fuerte</h3>
+          <p>Unión sin fundir el metal base, por debajo de su punto de fusión. Usada en refrigeración, cobre y uniones disímiles.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="conocimiento">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-tag">04 — Conocimiento</div>
+        <h2>Cómo leer una clasificación AWS</h2>
+        <p>El código no es arbitrario: cada carácter describe resistencia, posición y tipo de recubrimiento o gas.</p>
+      </div>
+      <div class="proc-grid">
+        <div class="proc-card">
+          <div class="num">E XX18</div>
+          <h3>Electrodo revestido</h3>
+          <p><b>E</b> = electrodo. Primeros dígitos = resistencia a la tensión en ksi (×1000 psi). Penúltimo dígito = posición de soldeo. Último = tipo de recubrimiento y polaridad.</p>
+        </div>
+        <div class="proc-card">
+          <div class="num">ER XXS-X</div>
+          <h3>Alambre sólido</h3>
+          <p><b>ER</b> = electrodo-varilla para arco con gas. Número = resistencia. <b>S</b> = sólido. Sufijo = composición química específica del depósito.</p>
+        </div>
+        <div class="proc-card">
+          <div class="num">-B / -D / -G</div>
+          <h3>Aleación de baja aleación</h3>
+          <p>Sufijos como -B3, -D2, -G indican adición de cromo-molibdeno, níquel-molibdeno u otra aleación para resistencia a alta temperatura.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <div class="footer-left">SOLDADURA.REF — recurso de consulta independiente, sin afiliación comercial</div>
+      <div class="footer-links">
+        <a href="#catalogo">Catálogo</a>
+        <a href="#procesos">Procesos</a>
+        <a href="#conocimiento">Conocimiento</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const DATA = [
+      { code: "E6010", cat: "Acero al carbono", process: "SMAW", position: "Todas", current: "CD+", desc: "Arco profundo y penetrante, recubrimiento celulósico. Tubería y pase de raíz en campo." },
+      { code: "E6011", cat: "Acero al carbono", process: "SMAW", position: "Todas", current: "CA / CD+", desc: "Versión CA del 6010. Mantenimiento general y campo con fuentes limitadas." },
+      { code: "E6013", cat: "Acero al carbono", process: "SMAW", position: "Todas", current: "CA / CD±", desc: "Arco suave, fácil de encender. Lámina delgada y soldadura general ligera." },
+      { code: "E7016", cat: "Acero al carbono", process: "SMAW", position: "Todas", current: "CA / CD+", desc: "Bajo hidrógeno, recubrimiento básico. Estructural donde se exige tenacidad." },
+      { code: "E7018", cat: "Acero al carbono", process: "SMAW", position: "Todas", current: "CA / CD+", desc: "El estándar estructural. Bajo hidrógeno, depósito limpio, alta tenacidad." },
+      { code: "E7024", cat: "Acero al carbono", process: "SMAW", position: "Plana / Horizontal", current: "CA / CD±", desc: "Alto rendimiento de depósito (hierro en polvo). Placa gruesa en posición plana." },
+      { code: "ER70S-2", cat: "Acero al carbono", process: "GTAW / GMAW", position: "Todas", current: "CD+", desc: "Triple desoxidado, tolera superficies con óxido leve. TIG de precisión." },
+      { code: "ER70S-6", cat: "Acero al carbono", process: "GMAW", position: "Todas", current: "CD+", desc: "Mayor Si-Mn, el alambre MIG más usado en taller. Tolera algo de óxido/grasa." },
+      { code: "E8018-C3", cat: "Baja aleación", process: "SMAW", position: "Todas", current: "CA / CD+", desc: "1% Ni, buena tenacidad a baja temperatura. Estructuras offshore y marinas." },
+      { code: "E9018-B3", cat: "Baja aleación", process: "SMAW", position: "Todas", current: "CD+", desc: "2.25Cr-1Mo. Servicio a alta temperatura, tubería de proceso y refinación." },
+      { code: "E10018-D2", cat: "Baja aleación", process: "SMAW", position: "Todas", current: "CD+", desc: "Ni-Mo, alta resistencia. Acero de alta resistencia mecánica (HSLA)." },
+      { code: "E11018-G", cat: "Baja aleación", process: "SMAW", position: "Todas", current: "CD+", desc: "Alta resistencia con aleación abierta. Estructuras críticas de gran espesor." },
+      { code: "ER80S-D2", cat: "Baja aleación", process: "GMAW", position: "Todas", current: "CD+", desc: "Ni-Mo en alambre sólido. Acero de alta resistencia en taller." },
+      { code: "ER90S-B3", cat: "Baja aleación", process: "GTAW / GMAW", position: "Todas", current: "CD+", desc: "2.25Cr-1Mo en alambre. Tubería de proceso soldada con TIG/MIG." },
+      { code: "E308L-16", cat: "Acero inoxidable", process: "SMAW", position: "Todas", current: "CA / CD+", desc: "Bajo carbono, para 304/304L. Resiste sensibilización por calor." },
+      { code: "E309L-16", cat: "Acero inoxidable", process: "SMAW", position: "Todas", current: "CA / CD+", desc: "Unión disímil acero al carbono–inoxidable, y recubrimiento (cladding)." },
+      { code: "E316L-16", cat: "Acero inoxidable", process: "SMAW", position: "Todas", current: "CA / CD+", desc: "Con molibdeno, resistencia a picaduras. Ambientes ácidos y marinos." },
+      { code: "ER308L", cat: "Acero inoxidable", process: "GTAW / GMAW", position: "Todas", current: "CD+", desc: "Versión en alambre del 308L. Tubería sanitaria y proceso alimenticio." },
+      { code: "ER316L", cat: "Acero inoxidable", process: "GTAW / GMAW", position: "Todas", current: "CD+", desc: "Alambre con Mo para servicio corrosivo. Farmacéutica y química." },
+      { code: "ER4043", cat: "Aluminio", process: "GTAW / GMAW", position: "Todas", current: "CA (TIG) / CD+ (MIG)", desc: "5% silicio. Fundición de aluminio y soldadura general, buena fluidez." },
+      { code: "ER5356", cat: "Aluminio", process: "GTAW / GMAW", position: "Todas", current: "CA (TIG) / CD+ (MIG)", desc: "Mayor resistencia que el 4043. Estructuras, marina y anodizado." },
+      { code: "RBCuZn-C", cat: "Cobre / Bronce", process: "Soldadura fuerte", position: "Todas", current: "—", desc: "Bronce al silicio para latón y unión disímil acero-cobre." },
+      { code: "BAg-5", cat: "Soldadura de plata", process: "Brazing", position: "Todas", current: "—", desc: "45% plata aprox. Refrigeración, cobre y uniones de precisión." },
+      { code: "NiCrBSi (hardfacing)", cat: "Recubrimiento duro", process: "GTAW / FCAW / Aspersión", position: "Plana", current: "Variable", desc: "Resistencia a desgaste abrasivo y metal-metal a alta dureza." },
+      { code: "E Fe-Cr (hardfacing)", cat: "Recubrimiento duro", process: "SMAW / FCAW", position: "Plana / Horizontal", current: "CD+", desc: "Recubrimiento de alto cromo. Desgaste abrasivo severo en minería y agro." }
+    ];
+
+    const grid = document.getElementById('grid');
+    const countLabel = document.getElementById('count-label');
+    const searchMeta = document.getElementById('search-meta');
+    const input = document.getElementById('search');
+    const chipsEl = document.getElementById('chips');
+    const catStrip = document.getElementById('cat-strip');
+
+    const categories = [...new Set(DATA.map(d => d.cat))];
+
+    function render(list) {
+      grid.innerHTML = list.length ? list.map(d => `
+        <div class="card">
+          <div class="card-top">
+            <div class="card-code">${d.code}</div>
+            <div class="card-cat">${d.cat}</div>
+          </div>
+          <div class="card-desc">${d.desc}</div>
+          <div class="card-meta">
+            <div class="meta-item"><div class="k">Proceso</div><div class="v">${d.process}</div></div>
+            <div class="meta-item"><div class="k">Posición</div><div class="v">${d.position}</div></div>
+            <div class="meta-item"><div class="k">Corriente</div><div class="v">${d.current}</div></div>
+          </div>
+        </div>
+      `).join('') : `<div class="empty-state">No hay coincidencias. Intenta con otro código AWS o material.</div>`;
+      countLabel.textContent = `${list.length} de ${DATA.length} consumibles`;
+    }
+
+    let activeChip = 'Todos';
+
+    function applyFilters() {
+      const q = input.value.trim().toLowerCase();
+      const filtered = DATA.filter(d => {
+        const matchesChip = activeChip === 'Todos' || d.cat === activeChip;
+        const matchesQuery = !q ||
+          d.code.toLowerCase().includes(q) ||
+          d.cat.toLowerCase().includes(q) ||
+          d.process.toLowerCase().includes(q) ||
+          d.desc.toLowerCase().includes(q);
+        return matchesChip && matchesQuery;
+      });
+      render(filtered);
+      searchMeta.innerHTML = q ? `Resultados para <b>"${q}"</b>` : '';
+    }
+
+    chipsEl.innerHTML = ['Todos', ...categories].map(c =>
+      `<button class="chip ${c === 'Todos' ? 'active' : ''}" data-cat="${c}">${c}</button>`
+    ).join('');
+
+    chipsEl.addEventListener('click', e => {
+      const btn = e.target.closest('.chip');
+      if (!btn) return;
+      activeChip = btn.dataset.cat;
+      [...chipsEl.children].forEach(c => c.classList.toggle('active', c === btn));
+      applyFilters();
+    });
+
+    catStrip.innerHTML = categories.map(c => {
+      const n = DATA.filter(d => d.cat === c).length;
+      return `<div class="cat-pill" data-cat="${c}"><div class="n">${n}</div><div class="l">${c}</div></div>`;
+    }).join('');
+
+    catStrip.addEventListener('click', e => {
+      const pill = e.target.closest('.cat-pill');
+      if (!pill) return;
+      activeChip = pill.dataset.cat;
+      [...chipsEl.children].forEach(c => c.classList.toggle('active', c.dataset.cat === activeChip));
+      document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth' });
+      applyFilters();
+    });
+
+    input.addEventListener('input', applyFilters);
+
+    document.addEventListener('keydown', e => {
+      if (e.key === '/' && document.activeElement !== input) {
+        e.preventDefault();
+        input.focus();
+      }
+    });
+
+    render(DATA);
+  </script>
+</body>
+</html>
