@@ -532,6 +532,11 @@ nav,header,.nav,.navbar{background:rgba(0,0,0,.72)!important;backdrop-filter:sat
   padding:0 24px;text-align:center}
 .hk-s1{z-index:3}
 .hk-s2{z-index:2;opacity:0;pointer-events:none}
+/* dark scrim behind content so text reads over the bright DNA helix */
+.hk-s1::before{content:"";position:absolute;inset:-10%;z-index:-1;
+  background:radial-gradient(ellipse 58% 62% at 50% 46%,rgba(0,0,0,.78),rgba(0,0,0,.4) 55%,transparent 76%)}
+.hk-s2::before{content:"";position:absolute;inset:-10%;z-index:-1;
+  background:radial-gradient(ellipse 54% 62% at 50% 50%,rgba(0,0,0,.72),rgba(0,0,0,.34) 55%,transparent 75%)}
 /* stage 1 — logo */
 .hk-logo-wrap{position:relative;will-change:transform,opacity;opacity:0;transform:translateY(26px) scale(.955);
   animation:hkIn 1.7s cubic-bezier(.16,.84,.24,1) .25s forwards}
@@ -612,7 +617,7 @@ nav,header,.nav,.navbar{background:rgba(0,0,0,.72)!important;backdrop-filter:sat
         <div class="hk-lsweep" aria-hidden="true"></div>
       </div>
       <div class="hk-rule" aria-hidden="true"></div>
-      <div class="hk-tag">SCIENCE&#8195;&#183;&#8195;PRECISION&#8195;&#183;&#8195;TRANSFORMATION</div>
+      <div class="hk-tag">ENGINEERED&#8195;BEYOND&#8195;PERFECTION</div>
       <div class="hk-cue"><div class="mouse"></div><span>Scroll</span></div>
     </div>
     <!-- STAGE 2 — inside the peptide: the vial -->
@@ -1525,27 +1530,38 @@ function buildVial(env,labelTex){
   return v;
 }
 
-/* Build a realistic peptide molecule cluster */
+/* Build a photorealistic DNA double helix spanning the screen */
 function buildMolecule(env,big){
-  const m=new THREE.Group();
-  const white=new THREE.MeshPhysicalMaterial({color:0xf2f5f8,metalness:1,roughness:0.08,envMap:env,envMapIntensity:2.2,clearcoat:1,clearcoatRoughness:0.06});
-  const blue=new THREE.MeshPhysicalMaterial({color:0x86b4d8,metalness:0.9,roughness:0.14,envMap:env,envMapIntensity:2,emissive:0x14304a,emissiveIntensity:0.55,clearcoat:1,clearcoatRoughness:0.08});
-  const dark=new THREE.MeshPhysicalMaterial({color:0x9298a0,metalness:1,roughness:0.2,envMap:env,envMapIntensity:1.8});
-  const bond=new THREE.MeshStandardMaterial({color:0x6a7078,metalness:0.9,roughness:0.3,envMap:env,envMapIntensity:1.4});
-  const pts=[];
-  for(let i=0;i<10;i++){const a=i*0.85;pts.push(new THREE.Vector3(Math.cos(a)*1.4+Math.sin(i*0.5)*0.4,Math.sin(a*1.25)*1.2,Math.sin(a)*1.4+Math.cos(i*0.4)*0.3));}
-  pts.forEach((pt,i)=>{
-    const r=i%3===0?0.4:(i%2?0.3:0.34);const mat=i%4===0?blue:(i%5===0?dark:white);
-    const s=new THREE.Mesh(new THREE.SphereGeometry(r,40,40),mat);s.position.copy(pt);m.add(s);
-    if(i>0){const pv=pts[i-1];const d=new THREE.Vector3().subVectors(pt,pv);const L=d.length();
-      const b=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,L,18),bond);
-      b.position.copy(pv).add(d.clone().multiplyScalar(0.5));
-      b.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());m.add(b);}
-  });
-  // cross-links for realism
-  [[0,5],[2,7],[3,9]].forEach(([a,c])=>{const pa=pts[a],pc=pts[c];const d=new THREE.Vector3().subVectors(pc,pa);const L=d.length();
-    const b=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,L,12),bond);b.position.copy(pa).add(d.clone().multiplyScalar(0.5));
-    b.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());m.add(b);});
+  const m=new THREE.Group();const spin=new THREE.Group();m.add(spin);m.userData.spin=spin;
+  const white=new THREE.MeshPhysicalMaterial({color:0xf2f5f8,metalness:1,roughness:0.07,envMap:env,envMapIntensity:2.3,clearcoat:1,clearcoatRoughness:0.05});
+  const ice=new THREE.MeshPhysicalMaterial({color:0xdfe9f2,metalness:0.85,roughness:0.1,envMap:env,envMapIntensity:2.1,clearcoat:1,clearcoatRoughness:0.06});
+  const silver=new THREE.MeshPhysicalMaterial({color:0x969ca4,metalness:1,roughness:0.16,envMap:env,envMapIntensity:2});
+  const blue=new THREE.MeshPhysicalMaterial({color:0x86b4d8,metalness:0.92,roughness:0.12,envMap:env,envMapIntensity:2.1,emissive:0x122c44,emissiveIntensity:0.5,clearcoat:1,clearcoatRoughness:0.07});
+  const bondM=new THREE.MeshPhysicalMaterial({color:0x808790,metalness:0.95,roughness:0.22,envMap:env,envMapIntensity:1.7});
+  const sGeo=new THREE.SphereGeometry(1,26,26);
+  const cGeo=new THREE.CylinderGeometry(1,1,1,14);
+  const up=new THREE.Vector3(0,1,0);
+  function sphere(mat,p,r){const s=new THREE.Mesh(sGeo,mat);s.position.copy(p);s.scale.setScalar(r);spin.add(s);return s;}
+  function tube(a,b,r,mat){const d=new THREE.Vector3().subVectors(b,a);const L=d.length();
+    const c=new THREE.Mesh(cGeo,mat);c.scale.set(r,L,r);
+    c.position.copy(a).add(d.clone().multiplyScalar(0.5));
+    c.quaternion.setFromUnitVectors(up,d.clone().normalize());spin.add(c);}
+  const LEN=34,TURNS=4.2,R=1.5,N=60;
+  let prev1=null,prev2=null;
+  for(let i=0;i<N;i++){
+    const t=i/(N-1),y=(t-0.5)*LEN,a=t*TURNS*Math.PI*2;
+    const p1=new THREE.Vector3(Math.cos(a)*R,y,Math.sin(a)*R);
+    const p2=new THREE.Vector3(-Math.cos(a)*R,y,-Math.sin(a)*R);
+    sphere(i%9===0?blue:(i%2?white:ice),p1,0.32);
+    sphere(i%7===0?blue:(i%2?silver:white),p2,0.32);
+    if(prev1){tube(prev1,p1,0.12,bondM);tube(prev2,p2,0.12,bondM);}
+    if(i%2===0){
+      tube(p1,p2,0.065,bondM);
+      const mid1=new THREE.Vector3().lerpVectors(p1,p2,0.38),mid2=new THREE.Vector3().lerpVectors(p1,p2,0.62);
+      sphere(blue,mid1,0.17);sphere(ice,mid2,0.17);
+    }
+    prev1=p1;prev2=p2;
+  }
   return m;
 }
 
@@ -1571,7 +1587,7 @@ let HERO_ENV=null;
 
   // (hero vial is now a static photo element, no 3D)
 
-  const mol=buildMolecule(env,true);mol.position.set(5.8,0.15,-1);mol.scale.set(1.35,1.35,1.35);group.add(mol);
+  const mol=buildMolecule(env,true);mol.position.set(0,0,-3);mol.rotation.z=0.55;group.add(mol);
 
   // particles — three depth layers for true volumetric parallax
   function makeParticleLayer(count,spread,z0,size,opacity,color){
@@ -1594,11 +1610,11 @@ let HERO_ENV=null;
     const sy=window.__scrollY||0;
     const hp=reduce?0:(window.__heroP||0);
     const syp=Math.max(0,sy-(window.__heroEnd||0));
-    if(!reduce){mol.rotation.y=-t*0.5-hp*2.4;mol.rotation.x=Math.sin(t*0.3)*0.3+hp*0.4;
-      mol.position.x=5.8-hp*4.6;
-      mol.position.y=0.15+Math.sin(t*0.8)*0.3-syp*0.004;
+    if(!reduce){mol.userData.spin.rotation.y=t*0.22+hp*2.6;
+      mol.rotation.x=Math.sin(t*0.18)*0.06;
+      mol.position.y=Math.sin(t*0.5)*0.25-syp*0.004;
       layerFar.rotation.y=t*0.008;layerMid.rotation.y=t*0.016;layerNear.rotation.y=t*0.03;
-      mx+=(tmx-mx)*0.045;my+=(tmy-my)*0.045;group.rotation.y=mx*0.34;group.rotation.x=my*0.22;
+      mx+=(tmx-mx)*0.045;my+=(tmy-my)*0.045;group.rotation.y=mx*0.18;group.rotation.x=my*0.12;
       layerFar.position.set(-mx*0.4,syp*0.0012,0);layerMid.position.set(-mx*1.0,syp*0.0032-my*0.5,0);layerNear.position.set(-mx*2.1,syp*0.0062-my*1.1,0);
       canvas.style.opacity=0.55+0.45*Math.max(0,1-syp/700);}
     camera.position.x=mx*1.6;camera.position.y=-my*0.8-syp*0.0016;
