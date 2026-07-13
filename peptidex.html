@@ -676,21 +676,21 @@ nav,header,.nav,.navbar{background:rgba(0,0,0,.72)!important;backdrop-filter:sat
   </div>
   <div class="lines-grid">
     <article class="line-card reveal" data-line="fitness" tabindex="0">
-      <div class="line-vial vial-treat black"><img class="line-vial-img" alt="PeptideX Fitness line vial"></div>
+      <div class="line-vial vial-treat black"><img class="line-vial-img" alt="PeptideX Fitness line vial"><div class="pop-vial-label lc-label" data-lline="fitness"></div></div>
       <img class="line-logo" data-ll="fitness" alt="PeptideX Fitness">
       <p class="line-tag">Performance &#183; Recovery &#183; Physique</p>
       <p class="line-desc">Compounds studied for muscle, fat loss, endurance and tissue repair.</p>
       <span class="line-cta">Explore Fitness &rarr;</span>
     </article>
     <article class="line-card reveal" data-line="beauty" tabindex="0">
-      <div class="line-vial vial-treat rose"><img class="line-vial-img" alt="PeptideX Beauty line vial"></div>
+      <div class="line-vial vial-treat rose"><img class="line-vial-img" alt="PeptideX Beauty line vial"><div class="pop-vial-label lc-label" data-lline="beauty"></div></div>
       <img class="line-logo" data-ll="beauty" alt="PeptideX Beauty">
       <p class="line-tag">Skin &#183; Glow &#183; Aesthetics</p>
       <p class="line-desc">Skin and aesthetic-focused peptides — GHK-Cu, GLOW, tanning and more.</p>
       <span class="line-cta">Explore Beauty &rarr;</span>
     </article>
     <article class="line-card reveal" data-line="longevity" tabindex="0">
-      <div class="line-vial vial-treat white"><img class="line-vial-img" alt="PeptideX Longevity line vial"></div>
+      <div class="line-vial vial-treat white"><img class="line-vial-img" alt="PeptideX Longevity line vial"><div class="pop-vial-label lc-label" data-lline="longevity"></div></div>
       <img class="line-logo" data-ll="longevity" alt="PeptideX Longevity">
       <p class="line-tag">Cellular Health &#183; Cognition &#183; Vitality</p>
       <p class="line-desc">Anti-aging, NAD+, cognition and immune-support compounds.</p>
@@ -701,7 +701,10 @@ nav,header,.nav,.navbar{background:rgba(0,0,0,.72)!important;backdrop-filter:sat
 <section class="line-hero" id="lineHero" hidden>
   <div class="lh-inner">
     <img class="lh-logo" id="lhLogo" alt="PeptideX line">
-    <div class="lh-vial vial-treat" id="lhVial"><img id="lhVialImg" alt="PeptideX line vial"></div>
+    <div class="lh-stage">
+      <div class="lh-vial vial-treat" id="lhVial"><img id="lhVialImg" alt="PeptideX line vial"><div class="pop-vial-label lh-label" id="lhLabel"></div></div>
+      <div class="lh-glow" aria-hidden="true"></div>
+    </div>
     <p class="lh-desc" id="lhDesc"></p>
     <div class="lh-ctas">
       <a class="btn btn-primary" href="#catalog">View products</a>
@@ -1678,8 +1681,11 @@ let HERO_ENV=null;
       mx+=(tmx-mx)*0.045;my+=(tmy-my)*0.045;group.rotation.y=mx*0.18;group.rotation.x=my*0.12;
       layerFar.position.set(-mx*0.4,syp*0.0012,0);layerMid.position.set(-mx*1.0,syp*0.0032-my*0.5,0);layerNear.position.set(-mx*2.1,syp*0.0062-my*1.1,0);
       canvas.style.opacity=0.55+0.45*Math.max(0,1-syp/700);}
+    window.__warpV=(window.__warpV||0)+((window.__warp||0)-(window.__warpV||0))*0.1;
+    const wp=window.__warpV;
+    if(!reduce&&wp>0.001){layerFar.rotation.y+=wp*0.06;layerMid.rotation.y+=wp*0.1;layerNear.rotation.y+=wp*0.16;}
     camera.position.x=mx*1.6;camera.position.y=-my*0.8-syp*0.0016;
-    camera.position.z=14-hp*16.5;
+    camera.position.z=14-hp*16.5-wp*7;
     camera.lookAt(camera.position.x*0.25,-syp*0.0016,camera.position.z-10);
     renderer.render(scene,camera);
   })();
@@ -2054,7 +2060,10 @@ body{text-rendering:optimizeLegibility}
   background:radial-gradient(ellipse 80% 55% at 50% 0%,var(--lc-glow),transparent 70%)}
 .line-card:hover{border-color:var(--lc);box-shadow:0 24px 70px rgba(0,0,0,.65),0 0 44px var(--lc-glow)}
 .line-card:hover::before{opacity:1}
-.line-vial{width:min(150px,40vw);margin:0 auto 6px;filter:drop-shadow(0 22px 40px rgba(0,0,0,.75))}
+.line-vial{position:relative;width:min(180px,46vw);margin:0 auto 12px;overflow:hidden;
+  border:1px solid var(--line);border-radius:16px;background:#000}
+/* blank-vial label overlays (line cards / line hero / popup) */
+.lc-label,.lh-label{left:33%;top:40%;width:34.5%;height:37.5%}
 .line-logo{height:118px;width:auto;margin:8px auto 4px;display:block}
 .line-tag{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--silver-dim);font-weight:700;margin-bottom:12px}
 .line-desc{font-size:13.5px;color:var(--silver-dim);line-height:1.6;margin-bottom:18px;min-height:44px}
@@ -2097,7 +2106,54 @@ body[data-line="longevity"]{--accent:#dfe9f2;--accent-deep:#6f8496;--accent-glow
 .lh-inner{position:relative;max-width:760px}
 .lh-logo{width:min(430px,82vw);display:block;margin:0 auto 6px;
   filter:drop-shadow(0 20px 60px rgba(0,0,0,.8))}
-.lh-vial{width:min(225px,46vw);margin:0 auto 28px;filter:drop-shadow(0 40px 80px rgba(0,0,0,.85))}
+.lh-stage{position:relative;width:min(300px,62vw);margin:0 auto 30px;overflow:hidden;background:#000;
+  border:1px solid var(--line-bright);border-radius:22px;
+  box-shadow:0 30px 80px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.04)}
+.lh-vial{position:relative;width:100%}
+.lh-vial img{width:100%;display:block}
+/* softer color grade in the big line-hero frame */
+.lh-stage .vial-treat.white img{filter:brightness(1.16) contrast(.97)}
+.lh-stage .vial-treat.white::after{background:linear-gradient(165deg,rgba(255,255,255,.3),rgba(220,232,244,.12) 55%,transparent)}
+.lh-stage .vial-treat.rose img{filter:brightness(1.05)}
+.lh-stage .vial-treat.rose::after{background:linear-gradient(165deg,rgba(240,170,192,.34),rgba(216,130,158,.12) 55%,transparent)}
+.lh-glow{position:absolute;bottom:5%;left:50%;transform:translateX(-50%);width:72%;height:26px;
+  background:radial-gradient(ellipse,var(--accent-glow),transparent 70%);filter:blur(12px)}
+/* popup label repositioned for the blank black vial */
+.pop-vial-label{left:33%;top:40%;width:34.5%;height:37.5%}
+/* staggered line-hero entrance */
+.line-hero .lh-logo,.line-hero .lh-stage,.line-hero .lh-desc,.line-hero .lh-ctas,.line-hero .lh-back{opacity:0}
+.line-hero.enter .lh-logo{animation:lhIn .85s cubic-bezier(.16,.84,.24,1) .05s both}
+.line-hero.enter .lh-stage{animation:lhIn .95s cubic-bezier(.16,.84,.24,1) .18s both}
+.line-hero.enter .lh-desc{animation:lhIn .8s ease .34s both}
+.line-hero.enter .lh-ctas{animation:lhIn .8s ease .46s both}
+.line-hero.enter .lh-back{animation:lhIn .8s ease .58s both}
+@keyframes lhIn{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+/* ===== WARP transition (home -> line) ===== */
+.px-warp{position:fixed;inset:0;z-index:250;pointer-events:none;--wc:#b9c2cc;
+  display:flex;align-items:center;justify-content:center}
+.px-warp[hidden]{display:none!important}
+.px-warp::before{content:"";position:absolute;inset:0;background:#000;opacity:0}
+.px-warp.play::before{animation:pwVeil 1.15s ease both}
+@keyframes pwVeil{0%{opacity:0}24%{opacity:.98}62%{opacity:.98}100%{opacity:0}}
+.pw-rings{position:absolute;inset:0;display:grid;place-items:center}
+.pw-rings i{position:absolute;width:46vmin;height:46vmin;border-radius:50%;
+  border:2px solid var(--wc);opacity:0;filter:blur(1px) drop-shadow(0 0 20px var(--wc))}
+.px-warp.play .pw-rings i{animation:pwRing 1.05s cubic-bezier(.2,.6,.3,1) both}
+.px-warp.play .pw-rings i:nth-child(2){animation-delay:.1s}
+.px-warp.play .pw-rings i:nth-child(3){animation-delay:.2s}
+.px-warp.play .pw-rings i:nth-child(4){animation-delay:.3s}
+@keyframes pwRing{0%{transform:scale(.1);opacity:0}30%{opacity:.6}100%{transform:scale(3.6);opacity:0}}
+.pw-streaks{position:absolute;inset:-22%;opacity:0;
+  background:repeating-conic-gradient(from 0deg,transparent 0 9deg,rgba(200,214,228,.16) 9.5deg 10deg);
+  -webkit-mask-image:radial-gradient(circle,transparent 16%,#000 42%,transparent 74%);
+  mask-image:radial-gradient(circle,transparent 16%,#000 42%,transparent 74%)}
+.px-warp.play .pw-streaks{animation:pwStreak 1.1s cubic-bezier(.3,.4,.2,1) both}
+@keyframes pwStreak{0%{opacity:0;transform:scale(.5) rotate(0deg)}30%{opacity:.55}100%{opacity:0;transform:scale(2.7) rotate(40deg)}}
+.pw-logo{position:relative;width:min(400px,72vw);opacity:0;filter:blur(16px)}
+.px-warp.play .pw-logo{animation:pwLogo 1.15s cubic-bezier(.16,.8,.24,1) both}
+@keyframes pwLogo{0%{opacity:0;transform:scale(.5);filter:blur(16px)}38%{opacity:1;filter:blur(0)}
+  70%{opacity:1;transform:scale(1.03)}100%{opacity:0;transform:scale(1.18);filter:blur(4px)}}
+@media(prefers-reduced-motion:reduce){.px-warp{display:none!important}}
 .lh-desc{max-width:540px;margin:0 auto 30px;color:#c7cad0;font-size:clamp(14px,1.6vw,17px);line-height:1.75}
 .lh-ctas{display:flex;gap:15px;flex-wrap:wrap;justify-content:center}
 .lh-back{display:inline-block;margin-top:32px;color:var(--silver-dim);text-decoration:none;
@@ -2142,6 +2198,11 @@ body[data-line] .nav-links a[href="#quality"]{display:none}
 .rou-blocked p{margin-bottom:24px}
 @media(max-width:560px){.rou-card{padding:28px 22px 24px}}
 </style>
+<div class="px-warp" id="pxWarp" hidden aria-hidden="true">
+  <div class="pw-streaks"></div>
+  <div class="pw-rings"><i></i><i></i><i></i><i></i></div>
+  <img class="pw-logo" id="pwLogo" alt="">
+</div>
 <div class="rou-gate" id="rouGate" hidden>
   <div class="rou-card" id="rouCard" role="dialog" aria-modal="true" aria-labelledby="rouTitle">
     <img class="rou-logo" id="rouLogo" alt="PeptideX">
@@ -2161,13 +2222,71 @@ body[data-line] .nav-links a[href="#quality"]{display:none}
 </div>
 <script id="lines-gate-js">
 (function(){
+  /* ----- line-branded vial label (matches the printed label design) ----- */
+  var LINE_ACCENT={fitness:'#c9ccd1',beauty:'#e8a4b8',longevity:'#f2f5f8'};
+  function lineLabelSVG(code,dose,line){
+    var logo=(line&&LINE_LOGOS[line])||LOGO2;
+    var ac=LINE_ACCENT[line]||'#c9ccd1';
+    var esc=function(s){return String(s||'').replace(/[&<>"]/g,'');};
+    code=esc(code);
+    var d=(dose&&/mg/i.test(dose))?esc(dose.toUpperCase()):'10 MG';
+    var mid;
+    if(code){
+      var fs=code.length>6?44:(code.length>4?54:62);
+      mid='<text x="250" y="256" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="'+fs+'" fill="'+ac+'">'+code+'</text>'
+        +'<rect x="200" y="280" width="100" height="34" rx="4" fill="none" stroke="#8d9299"/>'
+        +'<text x="250" y="304" text-anchor="middle" font-family="Arial" font-size="18" letter-spacing="2" fill="#dfe2e6">'+d+'</text>';
+    }else{
+      mid='<text x="250" y="262" text-anchor="middle" font-family="Arial" font-weight="700" font-size="27" letter-spacing="6" fill="'+ac+'">RESEARCH</text>'
+        +'<text x="250" y="300" text-anchor="middle" font-family="Arial" font-weight="700" font-size="27" letter-spacing="6" fill="'+ac+'">SERIES</text>';
+    }
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 520" preserveAspectRatio="xMidYMid meet">'
+      +'<rect width="500" height="520" rx="14" fill="#060606"/>'
+      +'<rect x="7" y="7" width="486" height="506" rx="10" fill="none" stroke="#3a3d42" stroke-width="1.5"/>'
+      +'<image href="'+logo+'" x="130" y="14" width="240" height="152" preserveAspectRatio="xMidYMid meet"/>'
+      +'<line x1="60" y1="184" x2="440" y2="184" stroke="#34373c"/>'
+      +mid
+      +'<text x="250" y="360" text-anchor="middle" font-family="Arial" font-weight="700" font-size="19" letter-spacing="2.5" fill="#d7dade">RESEARCH USE ONLY</text>'
+      +'<text x="250" y="388" text-anchor="middle" font-family="Arial" font-size="15" letter-spacing="1.5" fill="#8b9099">NOT FOR HUMAN CONSUMPTION</text>'
+      +'<rect x="60" y="424" width="380" height="44" rx="6" fill="#101318" stroke="#33363b"/>'
+      +'<text x="230" y="453" text-anchor="middle" font-family="Arial" font-weight="700" font-size="19" letter-spacing="2.5" fill="#cfd3d8">TESTED IN USA</text>'
+      +'<g transform="translate(384,433)"><rect width="34" height="26" fill="#232f4e"/>'
+      +'<rect y="4" width="34" height="3" fill="#a83b49"/><rect y="10" width="34" height="3" fill="#a83b49"/>'
+      +'<rect y="16" width="34" height="3" fill="#a83b49"/><rect y="22" width="34" height="3" fill="#a83b49"/>'
+      +'<rect width="15" height="13" fill="#2b3a66"/></g>'
+      +'</svg>';
+  }
+  var CAT_LINE={'Weight Management':'fitness','Growth Hormone':'fitness','Recovery & Repair':'fitness',
+    'Sexual & Hormonal':'fitness','Skin & Aesthetics':'beauty','Anti-Aging':'longevity',
+    'Cognition':'longevity','Immune & Vitality':'longevity','Solvents':''};
+  function lineForCode(code){
+    var card=document.querySelector('.product-card[data-code="'+code+'"]');
+    if(card){var it=card.closest('.acc-item');
+      if(it){var t=it.querySelector('.acc-title');
+        if(t){var l=CAT_LINE[t.textContent.trim()];if(l)return l;}}}
+    return document.body.getAttribute('data-line')||'';
+  }
+  /* every product vial now carries its line label on the black blank vial */
+  if(typeof PopupVial!=='undefined'){
+    PopupVial.show=function(code,name,dose,desc){
+      var img=document.getElementById('popVialImg'),lbl=document.getElementById('popVialLabel');
+      if(img)img.src=VIAL_BLANK;
+      if(lbl){lbl.style.display='';lbl.innerHTML=lineLabelSVG(code,dose,lineForCode(code));}
+      var holder=document.querySelector('.pop-vial-holder');
+      if(holder){holder.style.animation='none';void holder.offsetWidth;holder.style.animation='';}
+    };
+  }
+
   /* assets for line vials + logos (reuses embedded images) */
   function initAssets(){
-    var vurl='url("'+VIAL_HERO+'")';
+    var vurlHero='url("'+VIAL_HERO+'")',vurlBlank='url("'+VIAL_BLANK+'")';
     document.querySelectorAll('.vial-treat').forEach(function(v){
-      v.style.setProperty('--vurl',vurl);
-      var img=v.querySelector('img');if(img&&!img.src)img.src=VIAL_HERO;
+      var inTrio=!!v.closest('.hk-vial-row');
+      v.style.setProperty('--vurl',inTrio?vurlHero:vurlBlank);
+      var img=v.querySelector('img');if(img&&!img.src)img.src=inTrio?VIAL_HERO:VIAL_BLANK;
     });
+    document.querySelectorAll('.lc-label').forEach(function(l){
+      l.innerHTML=lineLabelSVG('','',l.dataset.lline);});
     document.querySelectorAll('.line-logo').forEach(function(i){i.src=LINE_LOGOS[i.dataset.ll]||LOGO2;});
     var rl=document.getElementById('rouLogo');if(rl)rl.src=LOGO2;
   }
@@ -2223,9 +2342,11 @@ body[data-line] .nav-links a[href="#quality"]{display:none}
     document.getElementById('lhLogo').src=LINE_LOGOS[line];
     var lv=document.getElementById('lhVial');
     lv.className='lh-vial vial-treat '+info.treat;
-    lv.style.setProperty('--vurl','url("'+VIAL_HERO+'")');
-    var lvi=document.getElementById('lhVialImg');if(!lvi.src)lvi.src=VIAL_HERO;
+    lv.style.setProperty('--vurl','url("'+VIAL_BLANK+'")');
+    var lvi=document.getElementById('lhVialImg');lvi.src=VIAL_BLANK;
+    document.getElementById('lhLabel').innerHTML=lineLabelSVG('','',line);
     document.getElementById('lhDesc').textContent=info.desc;
+    lh.classList.remove('enter');void lh.offsetWidth;lh.classList.add('enter');
     var wa=document.getElementById('lhWa');
     if(wa&&typeof waMsg==='function')wa.href=waMsg('the PeptideX '+line.charAt(0).toUpperCase()+line.slice(1)+' line');
     var cats=LINE_MAP[line];
@@ -2246,10 +2367,34 @@ body[data-line] .nav-links a[href="#quality"]{display:none}
     document.querySelectorAll('#accordion .acc-item').forEach(function(it){it.style.display='';});
     document.querySelectorAll('.line-chip').forEach(function(c){c.classList.toggle('active',!c.dataset.line);});
   }
+  /* warp transition (tunnel + logo) between views, like the reference reel */
+  var WARP_COLORS={fitness:'#b9c2cc',beauty:'#e8a4b8',longevity:'#eef3f8'};
+  var reduceMotion=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function playWarp(logoSrc,color,swapFn){
+    var w=document.getElementById('pxWarp');
+    if(!w||reduceMotion){swapFn();return;}
+    w.style.setProperty('--wc',color);
+    var pl=document.getElementById('pwLogo');if(pl)pl.src=logoSrc;
+    w.hidden=false;w.classList.remove('play');void w.offsetWidth;w.classList.add('play');
+    window.__warp=1;
+    setTimeout(swapFn,430);
+    setTimeout(function(){window.__warp=0;},900);
+    setTimeout(function(){w.hidden=true;w.classList.remove('play');},1200);
+  }
+  var firstRoute=true;
   function route(){
     var h=(location.hash||'').replace(/^#\/?/,'').toLowerCase();
-    if(LINE_INFO[h]){showLine(h);return;}
-    if(h===''||h==='home'){showHome();if(h==='home')scrollTo({top:0,behavior:'auto'});}
+    if(LINE_INFO[h]){
+      if(firstRoute||document.body.getAttribute('data-line')===h){showLine(h);}
+      else playWarp(LINE_LOGOS[h],WARP_COLORS[h],function(){showLine(h);});
+      firstRoute=false;return;
+    }
+    if(h===''||h==='home'){
+      var fromLine=document.body.hasAttribute('data-line');
+      if(!firstRoute&&fromLine)playWarp(LOGO2,'#b9c2cc',function(){showHome();scrollTo({top:0,behavior:'auto'});});
+      else{showHome();if(h==='home')scrollTo({top:0,behavior:'auto'});}
+    }
+    firstRoute=false;
   }
   addEventListener('hashchange',route);
   route();
