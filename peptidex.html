@@ -639,12 +639,16 @@ nav,header,.nav,.navbar{background:rgba(0,0,0,.72)!important;backdrop-filter:sat
     <!-- STAGE 2 — inside the peptide: the vial -->
     <div class="hk-stage hk-s2" id="hkS2">
       <h1 class="hk-head"><span class="hk-w">Purity,</span> <span class="hk-w">perfected.</span></h1>
-      <div class="hk-vial" id="hkVial">
-        <div class="hv-par" id="heroVialPar"><div class="hv-holder">
-          <img id="heroVialImg" alt="PeptideX research vial">
-          <div class="sweep" aria-hidden="true"></div>
-        </div></div>
-        <div class="hk-pedestal" aria-hidden="true"></div>
+      <div class="hk-vial-row" id="hkVialRow">
+        <div class="hk-vial hk-side vial-treat rose" aria-hidden="true"><img class="side-vial-img" alt=""></div>
+        <div class="hk-vial hk-center" id="hkVial">
+          <div class="hv-par" id="heroVialPar"><div class="hv-holder">
+            <img id="heroVialImg" alt="PeptideX research vial">
+            <div class="sweep" aria-hidden="true"></div>
+          </div></div>
+          <div class="hk-pedestal" aria-hidden="true"></div>
+        </div>
+        <div class="hk-vial hk-side vial-treat white" aria-hidden="true"><img class="side-vial-img" alt=""></div>
       </div>
       <p class="hk-sub">Research-grade peptides, HPLC-verified to &gt;99% purity. Certificate of analysis with every lot.</p>
       <div class="hk-ctas">
@@ -664,13 +668,47 @@ nav,header,.nav,.navbar{background:rgba(0,0,0,.72)!important;backdrop-filter:sat
       </div>
 </div>
 
+<section class="lines" id="lines">
+  <div class="section-intro reveal">
+    <span class="eyebrow">The Lines</span>
+    <h2>Three lines. One standard.</h2>
+    <p>Fitness, Beauty and Longevity — every line held to the same bar: HPLC-verified purity and a certificate of analysis on every lot.</p>
+  </div>
+  <div class="lines-grid">
+    <article class="line-card reveal" data-line="fitness" tabindex="0">
+      <div class="line-vial vial-treat black"><img class="line-vial-img" alt="PeptideX Fitness line vial"></div>
+      <img class="line-logo logo-black" alt="PeptideX Fitness">
+      <h3>FITNESS</h3>
+      <p class="line-tag">Performance &#183; Recovery &#183; Physique</p>
+      <p class="line-desc">Compounds studied for muscle, fat loss, endurance and tissue repair.</p>
+      <span class="line-cta">Explore Fitness &rarr;</span>
+    </article>
+    <article class="line-card reveal" data-line="beauty" tabindex="0">
+      <div class="line-vial vial-treat rose"><img class="line-vial-img" alt="PeptideX Beauty line vial"></div>
+      <img class="line-logo logo-rose" alt="PeptideX Beauty">
+      <h3>BEAUTY</h3>
+      <p class="line-tag">Skin &#183; Glow &#183; Aesthetics</p>
+      <p class="line-desc">Skin and aesthetic-focused peptides — GHK-Cu, GLOW, tanning and more.</p>
+      <span class="line-cta">Explore Beauty &rarr;</span>
+    </article>
+    <article class="line-card reveal" data-line="longevity" tabindex="0">
+      <div class="line-vial vial-treat white"><img class="line-vial-img" alt="PeptideX Longevity line vial"></div>
+      <img class="line-logo logo-white" alt="PeptideX Longevity">
+      <h3>LONGEVITY</h3>
+      <p class="line-tag">Cellular Health &#183; Cognition &#183; Vitality</p>
+      <p class="line-desc">Anti-aging, NAD+, cognition and immune-support compounds.</p>
+      <span class="line-cta">Explore Longevity &rarr;</span>
+    </article>
+  </div>
+</section>
 <div class="content" id="catalog">
   <div class="section-intro reveal">
     <span class="eyebrow">Full Catalog</span>
     <h2>80+ research peptides</h2>
     <p>Organized by family and goal. Tap any peptide to view its details. Request a quote via WhatsApp or the contact form.</p>
   </div>
-  <div class="cat-filter reveal" id="catFilter"><button class="filter-chip active" data-f="all">All</button><button class="filter-chip" data-f="Weight Management">Weight</button><button class="filter-chip" data-f="Recovery & Repair">Recovery</button><button class="filter-chip" data-f="Growth Hormone">Growth Hormone</button><button class="filter-chip" data-f="Anti-Aging">Anti-Aging</button><button class="filter-chip" data-f="Cognition">Cognition</button><button class="filter-chip" data-f="Skin & Aesthetics">Skin</button><button class="filter-chip" data-f="Sexual & Hormonal">Sexual</button><button class="filter-chip" data-f="Immune & Vitality">Immune</button><button class="filter-chip" data-f="Solvents">Solvents</button></div>
+  <div class="line-filter reveal" id="lineFilter"><button class="line-chip active" data-line="">ALL LINES</button><button class="line-chip" data-line="fitness">FITNESS</button><button class="line-chip" data-line="beauty">BEAUTY</button><button class="line-chip" data-line="longevity">LONGEVITY</button></div>
+<div class="cat-filter reveal" id="catFilter"><button class="filter-chip active" data-f="all">All</button><button class="filter-chip" data-f="Weight Management">Weight</button><button class="filter-chip" data-f="Recovery & Repair">Recovery</button><button class="filter-chip" data-f="Growth Hormone">Growth Hormone</button><button class="filter-chip" data-f="Anti-Aging">Anti-Aging</button><button class="filter-chip" data-f="Cognition">Cognition</button><button class="filter-chip" data-f="Skin & Aesthetics">Skin</button><button class="filter-chip" data-f="Sexual & Hormonal">Sexual</button><button class="filter-chip" data-f="Immune & Vitality">Immune</button><button class="filter-chip" data-f="Solvents">Solvents</button></div>
 <div class="accordion" id="accordion"><div class="acc-item open">
     <button class="acc-header">
       <div class="acc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 00-4 4h8a4 4 0 00-4-4zM5 9l-1 10a2 2 0 002 2h12a2 2 0 002-2L19 9H5z"/></svg></div>
@@ -1819,7 +1857,7 @@ body{text-rendering:optimizeLegibility}
       tag=document.querySelector('.hk-tag'),rule=document.querySelector('.hk-rule'),
       cue=document.querySelector('.hk-cue');
   var head=document.querySelectorAll('.hk-head .hk-w'),
-      vial=document.getElementById('hkVial'),
+      vial=document.querySelector('.hk-vial-row')||document.getElementById('hkVial'),
       sub=document.querySelector('.hk-sub'),ctas=document.querySelector('.hk-ctas');
   if(matchMedia('(prefers-reduced-motion:reduce)').matches){
     window.__heroP=0;window.__heroEnd=0;
@@ -1968,6 +2006,7 @@ body{text-rendering:optimizeLegibility}
   document.querySelectorAll('.product-card').forEach(function(c){makeTilt(c,7,9,6);});
   document.querySelectorAll('.q-card').forEach(function(c){makeTilt(c,5,7,5);});
   document.querySelectorAll('.coa-card,.cm,.trust-item').forEach(function(c){makeTilt(c,4,6,2);});
+  document.querySelectorAll('.line-card').forEach(function(c){makeTilt(c,5,7,5);});
 
   /* --- popup: card tilt + vial floating in depth ------------------------ */
   var popCard=document.querySelector('.pop-card'),popStage=document.getElementById('popStage');
@@ -1988,6 +2027,185 @@ body{text-rendering:optimizeLegibility}
       if(!praf)praf=requestAnimationFrame(pframe);});
     popCard.addEventListener('pointerleave',function(){phov=false;ptx=0;pty=0;});
   }
+})();
+</script>
+<style id="lines-gate-css">
+/* ===== THE LINES ===== */
+.lines{position:relative;z-index:10;background:#000;border-top:1px solid var(--line);padding-bottom:80px}
+.lines-grid{max-width:var(--maxw);margin:0 auto;padding:30px 32px 0;display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.line-card{--lc:#b9c2cc;--lc-glow:rgba(185,194,204,.22);
+  position:relative;background:linear-gradient(170deg,#0b0c0e,#060607);border:1px solid var(--line);
+  border-radius:20px;padding:34px 28px 30px;text-align:center;cursor:pointer;overflow:hidden;
+  transition:border-color .4s,box-shadow .4s;will-change:transform}
+.line-card[data-line="beauty"]{--lc:#e8a4b8;--lc-glow:rgba(232,164,184,.26)}
+.line-card[data-line="longevity"]{--lc:#eef3f8;--lc-glow:rgba(238,243,248,.24)}
+.line-card::before{content:"";position:absolute;inset:0;opacity:0;transition:.5s;pointer-events:none;
+  background:radial-gradient(ellipse 80% 55% at 50% 0%,var(--lc-glow),transparent 70%)}
+.line-card:hover{border-color:var(--lc);box-shadow:0 24px 70px rgba(0,0,0,.65),0 0 44px var(--lc-glow)}
+.line-card:hover::before{opacity:1}
+.line-vial{width:min(150px,40vw);margin:0 auto 6px;filter:drop-shadow(0 22px 40px rgba(0,0,0,.75))}
+.line-logo{height:44px;width:auto;margin:14px auto 12px;display:block}
+.line-card h3{font-size:20px;letter-spacing:.26em;text-indent:.26em;color:var(--lc);margin-bottom:8px}
+.line-tag{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--silver-dim);font-weight:700;margin-bottom:12px}
+.line-desc{font-size:13.5px;color:var(--silver-dim);line-height:1.6;margin-bottom:18px;min-height:44px}
+.line-cta{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:.06em;color:var(--lc);
+  border:1px solid var(--line-bright);border-radius:100px;padding:10px 22px;transition:.3s}
+.line-card:hover .line-cta{background:var(--lc);color:#0a0a0a;border-color:transparent}
+/* vial color treatments (masked screen overlays over the master vial photo) */
+.vial-treat{position:relative}
+.vial-treat img{width:100%;height:auto;display:block}
+.vial-treat::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  -webkit-mask-image:var(--vurl);mask-image:var(--vurl);
+  -webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  -webkit-mask-position:center;mask-position:center}
+.vial-treat.rose img{filter:brightness(1.1) saturate(1.05)}
+.vial-treat.rose::after{background:linear-gradient(165deg,rgba(240,170,192,.62),rgba(216,130,158,.24) 55%,rgba(240,170,192,.12))}
+.vial-treat.white img{filter:brightness(1.55) contrast(.86)}
+.vial-treat.white::after{background:linear-gradient(165deg,rgba(255,255,255,.72),rgba(220,232,244,.3) 55%,rgba(255,255,255,.14))}
+/* logo tints per line */
+.logo-black{filter:brightness(.94)}
+.logo-rose{filter:sepia(1) saturate(1.7) hue-rotate(-32deg) brightness(1.1)}
+.logo-white{filter:brightness(1.5) contrast(.9)}
+/* line filter chips */
+.line-filter{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;max-width:var(--maxw);margin:0 auto 10px;padding:0 32px}
+.line-chip{--lc:#b9c2cc;background:transparent;border:1px solid var(--line);color:var(--silver-dim);
+  padding:11px 24px;border-radius:100px;font-size:12px;font-weight:800;letter-spacing:.18em;cursor:pointer;transition:.25s}
+.line-chip[data-line="beauty"]{--lc:#e8a4b8}
+.line-chip[data-line="longevity"]{--lc:#eef3f8}
+.line-chip:hover{border-color:var(--lc);color:var(--silver-bright)}
+.line-chip.active{background:var(--lc);border-color:transparent;color:#0a0a0a}
+/* whole-site accent theme per active line */
+body[data-line="fitness"]{--accent:#b9c2cc;--accent-deep:#4d5866;--accent-glow:rgba(185,194,204,.4)}
+body[data-line="beauty"]{--accent:#e8a4b8;--accent-deep:#7e4356;--accent-glow:rgba(232,164,184,.45)}
+body[data-line="longevity"]{--accent:#dfe9f2;--accent-deep:#6f8496;--accent-glow:rgba(223,233,242,.4)}
+/* hero vial trio */
+.hk-vial-row{display:flex;align-items:flex-end;justify-content:center;will-change:transform,opacity;opacity:0}
+.hk-vial-row .hk-vial{opacity:1}
+.hk-vial-row .hk-center{z-index:2}
+.hk-side{width:min(212px,30vw);margin:0 -26px;z-index:1;opacity:.88;
+  filter:blur(.5px) brightness(.96);transform:translateY(-2%) scale(.96)}
+@media(max-width:700px){.hk-side{display:none}}
+/* ===== RESEARCH USE ONLY GATE ===== */
+.rou-gate{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;
+  padding:20px;background:rgba(0,0,0,.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.rou-gate[hidden]{display:none!important}
+.rou-gate.closing{opacity:0;transition:opacity .45s ease}
+.rou-card{width:100%;max-width:640px;max-height:92vh;overflow-y:auto;background:linear-gradient(170deg,#101216,#08090b);
+  border:1px solid var(--line-bright);border-radius:22px;padding:38px 40px 32px;
+  box-shadow:0 40px 120px rgba(0,0,0,.8),0 0 0 1px rgba(134,180,216,.06);
+  animation:rouIn .55s cubic-bezier(.16,.9,.24,1)}
+@keyframes rouIn{from{opacity:0;transform:translateY(34px) scale(.95)}to{opacity:1;transform:none}}
+.rou-logo{height:46px;width:auto;display:block;margin:0 auto 22px;
+  filter:drop-shadow(0 4px 18px rgba(134,180,216,.18))}
+.rou-card h2{font-size:clamp(21px,3.4vw,27px);text-align:center;margin-bottom:18px;color:var(--silver-bright)}
+.rou-card p{font-size:14px;color:var(--silver);line-height:1.75;margin-bottom:14px}
+.rou-card p.rou-note{color:var(--silver-bright);font-weight:600;background:rgba(255,255,255,.03);
+  border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.rou-card p.rou-risk{font-size:12.5px;color:var(--silver-dim)}
+.rou-row{display:flex;align-items:flex-start;gap:12px;margin:20px 0 22px}
+.rou-row input{width:19px;height:19px;margin-top:2px;accent-color:#86b4d8;cursor:pointer;flex-shrink:0}
+.rou-row label{font-size:13.5px;color:var(--silver);cursor:pointer;line-height:1.55}
+.rou-btns{display:flex;gap:12px;flex-wrap:wrap}
+.rou-btns .btn{flex:1;justify-content:center;padding:15px;font-size:14.5px;min-width:150px}
+.rou-btns .btn[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
+.btn-ghost{background:transparent;border:1px solid var(--line-bright)!important;color:var(--silver-bright)}
+.rou-blocked{text-align:center;padding:30px 8px}
+.rou-blocked h2{margin-bottom:14px}
+.rou-blocked p{margin-bottom:24px}
+@media(max-width:560px){.rou-card{padding:28px 22px 24px}}
+</style>
+<div class="rou-gate" id="rouGate" hidden>
+  <div class="rou-card" id="rouCard" role="dialog" aria-modal="true" aria-labelledby="rouTitle">
+    <img class="rou-logo" id="rouLogo" alt="PeptideX">
+    <h2 id="rouTitle">Research Use Only &#8212; Acknowledgement</h2>
+    <p>The products on this website are for legitimate research use only. They are not intended to prevent, treat, or cure any illness or disease and are not intended for human consumption. By accessing this site, you acknowledge that you are at least 21 years of age, understand these terms, and have a legitimate research basis for buying these products.</p>
+    <p class="rou-note">NOTE: All of our compounds are sold individually, and DO NOT include research supplies such as bacteriostatic water or syringes. Most are sold in powder form and require reconstitution with a suitable diluent solution prior to research.</p>
+    <p class="rou-risk">You enter and use this site at your own risk and responsibility.</p>
+    <div class="rou-row">
+      <input type="checkbox" id="rouCheck">
+      <label for="rouCheck">I acknowledge that I am a valid researcher over 21 years of age.</label>
+    </div>
+    <div class="rou-btns">
+      <button class="btn btn-primary" id="rouOk" disabled>Acknowledge &rarr;</button>
+      <button class="btn btn-ghost" id="rouNo">Decline</button>
+    </div>
+  </div>
+</div>
+<script id="lines-gate-js">
+(function(){
+  /* assets for line vials + logos (reuses embedded images) */
+  function initAssets(){
+    var vurl='url("'+VIAL_HERO+'")';
+    document.querySelectorAll('.vial-treat').forEach(function(v){
+      v.style.setProperty('--vurl',vurl);
+      var img=v.querySelector('img');if(img&&!img.src)img.src=VIAL_HERO;
+    });
+    document.querySelectorAll('.line-logo').forEach(function(i){i.src=LOGO2;});
+    var rl=document.getElementById('rouLogo');if(rl)rl.src=LOGO2;
+  }
+  if(document.readyState!=='loading')initAssets();else document.addEventListener('DOMContentLoaded',initAssets);
+
+  /* ----- line filtering + whole-site accent theming ----- */
+  var LINE_MAP={
+    fitness:['Weight Management','Growth Hormone','Recovery & Repair','Sexual & Hormonal','Solvents'],
+    beauty:['Skin & Aesthetics','Solvents'],
+    longevity:['Anti-Aging','Cognition','Immune & Vitality','Solvents']};
+  function expandOpen(){
+    document.querySelectorAll('.acc-item.open').forEach(function(it){
+      if(it.style.display==='none')return;
+      var b=it.querySelector('.acc-body');if(!b)return;
+      b.style.maxHeight=b.scrollHeight+'px';
+      it.querySelectorAll('.product-card').forEach(function(c,i){setTimeout(function(){c.classList.add('revealed');},i*30);});
+    });
+  }
+  function setLine(line,scroll){
+    if(line)document.body.setAttribute('data-line',line);else document.body.removeAttribute('data-line');
+    document.querySelectorAll('.line-chip').forEach(function(c){c.classList.toggle('active',(c.dataset.line||'')===(line||''));});
+    document.querySelectorAll('#catFilter .filter-chip').forEach(function(c){c.classList.toggle('active',c.dataset.f==='all');});
+    var cats=line?LINE_MAP[line]:null;
+    var first=null;
+    document.querySelectorAll('#accordion .acc-item').forEach(function(it){
+      var tEl=it.querySelector('.acc-title');var t=tEl?tEl.textContent.trim():'';
+      var show=!cats||cats.indexOf(t)>=0;
+      it.style.display=show?'':'none';
+      if(line&&show&&!first){first=it;it.classList.add('open');}
+      else if(line&&show)it.classList.add('open');
+    });
+    setTimeout(expandOpen,60);
+    if(scroll){var c=document.getElementById('catalog');
+      if(c)setTimeout(function(){scrollTo({top:c.getBoundingClientRect().top+window.scrollY-70,behavior:'smooth'});},80);}
+  }
+  document.querySelectorAll('.line-chip').forEach(function(ch){
+    ch.addEventListener('click',function(){setLine(ch.dataset.line||null,false);});});
+  document.querySelectorAll('.line-card').forEach(function(card){
+    var go=function(){setLine(card.dataset.line,true);};
+    card.addEventListener('click',go);
+    card.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+  });
+  /* category chips: fix collapsed bodies after the stock filter runs */
+  document.querySelectorAll('#catFilter .filter-chip').forEach(function(c){
+    c.addEventListener('click',function(){setTimeout(expandOpen,60);});});
+
+  /* ----- Research Use Only entry gate ----- */
+  var KEY='px_rou_ack',DAYS=30;
+  try{var v=localStorage.getItem(KEY);
+    if(v&&(Date.now()-parseInt(v,10))<DAYS*864e5)return;}catch(_){}
+  var g=document.getElementById('rouGate');if(!g)return;
+  g.hidden=false;document.documentElement.style.overflow='hidden';
+  var cb=document.getElementById('rouCheck'),ok=document.getElementById('rouOk');
+  cb.addEventListener('change',function(){ok.disabled=!cb.checked;});
+  ok.addEventListener('click',function(){
+    try{localStorage.setItem(KEY,String(Date.now()));}catch(_){}
+    g.classList.add('closing');
+    setTimeout(function(){g.hidden=true;document.documentElement.style.overflow='';},460);
+  });
+  document.getElementById('rouNo').addEventListener('click',function(){
+    document.getElementById('rouCard').innerHTML=
+      '<div class="rou-blocked"><h2>Access restricted</h2>'+
+      '<p>You must acknowledge the research-use terms to browse this site.</p>'+
+      '<button class="btn btn-primary" onclick="location.reload()">Start over</button></div>';
+  });
 })();
 </script>
 </body>
