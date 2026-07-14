@@ -626,6 +626,7 @@ nav,header,.nav,.navbar{background:rgba(0,0,0,.72)!important;backdrop-filter:sat
 
 <section class="hero8k" id="hero8kTrack">
   <div class="hk-sticky">
+    <div class="hk-caustics" aria-hidden="true"></div>
     <!-- STAGE 1 — matte-black logo reveal -->
     <div class="hk-stage hk-s1" id="hkS1">
       <div class="hk-logo-wrap" id="hkLogoWrap">
@@ -640,10 +641,14 @@ nav,header,.nav,.navbar{background:rgba(0,0,0,.72)!important;backdrop-filter:sat
     <div class="hk-stage hk-s2" id="hkS2">
       <h1 class="hk-head"><span class="hk-w">Purity,</span> <span class="hk-w">perfected.</span></h1>
       <div class="hk-vial-row" id="hkVialRow">
-        <div class="hk-rays" aria-hidden="true"></div>
-        <div class="hk-dust" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="hk-atmo" id="hkAtmo">
+          <div class="hk-rays" aria-hidden="true"></div>
+          <div class="hk-dust" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="hk-burst" id="hkBurst" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <div class="hk-vial hk-side vial-treat rose" aria-hidden="true"><img class="side-vial-img" alt=""></div>
         <div class="hk-vial hk-center" id="hkVial">
+          <div class="hk-rings2" aria-hidden="true"><b></b><b></b><b></b></div>
           <div class="hv-par" id="heroVialPar"><div class="hv-holder">
             <img id="heroVialImg" alt="PeptideX research vial">
             <div class="sweep" aria-hidden="true"></div>
@@ -1863,8 +1868,14 @@ chips.forEach(function(ch){ch.addEventListener('click',function(){
 .pop-vial-stage{will-change:transform}
 .pop-card{will-change:transform}
 body{text-rendering:optimizeLegibility}
-@media(prefers-reduced-motion:reduce){.plx{transform:none!important}}
+/* soft light that follows the cursor — the page feels touchable */
+.px-cursor-light{position:fixed;left:0;top:0;width:540px;height:540px;z-index:6;pointer-events:none;
+  transform:translate(-50%,-50%);mix-blend-mode:screen;opacity:0;transition:opacity .8s ease;
+  background:radial-gradient(circle,rgba(132,168,208,.13),rgba(132,168,208,.05) 45%,transparent 70%)}
+@media(pointer:coarse){.px-cursor-light{display:none}}
+@media(prefers-reduced-motion:reduce){.plx{transform:none!important}.px-cursor-light{display:none}}
 </style>
+<div class="px-cursor-light" id="pxCursorLight" aria-hidden="true"></div>
 <script>
 /* ===== HERO 8K — cinematic scroll dive controller ===== */
 (function(){
@@ -1895,10 +1906,11 @@ body{text-rendering:optimizeLegibility}
     var vh=innerHeight,hEnd=Math.max(1,track.offsetHeight-vh);
     window.__heroEnd=hEnd;
     var p=clamp(getY()/hEnd);window.__heroP=p;
+    var msx=window.__sx||0,msy=window.__sy||0;
     /* stage 1 — zoom through the logo, Apple-style */
     var pa=easeIn(seg(p,0,0.36));
     if(logoW&&logoW.dataset.free==='1'){
-      logoW.style.transform='scale('+(1+pa*1.2).toFixed(3)+')';
+      logoW.style.transform='translate3d('+(msx*16).toFixed(1)+'px,'+(msy*9).toFixed(1)+'px,0) scale('+(1+pa*1.2).toFixed(3)+')';
       logoW.style.opacity=(1-pa).toFixed(3);}
     if(tag&&tag.dataset.free==='1')tag.style.opacity=Math.max(0,1-seg(p,0,0.2)*1.4).toFixed(3);
     if(rule&&rule.dataset.free==='1')rule.style.opacity=Math.max(0,1-seg(p,0,0.18)*1.3).toFixed(3);
@@ -1908,15 +1920,27 @@ body{text-rendering:optimizeLegibility}
     s2.style.opacity=seg(p,0.4,0.6).toFixed(3);
     s2.style.pointerEvents=p>0.55?'auto':'none';
     if(vial){var vs=easeOut(seg(p,0.42,0.78));
-      vial.style.transform='translate3d(0,'+((1-vs)*12).toFixed(2)+'vh,0) scale('+(0.7+0.3*vs).toFixed(3)+')';
+      vial.style.transform='translate3d('+(msx*13).toFixed(1)+'px,'+((1-vs)*12).toFixed(2)+'vh,0) scale('+(0.7+0.3*vs).toFixed(3)+')';
       vial.style.opacity=seg(p,0.42,0.6).toFixed(3);}
+    /* vial settles with a tumble, like the reel */
+    var center=document.getElementById('hkVial');
+    if(center){var bk=seg(p,0.42,0.82);
+      var eb=1+2.70158*Math.pow(bk-1,3)+1.70158*Math.pow(bk-1,2);
+      center.style.transform='rotate('+((1-eb)*-13).toFixed(2)+'deg)';}
+    /* particle burst the moment the vial locks in */
+    var burst=document.getElementById('hkBurst');
+    if(burst){
+      if(p>0.52&&!burst.dataset.on){burst.dataset.on='1';
+        burst.classList.remove('go');void burst.offsetWidth;burst.classList.add('go');}
+      else if(p<0.34&&burst.dataset.on){delete burst.dataset.on;burst.classList.remove('go');}}
     head.forEach(function(w,i){var ws=easeOut(seg(p,0.46+i*0.05,0.66+i*0.05));
-      w.style.transform='translate3d(0,'+((1-ws)*46).toFixed(1)+'px,0)';w.style.opacity=ws.toFixed(3);});
+      w.style.transform='translate3d('+(-msx*(10+i*8)).toFixed(1)+'px,'+((1-ws)*46).toFixed(1)+'px,0)';w.style.opacity=ws.toFixed(3);});
     if(sub){var ss=easeOut(seg(p,0.6,0.8));
-      sub.style.transform='translate3d(0,'+((1-ss)*30).toFixed(1)+'px,0)';sub.style.opacity=ss.toFixed(3);}
+      sub.style.transform='translate3d('+(-msx*6).toFixed(1)+'px,'+((1-ss)*30).toFixed(1)+'px,0)';sub.style.opacity=ss.toFixed(3);}
     if(ctas){var cs=easeOut(seg(p,0.68,0.88));
-      ctas.style.transform='translate3d(0,'+((1-cs)*24).toFixed(1)+'px,0)';ctas.style.opacity=cs.toFixed(3);}
+      ctas.style.transform='translate3d('+(-msx*4).toFixed(1)+'px,'+((1-cs)*24).toFixed(1)+'px,0)';ctas.style.opacity=cs.toFixed(3);}
   }
+  window.__heroApply=apply;
   var tick=false;
   function onS(){if(!tick){tick=true;requestAnimationFrame(function(){tick=false;apply();});}}
   addEventListener('scroll',onS,{passive:true});
@@ -1941,8 +1965,9 @@ body{text-rendering:optimizeLegibility}
   function getY(){return document.body.scrollTop||document.documentElement.scrollTop||window.scrollY||0;}
 
   /* --- unified pointer + gyroscope input ------------------------------- */
-  var cx=0,cy=0,sx=0,syM=0;
-  addEventListener('mousemove',function(e){cx=e.clientX/innerWidth-.5;cy=e.clientY/innerHeight-.5;},{passive:true});
+  var cx=0,cy=0,sx=0,syM=0,rawX=null,rawY=0,lx=0,ly=0;
+  addEventListener('mousemove',function(e){cx=e.clientX/innerWidth-.5;cy=e.clientY/innerHeight-.5;
+    rawX=e.clientX;rawY=e.clientY;},{passive:true});
   addEventListener('deviceorientation',function(e){
     if(e.gamma==null&&e.beta==null)return;
     var gx=Math.max(-28,Math.min(28,e.gamma||0))/56,
@@ -1979,6 +2004,14 @@ body{text-rendering:optimizeLegibility}
   /* --- master frame loop ------------------------------------------------ */
   (function loop(){requestAnimationFrame(loop);
     sx+=(cx-sx)*0.06;syM+=(cy-syM)*0.06;
+    window.__sx=sx;window.__sy=syM;
+    if(window.__heroApply)window.__heroApply();
+    var cl=document.getElementById('pxCursorLight');
+    if(cl&&rawX!==null){lx+=(rawX-lx)*0.16;ly+=(rawY-ly)*0.16;
+      cl.style.transform='translate('+lx.toFixed(0)+'px,'+ly.toFixed(0)+'px) translate(-50%,-50%)';
+      cl.style.opacity='1';}
+    var atmo=document.getElementById('hkAtmo');
+    if(atmo)atmo.style.transform='translate('+(-sx*24).toFixed(1)+'px,'+(-syM*13).toFixed(1)+'px)';
     var y=getY(),vh=innerHeight;
     var yb=Math.max(0,y-(window.__heroEnd||0));
     if(bg)bg.style.transform='translate3d('+(sx*-16).toFixed(2)+'px,'+(yb*0.05).toFixed(1)+'px,0) scale(1.07)';
@@ -2025,6 +2058,16 @@ body{text-rendering:optimizeLegibility}
   document.querySelectorAll('.q-card').forEach(function(c){makeTilt(c,5,7,5);});
   document.querySelectorAll('.coa-card,.cm,.trust-item').forEach(function(c){makeTilt(c,4,6,2);});
   document.querySelectorAll('.line-card').forEach(function(c){makeTilt(c,5,7,5);});
+
+  /* --- magnetic buttons: they lean toward your cursor ------------------- */
+  document.querySelectorAll('.btn,.nav-cta,.form-submit').forEach(function(b){
+    b.addEventListener('pointermove',function(e){
+      if(e.pointerType==='touch')return;
+      var r=b.getBoundingClientRect();
+      var dx=(e.clientX-r.left-r.width/2)/r.width,dy=(e.clientY-r.top-r.height/2)/r.height;
+      b.style.transform='translate('+(dx*6).toFixed(1)+'px,'+(dy*4-2).toFixed(1)+'px)';});
+    b.addEventListener('pointerleave',function(){b.style.transform='';});
+  });
 
   /* --- popup: card tilt + vial floating in depth ------------------------ */
   var popCard=document.querySelector('.pop-card'),popStage=document.getElementById('popStage');
@@ -2249,7 +2292,44 @@ body[data-line] .nav-links a[href="#quality"]{display:none}
 .hk-dust i:nth-child(14){left:58%;--dx:-2.8vw;animation-duration:10s;animation-delay:7.1s}
 @keyframes dustUp{0%{transform:translate(0,0);opacity:0}10%{opacity:.85}
   70%{opacity:.45}100%{transform:translate(var(--dx),-56vh);opacity:0}}
-@media(prefers-reduced-motion:reduce){.hk-vial-row::before,.hk-vial-row::after,.hk-side,.hk-side::before,.hk-rays,.hk-dust i{animation:none!important}}
+/* atmosphere wrapper (mouse-parallax layer for rays + dust) */
+.hk-atmo{position:absolute;inset:0;pointer-events:none;will-change:transform}
+/* underwater light caustics drifting over the whole hero */
+.hk-caustics{position:absolute;inset:-12%;z-index:1;pointer-events:none;opacity:.15;mix-blend-mode:screen;
+  background:
+    radial-gradient(42% 34% at 22% 28%,rgba(140,180,220,.5),transparent 70%),
+    radial-gradient(36% 30% at 76% 58%,rgba(160,200,240,.42),transparent 70%),
+    radial-gradient(30% 26% at 46% 82%,rgba(120,160,210,.46),transparent 70%);
+  filter:blur(34px);animation:causticsMove 15s ease-in-out infinite alternate}
+@keyframes causticsMove{0%{transform:translate(0,0) scale(1)}100%{transform:translate(3.5%,-4%) scale(1.09)}}
+/* water-surface ripple rings under the center vial */
+.hk-center{position:relative}
+.hk-rings2{position:absolute;left:50%;bottom:2%;transform:translateX(-50%);width:170%;height:34%;z-index:-1;pointer-events:none}
+.hk-rings2 b{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(180,210,240,.34);
+  filter:blur(1.5px);opacity:0;transform:scale(.3);animation:ringPulse 4.8s ease-out infinite}
+.hk-rings2 b:nth-child(2){animation-delay:1.6s}
+.hk-rings2 b:nth-child(3){animation-delay:3.2s}
+@keyframes ringPulse{0%{opacity:0;transform:scale(.28)}16%{opacity:.5}100%{opacity:0;transform:scale(1.3)}}
+/* particle burst when the vial locks into place */
+.hk-burst{position:absolute;left:50%;top:44%;width:8px;height:8px;z-index:3;pointer-events:none}
+.hk-burst::before{content:"";position:absolute;left:50%;top:50%;width:30px;height:30px;border-radius:50%;
+  transform:translate(-50%,-50%) scale(0);opacity:0;
+  background:radial-gradient(circle,rgba(235,245,255,.95),rgba(170,205,240,.4) 55%,transparent 75%)}
+.hk-burst.go::before{animation:burstFlash .7s ease-out forwards}
+@keyframes burstFlash{0%{opacity:1;transform:translate(-50%,-50%) scale(.4)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(7)}}
+.hk-burst i{position:absolute;left:0;top:0;width:6px;height:6px;border-radius:50%;--bx:0px;--by:0px;opacity:0;
+  background:radial-gradient(circle,#eaf3fc,rgba(160,195,230,.4) 70%,transparent)}
+.hk-burst.go i{animation:burstFly .95s cubic-bezier(.15,.65,.3,1) forwards}
+.hk-burst i:nth-child(1){--bx:-160px;--by:-90px}.hk-burst i:nth-child(2){--bx:150px;--by:-120px}
+.hk-burst i:nth-child(3){--bx:-220px;--by:20px}.hk-burst i:nth-child(4){--bx:210px;--by:40px}
+.hk-burst i:nth-child(5){--bx:-120px;--by:-190px;animation-delay:.05s}.hk-burst i:nth-child(6){--bx:110px;--by:-210px;animation-delay:.04s}
+.hk-burst i:nth-child(7){--bx:-260px;--by:-60px;animation-delay:.06s}.hk-burst i:nth-child(8){--bx:255px;--by:-40px;animation-delay:.03s}
+.hk-burst i:nth-child(9){--bx:-70px;--by:-250px;animation-delay:.08s}.hk-burst i:nth-child(10){--bx:80px;--by:-260px;animation-delay:.07s}
+.hk-burst i:nth-child(11){--bx:-190px;--by:130px;animation-delay:.05s}.hk-burst i:nth-child(12){--bx:180px;--by:120px;animation-delay:.06s}
+@keyframes burstFly{0%{opacity:1;transform:translate(0,0) scale(1.1)}
+  100%{opacity:0;transform:translate(var(--bx),var(--by)) scale(.35)}}
+@media(prefers-reduced-motion:reduce){.hk-vial-row::before,.hk-vial-row::after,.hk-side,.hk-side::before,.hk-rays,.hk-dust i,.hk-caustics,.hk-rings2 b,.hk-burst i,.hk-burst::before{animation:none!important}}
 /* ===== RESEARCH USE ONLY GATE ===== */
 .rou-gate{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;
   padding:20px;background:rgba(0,0,0,.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
