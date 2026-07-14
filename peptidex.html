@@ -527,8 +527,8 @@ nav,header,.nav,.navbar{background:rgba(0,0,0,.72)!important;backdrop-filter:sat
 <style id="hero8k-css">
 /* ===== HERO 8K — cinematic matte-black dive ===== */
 .hero8k{position:relative;z-index:10;height:340vh}
-.hk-sticky{position:sticky;top:0;height:100vh;overflow:hidden}
-.hk-stage{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+.hk-sticky{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+.hk-stage{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100svh;
   padding:0 24px;text-align:center}
 .hk-s1{z-index:3}
 .hk-s2{z-index:2;opacity:0;pointer-events:none}
@@ -1907,6 +1907,8 @@ chips.forEach(function(ch){ch.addEventListener('click',function(){
 .pop-vial-stage{will-change:transform}
 .pop-card{will-change:transform}
 body{text-rendering:optimizeLegibility}
+header.nav,header.nav.scrolled,.filters,.rou-gate{-webkit-backdrop-filter:blur(14px) saturate(1.15)}
+.pop-overlay{-webkit-backdrop-filter:blur(12px)}
 /* soft light that follows the cursor — the page feels touchable */
 .px-cursor-light{position:fixed;left:0;top:0;width:540px;height:540px;z-index:6;pointer-events:none;
   transform:translate(-50%,-50%);mix-blend-mode:screen;opacity:0;transition:opacity .8s ease;
