@@ -2964,7 +2964,7 @@ body[data-line] .nav-links a[href="#quality"]{display:none}
 .lang-switch button.on{background:var(--silver-bright);color:#0a0a0a}
 .lang-switch button:not(.on):hover{color:var(--silver-bright)}
 /* make room in the nav so the CTA never sits under the switcher */
-@media(min-width:861px){header.nav{padding-right:150px}}
+@media(min-width:861px){header.nav,header.nav.scrolled{padding-right:158px!important}}
 @media(max-width:860px){.lang-switch{right:70px;top:13px}}
 </style>
 <div class="lang-switch" id="langSwitch" role="group" aria-label="Language">
@@ -3037,5 +3037,131 @@ body[data-line] .nav-links a[href="#quality"]{display:none}
   if(document.readyState!=='loading')boot();else document.addEventListener('DOMContentLoaded',boot);
 })();
 </script>
+<style id="clean-theme">
+:root{
+  --cln-bg:#f4f1ec; --cln-bg2:#eae6de; --cln-surface:#ffffff; --cln-surface2:#faf8f4;
+  --cln-ink:#191b1f; --cln-ink2:#5a616b; --cln-line:rgba(20,22,26,.10); --cln-line2:rgba(20,22,26,.20);
+  --cln-accent:#2f8f86; --cln-accent2:#236e67; --cln-glow:rgba(47,143,134,.16);
+}
+/* ===== LIGHT CONTENT — everything below the cinematic hero ===== */
+.trust,.lines,.content,.quality,.compare,.faqsec,.contact,footer{
+  background:var(--cln-bg)!important;border-color:var(--cln-line)!important;color:var(--cln-ink)}
+.trust{background:linear-gradient(180deg,#000,var(--cln-bg) 92%)!important;border-top:none!important}
+.content{background:var(--cln-bg)!important}
+.quality,.compare,.faqsec,.contact{border-top:1px solid var(--cln-line)!important}
+footer{background:var(--cln-bg2)!important;border-top:1px solid var(--cln-line)!important}
+/* headings + copy */
+.lines h2,.quality h2,.compare h2,.faqsec h2,.contact h2,.section-intro h2{
+  background:linear-gradient(100deg,#16181c 30%,#5a616b 50%,#16181c 70%)!important;background-size:230% 100%!important;
+  -webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important}
+.content h3,.quality h3,.coa-side h3,.contact-left h2,.acc-title,.cat-title,.product-name,.q-card h3,.coa-head h3{color:var(--cln-ink)!important}
+.section-intro p,.acc-desc,.cat-desc,.q-card p,.coa-side>p,.contact-left p,.card-desc,.line-desc,.footer-brand p,.form-note,.footer-disclaimer{color:var(--cln-ink2)!important}
+.eyebrow{color:var(--cln-accent)!important}
+/* cards / panels -> white with soft shadow */
+.product-card,.q-card,.coa-card,.cmp-table,.faq details,.acc-item,.trust-item,.coa-chip,.contact-form,.acc-item.open{
+  background:var(--cln-surface)!important;border:1px solid var(--cln-line)!important;color:var(--cln-ink)!important}
+.product-card{box-shadow:0 8px 24px rgba(20,22,26,.06)!important}
+.product-card:hover,.q-card:hover{border-color:var(--cln-line2)!important;box-shadow:0 18px 44px rgba(20,22,26,.12)!important}
+.acc-header:hover{background:rgba(20,22,26,.03)!important}
+.acc-item.open{box-shadow:0 16px 44px rgba(20,22,26,.10)!important;border-color:var(--cln-accent)!important}
+.q-card{background:var(--cln-surface2)!important}
+.product-code{background:linear-gradient(180deg,#20242a,#5a616b)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;color:var(--cln-ink)!important}
+.product-tag,.card-hint{color:var(--cln-accent)!important}
+.product-specs{color:var(--cln-ink)!important}
+.card-foot,.card-top{border-color:var(--cln-line)!important}
+.acc-icon{background:linear-gradient(145deg,#fff,#eee)!important;border-color:var(--cln-line)!important}
+.acc-icon svg,.cat-icon svg{color:var(--cln-accent)!important}
+.acc-count{color:var(--cln-ink2)!important;border-color:var(--cln-line2)!important}
+.acc-item.open .acc-count{color:var(--cln-accent)!important;border-color:var(--cln-accent)!important}
+.acc-chevron{background:var(--cln-bg2)!important}.acc-chevron svg{color:var(--cln-ink2)!important}
+.acc-item.open .acc-chevron{background:var(--cln-accent)!important}
+.acc-icon,.acc-item.open .acc-icon{border-color:var(--cln-line)!important}
+.acc-item.open .acc-icon{background:linear-gradient(145deg,var(--cln-accent),var(--cln-accent2))!important}
+.acc-item.open .acc-icon svg{color:#fff!important}
+/* trust chips */
+.trust-item{color:var(--cln-ink)!important}.trust-item svg{color:var(--cln-accent)!important}
+/* filters */
+.filters,.line-filter,.cat-filter{background:transparent!important}
+.filter-chip{background:var(--cln-surface)!important;border:1px solid var(--cln-line)!important;color:var(--cln-ink2)!important}
+.filter-chip:hover{color:var(--cln-ink)!important;border-color:var(--cln-line2)!important}
+.filter-chip.active{background:var(--cln-ink)!important;color:#fff!important;border-color:transparent!important}
+/* quality COA */
+.coa-card{background:var(--cln-surface)!important}
+.coa-card::after{color:rgba(20,22,26,.05)!important}
+.coa-head{border-color:var(--cln-line)!important}.coa-head h3{color:var(--cln-ink)!important}
+.coa-row{border-color:var(--cln-line)!important}
+.coa-row span:first-child{color:var(--cln-ink2)!important}.coa-row span:last-child{color:var(--cln-ink)!important}
+.coa-ok{background:var(--cln-accent)!important;color:#fff!important;border:none!important}
+.coa-chip{color:var(--cln-ink)!important}.coa-chip svg{color:var(--cln-accent)!important}
+/* comparison */
+.cmp-table{background:var(--cln-surface)!important}
+.cmp-row+.cmp-row{border-color:var(--cln-line)!important}
+.cmp-row.head>div{background:var(--cln-bg2)!important;color:var(--cln-ink)!important}
+.cmp-feat{color:var(--cln-ink)!important}
+.cmp-us{background:rgba(47,143,134,.08)!important;box-shadow:inset 2px 0 0 var(--cln-accent),inset -2px 0 0 var(--cln-accent)!important}
+.cmp-us svg{color:var(--cln-accent)!important}.cmp-ot{opacity:.6!important}.cmp-ot svg{color:#9aa0a8!important}
+.cmp-row.head>div:nth-child(2){color:var(--cln-accent)!important}
+/* FAQ */
+.faq details{background:var(--cln-surface)!important;border-color:var(--cln-line)!important}
+.faq summary{color:var(--cln-ink)!important}.faq summary::after{color:var(--cln-accent)!important}
+.faq details p{color:var(--cln-ink2)!important}
+/* contact */
+.contact-form{background:var(--cln-surface)!important;box-shadow:0 12px 40px rgba(20,22,26,.08)!important}
+.form-row label{color:var(--cln-ink2)!important}
+.form-row input,.form-row textarea{background:var(--cln-surface2)!important;border:1px solid var(--cln-line)!important;color:var(--cln-ink)!important}
+.form-row input:focus,.form-row textarea:focus{border-color:var(--cln-accent)!important;box-shadow:0 0 0 3px var(--cln-glow)!important}
+.form-row input::placeholder,.form-row textarea::placeholder{color:#9aa0a8!important}
+.cm{background:var(--cln-surface)!important;border-color:var(--cln-line)!important;color:var(--cln-ink)!important}
+.cm:hover{background:var(--cln-surface2)!important;border-color:var(--cln-accent)!important}
+.cm-text b{color:var(--cln-ink)!important}.cm-text span{color:var(--cln-ink2)!important}
+/* footer */
+.footer-top,.footer-bottom{border-color:var(--cln-line)!important}
+.footer-brand p,.footer-bottom span{color:var(--cln-ink2)!important}
+.fbadge{color:var(--cln-ink2)!important;border-color:var(--cln-line2)!important}
+/* primary button -> dark ink on light */
+.content .btn-primary,.contact .btn-primary,.lines .btn-primary{background:var(--cln-ink)!important;color:#fff!important}
+/* ===== THE LINES cards on the light page ===== */
+.lines-grid .line-card{background:var(--cln-surface)!important;border:1px solid var(--cln-line)!important;
+  box-shadow:0 10px 30px rgba(20,22,26,.06)!important}
+.line-card[data-line="beauty"]{--lc:#c26a86}
+.line-card[data-line="longevity"]{--lc:#3a7f8c}
+.line-card h3,.line-card .line-tag{color:var(--cln-ink)!important}
+.line-desc{color:var(--cln-ink2)!important}
+.line-cta{color:var(--lc)!important;border-color:var(--cln-line2)!important}
+.line-card:hover .line-cta{background:var(--lc)!important;color:#fff!important}
+/* FITNESS card stays BLACK & aggressive on the light page */
+.line-card[data-line="fitness"]{background:linear-gradient(165deg,#141518,#000)!important;
+  border:1px solid #26282d!important;box-shadow:0 16px 44px rgba(0,0,0,.4)!important}
+.line-card[data-line="fitness"] h3{color:#e9ebef!important;letter-spacing:.3em!important}
+.line-card[data-line="fitness"] .line-tag{color:#8b9199!important}
+.line-card[data-line="fitness"] .line-desc{color:#9aa0a8!important}
+.line-card[data-line="fitness"] .line-cta{color:#dfe2e6!important;border-color:#33363c!important}
+.line-card[data-line="fitness"] .line-vial{background:#000!important}
+.line-card[data-line="fitness"]:hover .line-cta{background:#e9ebef!important;color:#0a0a0a!important}
+/* clean tinted vitrines for the light lines' vials */
+.line-card[data-line="beauty"] .line-vial{background:radial-gradient(ellipse at 50% 30%,#fce9ef,#f3d9e2 55%,#e9c7d3)!important;border-color:rgba(194,106,134,.25)!important}
+.line-card[data-line="longevity"] .line-vial{background:radial-gradient(ellipse at 50% 30%,#eef4f6,#e3edf0 55%,#d6e4e8)!important;border-color:rgba(58,127,140,.22)!important}
+/* ===== LINE VIEWS: Fitness dark, Beauty/Longevity clean light ===== */
+body[data-line="beauty"] .line-hero,body[data-line="longevity"] .line-hero{background:var(--cln-bg)!important}
+body[data-line="beauty"] .line-hero::before,body[data-line="longevity"] .line-hero::before{
+  background:radial-gradient(ellipse 66% 60% at 50% 44%,rgba(255,255,255,.7),rgba(255,255,255,.2) 55%,transparent 78%)!important}
+body[data-line="beauty"] .lh-desc,body[data-line="longevity"] .lh-desc{color:var(--cln-ink2)!important}
+body[data-line="beauty"] .lh-back,body[data-line="longevity"] .lh-back{color:var(--cln-ink2)!important}
+body[data-line="beauty"] .lh-stage{background:radial-gradient(ellipse at 50% 32%,#fce9ef,#f3d9e2 60%,#ecccd8)!important;border-color:rgba(194,106,134,.3)!important}
+body[data-line="longevity"] .lh-stage{background:radial-gradient(ellipse at 50% 32%,#eef4f6,#e3edf0 60%,#d9e6ea)!important;border-color:rgba(58,127,140,.28)!important}
+body[data-line="beauty"] .lh-ctas .btn-primary,body[data-line="longevity"] .lh-ctas .btn-primary{background:var(--cln-ink)!important;color:#fff!important}
+/* Beauty/Longevity: light catalog accent already handled by light theme; Fitness view -> keep dark */
+body[data-line="fitness"] .trust,body[data-line="fitness"] .content,body[data-line="fitness"] .lines,
+body[data-line="fitness"] .quality,body[data-line="fitness"] .compare,body[data-line="fitness"] .faqsec,
+body[data-line="fitness"] .contact,body[data-line="fitness"] footer{background:#000!important;color:var(--silver)!important}
+body[data-line="fitness"] .product-card,body[data-line="fitness"] .acc-item{background:#080809!important;border-color:rgba(255,255,255,.07)!important}
+body[data-line="fitness"] .acc-title,body[data-line="fitness"] .product-name,body[data-line="fitness"] .section-intro h2{color:#f6f7f9!important;-webkit-text-fill-color:#f6f7f9!important;background:none!important}
+body[data-line="fitness"] .product-code{-webkit-text-fill-color:#f6f7f9!important;background:none!important}
+body[data-line="fitness"] .acc-desc,body[data-line="fitness"] .card-desc,body[data-line="fitness"] .section-intro p{color:#8b9199!important}
+body[data-line="fitness"] .product-tag,body[data-line="fitness"] .card-hint{color:#b9c2cc!important}
+/* soften the cursor light on the bright content (screen blend looks off on white) */
+.px-cursor-light{mix-blend-mode:normal}
+@media(prefers-reduced-motion:reduce){.lines h2,.quality h2,.compare h2,.faqsec h2,.contact h2,.section-intro h2{animation:none!important}}
+</style>
 </body>
 </html>
