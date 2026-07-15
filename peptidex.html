@@ -683,17 +683,18 @@ nav,header,.nav,.navbar{background:rgba(0,0,0,.72)!important;backdrop-filter:sat
           <section class="rs rs6">
             <div class="pdw" data-pd="16"><img class="rs6-logo" data-logo="master" alt="PeptideX"></div>
             <div class="rs-trio" data-pd="7">
-              <div class="hk-vial hk-side vial-treat rose" aria-hidden="true"><img class="side-vial-img" alt=""><img class="vmir" aria-hidden="true" alt=""></div>
+              <div class="hk-vial hk-side vial-treat rose" aria-hidden="true"><img class="side-vial-img" alt=""><div class="pop-vial-label tri-label" data-lline="beauty"></div><img class="vmir" aria-hidden="true" alt=""></div>
               <div class="hk-vial hk-center" id="hkVial">
                 <div class="hk-rings2" aria-hidden="true"><b></b><b></b><b></b></div>
                 <div class="hv-par" id="heroVialPar"><div class="hv-holder">
                   <img id="heroVialImg" alt="PeptideX research vial">
+                  <div class="pop-vial-label tri-label tri-center-label" data-lline="fitness"></div>
                   <div class="sweep" aria-hidden="true"></div>
                 </div></div>
                 <img class="vmir" aria-hidden="true" alt="">
                 <div class="hk-pedestal" aria-hidden="true"></div>
               </div>
-              <div class="hk-vial hk-side vial-treat white" aria-hidden="true"><img class="side-vial-img" alt=""><img class="vmir" aria-hidden="true" alt=""></div>
+              <div class="hk-vial hk-side vial-treat white" aria-hidden="true"><img class="side-vial-img" alt=""><div class="pop-vial-label tri-label" data-lline="longevity"></div><img class="vmir" aria-hidden="true" alt=""></div>
             </div>
           </section>
         </div>
@@ -1816,7 +1817,7 @@ document.getElementById('formSubmit').addEventListener('click',()=>{
 <script>
 (function(){function initHero(){
   var img=document.getElementById('heroVialImg');
-  if(img)img.src=VIAL_HERO;
+  if(img)img.src=VIAL_BLANK;
   var sweep=document.querySelector('.hk-vial .sweep');
   if(sweep){sweep.style.webkitMaskImage='url("'+VIAL_HERO+'")';sweep.style.maskImage='url("'+VIAL_HERO+'")';
     sweep.style.webkitMaskSize='contain';sweep.style.maskSize='contain';
@@ -2101,6 +2102,8 @@ header.nav,header.nav.scrolled,.filters,.rou-gate{-webkit-backdrop-filter:blur(1
   border:1px solid var(--line);border-radius:16px;background:#000}
 /* blank-vial label overlays (line cards / line hero / popup) */
 .lc-label,.lh-label{left:32.9%;top:40.2%;width:35.4%;height:37.2%}
+.tri-label{left:32.9%;top:40.2%;width:35.4%;height:37.2%}
+.tri-center-label{left:33%;top:40.4%;width:34.6%;height:36.6%}
 /* ===== photoreal label adhesion (all blank-vial labels) ===== */
 .pop-vial-label{
   border-radius:5%/3.5%;opacity:.985;
@@ -2629,7 +2632,7 @@ body[data-line] .nav-links a[href="#quality"]{display:none}
       v.style.setProperty('--vurl','url("'+base+'")');
       v.querySelectorAll('img').forEach(function(img){if(!img.src)img.src=base;});
     });
-    document.querySelectorAll('.lc-label,.rs-label').forEach(function(l){
+    document.querySelectorAll('.lc-label,.rs-label,.tri-label').forEach(function(l){
       l.innerHTML=lineLabelSVG('','',l.dataset.lline);});
     document.querySelectorAll('.line-logo,.rs-line-logo').forEach(function(i){i.src=LINE_LOGOS[i.dataset.ll]||LOGO2;});
     document.querySelectorAll('[data-logo="master"],.rs6-logo').forEach(function(i){i.src=MASTER_LOGO;});
