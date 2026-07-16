@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PEPTIDEX — Engineered Beyond Perfection</title>
+  <meta name="description" content="PEPTIDEX designs research-grade peptides at the intersection of precision, science and performance. Engineered beyond perfection." />
+  <meta name="theme-color" content="#FFFFFF" />
+  <meta property="og:title" content="PEPTIDEX — Engineered Beyond Perfection" />
+  <meta property="og:description" content="A luxury peptide science company. Precision. Science. Transformation." />
+  <meta property="og:type" content="website" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230A0A0A'/%3E%3Cpolygon points='32,16 43,22 43,34 32,40 21,34 21,22' fill='none' stroke='%23fff' stroke-opacity='.6' stroke-width='2'/%3E%3Ccircle cx='32' cy='16' r='3.4' fill='%231E5EFF'/%3E%3Ccircle cx='21' cy='22' r='3' fill='%231E5EFF'/%3E%3C/svg%3E" />
+
+  <style>
+    :root{
+      --paper:#FFFFFF;
+      --ink:#0A0A0A;
+      --muted:#666666;
+      --accent:#1E5EFF;
+      --hair:rgba(0,0,0,.08);
+      --ease:cubic-bezier(.16,1,.3,1);
+      --power:cubic-bezier(.65,0,.35,1);
+      --page:1440px;
+      --font:'Inter',system-ui,-apple-system,sans-serif;
+      --display:'Space Grotesk','Inter',sans-serif;
+      --mono:'JetBrains Mono',ui-monospace,monospace;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+    html{scroll-behavior:auto;}
+    body{
+      font-family:var(--font);
+      background:var(--paper);
+      color:var(--ink);
+      overflow-x:hidden;
+      line-height:1.5;
+      font-feature-settings:"ss01","cv01","cv11";
+    }
+    html.lenis,html.lenis body{height:auto;}
+    .lenis.lenis-smooth{scroll-behavior:auto !important;}
+    .lenis.lenis-stopped{overflow:hidden;}
+
+    ::selection{background:rgba(30,94,255,.14);color:var(--ink);}
+    ::-webkit-scrollbar{width:0;background:transparent;}
+
+    a{color:inherit;text-decoration:none;}
+    button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+    img,svg{display:block;max-width:100%;}
+
+    /* ————— layout ————— */
+    .wrap{width:100%;max-width:var(--page);margin:0 auto;padding:0 24px;}
+    @media(min-width:768px){.wrap{padding:0 40px;}}
+    @media(min-width:1024px){.wrap{padding:0 64px;}}
+
+    .eyebrow{
+      font-family:var(--mono);font-size:11px;text-transform:uppercase;
+      letter-spacing:.3em;color:var(--muted);display:inline-flex;align-items:center;gap:12px;
+    }
+    .eyebrow .bar{display:inline-block;width:32px;height:1px;background:rgba(10,10,10,.3);}
+    .display{font-family:var(--display);font-weight:700;letter-spacing:-.04em;line-height:.92;}
+    .accent{color:var(--accent);}
+
+    /* ————— buttons ————— */
+    .btn{
+      position:relative;display:inline-flex;align-items:center;gap:8px;
+      padding:14px 28px;border-radius:999px;font-size:13px;font-weight:500;
+      letter-spacing:-.01em;overflow:hidden;transition:background .5s var(--ease),color .5s var(--ease),border-color .5s var(--ease);
+      will-change:transform;
+    }
+    .btn .lbl{position:relative;z-index:2;display:inline-block;transition:transform .4s var(--ease);}
+    .btn .arw{position:relative;z-index:2;width:16px;height:16px;transition:transform .4s var(--ease);}
+    .btn:hover .arw{transform:translateX(3px);}
+    .btn-solid{background:var(--ink);color:#fff;}
+    .btn-solid .fill{position:absolute;inset:0;z-index:1;background:var(--accent);opacity:0;transition:opacity .5s var(--ease);}
+    .btn-solid:hover .fill{opacity:1;}
+    .btn-outline{background:transparent;color:var(--ink);border:1px solid var(--hair);}
+    .btn-outline:hover{border-color:rgba(10,10,10,.25);}
+    .btn-ghost{background:transparent;color:var(--ink);}
+    .btn-invert{background:#fff;color:var(--ink);}
+    .btn-invert:hover{background:rgba(255,255,255,.88);}
+    .btn-invert-outline{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.2);}
+    .btn-invert-outline:hover{border-color:rgba(255,255,255,.5);}
+
+    /* ————— preloader ————— */
+    #preloader{
+      position:fixed;inset:0;z-index:1000;background:var(--paper);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+    }
+    #preloader .pl-mol{width:64px;height:64px;opacity:0;}
+    #preloader .pl-word{
+      margin-top:24px;font-family:var(--display);font-size:26px;font-weight:600;
+      letter-spacing:.4em;opacity:0;padding-left:.4em;
+    }
+    #preloader .pl-tags{margin-top:30px;display:flex;gap:14px;}
+    #preloader .pl-tags span{
+      font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.32em;
+      color:var(--muted);opacity:0;
+    }
+    #preloader .pl-bar{position:absolute;bottom:0;left:0;height:1px;width:0;background:rgba(10,10,10,.8);}
+
+    /* ————— navbar ————— */
+    header.nav{
+      position:fixed;inset:0 0 auto 0;z-index:100;padding:20px 0;
+      transition:padding .5s var(--ease);
+    }
+    header.nav.scrolled{padding:10px 0;}
+    .nav-inner{
+      max-width:var(--page);margin:0 auto;padding:0 24px;
+      display:flex;align-items:center;justify-content:space-between;
+      transition:all .5s var(--ease);border-radius:999px;
+    }
+    @media(min-width:768px){.nav-inner{padding:0 40px;}}
+    header.nav.scrolled .nav-inner{
+      margin:0 12px;padding:6px 20px 6px 24px;
+      background:rgba(255,255,255,.6);backdrop-filter:saturate(180%) blur(18px);-webkit-backdrop-filter:saturate(180%) blur(18px);
+      border:1px solid var(--hair);box-shadow:0 10px 40px -24px rgba(0,0,0,.3);
+    }
+    @media(min-width:1024px){header.nav.scrolled .nav-inner{margin:0 40px;}}
+    .brand{display:inline-flex;align-items:center;gap:9px;padding:12px 0;transition:transform .5s var(--ease);transform-origin:left;}
+    header.nav.scrolled .brand{transform:scale(.9);}
+    [data-molecule]{display:inline-flex;}
+    [data-molecule] svg{width:100%;height:100%;display:block;}
+    .brand [data-molecule]{width:22px;height:22px;}
+    .brand .txt{font-weight:600;letter-spacing:.34em;font-size:15px;padding-left:.1em;}
+    .nav-links{display:none;align-items:center;gap:36px;}
+    @media(min-width:900px){.nav-links{display:flex;}}
+    .nav-links button{
+      position:relative;font-family:var(--mono);font-size:11px;text-transform:uppercase;
+      letter-spacing:.2em;color:var(--muted);transition:color .3s;
+    }
+    .nav-links button:hover{color:var(--ink);}
+    .nav-links button::after{content:"";position:absolute;left:0;bottom:-6px;height:1px;width:0;background:var(--ink);transition:width .5s var(--ease);}
+    .nav-links button:hover::after{width:100%;}
+    .nav-cta{display:none;}
+    @media(min-width:900px){.nav-cta{display:inline-flex;}}
+    .nav-burger{display:flex;flex-direction:column;gap:6px;width:40px;height:40px;align-items:center;justify-content:center;}
+    @media(min-width:900px){.nav-burger{display:none;}}
+    .nav-burger span{width:24px;height:1px;background:var(--ink);transition:transform .3s;}
+    .nav-mobile{overflow:hidden;height:0;opacity:0;transition:height .5s var(--ease),opacity .5s var(--ease);}
+    .nav-mobile.open{opacity:1;}
+    .nav-mobile-inner{margin:8px 12px 0;padding:24px;border-radius:24px;border:1px solid var(--hair);
+      background:rgba(255,255,255,.7);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+      display:flex;flex-direction:column;gap:16px;}
+    .nav-mobile-inner button{text-align:left;font-size:18px;font-weight:500;letter-spacing:-.02em;}
+
+    /* ————— hero ————— */
+    #hero{position:relative;min-height:100svh;overflow:hidden;}
+    .hero-grid-bg{
+      position:absolute;inset:0;opacity:.5;pointer-events:none;
+      background-image:linear-gradient(to right,rgba(0,0,0,.035) 1px,transparent 1px),linear-gradient(to bottom,rgba(0,0,0,.035) 1px,transparent 1px);
+      background-size:72px 72px;
+      -webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent 100%);mask-image:linear-gradient(to bottom,#000 55%,transparent 100%);
+    }
+    .hero-bgword{
+      position:absolute;right:-4%;top:42%;font-family:var(--display);font-weight:700;
+      font-size:22vw;line-height:1;letter-spacing:-.05em;color:rgba(0,0,0,.025);
+      white-space:nowrap;pointer-events:none;user-select:none;display:none;
+    }
+    @media(min-width:1024px){.hero-bgword{display:block;}}
+    #hero canvas.particles{position:absolute;inset:0;pointer-events:none;}
+    .hero-inner{position:relative;min-height:100svh;display:flex;align-items:center;padding:112px 0 64px;}
+    .hero-cols{display:grid;grid-template-columns:1fr;gap:32px;align-items:center;width:100%;}
+    @media(min-width:1024px){.hero-cols{grid-template-columns:7fr 5fr;}}
+    .hero-h1{font-family:var(--display);font-weight:700;letter-spacing:-.045em;line-height:.9;
+      font-size:15vw;}
+    @media(min-width:640px){.hero-h1{font-size:13vw;}}
+    @media(min-width:1024px){.hero-h1{font-size:9.2vw;}}
+    .hero-h1 .line{display:block;overflow:hidden;}
+    .hero-h1 .line > span{display:inline-block;transform:translateY(110%);}
+    .hero-copy{margin-top:32px;max-width:440px;font-size:15px;line-height:1.7;color:var(--muted);opacity:0;}
+    .hero-btns{margin-top:40px;display:flex;flex-wrap:wrap;gap:12px;opacity:0;}
+    .hero-eyebrow{margin-bottom:32px;opacity:0;}
+    .hero-stage{position:relative;display:flex;align-items:center;justify-content:center;min-height:60vh;}
+    .hero-dna{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+    .hero-dna svg{height:120%;width:auto;opacity:.7;animation:spin 42s linear infinite;}
+    .hero-bottle{position:relative;z-index:10;will-change:transform;}
+    .hero-bottle .b-inner{animation:float 6s ease-in-out infinite;transform-style:preserve-3d;}
+    .hero-bottle svg{height:62vh;max-height:560px;width:auto;filter:drop-shadow(0 40px 60px rgba(10,20,40,.14));}
+    .hero-sweep{position:absolute;inset:0;z-index:20;overflow:hidden;pointer-events:none;}
+    .hero-sweep i{position:absolute;top:0;height:100%;width:33%;filter:blur(40px);
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);
+      animation:sweep 9s ease-in-out infinite;}
+    .scrollcue{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;}
+    .scrollcue .lbl{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.3em;color:var(--muted);}
+    .scrollcue .track{position:relative;width:1px;height:36px;overflow:hidden;background:rgba(0,0,0,.1);}
+    .scrollcue .track i{position:absolute;inset:0;background:var(--ink);animation:cue 1.8s ease-in-out infinite;}
+
+    @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-14px);}}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    @keyframes sweep{0%{transform:translateX(-40%);}60%,100%{transform:translateX(360%);}}
+    @keyframes cue{0%{transform:translateY(-100%);}100%{transform:translateY(100%);}}
+
+    /* ————— category panels ————— */
+    .panel{position:relative;min-height:100svh;display:flex;align-items:center;overflow:hidden;}
+    .panel.dark{background:#0A0A0A;color:#fff;}
+    .panel.light{background:#fff;color:var(--ink);}
+    .panel.silver{background:#F4F5F7;color:var(--ink);}
+    .panel-bgword{
+      position:absolute;left:0;top:50%;transform:translateY(-50%);
+      font-family:var(--display);font-weight:700;font-size:28vw;line-height:1;letter-spacing:-.05em;
+      text-transform:uppercase;white-space:nowrap;pointer-events:none;user-select:none;will-change:transform;
+    }
+    .panel.dark .panel-bgword{color:rgba(255,255,255,.045);}
+    .panel.light .panel-bgword,.panel.silver .panel-bgword{color:rgba(0,0,0,.035);}
+    .panel-cols{position:relative;display:grid;grid-template-columns:1fr;gap:40px;align-items:center;width:100%;padding:96px 0;}
+    @media(min-width:1024px){.panel-cols{grid-template-columns:1fr 1fr;}}
+    .panel-meta{display:flex;align-items:center;gap:16px;margin-bottom:32px;font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;}
+    .panel-meta .num{letter-spacing:.3em;}
+    .panel-meta .ln{height:1px;width:48px;}
+    .panel.dark .panel-meta{color:rgba(255,255,255,.55);}
+    .panel.dark .panel-meta .ln{background:rgba(255,255,255,.2);}
+    .panel:not(.dark) .panel-meta{color:var(--muted);}
+    .panel:not(.dark) .panel-meta .ln{background:rgba(0,0,0,.15);}
+    .panel-meta .ic{display:inline-flex;align-items:center;gap:8px;}
+    .panel-px{font-family:var(--display);font-weight:700;font-size:8rem;line-height:.8;letter-spacing:-.05em;}
+    @media(min-width:640px){.panel-px{font-size:10rem;}}
+    .panel-name{margin-top:8px;font-family:var(--display);font-weight:600;font-size:3rem;letter-spacing:-.03em;}
+    @media(min-width:640px){.panel-name{font-size:3.75rem;}}
+    .panel-line{margin-top:24px;max-width:440px;font-size:15px;line-height:1.7;}
+    .panel.dark .panel-line{color:rgba(255,255,255,.55);}
+    .panel:not(.dark) .panel-line{color:var(--muted);}
+    .panel-chips{margin-top:32px;display:flex;flex-wrap:wrap;gap:8px;}
+    .panel-chips span{border:1px solid;border-radius:999px;padding:6px 16px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.15em;}
+    .panel.dark .panel-chips span{border-color:rgba(255,255,255,.12);color:rgba(255,255,255,.55);}
+    .panel:not(.dark) .panel-chips span{border-color:var(--hair);color:var(--muted);}
+    .panel-btn{margin-top:40px;}
+    .panel-stage{position:relative;display:flex;align-items:center;justify-content:center;}
+    .panel-halo{position:absolute;width:70%;height:70%;border-radius:50%;filter:blur(40px);}
+    .panel.dark .panel-halo{background:rgba(255,255,255,.04);}
+    .panel:not(.dark) .panel-halo{background:rgba(0,0,0,.02);}
+    .panel-bottle{position:relative;will-change:transform;}
+    .panel-bottle .b-inner{animation:float 7s ease-in-out infinite;}
+    .panel-bottle svg{height:58vh;max-height:520px;width:auto;}
+
+    /* ————— science ————— */
+    #science{position:relative;background:#0A0A0A;color:#fff;padding:128px 0;overflow:hidden;}
+    .sci-grid{position:absolute;inset:0;opacity:.35;pointer-events:none;
+      background-image:linear-gradient(to right,rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,.04) 1px,transparent 1px);
+      background-size:80px 80px;}
+    .sci-mol{position:absolute;right:-160px;top:50%;transform:translateY(-50%);width:720px;height:720px;opacity:.14;will-change:transform;}
+    .sci-head{font-family:var(--display);font-weight:700;letter-spacing:-.04em;line-height:.95;max-width:60rem;
+      font-size:9vw;}
+    @media(min-width:640px){.sci-head{font-size:3.75rem;}}
+    @media(min-width:1024px){.sci-head{font-size:4.5rem;}}
+    .sci-copy{margin-top:32px;max-width:560px;font-size:15px;line-height:1.7;color:rgba(255,255,255,.55);}
+    .sci-metrics{margin-top:64px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border:1px solid rgba(255,255,255,.1);border-radius:24px;overflow:hidden;background:rgba(255,255,255,.02);}
+    @media(min-width:1024px){.sci-metrics{grid-template-columns:repeat(4,1fr);}}
+    .sci-metric{background:rgba(255,255,255,.015);padding:32px;}
+    .sci-metric .val{font-family:var(--display);font-weight:600;letter-spacing:-.03em;font-size:3rem;}
+    @media(min-width:1024px){.sci-metric .val{font-size:3.75rem;}}
+    .sci-metric .lb{margin-top:12px;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.45);}
+    .sci-pillars{margin-top:64px;display:grid;grid-template-columns:1fr;gap:24px;}
+    @media(min-width:768px){.sci-pillars{grid-template-columns:repeat(3,1fr);}}
+    .sci-pillar{border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:32px;transition:border-color .5s var(--ease);}
+    .sci-pillar:hover{border-color:rgba(255,255,255,.25);}
+    .sci-pillar .ic{display:flex;width:44px;height:44px;align-items:center;justify-content:center;border-radius:999px;border:1px solid rgba(255,255,255,.15);color:var(--accent);transition:transform .5s var(--ease);}
+    .sci-pillar:hover .ic{transform:translateY(-4px);}
+    .sci-pillar h3{margin-top:24px;font-size:18px;font-weight:500;letter-spacing:-.02em;}
+    .sci-pillar p{margin-top:12px;font-size:14px;line-height:1.7;color:rgba(255,255,255,.5);}
+    .sci-foot{margin-top:64px;display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.4);font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.25em;}
+
+    /* ————— products ————— */
+    #products{background:#fff;padding:128px 0;}
+    .prod-top{display:flex;flex-direction:column;gap:32px;justify-content:space-between;align-items:flex-start;}
+    @media(min-width:1024px){.prod-top{flex-direction:row;align-items:flex-end;}}
+    .prod-head{font-family:var(--display);font-weight:700;letter-spacing:-.04em;line-height:.95;font-size:10vw;}
+    @media(min-width:640px){.prod-head{font-size:3.75rem;}}
+    @media(min-width:1024px){.prod-head{font-size:4.5rem;}}
+    .prod-filter{display:flex;flex-wrap:wrap;gap:8px;}
+    .prod-filter button{position:relative;border:1px solid var(--hair);border-radius:999px;padding:10px 20px;
+      font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);transition:.3s;}
+    .prod-filter button:hover{border-color:rgba(10,10,10,.25);color:var(--ink);}
+    .prod-filter button.active{border-color:var(--ink);color:#fff;background:var(--ink);}
+    .prod-grid{margin-top:64px;display:grid;grid-template-columns:1fr;gap:24px;}
+    @media(min-width:640px){.prod-grid{grid-template-columns:1fr 1fr;}}
+    @media(min-width:1024px){.prod-grid{grid-template-columns:repeat(3,1fr);}}
+    .card{
+      position:relative;display:flex;flex-direction:column;height:460px;border:1px solid var(--hair);border-radius:24px;
+      background:#fff;overflow:hidden;transition:border-color .5s var(--ease),box-shadow .5s var(--ease),transform .3s var(--ease);
+    }
+    .card:hover{border-color:rgba(10,10,10,.15);box-shadow:0 40px 80px -40px rgba(10,20,40,.25);}
+    .card-glare{position:absolute;top:0;height:100%;width:160px;transform:translateX(-50%);
+      background:rgba(255,255,255,.4);filter:blur(40px);opacity:0;transition:opacity .3s;pointer-events:none;z-index:3;}
+    .card:hover .card-glare{opacity:1;}
+    .card-hd{position:relative;z-index:2;display:flex;align-items:flex-start;justify-content:space-between;padding:24px;}
+    .card-hd .tag{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);}
+    .card-hd h3{margin-top:4px;font-family:var(--display);font-size:20px;font-weight:500;letter-spacing:-.02em;}
+    .card-hd .go{display:flex;width:36px;height:36px;align-items:center;justify-content:center;border-radius:999px;border:1px solid var(--hair);color:var(--muted);transition:.5s;flex-shrink:0;}
+    .card:hover .card-hd .go{border-color:var(--ink);color:var(--ink);}
+    .card:hover .card-hd .go svg{transform:rotate(45deg);}
+    .card-hd .go svg{transition:transform .5s var(--ease);}
+    .card-stage{position:relative;flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;perspective:900px;}
+    .card-stage .shadow{position:absolute;bottom:40px;width:160px;height:96px;border-radius:50%;background:rgba(0,0,0,.06);filter:blur(20px);}
+    .card-stage .tilt{will-change:transform;}
+    .card-stage .tilt svg{height:240px;width:auto;filter:drop-shadow(0 24px 36px rgba(10,20,40,.12));}
+    .card-reveal{position:absolute;inset:auto 0 0 0;z-index:2;transform:translateY(101%);transition:transform .55s var(--ease);
+      border-top:1px solid var(--hair);padding:20px 24px;
+      background:rgba(255,255,255,.6);backdrop-filter:saturate(180%) blur(18px);-webkit-backdrop-filter:saturate(180%) blur(18px);}
+    .card:hover .card-reveal{transform:translateY(0);}
+    .card-reveal p{font-size:13px;line-height:1.6;color:var(--muted);}
+    .card-reveal .row{margin-top:16px;display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.15em;}
+    .card-ft{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--hair);padding:16px 24px;}
+    .card-ft .from{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);}
+    .card-ft .price{font-family:var(--display);font-size:18px;font-weight:500;letter-spacing:-.02em;}
+    .card-ft .price small{font-size:12px;font-weight:400;color:var(--muted);margin-left:4px;}
+    .prod-note{margin-top:64px;max-width:520px;font-size:14px;line-height:1.7;color:var(--muted);}
+
+    /* ————— why ————— */
+    #why{background:#fff;padding:128px 0;}
+    .why-cols{display:grid;grid-template-columns:1fr;gap:64px;}
+    @media(min-width:1024px){.why-cols{grid-template-columns:4fr 8fr;}}
+    .why-head{font-family:var(--display);font-weight:700;letter-spacing:-.04em;line-height:.98;font-size:3rem;}
+    @media(min-width:640px){.why-head{font-size:3.75rem;}}
+    .why-copy{margin-top:32px;max-width:24rem;font-size:15px;line-height:1.7;color:var(--muted);}
+    .why-grid{display:grid;grid-template-columns:1fr;}
+    @media(min-width:640px){.why-grid{grid-template-columns:1fr 1fr;}}
+    .why-cell{padding:32px;border-top:1px solid var(--hair);transition:background .5s var(--ease);}
+    .why-cell:hover{background:rgba(0,0,0,.015);}
+    @media(min-width:640px){.why-cell:nth-child(odd){border-right:1px solid var(--hair);}.why-cell:nth-child(1),.why-cell:nth-child(2){border-top:0;}}
+    .why-cell .ic{display:flex;width:48px;height:48px;align-items:center;justify-content:center;border-radius:999px;border:1px solid var(--hair);color:var(--ink);transition:.5s var(--ease);}
+    .why-cell:hover .ic{transform:translateY(-4px);border-color:var(--accent);color:var(--accent);}
+    .why-cell h3{margin-top:24px;font-family:var(--display);font-size:20px;font-weight:500;letter-spacing:-.02em;}
+    .why-cell p{margin-top:8px;max-width:20rem;font-size:14px;line-height:1.7;color:var(--muted);}
+    .why-cell.filler{display:none;}
+    @media(min-width:640px){.why-cell.filler{display:flex;align-items:flex-end;}}
+    .why-cell.filler span{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.25em;color:var(--muted);}
+
+    /* ————— social proof ————— */
+    #proof{background:#fff;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);padding:112px 0;}
+    .proof-lbl{text-align:center;margin-bottom:56px;}
+    .proof-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px 0;}
+    @media(min-width:1024px){.proof-grid{grid-template-columns:repeat(4,1fr);}}
+    .proof-cell{display:flex;flex-direction:column;align-items:center;text-align:center;}
+    .proof-cell .val{font-family:var(--display);font-weight:700;letter-spacing:-.04em;font-size:3.75rem;}
+    @media(min-width:640px){.proof-cell .val{font-size:4.5rem;}}
+    @media(min-width:1024px){.proof-cell .val{font-size:5.5rem;}}
+    .proof-cell .lb{margin-top:16px;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.28em;color:var(--muted);}
+
+    /* ————— cta ————— */
+    #cta{position:relative;min-height:90svh;display:flex;align-items:center;overflow:hidden;background:#fff;}
+    #cta canvas.particles{position:absolute;inset:0;pointer-events:none;}
+    .cta-bottle{position:absolute;right:-4%;top:50%;transform:translateY(-50%);opacity:.7;pointer-events:none;will-change:transform;}
+    .cta-bottle svg{height:92vh;max-height:820px;width:auto;}
+    .cta-fade{position:absolute;inset:0;background:linear-gradient(90deg,#fff 30%,rgba(255,255,255,.7) 60%,transparent);pointer-events:none;}
+    .cta-head{font-family:var(--display);font-weight:700;letter-spacing:-.045em;line-height:.92;max-width:60rem;font-size:12vw;}
+    @media(min-width:640px){.cta-head{font-size:4.5rem;}}
+    @media(min-width:1024px){.cta-head{font-size:6rem;}}
+    .cta-copy{margin-top:32px;max-width:440px;font-size:15px;line-height:1.7;color:var(--muted);}
+    .cta-btns{margin-top:40px;display:flex;flex-wrap:wrap;gap:12px;}
+
+    /* ————— footer ————— */
+    footer{background:#0A0A0A;color:#fff;}
+    .foot-cols{display:grid;grid-template-columns:1fr;gap:64px;padding:96px 0 0;}
+    @media(min-width:1024px){.foot-cols{grid-template-columns:5fr 3fr 4fr;}}
+    .foot-brand .lg{display:inline-flex;align-items:center;gap:10px;}
+    .foot-brand .lg [data-molecule]{width:28px;height:28px;}
+    .foot-brand .lg .txt{font-weight:600;letter-spacing:.34em;font-size:20px;padding-left:.1em;}
+    .foot-brand .tag{margin-top:32px;max-width:24rem;font-family:var(--display);font-size:24px;font-weight:300;line-height:1.35;letter-spacing:-.02em;color:rgba(255,255,255,.8);}
+    .foot-news{margin-top:40px;max-width:24rem;}
+    .foot-news label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.25em;color:rgba(255,255,255,.45);}
+    .foot-news .field{margin-top:12px;display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,.2);padding:8px 0;transition:border-color .3s;}
+    .foot-news .field:focus-within{border-color:rgba(255,255,255,.6);}
+    .foot-news input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:14px;font-family:inherit;}
+    .foot-news input::placeholder{color:rgba(255,255,255,.3);}
+    .foot-news button{display:flex;width:32px;height:32px;align-items:center;justify-content:center;}
+    .foot-news button:hover svg{transform:translateX(4px);}
+    .foot-news button svg{transition:transform .3s;}
+    .foot-msg{margin-top:12px;font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.2em;color:var(--accent);display:none;}
+    .foot-links{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
+    @media(min-width:1024px){.foot-col-links{grid-column:3;}}
+    .foot-links h4{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.25em;color:rgba(255,255,255,.45);}
+    .foot-links ul{margin-top:24px;list-style:none;display:flex;flex-direction:column;gap:12px;}
+    .foot-links button{position:relative;font-size:14px;color:rgba(255,255,255,.7);transition:color .3s;}
+    .foot-links button:hover{color:#fff;}
+    .foot-bottom{margin-top:80px;display:flex;flex-direction:column;gap:24px;justify-content:space-between;border-top:1px solid rgba(255,255,255,.1);padding:32px 0;}
+    @media(min-width:640px){.foot-bottom{flex-direction:row;align-items:center;}}
+    .foot-bottom .cp{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.2em;color:rgba(255,255,255,.4);}
+    .foot-social{display:flex;gap:16px;}
+    .foot-social a{display:flex;width:40px;height:40px;align-items:center;justify-content:center;border-radius:999px;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.6);transition:.3s;}
+    .foot-social a:hover{border-color:rgba(255,255,255,.4);color:#fff;}
+    .foot-legal{padding-bottom:40px;max-width:48rem;font-size:11px;line-height:1.7;color:rgba(255,255,255,.25);}
+
+    /* reveal util */
+    .reveal{opacity:0;transform:translateY(26px);}
+
+    @media(prefers-reduced-motion:reduce){
+      *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
+      .hero-h1 .line>span{transform:none;}
+      .reveal{opacity:1;transform:none;}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============ PRELOADER ============ -->
+  <div id="preloader">
+    <div class="pl-mol" data-molecule></div>
+    <div class="pl-word">PEPTIDE<span class="accent">X</span></div>
+    <div class="pl-tags">
+      <span>Science</span><span>Precision</span><span>Transformation</span>
+    </div>
+    <div class="pl-bar"></div>
+  </div>
+
+  <!-- ============ NAVBAR ============ -->
+  <header class="nav" id="navbar">
+    <div class="nav-inner">
+      <button class="brand" data-scroll="#top" aria-label="PEPTIDEX home">
+        <span data-molecule></span>
+        <span class="txt">PEPTIDE<span class="accent">X</span></span>
+      </button>
+      <nav class="nav-links">
+        <button data-scroll="#science">Science</button>
+        <button data-scroll="#collections">Collections</button>
+        <button data-scroll="#products">Products</button>
+        <button data-scroll="#why">Why PEPTIDEX</button>
+      </nav>
+      <button class="btn btn-outline nav-cta" data-scroll="#products">
+        <span class="lbl">Explore</span>
+        <svg class="arw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <button class="nav-burger" id="burger" aria-label="Menu"><span></span><span></span></button>
+    </div>
+    <div class="nav-mobile" id="navMobile">
+      <div class="nav-mobile-inner">
+        <button data-scroll="#science">Science</button>
+        <button data-scroll="#collections">Collections</button>
+        <button data-scroll="#products">Products</button>
+        <button data-scroll="#why">Why PEPTIDEX</button>
+        <button class="btn btn-solid" data-scroll="#products" style="justify-content:center;margin-top:8px;">
+          <span class="fill"></span><span class="lbl">Explore Products</span>
+          <svg class="arw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ HERO ============ -->
+    <section id="hero">
+      <div id="top" style="position:absolute;top:0"></div>
+      <div class="hero-grid-bg"></div>
+      <div class="hero-bgword" data-parallax="-60">PEPTIDEX</div>
+      <canvas class="particles" data-particles="40"></canvas>
+      <div class="wrap hero-inner">
+        <div class="hero-cols">
+          <div class="hero-text">
+            <p class="eyebrow hero-eyebrow"><span class="bar"></span>Precision Peptide Science</p>
+            <h1 class="hero-h1">
+              <span class="line"><span>ENGINEERED</span></span>
+              <span class="line"><span>BEYOND</span></span>
+              <span class="line"><span class="accent">PERFECTION</span></span>
+            </h1>
+            <p class="hero-copy">Research-grade peptides, engineered at the intersection of biotechnology and design. Every molecule measured. Every batch verified. Nothing left to chance.</p>
+            <div class="hero-btns">
+              <button class="btn btn-solid" data-magnetic data-scroll="#products">
+                <span class="fill"></span><span class="lbl">Explore Products</span>
+                <svg class="arw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </button>
+              <button class="btn btn-ghost" data-magnetic data-scroll="#science">
+                <span class="lbl">Learn the Science</span>
+                <svg class="arw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="hero-stage" id="heroStage">
+            <div class="hero-dna" data-parallax="-120" id="heroDna" data-dna></div>
+            <div class="hero-bottle" id="heroBottle">
+              <div class="b-inner" id="heroBottleInner" data-bottle="218" data-label="PEPTIDEX"></div>
+            </div>
+            <div class="hero-sweep"><i></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="scrollcue" id="scrollcue">
+        <span class="lbl">Scroll</span>
+        <span class="track"><i></i></span>
+      </div>
+    </section>
+
+    <!-- ============ CATEGORIES ============ -->
+    <section id="collections"></section>
+
+    <!-- ============ SCIENCE ============ -->
+    <section id="science">
+      <div class="sci-grid"></div>
+      <div class="sci-mol" data-parallax="80" data-rotate data-molecule="dark"></div>
+      <div class="wrap" style="position:relative;">
+        <p class="eyebrow reveal" style="color:rgba(255,255,255,.5);margin-bottom:32px;"><span class="bar" style="background:rgba(255,255,255,.25)"></span>The Science</p>
+        <h2 class="sci-head reveal">The Power of<br>Peptide <span class="accent">Science</span></h2>
+        <p class="sci-copy reveal">Peptides are the language the body already speaks — short chains of amino acids that signal, repair and regulate. PEPTIDEX engineers that language with pharmaceutical discipline, so precision is never left to interpretation.</p>
+        <div class="sci-metrics" id="sciMetrics"></div>
+        <div class="sci-pillars" id="sciPillars"></div>
+        <div class="sci-foot reveal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4.5"/><ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(120 12 12)"/></svg>
+          Engineered Beyond Perfection
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PRODUCTS ============ -->
+    <section id="products">
+      <div class="wrap">
+        <div class="prod-top">
+          <div>
+            <p class="eyebrow reveal" style="margin-bottom:24px;"><span class="bar"></span>The Collection</p>
+            <h2 class="prod-head reveal">Every molecule,<br>a <span class="accent">hero object.</span></h2>
+          </div>
+          <div class="prod-filter reveal" id="prodFilter">
+            <button class="active" data-filter="all">All</button>
+            <button data-filter="fitness">Fitness</button>
+            <button data-filter="beauty">Beauty</button>
+            <button data-filter="longevity">Longevity</button>
+          </div>
+        </div>
+        <div class="prod-grid" id="prodGrid"></div>
+        <p class="prod-note reveal">A curated selection from a catalog of 100+ research compounds. Every order ships with quality control and Certificate of Analysis available on request. MOQ 1 box · worldwide shipping.</p>
+      </div>
+    </section>
+
+    <!-- ============ WHY ============ -->
+    <section id="why">
+      <div class="wrap why-cols">
+        <div>
+          <p class="eyebrow reveal" style="margin-bottom:24px;"><span class="bar"></span>Why PEPTIDEX</p>
+          <h2 class="why-head reveal">The standard,<br><span class="accent">redefined.</span></h2>
+          <p class="why-copy reveal">Five commitments that separate a peptide company from a peptide obsession. This is the difference you can measure.</p>
+        </div>
+        <div class="why-grid" id="whyGrid"></div>
+      </div>
+    </section>
+
+    <!-- ============ SOCIAL PROOF ============ -->
+    <section id="proof">
+      <div class="wrap">
+        <p class="eyebrow proof-lbl reveal" style="justify-content:center;">Measured in results</p>
+        <div class="proof-grid" id="proofGrid"></div>
+      </div>
+    </section>
+
+    <!-- ============ CTA ============ -->
+    <section id="cta">
+      <canvas class="particles" data-particles="34"></canvas>
+      <div class="cta-bottle" data-parallax="140" data-bottle="216"></div>
+      <div class="cta-fade"></div>
+      <div class="wrap" style="position:relative;">
+        <p class="eyebrow reveal" style="margin-bottom:32px;"><span class="bar"></span>Begin</p>
+        <h2 class="cta-head reveal">Ready to experience<br><span class="accent">precision?</span></h2>
+        <p class="cta-copy reveal">Explore the full collection and discover what peptide science looks like when nothing is left to chance.</p>
+        <div class="cta-btns reveal">
+          <button class="btn btn-solid" data-magnetic data-scroll="#products">
+            <span class="fill"></span><span class="lbl">Explore Products</span>
+            <svg class="arw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+          <button class="btn btn-outline" data-magnetic data-scroll="#science">
+            <span class="lbl">The Science</span>
+            <svg class="arw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer>
+    <div class="wrap">
+      <div class="foot-cols">
+        <div class="foot-brand">
+          <span class="lg"><span data-molecule="dark"></span><span class="txt">PEPTIDE<span class="accent">X</span></span></span>
+          <p class="tag">Engineered beyond perfection. The future of peptide science, designed with intent.</p>
+          <form class="foot-news" id="newsForm">
+            <label>Join the frontier</label>
+            <div class="field">
+              <input type="email" required placeholder="you@laboratory.com" />
+              <button type="submit" aria-label="Subscribe">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </button>
+            </div>
+            <p class="foot-msg" id="footMsg">Welcome to PEPTIDEX.</p>
+          </form>
+        </div>
+        <div class="foot-links foot-col-links" style="grid-column:auto;">
+          <div>
+            <h4>Collections</h4>
+            <ul>
+              <li><button data-scroll="#collections">Fitness</button></li>
+              <li><button data-scroll="#collections">Beauty</button></li>
+              <li><button data-scroll="#collections">Longevity</button></li>
+              <li><button data-scroll="#products">All Products</button></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Company</h4>
+            <ul>
+              <li><button data-scroll="#science">The Science</button></li>
+              <li><button data-scroll="#why">Why PEPTIDEX</button></li>
+              <li><button data-scroll="#science">Quality &amp; COA</button></li>
+              <li><button data-scroll="#top">Contact</button></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <p class="cp" id="copy">© PEPTIDEX · Engineered Beyond Perfection</p>
+        <div class="foot-social">
+          <a href="#" aria-label="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
+          <a href="#" aria-label="X"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+          <a href="#" aria-label="LinkedIn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M7 10v7M7 7v.01M11 17v-4a2 2 0 014 0v4"/></svg></a>
+        </div>
+      </div>
+      <p class="foot-legal">For research use only. Products offered by PEPTIDEX are intended strictly for laboratory and research purposes and are not for human or veterinary use, diagnosis, or treatment.</p>
+    </div>
+  </footer>
+
+  <!-- ============ LIBRARIES (vendored locally — no external CDN) ============ -->
+  <script src="assets/vendor/gsap.min.js"></script>
+  <script src="assets/vendor/ScrollTrigger.min.js"></script>
+  <script src="assets/vendor/lenis.min.js"></script>
+
+  <script>
+  /* =====================================================================
+     PEPTIDEX — interaction layer
+     ===================================================================== */
+  (function(){
+    "use strict";
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /* ---------- SVG generators ---------- */
+    function moleculeSVG(variant){
+      const stroke = variant==="dark" ? "rgba(255,255,255,.5)" : "rgba(10,10,10,.55)";
+      const node   = variant==="dark" ? "#ffffff" : "#0A0A0A";
+      const accent = "#1E5EFF";
+      const cx=100,cy=100,r=46;
+      const hex=[];for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;hex.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]);}
+      const pend=[[hex[0],[hex[0][0]+30,hex[0][1]-20]],[hex[2],[hex[2][0]-34,hex[2][1]+6]],[hex[4],[hex[4][0]+6,hex[4][1]+34]]];
+      let s=`<svg viewBox="0 0 200 200" fill="none" aria-hidden="true">`;
+      for(let i=0;i<6;i++){const p=hex[i],n=hex[(i+1)%6];s+=`<line x1="${p[0]}" y1="${p[1]}" x2="${n[0]}" y2="${n[1]}" stroke="${stroke}" stroke-width="1.4"/>`;}
+      pend.forEach(([a,b])=>{s+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${stroke}" stroke-width="1.4"/>`;});
+      pend.forEach(([,b],i)=>{s+=`<circle cx="${b[0]}" cy="${b[1]}" r="4.5" fill="${i===0?accent:node}"/>`;});
+      hex.forEach((p,i)=>{s+=`<circle cx="${p[0]}" cy="${p[1]}" r="${(i===1||i===4)?6.5:5}" fill="${i===1?accent:node}" stroke="${variant==="dark"?"#0A0A0A":"#fff"}" stroke-width="1.2"/>`;});
+      return s+`</svg>`;
+    }
+
+    function dnaSVG(){
+      const W=200,H=900,mid=W/2,amp=62,turns=6,seg=120;
+      const strand=(ph)=>{let d="";for(let i=0;i<=seg;i++){const t=i/seg,y=t*H,x=mid+Math.sin(t*Math.PI*2*turns+ph)*amp;d+=`${i===0?"M":"L"}${x.toFixed(1)},${y.toFixed(1)} `;}return d;};
+      let rungs="";const N=turns*8;
+      for(let i=0;i<N;i++){const t=i/(N-1),y=t*H;const a=mid+Math.sin(t*Math.PI*2*turns)*amp;const b=mid+Math.sin(t*Math.PI*2*turns+Math.PI)*amp;const near=Math.abs(a-b)<amp*.9;rungs+=`<line x1="${a.toFixed(1)}" y1="${y.toFixed(1)}" x2="${b.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${near?"rgba(30,94,255,.28)":"rgba(10,10,10,.10)"}" stroke-width="1.1"/>`;if(i%2===0){rungs+=`<circle cx="${a.toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="rgba(10,10,10,.5)"/><circle cx="${b.toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="rgba(10,10,10,.5)"/>`;}}
+      return `<svg viewBox="0 0 ${W} ${H}" fill="none" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <defs><linearGradient id="dnaS" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="rgba(10,10,10,0)"/><stop offset="18%" stop-color="rgba(10,10,10,.4)"/>
+        <stop offset="82%" stop-color="rgba(10,10,10,.4)"/><stop offset="100%" stop-color="rgba(10,10,10,0)"/></linearGradient></defs>
+        ${rungs}<path d="${strand(0)}" stroke="url(#dnaS)" stroke-width="1.6"/><path d="${strand(Math.PI)}" stroke="url(#dnaS)" stroke-width="1.6"/></svg>`;
+    }
+
+    let bid=0;
+    function bottleSVG(hue,label){
+      hue=hue||218;label=label||"PX";const id="b"+(bid++);
+      const lt=`hsl(${hue} 90% 66% / .55)`,lb=`hsl(${hue} 85% 52% / .75)`;
+      let ridges="";for(let i=0;i<9;i++){const x=84+i*6.5;ridges+=`<line x1="${x}" y1="90" x2="${x}" y2="116" stroke="rgba(10,10,10,.10)" stroke-width=".8"/>`;}
+      return `<svg viewBox="0 0 220 520" fill="none" role="img" aria-label="${label} peptide vial">
+      <defs>
+        <linearGradient id="gb${id}" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,255,255,.9)"/><stop offset="14%" stop-color="rgba(240,244,250,.55)"/><stop offset="50%" stop-color="rgba(255,255,255,.14)"/><stop offset="82%" stop-color="rgba(228,234,244,.5)"/><stop offset="100%" stop-color="rgba(255,255,255,.85)"/></linearGradient>
+        <linearGradient id="cp${id}" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#e9edf3"/><stop offset="22%" stop-color="#fff"/><stop offset="46%" stop-color="#aeb6c2"/><stop offset="70%" stop-color="#cfd6e0"/><stop offset="100%" stop-color="#8a94a3"/></linearGradient>
+        <linearGradient id="ct${id}" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#c7cdd8"/><stop offset="50%" stop-color="#f4f6fa"/><stop offset="100%" stop-color="#9aa3b2"/></linearGradient>
+        <linearGradient id="lq${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${lt}"/><stop offset="100%" stop-color="${lb}"/></linearGradient>
+        <linearGradient id="lb${id}" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,255,255,.95)"/><stop offset="50%" stop-color="rgba(255,255,255,.75)"/><stop offset="100%" stop-color="rgba(244,247,251,.9)"/></linearGradient>
+        <clipPath id="cl${id}"><path d="M64 150 Q64 138 78 136 L142 136 Q156 138 156 150 L156 470 Q156 492 132 494 L88 494 Q64 492 64 470 Z"/></clipPath>
+      </defs>
+      <ellipse cx="110" cy="502" rx="66" ry="10" fill="rgba(10,10,10,.06)"/>
+      <path d="M64 150 Q64 138 78 136 L142 136 Q156 138 156 150 L156 470 Q156 492 132 494 L88 494 Q64 492 64 470 Z" fill="url(#gb${id})" stroke="rgba(10,10,10,.10)" stroke-width="1"/>
+      <g clip-path="url(#cl${id})"><rect x="60" y="300" width="100" height="200" fill="url(#lq${id})"/><ellipse cx="110" cy="300" rx="46" ry="7" fill="${lt}"/><rect x="74" y="308" width="8" height="176" rx="4" fill="rgba(255,255,255,.4)"/></g>
+      <path d="M84 136 L84 118 Q84 112 92 112 L128 112 Q136 112 136 118 L136 136 Z" fill="url(#gb${id})" stroke="rgba(10,10,10,.10)" stroke-width="1"/>
+      <rect x="80" y="86" width="60" height="34" rx="5" fill="url(#cp${id})"/>
+      <rect x="86" y="72" width="48" height="20" rx="6" fill="url(#ct${id})"/>
+      <circle cx="110" cy="72" r="6" fill="url(#ct${id})"/>
+      ${ridges}
+      <rect x="70" y="330" width="80" height="128" rx="7" fill="url(#lb${id})" stroke="rgba(10,10,10,.08)"/>
+      <text x="110" y="360" text-anchor="middle" font-family="var(--mono)" font-size="8" letter-spacing="3" fill="#666">RESEARCH GRADE</text>
+      <text x="110" y="392" text-anchor="middle" font-family="var(--display)" font-size="21" font-weight="700" letter-spacing="1" fill="#0A0A0A">${label}</text>
+      <line x1="82" y1="404" x2="138" y2="404" stroke="rgba(10,10,10,.12)"/>
+      <text x="110" y="424" text-anchor="middle" font-family="var(--mono)" font-size="7.5" letter-spacing="2" fill="#1E5EFF">ENGINEERED · PX</text>
+      <text x="110" y="444" text-anchor="middle" font-family="var(--mono)" font-size="7" letter-spacing="1.5" fill="#999">10 mg · 10 vials</text>
+      <rect x="74" y="150" width="12" height="330" rx="6" fill="rgba(255,255,255,.7)"/>
+      <rect x="138" y="160" width="6" height="300" rx="3" fill="rgba(255,255,255,.35)"/>
+      <rect x="90" y="76" width="14" height="10" rx="3" fill="rgba(255,255,255,.75)"/>
+      </svg>`;
+    }
+
+    /* ---------- data ---------- */
+    const CAT = {
+      fitness:{label:"Fitness",sub:"Build Performance",line:"Recovery, lean mass and metabolic performance — engineered for the body under load.",tone:"dark",num:"01",hue:218,icon:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6.5 6.5l11 11M21 21l-1-1M3 3l1 1M18 22l4-4M2 6l4-4M17 7l-1.5-1.5M8.5 16.5L7 15"/><rect x="5" y="5" width="4" height="4" rx="1" transform="rotate(45 7 7)"/></svg>'},
+      beauty:{label:"Beauty",sub:"Elevate Aesthetics",line:"Skin, hair and cellular radiance — the science of aesthetics, refined to a formula.",tone:"light",num:"02",hue:202,icon:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z"/></svg>'},
+      longevity:{label:"Longevity",sub:"Extend Possibility",line:"Cellular repair, mitochondrial function and the biology of time — extended.",tone:"silver",num:"03",hue:210,icon:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6.5 8.5c-2.5 0-4 1.6-4 3.5s1.5 3.5 4 3.5c3.5 0 5-7 11-7 2.5 0 4 1.6 4 3.5s-1.5 3.5-4 3.5c-3.5 0-5-7-11-7z"/></svg>'}
+    };
+
+    const PRODUCTS = [
+      {id:"bpc-tb",name:"BPC-157 / TB-500",cat:"fitness",tag:"Recovery Matrix",desc:"A synergistic repair complex pairing BPC-157 with TB-500 to accelerate soft-tissue recovery and connective resilience.",spec:"10mg + 10mg · 20mg × 10 vials",price:168,purity:"99.4%",hue:218},
+      {id:"reta",name:"Retatrutide",cat:"fitness",tag:"Metabolic Triad",desc:"A triple-receptor agonist engineered for advanced metabolic and body-composition research protocols.",spec:"10mg × 10 vials",price:48,purity:"99.2%",hue:222},
+      {id:"tirz",name:"Tirzepatide",cat:"fitness",tag:"Dual Incretin",desc:"GIP and GLP-1 dual agonism, expressed with pharmaceutical-grade precision across every batch.",spec:"10mg × 10 vials",price:49,purity:"99.3%",hue:214},
+      {id:"cjc",name:"CJC-1295 / Ipamorelin",cat:"fitness",tag:"Growth Axis",desc:"A refined secretagogue blend supporting the natural growth-hormone axis without the noise.",spec:"5mg + 5mg · 10mg × 10 vials",price:168,purity:"99.1%",hue:220},
+      {id:"mots",name:"MOTS-c",cat:"fitness",tag:"Mitochondrial Signal",desc:"A mitochondrial-derived peptide studied for metabolic flexibility and cellular energy output.",spec:"10mg × 10 vials",price:93,purity:"99.0%",hue:216},
+      {id:"aod",name:"AOD-9604",cat:"fitness",tag:"Lipolytic Fragment",desc:"A modified fragment of the growth-hormone molecule explored for targeted fat-metabolism research.",spec:"10mg × 10 vials",price:172,purity:"99.0%",hue:224},
+      {id:"ghk",name:"GHK-Cu",cat:"beauty",tag:"Copper Peptide",desc:"The copper tripeptide behind luminous skin research — remodeling, firmness and repair, distilled.",spec:"100mg × 10 vials",price:38,purity:"99.5%",hue:205},
+      {id:"glow",name:"GLOW · GHK-Cu / BPC / TB",cat:"beauty",tag:"Radiance Complex",desc:"A three-peptide radiance system uniting GHK-Cu, BPC-157 and TB-500 for whole-system aesthetics.",spec:"70mg × 10 vials",price:289,purity:"99.3%",hue:200},
+      {id:"glut",name:"Glutathione",cat:"beauty",tag:"Master Antioxidant",desc:"The body's master antioxidant, purified for research into brightness, clarity and oxidative balance.",spec:"1500mg × 10 vials",price:68,purity:"99.4%",hue:198},
+      {id:"matrix",name:"Matrixyl",cat:"beauty",tag:"Collagen Signal",desc:"A matrikine peptide studied for collagen synthesis and the architecture of firmer skin.",spec:"10mg × 10 vials",price:118,purity:"99.2%",hue:208},
+      {id:"snap8",name:"Snap-8",cat:"beauty",tag:"Expression Relax",desc:"An octapeptide explored for the smoothing of expression lines through neuro-signal modulation.",spec:"10mg × 10 vials",price:64,purity:"99.1%",hue:202},
+      {id:"ahk",name:"AHK-Cu",cat:"beauty",tag:"Follicle Copper",desc:"A copper peptide investigated for follicular vitality and the density of healthy hair.",spec:"50mg × 10 vials",price:53,purity:"99.2%",hue:206},
+      {id:"epi",name:"Epithalon",cat:"longevity",tag:"Telomere Research",desc:"A tetrapeptide at the frontier of telomere and circadian-longevity research.",spec:"50mg × 10 vials",price:78,purity:"99.3%",hue:212},
+      {id:"nad",name:"NAD+",cat:"longevity",tag:"Cellular Fuel",desc:"The coenzyme central to cellular energy and repair — the currency of biological time.",spec:"1000mg × 10 vials",price:48,purity:"99.4%",hue:210},
+      {id:"ss31",name:"SS-31",cat:"longevity",tag:"Mitochondrial Guard",desc:"A mitochondria-targeting peptide studied for the protection of cellular powerhouses.",spec:"50mg × 10 vials",price:118,purity:"99.2%",hue:215},
+      {id:"ta1",name:"Thymosin Alpha-1",cat:"longevity",tag:"Immune Modulator",desc:"An immunomodulatory peptide researched for resilient, balanced immune function.",spec:"10mg × 10 vials",price:136,purity:"99.3%",hue:209},
+      {id:"foxo",name:"FOXO4-DRI",cat:"longevity",tag:"Senolytic Frontier",desc:"A senolytic research peptide at the edge of cellular-senescence science.",spec:"2mg × 10 vials",price:375,purity:"98.9%",hue:217},
+      {id:"semax",name:"Semax",cat:"longevity",tag:"Neuro Cognition",desc:"A neuropeptide explored for cognitive clarity, focus and neuroprotective potential.",spec:"10mg × 10 vials",price:78,purity:"99.1%",hue:211}
+    ];
+
+    const SCI_METRICS=[
+      {val:99.4,dec:1,suf:"%",lb:"Peptide Purity"},
+      {val:40,dec:0,suf:"+",lb:"Synthesis Steps"},
+      {val:12,dec:0,suf:"",lb:"QC Checkpoints"},
+      {val:100,dec:0,suf:"%",lb:"Batch Traceability"}
+    ];
+    const SCI_PILLARS=[
+      {t:"Solid-Phase Synthesis",b:"Sequences assembled residue by residue under inert, moisture-controlled conditions.",i:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3h6M10 3v6l-5.5 9.5A2 2 0 006 22h12a2 2 0 001.5-3.5L14 9V3"/><path d="M7 15h10"/></svg>'},
+      {t:"HPLC Verification",b:"Every batch resolved by high-performance chromatography before it earns the PX mark.",i:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg>'},
+      {t:"Third-Party COA",b:"Independent Certificates of Analysis — identity, purity and mass, on request.",i:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>'}
+    ];
+    const WHY=[
+      {t:"Research Driven",b:"Every compound grounded in peer-reviewed science and rigorous method.",i:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 3h6M10 3v6l-5.5 9.5A2 2 0 006 22h12a2 2 0 001.5-3.5L14 9V3"/><path d="M7 15h10"/></svg>'},
+      {t:"Premium Quality",b:"Pharmaceutical-grade synthesis, held to a standard without compromise.",i:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 2l3 6 6 .5-4.5 4 1.5 6-6-3.2L6 18.5 7.5 12.5 3 8.5 9 8z"/></svg>'},
+      {t:"Third-Party Tested",b:"Independent laboratories verify identity and purity, batch by batch.",i:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-5"/></svg>'},
+      {t:"Worldwide Shipping",b:"Discreet, reliable delivery through trusted couriers, globally.",i:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18"/></svg>'},
+      {t:"Purity Guaranteed",b:"99%+ purity, documented and backed by Certificate of Analysis.",i:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>'}
+    ];
+    const PROOF=[
+      {val:99,suf:"%",dec:0,lb:"Purity"},
+      {val:100,suf:"+",dec:0,lb:"Products"},
+      {text:"Global",lb:"Shipping"},
+      {val:10000,suf:"+",dec:0,lb:"Satisfied Clients"}
+    ];
+
+    /* ---------- inject SVGs ---------- */
+    document.querySelectorAll("[data-molecule]").forEach(el=>{el.innerHTML=moleculeSVG(el.getAttribute("data-molecule"));});
+    document.querySelectorAll("[data-dna]").forEach(el=>{el.innerHTML=dnaSVG();});
+    document.querySelectorAll("[data-bottle]").forEach(el=>{el.innerHTML=bottleSVG(+el.getAttribute("data-bottle"),el.getAttribute("data-label")||"PX");});
+
+    /* ---------- build category panels ---------- */
+    (function(){
+      const host=document.getElementById("collections");
+      Object.keys(CAT).forEach(key=>{
+        const c=CAT[key];
+        const chips=PRODUCTS.filter(p=>p.cat===key).slice(0,3).map(p=>`<span>${p.name}</span>`).join("");
+        const btnClass=c.tone==="dark"?"btn-invert":"btn-outline";
+        const el=document.createElement("div");
+        el.className="panel "+c.tone;
+        el.innerHTML=`
+          <div class="panel-bgword" data-parallax="60">${c.label}</div>
+          <div class="wrap panel-cols">
+            <div class="panel-text">
+              <div class="panel-meta reveal"><span class="num">${c.num}</span><span class="ln"></span><span class="ic">${c.icon}${c.sub}</span></div>
+              <div class="panel-logo reveal"><div class="panel-px">PX</div><h2 class="panel-name">${c.label}</h2></div>
+              <p class="panel-line reveal">${c.line}</p>
+              <div class="panel-chips reveal">${chips}</div>
+              <div class="panel-btn reveal">
+                <button class="btn ${btnClass}" data-magnetic data-scroll="#products"><span class="lbl">View ${c.label}</span>
+                <svg class="arw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+              </div>
+            </div>
+            <div class="panel-stage">
+              <div class="panel-halo"></div>
+              <div class="panel-bottle" data-parallax="90"><div class="b-inner">${bottleSVG(c.hue,"PX")}</div></div>
+            </div>
+          </div>`;
+        host.appendChild(el);
+      });
+    })();
+
+    /* ---------- science metrics + pillars ---------- */
+    document.getElementById("sciMetrics").innerHTML=SCI_METRICS.map(m=>
+      `<div class="sci-metric reveal"><div class="val" data-count="${m.val}" data-dec="${m.dec}" data-suf="${m.suf}">0${m.suf}</div><div class="lb">${m.lb}</div></div>`).join("");
+    document.getElementById("sciPillars").innerHTML=SCI_PILLARS.map(p=>
+      `<div class="sci-pillar reveal"><div class="ic">${p.i}</div><h3>${p.t}</h3><p>${p.b}</p></div>`).join("");
+
+    /* ---------- why grid ---------- */
+    document.getElementById("whyGrid").innerHTML=WHY.map(f=>
+      `<div class="why-cell reveal"><div class="ic">${f.i}</div><h3>${f.t}</h3><p>${f.b}</p></div>`).join("")
+      +`<div class="why-cell filler"><span>ENGINEERED · PX</span></div>`;
+
+    /* ---------- proof ---------- */
+    document.getElementById("proofGrid").innerHTML=PROOF.map(s=>
+      s.text?`<div class="proof-cell reveal"><div class="val">${s.text}</div><div class="lb">${s.lb}</div></div>`
+            :`<div class="proof-cell reveal"><div class="val" data-count="${s.val}" data-dec="${s.dec}" data-suf="${s.suf}">0${s.suf}</div><div class="lb">${s.lb}</div></div>`
+    ).join("");
+
+    /* ---------- products ---------- */
+    const grid=document.getElementById("prodGrid");
+    function cardHTML(p){
+      return `<div class="card" data-cat="${p.cat}" data-tilt>
+        <div class="card-glare"></div>
+        <div class="card-hd"><div><div class="tag">${p.tag}</div><h3>${p.name}</h3></div>
+          <span class="go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 17L17 7M9 7h8v8"/></svg></span></div>
+        <div class="card-stage"><div class="shadow"></div><div class="tilt">${bottleSVG(p.hue,"PX")}</div>
+          <div class="card-reveal"><p>${p.desc}</p><div class="row"><span style="color:var(--ink)">${p.spec}</span><span class="accent">${p.purity} pure</span></div></div>
+        </div>
+        <div class="card-ft"><span class="from">From</span><span class="price">$${p.price}<small>/ box</small></span></div>
+      </div>`;
+    }
+    function renderProducts(filter){
+      const list=filter==="all"?PRODUCTS:PRODUCTS.filter(p=>p.cat===filter);
+      grid.innerHTML=list.map(cardHTML).join("");
+      initTilt();
+      if(window.gsap && !reduce)gsap.fromTo(grid.querySelectorAll(".card"),{opacity:0,y:30},{opacity:1,y:0,duration:.7,ease:"power3.out",stagger:.06});
+    }
+    document.getElementById("prodFilter").addEventListener("click",e=>{
+      const b=e.target.closest("button");if(!b)return;
+      document.querySelectorAll("#prodFilter button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");renderProducts(b.getAttribute("data-filter"));
+    });
+
+    /* ---------- 3D tilt for cards ---------- */
+    function initTilt(){
+      document.querySelectorAll("[data-tilt]").forEach(card=>{
+        const tilt=card.querySelector(".tilt"),glare=card.querySelector(".card-glare");
+        card.addEventListener("mousemove",e=>{
+          const r=card.getBoundingClientRect();
+          const px=(e.clientX-r.left)/r.width-.5, py=(e.clientY-r.top)/r.height-.5;
+          if(tilt)tilt.style.transform=`rotateY(${px*10}deg) rotateX(${-py*10}deg)`;
+          if(glare)glare.style.left=(px+.5)*100+"%";
+        });
+        card.addEventListener("mouseleave",()=>{if(tilt)tilt.style.transform="";});
+      });
+    }
+    renderProducts("all");
+
+    /* ---------- footer misc ---------- */
+    document.getElementById("copy").textContent="© "+new Date().getFullYear()+" PEPTIDEX · Engineered Beyond Perfection";
+    document.getElementById("newsForm").addEventListener("submit",e=>{e.preventDefault();document.getElementById("footMsg").style.display="block";e.target.querySelector("input").value="";});
+
+    /* ---------- magnetic buttons ---------- */
+    if(!reduce)document.querySelectorAll("[data-magnetic]").forEach(btn=>{
+      btn.addEventListener("mousemove",e=>{
+        const r=btn.getBoundingClientRect();
+        const x=e.clientX-(r.left+r.width/2), y=e.clientY-(r.top+r.height/2);
+        btn.style.transform=`translate(${x*.28}px,${y*.42}px)`;
+      });
+      btn.addEventListener("mouseleave",()=>{btn.style.transform="";});
+    });
+
+    /* ---------- smooth-scroll nav ---------- */
+    let lenis=null;
+    function scrollToTarget(sel){
+      const t=document.querySelector(sel);if(!t)return;
+      if(lenis)lenis.scrollTo(t,{offset:0,duration:1.6});
+      else t.scrollIntoView({behavior:"smooth"});
+    }
+    document.querySelectorAll("[data-scroll]").forEach(el=>{
+      el.addEventListener("click",()=>{document.getElementById("navMobile").classList.remove("open");document.getElementById("navMobile").style.height="0";scrollToTarget(el.getAttribute("data-scroll"));});
+    });
+
+    /* ---------- mobile menu ---------- */
+    const burger=document.getElementById("burger"),navMobile=document.getElementById("navMobile");
+    let menuOpen=false;
+    burger.addEventListener("click",()=>{
+      menuOpen=!menuOpen;
+      navMobile.classList.toggle("open",menuOpen);
+      navMobile.style.height=menuOpen?navMobile.querySelector(".nav-mobile-inner").offsetHeight+16+"px":"0";
+      burger.children[0].style.transform=menuOpen?"translateY(3.5px) rotate(45deg)":"";
+      burger.children[1].style.transform=menuOpen?"translateY(-3.5px) rotate(-45deg)":"";
+    });
+
+    /* ---------- navbar scroll state ---------- */
+    const navbar=document.getElementById("navbar");
+    function onScroll(){navbar.classList.toggle("scrolled",window.scrollY>24);}
+    window.addEventListener("scroll",onScroll,{passive:true});onScroll();
+
+    /* ---------- particles ---------- */
+    document.querySelectorAll("canvas.particles").forEach(canvas=>{
+      const ctx=canvas.getContext("2d");if(!ctx)return;
+      const count=+canvas.getAttribute("data-particles")||40;
+      const dpr=Math.min(window.devicePixelRatio||1,2);let w=0,h=0,parts=[],raf=0;
+      function resize(){const r=canvas.parentElement.getBoundingClientRect();w=r.width;h=r.height;
+        canvas.width=w*dpr;canvas.height=h*dpr;canvas.style.width=w+"px";canvas.style.height=h+"px";ctx.setTransform(dpr,0,0,dpr,0,0);
+        parts=Array.from({length:count},()=>({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.6+.4,vx:(Math.random()-.5)*.12,vy:-Math.random()*.18-.03,a:Math.random()*.4+.05,blue:Math.random()<.12}));}
+      function draw(){ctx.clearRect(0,0,w,h);for(const p of parts){p.x+=p.vx;p.y+=p.vy;if(p.y<-8){p.y=h+8;p.x=Math.random()*w;}if(p.x<-8)p.x=w+8;if(p.x>w+8)p.x=-8;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.blue?`rgba(30,94,255,${p.a})`:`rgba(10,10,10,${p.a*.6})`;ctx.fill();}raf=requestAnimationFrame(draw);}
+      resize();window.addEventListener("resize",resize);if(!reduce)draw();else{parts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle="rgba(10,10,10,.2)";ctx.fill();});}
+    });
+
+    /* ---------- counters ---------- */
+    function runCounter(el){
+      const target=+el.getAttribute("data-count"),dec=+el.getAttribute("data-dec")||0,suf=el.getAttribute("data-suf")||"";
+      if(reduce){el.textContent=target.toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec})+suf;return;}
+      const dur=1800,start=performance.now();
+      function tick(now){const t=Math.min((now-start)/dur,1),e=1-Math.pow(1-t,3),v=target*e;
+        el.textContent=v.toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec})+suf;
+        if(t<1)requestAnimationFrame(tick);}
+      requestAnimationFrame(tick);
+    }
+
+    /* ---------- mouse 3D on hero bottle ---------- */
+    if(!reduce){
+      const stage=document.getElementById("heroStage"),bInner=document.getElementById("heroBottleInner");
+      let tx=0,ty=0,cx=0,cy=0;
+      stage&&stage.addEventListener("mousemove",e=>{const r=stage.getBoundingClientRect();tx=((e.clientX-r.left)/r.width-.5);ty=((e.clientY-r.top)/r.height-.5);});
+      stage&&stage.addEventListener("mouseleave",()=>{tx=0;ty=0;});
+      (function loop(){cx+=(tx-cx)*.06;cy+=(ty-cy)*.06;if(bInner)bInner.style.transform=`perspective(1000px) rotateY(${-cx*12}deg) rotateX(${cy*10}deg)`;requestAnimationFrame(loop);})();
+    }
+
+    /* =====================================================================
+       GSAP + Lenis
+       ===================================================================== */
+    function initMotion(){
+      gsap.registerPlugin(ScrollTrigger);
+
+      if(!reduce){
+        lenis=new Lenis({duration:1.15,easing:t=>Math.min(1,1.001-Math.pow(2,-10*t)),smoothWheel:true,touchMultiplier:1.6});
+        lenis.on("scroll",ScrollTrigger.update);
+        gsap.ticker.add(t=>lenis.raf(t*1000));
+        gsap.ticker.lagSmoothing(0);
+      }
+
+      /* reveal on scroll */
+      gsap.utils.toArray(".reveal").forEach(el=>{
+        gsap.fromTo(el,{opacity:0,y:26},{opacity:1,y:0,duration:1,ease:"power3.out",
+          scrollTrigger:{trigger:el,start:"top 88%"}});
+      });
+
+      /* parallax layers */
+      gsap.utils.toArray("[data-parallax]").forEach(el=>{
+        const amt=+el.getAttribute("data-parallax");
+        gsap.to(el,{y:amt,ease:"none",scrollTrigger:{trigger:el.closest("section")||el,start:"top bottom",end:"bottom top",scrub:true}});
+      });
+
+      /* rotate elements on scroll */
+      gsap.utils.toArray("[data-rotate]").forEach(el=>{
+        gsap.to(el,{rotation:90,ease:"none",scrollTrigger:{trigger:el.closest("section"),start:"top bottom",end:"bottom top",scrub:true}});
+      });
+
+      /* hero scroll transition */
+      const heroBottle=document.getElementById("heroBottle"),heroDna=document.getElementById("heroDna"),heroText=document.querySelector(".hero-text");
+      if(heroBottle){
+        gsap.to(heroBottle,{yPercent:-40,scale:.82,ease:"none",scrollTrigger:{trigger:"#hero",start:"top top",end:"bottom top",scrub:true}});
+      }
+      if(heroDna){gsap.to(heroDna,{opacity:0,ease:"none",scrollTrigger:{trigger:"#hero",start:"top top",end:"center top",scrub:true}});}
+      if(heroText){gsap.to(heroText,{yPercent:-14,opacity:0,ease:"none",scrollTrigger:{trigger:"#hero",start:"top top",end:"bottom top",scrub:true}});}
+
+      /* category logo scale + product panel bottle drift handled by parallax */
+      gsap.utils.toArray(".panel-logo").forEach(el=>{
+        gsap.fromTo(el,{scale:1.12},{scale:.95,ease:"none",scrollTrigger:{trigger:el.closest(".panel"),start:"top bottom",end:"bottom top",scrub:true}});
+      });
+
+      /* counters */
+      gsap.utils.toArray("[data-count]").forEach(el=>{
+        ScrollTrigger.create({trigger:el,start:"top 85%",once:true,onEnter:()=>runCounter(el)});
+      });
+
+      ScrollTrigger.refresh();
+    }
+
+    /* =====================================================================
+       Preloader → hero intro
+       ===================================================================== */
+    function heroIntro(){
+      const tl=gsap.timeline({defaults:{ease:"power3.out"}});
+      tl.to(".hero-eyebrow",{opacity:1,y:0,duration:1},0)
+        .to(".hero-h1 .line > span",{y:"0%",duration:1,stagger:.09},0)
+        .to(".hero-copy",{opacity:1,y:0,duration:1},.5)
+        .to(".hero-btns",{opacity:1,y:0,duration:1},.65)
+        .fromTo("#heroBottleInner",{opacity:0,y:60},{opacity:1,y:0,duration:1.4},.2)
+        .to("#scrollcue",{opacity:1,duration:1},1);
+    }
+
+    function runPreloader(){
+      const html=document.documentElement;
+      html.classList.add("lenis-stopped");document.body.style.overflow="hidden";
+      gsap.set(".hero-copy,.hero-btns,.hero-eyebrow",{y:14});
+
+      if(reduce){
+        document.getElementById("preloader").style.display="none";
+        html.classList.remove("lenis-stopped");document.body.style.overflow="";
+        document.querySelectorAll(".hero-h1 .line > span").forEach(s=>s.style.transform="none");
+        gsap.set(".hero-copy,.hero-btns,.hero-eyebrow,#scrollcue,#heroBottleInner",{opacity:1,y:0});
+        initMotion();return;
+      }
+
+      const tl=gsap.timeline();
+      tl.to(".pl-mol",{opacity:1,rotate:0,duration:1.6,ease:"power3.out"},0)
+        .fromTo(".pl-mol",{rotate:-20},{rotate:0,duration:1.6,ease:"power3.out"},0)
+        .fromTo(".pl-mol,.pl-word",{scale:.85},{scale:1.06,duration:2.2,ease:"power2.out"},0)
+        .to(".pl-word",{opacity:1,duration:1.1,ease:"power3.out"},.4)
+        .to(".pl-tags span",{opacity:1,duration:.8,stagger:.2,ease:"power3.out"},.9)
+        .to(".pl-bar",{width:"100%",duration:2.2,ease:"power1.inOut"},0)
+        .to("#preloader",{opacity:0,duration:.9,ease:"power3.out",onComplete:()=>{
+          document.getElementById("preloader").style.display="none";
+          html.classList.remove("lenis-stopped");document.body.style.overflow="";
+        }},2.3)
+        .add(()=>{initMotion();heroIntro();},2.5);
+    }
+
+    /* boot */
+    if(window.gsap && window.Lenis){runPreloader();}
+    else{
+      /* libraries failed to load — still show content gracefully */
+      window.addEventListener("load",()=>{
+        if(window.gsap){runPreloader();}
+        else{
+          document.getElementById("preloader").style.display="none";
+          document.querySelectorAll(".reveal").forEach(el=>{el.style.opacity=1;el.style.transform="none";});
+          document.querySelectorAll(".hero-h1 .line > span").forEach(s=>s.style.transform="none");
+          document.querySelectorAll(".hero-copy,.hero-btns,.hero-eyebrow,#scrollcue,#heroBottleInner").forEach(el=>{el.style.opacity=1;el.style.transform="none";});
+          document.querySelectorAll("[data-count]").forEach(runCounter);
+        }
+      });
+    }
+  })();
+  </script>
+</body>
+</html>
