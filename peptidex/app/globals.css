@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI',
+    'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI',
+    'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  --paper: #ffffff;
+  --ink: #0a0a0a;
+  --muted: #666666;
+  --accent: #1e5eff;
+  --hairline: rgba(0, 0, 0, 0.08);
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+html {
+  scroll-behavior: auto; /* Lenis controls scroll */
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  overflow-x: clip;
+}
+
+::selection {
+  background: rgba(30, 94, 255, 0.16);
+  color: var(--ink);
+}
+
+/* Custom minimalist scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .display-huge {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    line-height: 0.92;
+  }
+  .hairline-b {
+    border-bottom: 1px solid var(--hairline);
+  }
+  .hairline-t {
+    border-top: 1px solid var(--hairline);
+  }
+  .eyebrow {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .glass {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border: 1px solid var(--hairline);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
