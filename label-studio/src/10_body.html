@@ -1,0 +1,53 @@
+<div id="app">
+
+  <!-- ============ TOP BAR ============ -->
+  <div class="topbar">
+    <div class="brandmark">
+      <div class="px">Px</div>
+      <div><b>LABEL STUDIO</b><s>PRO · PHASE 1</s></div>
+    </div>
+    <div id="menubar" style="display:flex;gap:1px"></div>
+    <div class="topspace"></div>
+    <div class="modepill" id="modepill" role="tablist" title="Operating mode"></div>
+    <div style="width:10px"></div>
+    <button class="iconbtn" id="btnTheme" title="Toggle theme (T)">
+      <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+    <button class="iconbtn" id="btnHelp" title="Keyboard shortcuts (?)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 2.5-3 4"/><path d="M12 17h.01"/></svg></button>
+  </div>
+
+  <!-- ============ TOOLBAR ============ -->
+  <div class="toolbar" id="toolbar"></div>
+
+  <!-- ============ WORKSPACE ============ -->
+  <div class="work" id="work">
+
+    <div class="dock left" id="dockLeft"><div class="dockscroll" id="leftScroll"></div></div>
+
+    <div class="canvashost" id="host">
+      <div class="corner"></div>
+      <div class="ruler h" id="rulerH"><canvas id="rhc"></canvas></div>
+      <div class="ruler v" id="rulerV"><canvas id="rvc"></canvas></div>
+      <div class="stage" id="stage">
+        <canvas id="cv"></canvas>
+        <div class="modebanner" id="modeBanner"></div>
+        <div class="stats" id="stats"></div>
+        <div class="zoomhud">
+          <button class="iconbtn" id="zOut" title="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+          <span id="zVal" style="min-width:56px;text-align:center">100%</span>
+          <button class="iconbtn" id="zIn" title="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+          <div style="width:1px;height:14px;background:var(--line2)"></div>
+          <button class="iconbtn" id="zFit" title="Fit to view (⇧1)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="dock right" id="dockRight"><div class="dockscroll" id="rightScroll"></div></div>
+  </div>
+
+  <!-- ============ STATUS ============ -->
+  <div class="status" id="status"></div>
+</div>
+
+<div id="toasts"></div>
+<div id="modals"></div>
