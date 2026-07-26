@@ -41,7 +41,7 @@ function governAttributes(){
 }
 
 /* --------------------------------------------------------------------------
-   2 · A parallax engine that costs almost nothing.
+   2 · A parallax engine that costs almost nothing, and flows.
 
    The original read getBoundingClientRect() for every element inside its own
    write loop. That forces a synchronous layout per element per frame, and
@@ -49,9 +49,24 @@ function governAttributes(){
    into the next reading and the node creeps.
 
    This one measures each node once, while it is at rest, and derives the rest
-   from the scroll position: no layout is read per frame, there is no feedback
-   path, output lands on a whole pixel, and an unchanged value is not written.
+   from the scroll position: no layout is read per frame, and there is no
+   feedback path.
+
+   It does not jump to that position either. Writing the exact target every
+   frame ties the light rigidly to the scrollbar — it starts and stops when the
+   finger does, which is what makes it read as a sheet being dragged. Instead
+   each plane eases toward its target and keeps easing after the scroll stops,
+   so the light arrives a moment late and settles. Planes further back ease
+   more slowly, so the field arrives in depth order rather than as one piece.
+
+   Sub-pixel output is deliberate here: these are soft gradients and huge faint
+   lettering on their own compositor layers, and rounding them to whole pixels
+   is what would make a slow drift look stepped.
    -------------------------------------------------------------------------- */
+const EASE_BASE = 0.085;   /* how fast a plane closes on its target, per frame */
+const EASE_DEPTH = 0.55;   /* how much its own speed slows that down */
+const REST = 0.12;         /* px — below this a plane has arrived; the rest is invisible */
+
 function installEngine(){
   function scrollY(){
     return (typeof pageScroll === 'number' ? pageScroll : 0) ||
@@ -60,12 +75,27 @@ function installEngine(){
   function measure(){
     const sy = scrollY();
     for(const P of parEls){
-      const el = P.el, prev = el.style.transform;
+      const el = P.el;
+
+      const prev = el.style.transform;
+
+      /* Some of these are placed by a transform of their own — the big ghost
+         lettering behind the line cards is centred with translateY(-50%), and
+         the halos with translate(-50%,-50%). Writing the parallax over that
+         would drop them by half their size. Clearing the inline value first
+         exposes what the stylesheet asked for, which the parallax composes
+         onto rather than replaces. */
+      el.style.transform = '';
+      const cs = getComputedStyle(el).transform;
+      P.base = (cs && cs !== 'none') ? cs + ' ' : '';
+
       el.style.transform = 'none';
       const r = el.getBoundingClientRect();
       P.dc = r.top + sy + r.height / 2;
       el.style.transform = prev;
       el.__pxTf = null;
+      P.k = Math.max(0.035, EASE_BASE - Math.abs(P.sp) * EASE_DEPTH);
+      P.cur = undefined;          /* the first frame arrives already settled */
     }
   }
 
@@ -77,22 +107,29 @@ function installEngine(){
     rz = setTimeout(() => { measure(); parallaxTick(); }, 150);
   }, { passive:true });
 
-  let lastY = null;
   parallaxRun = function(){
     parScheduled = false;
     if(!parEls.length) return;
-    const sy = scrollY();
-    if(sy === lastY) return;             /* the pointer alone changes nothing */
-    lastY = sy;
-    const vh = innerHeight;
+    const sy = scrollY(), vh = innerHeight;
     const mf = (typeof MOBILE !== 'undefined' && MOBILE) ? 0.3 : 1;
+    let flowing = false;
+
     for(let i = 0; i < parEls.length; i++){
       const P = parEls[i], el = P.el;
       if(P.dc === undefined) continue;
-      const c = P.dc - sy - vh / 2;
-      const tf = 'translate3d(0,' + Math.round(-c * P.sp * mf) + 'px,0)';
+
+      const tgt = -(P.dc - sy - vh / 2) * P.sp * mf;
+      if(P.cur === undefined) P.cur = tgt;
+      const d = tgt - P.cur;
+      if(Math.abs(d) > REST){ P.cur += d * P.k; flowing = true; }
+      else P.cur = tgt;
+
+      const tf = (P.base || '') + 'translate3d(0,' + P.cur.toFixed(2) + 'px,0)';
       if(el.__pxTf !== tf){ el.__pxTf = tf; el.style.transform = tf; }
     }
+
+    /* keep going while anything is still arriving, and stop the moment it has */
+    if(flowing) parallaxTick();
     /* skew is disabled by stylesheet — it is not computed at all */
   };
 }
