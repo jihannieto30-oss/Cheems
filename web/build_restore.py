@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Restore PEPTIDEX to the original site.
+"""Build PEPTIDEX: the original site + the motion governor.
 
-The platform layer is NOT applied. The only change to the base file is a
-swap of three static images: the line vials now wear the supplied production
-label artwork. That is a data substitution — it cannot move, shake or
-re-layout anything, because no CSS rule and no line of script is added.
+Two changes to the base file and nothing else:
+
+  1. three static images — the line vials wear the supplied label artwork
+  2. the motion governor — a purely subtractive patch that anchors the
+     products and the marks and damps the parallax to a tenth
+
+No colour, layout, typography, spacing or markup is altered.
 """
 import base64, os, re
 
@@ -25,7 +28,21 @@ for k in ('fitness', 'beauty', 'longevity'):
     if not n: raise SystemExit('vial_%s not found' % k)
     print('  vial_%-10s replaced' % k)
 
+# ---- motion governor: subtractive only ------------------------------------
+SRC = os.path.join(HERE, 'web_src')
+def rd(p):
+    with open(p, encoding='utf-8') as f: return f.read()
+
+css = rd(os.path.join(SRC, '30_motion.css'))
+js  = rd(os.path.join(SRC, '31_motion.js'))
+i = html.rindex('</style>')
+html = html[:i] + '\n/* ===== MOTION GOVERNOR ===== */\n' + css + '\n' + html[i:]
+j = html.rindex('</script>')
+html = html[:j] + '\n/* ===== MOTION GOVERNOR ===== */\n' + js + '\n' + html[j:]
+print('  motion governor  %.1f KB css + %.1f KB js'
+      % (len(css.encode())/1024, len(js.encode())/1024))
+
 with open(OUT, 'w', encoding='utf-8') as f: f.write(html)
 with open(os.path.join(HERE, 'index.html'), 'w', encoding='utf-8') as f: f.write(html)
-print('\n  PEPTIDEX.html  %.1f KB   (original site + supplied vial artwork)'
+print('\n  PEPTIDEX.html  %.1f KB   (site + vials + motion governor)'
       % (len(html.encode())/1024))

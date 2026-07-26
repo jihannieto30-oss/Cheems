@@ -1,0 +1,90 @@
+/* ============================================================================
+   PEPTIDEX — MOTION GOVERNOR
+   Purely subtractive. No colour, layout, type, spacing or image is touched.
+   The products and the marks are anchored; only the environment may move.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   1 · THE LOOPS
+   Three infinite keyframe animations were running on the brand assets. They
+   are the reason the logo appeared to shake and the vials appeared to float —
+   none of it was parallax.
+
+     #home-hero .logowrap img   breath 7s   scale(1) ⇄ scale(1.018)
+     .vwrap img                 vfloat 6.5s translateY(-16px) rotate(.8deg)
+     #pv .inner                 vfloat 6.5s translateY(-16px) rotate(.8deg)
+
+   A product on a marble pedestal does not breathe.
+   --------------------------------------------------------------------------- */
+#home-hero .logowrap img,
+.vwrap img,
+.vialphoto,
+#pv .inner,
+#pv img{
+  animation:none!important;
+}
+
+/* ---------------------------------------------------------------------------
+   2 · THE ANCHOR
+   A hard lock. A stylesheet !important outranks the inline transform that any
+   engine — parallax, GSAP or otherwise — may try to write, so these elements
+   cannot be moved by anything, ever.
+   --------------------------------------------------------------------------- */
+.vwrap,
+.vwrap img,
+.vialphoto,
+#pv,
+#pv .inner,
+#pv img,
+#home-hero .logowrap,
+#home-hero .logowrap img,
+#home-hero .lreflect,
+.lhero .copy,
+.lhero .badge,
+.dh-badge,
+.logo-l,
+nav .brand,
+nav .brand img,
+#home-hero .sub,
+#home-hero .meta,
+#home-hero .stats .stat,
+.hv-frame,
+.labshot{
+  transform:none!important;
+}
+
+/* products keep their own light; they simply stop moving inside it */
+.vwrap img,.vialphoto{will-change:auto;}
+#pv .inner{will-change:auto;}
+
+/* ---------------------------------------------------------------------------
+   3 · NO SHEAR
+   Scroll velocity was skewing whole sections. Architecture does not shear.
+   --------------------------------------------------------------------------- */
+[data-skew]{transform:none!important;}
+
+/* ---------------------------------------------------------------------------
+   4 · ENTRANCES
+   A mark arrives by fading in. It never rises, scales, rotates or blurs.
+   --------------------------------------------------------------------------- */
+#home-hero .logowrap,
+#home-hero .lreflect,
+.vwrap,
+.dh-badge,
+.logo-l,
+.lhero .badge{
+  filter:none;
+}
+#home-hero .logowrap img{filter:drop-shadow(0 26px 40px rgba(10,20,60,.13));}
+.vwrap img{filter:drop-shadow(0 44px 46px rgba(10,20,60,.16));}
+
+/* ---------------------------------------------------------------------------
+   5 · THE ENVIRONMENT MAY MOVE
+   Only light, glow and the background lettering carry depth now, and they do
+   it on a GPU layer so the main thread never repaints for them.
+   --------------------------------------------------------------------------- */
+.halo,#sci .gword,.ghost{will-change:transform;}
+
+@media (prefers-reduced-motion:reduce){
+  .halo,#sci .gword,.ghost{transform:none!important;}
+}
