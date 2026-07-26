@@ -11,7 +11,9 @@
 .vwrap img{width:100%;height:100%;object-fit:contain;display:block;}
 .pcard img,.labshot img,.vialphoto img{display:block;}
 nav .brand img{width:auto;height:24px;}
-img{content-visibility:auto;}
+/* NEVER content-visibility:auto here — it collapses an image to zero height
+   until it is rendered, which is what made the vials vanish and the line
+   cards show empty plates. */
 
 /* ---------- 2 · locked assets are anchored -------------------------------- */
 /* They may be carried by the camera. They may never move on their own. */
@@ -167,3 +169,22 @@ nav .navacc .iconbtn.acct.in{box-shadow:0 0 0 1px rgba(20,26,40,.12),0 2px 8px -
 /* a tier never wraps — it is a stamp, not a paragraph */
 .px-tier,.pxm-card .pxm-tier{white-space:nowrap;}
 .px-card .px-tier{font-size:9px;letter-spacing:.13em;padding:5px 10px;}
+
+/* ============================================================================
+   THE MARK OWNS ITS SPACE
+   The DNA field is the environment, not a competitor. It stays, calmed, and a
+   soft veil of the brand's own white opens up underneath the logotype so the
+   mark reads clean at every scroll position.
+   ============================================================================ */
+#bgfx{opacity:.62;}
+#home-hero .px-lightfield{
+  background:
+    radial-gradient(40% 32% at 50% 40%,rgba(255,255,255,.97),rgba(255,255,255,.80) 48%,transparent 74%),
+    radial-gradient(58% 46% at var(--lx,50%) var(--ly,30%),var(--ice-glow),transparent 70%),
+    radial-gradient(90% 70% at 50% -10%,rgba(255,255,255,.9),transparent 60%);
+}
+.lhero .px-lightfield{
+  background:
+    radial-gradient(34% 40% at 26% 46%,rgba(255,255,255,.92),transparent 70%),
+    radial-gradient(58% 46% at var(--lx,50%) var(--ly,30%),var(--ice-glow),transparent 70%);
+}

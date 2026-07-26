@@ -396,6 +396,13 @@ function unlockAssets(){
   document.querySelectorAll('.logowrap[data-tilt],.vwrap[data-tilt]').forEach(el=>{
     el.removeAttribute('data-tilt');el.__tilt=null;
   });
+  /* the vial drifts, it does not travel: 0.30 → 0.09 */
+  document.querySelectorAll('.vwrap[data-speed]').forEach(el=>{
+    if(parseFloat(el.dataset.speed)>0.1)el.dataset.speed='0.09';
+  });
+  document.querySelectorAll('.logowrap[data-speed]').forEach(el=>{
+    if(Math.abs(parseFloat(el.dataset.speed))>0.1)el.dataset.speed='-0.07';
+  });
   document.querySelectorAll('.logowrap[data-scale],.vwrap[data-scale]').forEach(el=>{
     el.removeAttribute('data-scale');
   });

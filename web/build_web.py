@@ -16,6 +16,22 @@ css  = '\n'.join(rd(os.path.join(SRC, f)) for f in
                  ['00_tokens.css','05_nav.css','10_ui.css','06_card.css','07_stability.css'])
 js   = rd(os.path.join(SRC, '20_platform.js'))
 
+# ---------------------------------------------------------------------------
+# Production vials. The supplied label artwork is wrapped onto the production
+# vial photograph by mk_vials.py — sampled, never redrawn — and swapped in for
+# the placeholder renders that shipped with the base file.
+# ---------------------------------------------------------------------------
+import base64, re
+def datauri(p):
+    with open(p,'rb') as f: return 'data:image/webp;base64,'+base64.b64encode(f.read()).decode()
+VIALS = {k: datauri(os.path.join(HERE,'ls_master','vial_%s.webp'%k))
+         for k in ('fitness','beauty','longevity')}
+
+for k,uri in VIALS.items():
+    pat = re.compile(r'(vial_'+k+r'\s*:\s*")data:image/[a-z]+;base64,[^"]+(")')
+    base, n = pat.subn(lambda m: m.group(1)+uri+m.group(2), base, count=1)
+    if not n: raise SystemExit('vial_%s not found in the base file' % k)
+
 # 1) CSS — appended to the existing sheet so it wins on equal specificity
 i = base.rindex('</style>')
 out = base[:i] + '\n/* ===== PEPTIDEX PLATFORM LAYER ===== */\n' + css + '\n' + base[i:]
