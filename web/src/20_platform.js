@@ -350,20 +350,8 @@ function initCursor(){
     requestAnimationFrame(loop);
   })();
 }
-function initMagnetic(){
-  if(!canHoverFine)return;
-  addEventListener('pointermove',e=>{
-    if(reduced())return;
-    document.querySelectorAll('.btn.mag,[data-mag]').forEach(el=>{
-      const r=el.getBoundingClientRect();
-      const dx=e.clientX-(r.left+r.width/2), dy=e.clientY-(r.top+r.height/2);
-      const d=Math.hypot(dx,dy), reach=Math.max(r.width,r.height)*0.95+42;
-      if(d<reach){const f=(1-d/reach)*0.34;
-        el.style.transform=`translate3d(${(dx*f).toFixed(2)}px,${(dy*f).toFixed(2)}px,0)`;}
-      else if(el.style.transform)el.style.transform='';
-    });
-  },{passive:true});
-}
+/* Magnetism is already owned by the base (gsap.to on .mag). A second writer
+   on the same nodes fights it frame by frame — so this layer adds none. */
 function initProgress(){
   const b=document.createElement('div');b.id='px-prog';document.body.appendChild(b);
   const upd=()=>{
@@ -376,27 +364,17 @@ function initProgress(){
   upd();
 }
 
-/* --- cinematic depth: fore / mid / back with light travel ------------------ */
-let depthEls=[];
-function collectDepth(){
-  depthEls=[...document.querySelectorAll('[data-depth]')]
-    .filter(el=>!el.hasAttribute('data-par'))
-    .map(el=>({el,d:parseFloat(el.dataset.depth||'1')}));
-  document.querySelectorAll('.px-lightfield').forEach(l=>{l.__h=l.parentElement;});
-}
-function depthTick(){
-  if(reduced()||!depthEls.length)return;
-  const vh=innerHeight,mf=(typeof MOBILE!=='undefined'&&MOBILE)?0.35:1;
-  depthEls.forEach(({el,d})=>{
-    const r=el.getBoundingClientRect();
-    const c=r.top+r.height/2-vh/2;
-    el.style.transform=`translate3d(0,${(-c*0.055*d*mf).toFixed(1)}px,0) scale(${(1+d*0.012).toFixed(3)})`;
-  });
-}
-addEventListener('scroll',()=>requestAnimationFrame(depthTick),{passive:true});
+/* --- architectural light -------------------------------------------------
+   The only thing this layer moves is light. Geometry belongs to the base
+   parallax and to the GSAP entrance timelines; a second writer on those
+   nodes fights them every frame. */
+function collectDepth(){}
+function depthTick(){}
 if(canHoverFine)addEventListener('pointermove',e=>{
+  const f=document.querySelectorAll('.px-lightfield');
+  if(!f.length)return;
   const x=(e.clientX/innerWidth*100).toFixed(1), y=(e.clientY/innerHeight*100).toFixed(1);
-  document.querySelectorAll('.px-lightfield').forEach(l=>{l.style.setProperty('--lx',x+'%');l.style.setProperty('--ly',y+'%');});
+  f.forEach(l=>{l.style.setProperty('--lx',x+'%');l.style.setProperty('--ly',y+'%');});
 },{passive:true});
 
 /* ==========================================================================
@@ -1534,36 +1512,13 @@ acctSectionHTML=function(sec){
    sheet styles.
    -------------------------------------------------------------------------- */
 function enhance(){
-  const pick=sel=>[...document.querySelectorAll(sel)].filter(e=>!e.hasAttribute('data-par')&&!e.hasAttribute('data-depth'));
-  /* staggered groups */
-  ['.grid-cat','#lines .grid','.qsteps','.faq-list','.ct-grid','.px-qa','.stats','.cols']
-    .forEach(s=>document.querySelectorAll(s).forEach(g=>g.classList.add('px-stagger','reveal')));
-  /* Cinematic depth. The base already drives a parallax engine on [data-par];
-     rather than run a competing one, we enrol additional planes into it with
-     tuned speeds so foreground, midground and background separate properly.
-     Elements that carry their own CSS transform are deliberately excluded. */
-  const PLANES=[
-    ['#home-hero .cue',      .045, 0],
-    ['#home-hero .sub',      .07,  0],
-    ['.labshot',             .105, .35],
-    ['#sci .gword',          .035, 0],
-    ['#sci .stats',          .075, 0],
-    ['.cat .chead',          .06,  0],
-    ['#lines .head',         .055, 0],
-    ['.qhero .eyebrow',      .05,  0],
-    ['.px-dhead .av',        .085, 0],
-    ['.px-dhead .who',       .04,  0]
-  ];
-  PLANES.forEach(([sel,sp,rot])=>pick(sel).forEach(e=>{
-    e.dataset.par='';e.dataset.speed=String(sp);if(rot)e.dataset.rot=String(rot);
-    e.dataset.depth=String(sp*10);
-  }));
-  try{collectParallax();requestAnimationFrame(parallaxTick);}catch(e){}
-  /* cursor affordances on the catalogue */
+  /* Staggered reveal is applied only to surfaces this layer owns. Base
+     grids are already choreographed by observeReveals() + pageEntrance;
+     adding a second opacity owner there can leave content invisible. */
+  document.querySelectorAll('.px-qa').forEach(g=>g.classList.add('px-stagger'));
+  /* Cursor affordances carry no transform, so they are safe anywhere. */
   document.querySelectorAll('.pcard:not([data-cursor])').forEach(c=>c.dataset.cursor=t('View','Ver'));
   document.querySelectorAll('.px-prow:not([data-cursor])').forEach(c=>c.dataset.cursor=t('Open','Abrir'));
-  /* magnetism on the primary calls to action */
-  document.querySelectorAll('.btn:not(.mag):not([data-mag])').forEach(b=>b.dataset.mag='1');
 }
 
 /* -- render hook ----------------------------------------------------------- */
@@ -1580,7 +1535,7 @@ render=function(route,defer){
     const s=document.querySelector(sel);
     if(s&&!s.querySelector('.px-lightfield')){
       const l=document.createElement('div');l.className='px-lightfield';
-      s.style.position=s.style.position||'relative';
+      if(getComputedStyle(s).position==='static')s.style.position='relative';
       s.insertBefore(l,s.firstChild);
     }
   });
@@ -1808,7 +1763,6 @@ setAcctSection=function(sec){
 applyPrefs();
 mountChrome();
 initCursor();
-initMagnetic();
 initNav();
 initProgress();
 applyPrefs();
@@ -1824,7 +1778,8 @@ document.querySelectorAll('.px-stagger').forEach(el=>requestAnimationFrame(()=>e
   const s=document.querySelector(sel);
   if(s&&!s.querySelector('.px-lightfield')){
     const l=document.createElement('div');l.className='px-lightfield';
-    s.style.position=s.style.position||'relative';s.insertBefore(l,s.firstChild);
+    if(getComputedStyle(s).position==='static')s.style.position='relative';
+    s.insertBefore(l,s.firstChild);
   }
 });
 collectDepth();requestAnimationFrame(depthTick);

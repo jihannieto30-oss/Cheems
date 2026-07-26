@@ -28,14 +28,38 @@ STUB = r"""<script>
     if(v.onComplete)setTimeout(()=>{try{v.onComplete()}catch(e){}},0);
   };
   const TL=()=>{const o={
-    to(t,v){applyVars(t,v||{});return o;}, from(t,v){return o;},
+    to(t,v){applyVars(t,v||{});return o;}, from(t,v){fromTween(t,v||{});return o;},
     fromTo(t,a,b){applyVars(t,b||{});return o;}, set(t,v){applyVars(t,v||{});return o;},
     add(f){ if(typeof f==='function')setTimeout(()=>{try{f()}catch(e){console.error(e)}},0); return o;},
     call(f){return o.add(f);}, kill(){return o;}
   };return o;};
+  /* gsap.from() really does drive the node from a hidden state and own its
+     transform for the whole tween — model that, so a second writer shows up. */
+  const els=(tg)=> typeof tg==='string' ? [...document.querySelectorAll(tg)]
+      : (tg&&tg.nodeType?[tg]:(Array.isArray(tg)?tg:(tg&&tg.length?[...tg]:[])));
+  const fromTween=(tg,v)=>{
+    const D=(v&&v.duration!=null?v.duration:.6)*1000;
+    els(tg).forEach(el=>{
+      if(!el.style)return;
+      el.__gsapOwn=(el.__gsapOwn||0)+1;
+      const t0=performance.now();
+      if(v&&v.opacity!=null)el.style.opacity='0';
+      const step=()=>{
+        const k=Math.min(1,(performance.now()-t0)/D);
+        if(v&&v.opacity!=null)el.style.opacity=String(k);
+        const y=(v&&v.y!=null?v.y:0)*(1-k);
+        const sc=1-((1-(v&&v.scale!=null?v.scale:1))*(1-k));
+        el.style.transform='translate3d(0,'+y.toFixed(2)+'px,0) scale('+sc.toFixed(4)+')';
+        if(k<1)requestAnimationFrame(step);
+        else{ el.style.opacity=''; el.style.transform=''; el.__gsapOwn--; }
+      };
+      requestAnimationFrame(step);
+    });
+    if(v&&v.onComplete)setTimeout(v.onComplete,D);
+  };
   window.gsap={ set:applyVars, to:applyVars, fromTo:(t,a,b)=>applyVars(t,b||{}),
-    from:(t,v)=>{ if(v&&v.onComplete)setTimeout(v.onComplete,0); },
-    timeline(o){ if(o&&o.onComplete)setTimeout(o.onComplete,0); return TL(); },
+    from:fromTween,
+    timeline(o){ if(o&&o.onComplete)setTimeout(o.onComplete,900); return TL(); },
     ticker:{lagSmoothing(){}}, registerPlugin(){}, killTweensOf(){} };
   window.Lenis=function(){ this.raf=()=>{}; this.on=(e,f)=>{ if(e==='scroll')addEventListener('scroll',()=>f({scroll:scrollY,velocity:0}),{passive:true}); };
     this.stop=()=>{}; this.start=()=>{}; this.scrollTo=(y,o)=>{ try{window.scrollTo(0,typeof y==='number'?y:0)}catch(e){} }; };

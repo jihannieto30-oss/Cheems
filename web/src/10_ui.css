@@ -336,9 +336,6 @@ nav .navacc .iconbtn:hover{transform:translateY(-2px);box-shadow:var(--el-2);}
 .px-sh .ln{flex:1;height:1px;background:var(--hairline);}
 .px-sh .n{font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--muted);font-variant-numeric:tabular-nums;}
 
-/* ---------------------------- MAGNETIC HOVER ------------------------------ */
-[data-mag]{will-change:transform;}
-
 /* --------------------------- SCROLL PROGRESS ------------------------------ */
 #px-prog{position:fixed;top:0;left:0;height:2px;width:100%;z-index:9300;pointer-events:none;
   transform-origin:0 50%;transform:scaleX(0);

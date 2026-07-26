@@ -111,7 +111,7 @@ p{line-height:var(--lh-body);}
 
 /* buttons gain weight and a light sweep */
 .btn{position:relative;overflow:hidden;border-radius:var(--r-full);
-  transition:transform var(--d-2) var(--e-out),box-shadow var(--d-3) var(--e-out),
+  transition:box-shadow var(--d-3) var(--e-out),
              background var(--d-3) var(--e-out),color var(--d-3) var(--e-out);
   box-shadow:var(--el-2);}
 .btn::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
@@ -119,7 +119,7 @@ p{line-height:var(--lh-body);}
   transform:translateX(-130%);transition:transform .85s var(--e-out);}
 .btn:hover::after{transform:translateX(130%);}
 .btn:hover{box-shadow:var(--el-4);}
-.btn:active{transform:scale(.975);}
+
 
 /* cards: quieter at rest, alive on approach */
 .pcard,.qstep,.rec-card,.tool-card,.faq-i{
@@ -151,8 +151,6 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)!important;
 .px-stagger.in>*:nth-child(8){transition-delay:385ms}
 .px-stagger.in>*:nth-child(n+9){transition-delay:430ms}
 
-/* depth layers for cinematic parallax */
-[data-depth]{will-change:transform;transform-style:preserve-3d;}
 .px-lightfield{position:absolute;inset:-20%;pointer-events:none;z-index:0;
   background:radial-gradient(60% 50% at var(--lx,50%) var(--ly,32%),rgba(30,94,255,.11),transparent 68%);
   transition:opacity var(--d-5) var(--e-out);}
