@@ -6,8 +6,9 @@ Three changes to the base file and nothing else:
   1. the label system — one renderer draws the landscape band for every label
      on the site, from artwork cut out of the supplied panels. The three line
      vials it produces are baked in so the first paint is already right.
-  2. the open product sits nearer the middle of the screen
-  3. the motion governor — a purely subtractive patch that anchors the products
+  2. the member overview — the account's own record, shown in full
+  3. the open product sits nearer the middle of the screen
+  4. the motion governor — a purely subtractive patch that anchors the products
      and the marks and damps the parallax to a tenth
 
 No colour, typography or copy elsewhere on the site is altered.
@@ -40,8 +41,11 @@ for k in ('fitness', 'beauty', 'longevity'):
 # ---- 2 · the layers -------------------------------------------------------
 kit   = rd(os.path.join(M, 'labelkit.json'))
 label = rd(os.path.join(SRC, '40_label.js')).replace('__LABELKIT__', kit)
-css   = rd(os.path.join(SRC, '41_label.css')) + '\n' + rd(os.path.join(SRC, '30_motion.css'))
-js    = ('window.__pxBakedLines = true;\n' + label + '\n' + rd(os.path.join(SRC, '31_motion.js')))
+css   = '\n'.join(rd(os.path.join(SRC, f)) for f in
+                  ('41_label.css', '51_profile.css', '30_motion.css'))
+js    = ('window.__pxBakedLines = true;\n' + label + '\n' +
+         rd(os.path.join(SRC, '50_profile.js')) + '\n' +
+         rd(os.path.join(SRC, '31_motion.js')))
 
 i = html.rindex('</style>')
 html = html[:i] + '\n/* ===== PEPTIDEX LABEL + MOTION ===== */\n' + css + '\n' + html[i:]
