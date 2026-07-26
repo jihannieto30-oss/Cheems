@@ -42,10 +42,11 @@ for k in ('fitness', 'beauty', 'longevity'):
 kit   = rd(os.path.join(M, 'labelkit.json'))
 label = rd(os.path.join(SRC, '40_label.js')).replace('__LABELKIT__', kit)
 css   = '\n'.join(rd(os.path.join(SRC, f)) for f in
-                  ('41_label.css', '51_profile.css', '30_motion.css'))
+                  ('41_label.css', '51_profile.css', '61_drop.css', '30_motion.css'))
 js    = ('window.__pxBakedLines = true;\n' + label + '\n' +
          rd(os.path.join(SRC, '50_profile.js')) + '\n' +
-         rd(os.path.join(SRC, '31_motion.js')))
+         rd(os.path.join(SRC, '31_motion.js')) + '\n' +
+         rd(os.path.join(SRC, '60_drop.js')))
 
 i = html.rindex('</style>')
 html = html[:i] + '\n/* ===== PEPTIDEX LABEL + MOTION ===== */\n' + css + '\n' + html[i:]

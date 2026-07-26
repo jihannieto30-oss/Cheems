@@ -83,8 +83,8 @@ nav .brand img,
    Only light, glow and the background lettering carry depth now, and they do
    it on a GPU layer so the main thread never repaints for them.
    --------------------------------------------------------------------------- */
-.halo,#sci .gword,.ghost{will-change:transform;}
+.halo,#sci .gword{will-change:transform;}
 
 @media (prefers-reduced-motion:reduce){
-  .halo,#sci .gword,.ghost{transform:none!important;}
+  .halo,#sci .gword{transform:none!important;}
 }

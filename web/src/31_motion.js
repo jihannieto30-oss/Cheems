@@ -11,8 +11,10 @@ const BRAND = '.vwrap,.vialphoto,#pv,#pv .inner,#pv img,.logowrap,.lreflect,' +
               '.badge,.dh-badge,.logo-l,.brand,.brand img,#auth-logo,.dlogo,' +
               '#pre img,.g-av img,.hv-frame,.labshot';
 
-/* The only things allowed to drift, and only as atmosphere. */
-const ATMOSPHERE = '.halo,.gword,.ghost';
+/* The only things allowed to drift, and only as atmosphere. The ghost
+   lettering on the line cards is no longer among them: the drift between the
+   lines is replaced by the drop, which lands on those bands instead. */
+const ATMOSPHERE = '.halo,.gword';
 
 /* Parallax is reduced to a tenth of what it was. */
 const DAMP = 0.10;
