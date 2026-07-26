@@ -134,10 +134,14 @@ input,select,textarea{transition:border-color var(--d-2) var(--e-out),box-shadow
 input:focus,select:focus,textarea:focus{border-color:var(--accent)!important;
   box-shadow:0 0 0 4px rgba(30,94,255,.12);outline:none;}
 
-/* reveals: masked, staggered, directional */
-.reveal{opacity:0;transform:translate3d(0,26px,0);
+/* Reveals. A node the parallax engine owns only fades — its position is
+   written every frame, and a transform transition would smear that into lag
+   and fractional pixels. */
+.reveal{opacity:0;transition:opacity var(--d-4) var(--e-out);}
+.reveal:not([data-par]){transform:translate3d(0,26px,0);
   transition:opacity var(--d-4) var(--e-out),transform var(--d-4) var(--e-out);}
-.reveal.in{opacity:1;transform:none;}
+.reveal.in{opacity:1;}
+.reveal.in:not([data-par]){transform:none;}
 .px-stagger>*{opacity:0;transform:translate3d(0,22px,0);}
 .px-stagger.in>*{opacity:1;transform:none;
   transition:opacity var(--d-4) var(--e-out),transform var(--d-4) var(--e-out);}

@@ -369,7 +369,7 @@ nav .navacc .iconbtn:hover{transform:translateY(-2px);box-shadow:var(--el-2);}
 .px-comp .tx{min-width:0;}
 .px-comp .tx .cap{margin:0;line-height:1.4;}
 .px-comp .tx button{background:none;border:0;color:var(--accent);font-size:11.5px;padding:0;margin-top:6px;text-align:left;}
-@media(min-width:1560px){.px-comp{flex-direction:row;align-items:center;gap:16px;}}
+
 .px-avstudio{margin-top:var(--s-5);}
 
 /* ------------------------------ COMPACT NAV ------------------------------- */

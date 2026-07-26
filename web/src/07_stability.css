@@ -1,0 +1,169 @@
+/* ============================================================================
+   VISUAL STABILITY, COMPOSITION AND AIR
+   Locked brand assets are anchored. Space is reserved before anything paints.
+   Everything that still moves, moves on a whole pixel.
+   ============================================================================ */
+
+/* ---------- 1 · reserved space: nothing reflows while an asset decodes ----- */
+#home-hero .logowrap{aspect-ratio:1250/789;width:min(540px,72vw);margin-inline:auto;}
+#home-hero .logowrap img{width:100%;height:100%;object-fit:contain;display:block;}
+.vwrap{aspect-ratio:411/1155;}
+.vwrap img{width:100%;height:100%;object-fit:contain;display:block;}
+.pcard img,.labshot img,.vialphoto img{display:block;}
+nav .brand img{width:auto;height:24px;}
+img{content-visibility:auto;}
+
+/* ---------- 2 · locked assets are anchored -------------------------------- */
+/* They may be carried by the camera. They may never move on their own. */
+#home-hero .logowrap,
+#home-hero .lreflect,
+.vwrap,
+nav .brand,
+nav .brand img,
+.pxm-card .pxm-mark{
+  backface-visibility:hidden;
+  -webkit-font-smoothing:antialiased;
+  transform-origin:50% 50%;
+}
+/* `contain:paint` would clip the drop-shadow into a visible box edge */
+#home-hero .logowrap,.vwrap{will-change:transform;contain:layout;}
+
+/* ---------- 3 · no shear. Nothing on this platform is skewed. ------------- */
+[data-skew]{transform:none!important;}
+
+/* ============================================================================
+   COMPOSITION — the platform breathes
+   ============================================================================ */
+
+/* --- home hero: the mark sits in air, centred, with a light plinth -------- */
+#home-hero{padding-top:calc(var(--nav-h) + var(--s-9));padding-bottom:var(--s-9);}
+#home-hero .sub{margin-top:var(--s-7);max-width:min(620px,84vw);margin-inline:auto;
+  font-size:clamp(15px,1.35vw,18px);line-height:1.72;}
+#home-hero .cue{margin-top:var(--s-9);}
+#home-hero .meta{margin-top:var(--s-7);}
+
+/* --- line hero: the vial becomes the centrepiece -------------------------- */
+.lhero{padding-top:calc(var(--nav-h) + var(--s-8));padding-bottom:var(--s-9);}
+.lhero .vwrap{margin-inline:auto;}
+/* the shadow is cast by the object itself, so it follows its silhouette
+   instead of outlining a rectangle */
+.lhero .vwrap img{
+  filter:drop-shadow(0 34px 46px rgba(18,24,38,.18)) drop-shadow(0 6px 14px rgba(18,24,38,.10));
+}
+.lhero .copy{max-width:min(520px,92%);}
+.lhero .copy .desc{margin-top:var(--s-5);font-size:clamp(15px,1.25vw,17px);line-height:1.72;}
+.lhero .copy .usa{margin-top:var(--s-6);}
+
+/* --- catalogue: air between the rows -------------------------------------- */
+.cat{padding-top:var(--s-9);padding-bottom:var(--s-10);}
+.cat .chead{margin-bottom:var(--s-8);}
+.grid-cat{gap:var(--s-5);}
+.pcard{padding:var(--s-5);border-radius:var(--r-4);}
+
+/* --- quality --------------------------------------------------------------- */
+.qhero{padding-top:calc(var(--nav-h) + var(--s-9));}
+.qsteps{gap:var(--s-5);}
+.qstep{padding:var(--s-5);border-radius:var(--r-4);}
+
+/* --- science --------------------------------------------------------------- */
+#sci{padding-top:var(--s-10);padding-bottom:var(--s-10);}
+
+/* --- info pages ------------------------------------------------------------ */
+.info-page,.tools-page,.track-page{padding-top:calc(var(--nav-h) + var(--s-8));}
+
+/* ============================================================================
+   DASHBOARD — nothing touches
+   ============================================================================ */
+.px-dash{padding-top:calc(var(--nav-h) + var(--s-9));}
+.px-grid{gap:var(--s-6);}
+.px-card{padding:var(--s-6);border-radius:var(--r-5);}
+.px-card .ch{margin-bottom:var(--s-5);}
+.px-dhead{
+  display:grid;grid-template-columns:minmax(280px,1fr) minmax(300px,428px);
+  align-items:center;gap:var(--s-8);margin-bottom:var(--s-9);
+}
+.px-dhead .who,.px-dhead .card{min-width:0;}
+@media(max-width:1180px){.px-dhead{grid-template-columns:1fr;gap:var(--s-6);}}
+.px-dhead h1{font-size:clamp(34px,4.8vw,58px);}
+.px-dhead .sub{margin-top:var(--s-4);font-size:15px;max-width:34ch;line-height:1.6;}
+.px-qa{gap:var(--s-3);}
+.px-qa button{padding:var(--s-5);border-radius:var(--r-4);}
+.acct-panel{padding:var(--s-7)!important;}
+.acct-side{padding:var(--s-4)!important;}
+.px-prow{padding:var(--s-3);}
+.px-tl .r{padding:var(--s-3) 0;}
+@media(max-width:1080px){
+  .px-grid{gap:var(--s-5);}
+  .px-card{padding:var(--s-5);}
+  .px-dhead{margin-bottom:var(--s-7);}
+}
+
+/* ============================================================================
+   AVATAR — a framed portrait, not a profile circle
+   ============================================================================ */
+.px-av{
+  border-radius:26%;                       /* squircle-adjacent, never a disc */
+  box-shadow:
+    0 0 0 1px rgba(20,26,40,.10),
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 6px 18px -8px rgba(18,24,38,.45);
+  background:var(--alu-soft);
+  transition:box-shadow var(--d-4) var(--e-out);
+}
+.px-av:hover{
+  transform:none;                          /* portraits do not jump */
+  box-shadow:
+    0 0 0 1px rgba(20,26,40,.16),
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 12px 30px -10px rgba(18,24,38,.5);
+}
+.px-av .pulse{display:none;}               /* no ambient throb on an identity */
+.px-av .tierring{
+  inset:-5px;border-radius:30%;
+  border:1px solid rgba(154,123,63,.42);
+}
+.px-av img,.px-av canvas,.px-av .ini{border-radius:inherit;}
+nav .navacc .iconbtn.acct{border-radius:11px;}
+nav .navacc .iconbtn.acct img{border-radius:11px;}
+nav .navacc .iconbtn.acct.in{box-shadow:0 0 0 1px rgba(20,26,40,.12),0 2px 8px -3px rgba(18,24,38,.4);}
+
+/* ============================================================================
+   MEMBERSHIP CARD — deeper material
+   ============================================================================ */
+.pxm-card{
+  border-radius:20px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.98) inset,
+    0 -1px 0 rgba(20,26,40,.06) inset,
+    0 0 0 1px rgba(20,26,40,.10),
+    0 2px 3px rgba(18,24,38,.05),
+    0 22px 44px -20px rgba(18,24,38,.38),
+    0 60px 110px -60px rgba(18,24,38,.55);
+}
+/* a machined edge: light catches the top-left, shadow settles bottom-right */
+.pxm-card .pxm-name{
+  text-shadow:0 1px 0 rgba(255,255,255,.9);
+}
+.pxm-card .pxm-k{text-shadow:0 1px 0 rgba(255,255,255,.7);}
+.pxm-card .pxm-av{
+  border-radius:13px;
+  box-shadow:
+    0 0 0 1px rgba(20,26,40,.14),
+    0 1px 0 rgba(255,255,255,.7),
+    0 6px 14px -5px rgba(18,24,38,.45);
+}
+.pxm-card .pxm-tier{backdrop-filter:saturate(140%);}
+
+/* ============================================================================
+   ENGINEERED MOTION — nothing snaps, nothing bounces
+   ============================================================================ */
+:root{--e-spring:cubic-bezier(.22,1,.28,1);}   /* weight, no overshoot */
+.px-qa button:hover{transform:translateY(-2px);}
+.pcard:hover{transform:translateY(-4px);}
+.px-prow:hover{transform:none;background:var(--titanium-1);}
+#px-ai-dock:hover{transform:translateY(-2px);}
+.px-avstyles button:hover{transform:translateY(-2px);}
+
+/* a tier never wraps — it is a stamp, not a paragraph */
+.px-tier,.pxm-card .pxm-tier{white-space:nowrap;}
+.px-card .px-tier{font-size:9px;letter-spacing:.13em;padding:5px 10px;}

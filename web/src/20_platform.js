@@ -333,10 +333,12 @@ function initCursor(){
   addEventListener('pointermove',e=>{
     curX=e.clientX;curY=e.clientY;cur.classList.add('on');
     dot.style.transform=`translate3d(${curX}px,${curY}px,0) translate(-50%,-50%)`;
-    const el=e.target.closest('a,button,[data-nav],[role="button"],input,textarea,select,.pcard,.px-prow,.px-qa button,.px-avstyles button');
+    const tg=e.target;
+    if(!tg||typeof tg.closest!=='function'){cur.classList.remove('hot','txt','big');return;}
+    const el=tg.closest('a,button,[data-nav],[role="button"],input,textarea,select,.pcard,.px-prow,.px-qa button,.px-avstyles button');
     cur.classList.toggle('hot',!!el&&!el.matches('input,textarea,select'));
     cur.classList.toggle('txt',!!el&&el.matches('input,textarea'));
-    const big=e.target.closest('[data-cursor]');
+    const big=tg.closest('[data-cursor]');
     cur.classList.toggle('big',!!big);
     if(big){lbl.textContent=big.dataset.cursor;
       lbl.style.transform=`translate3d(${curX}px,${curY}px,0) translate(-50%,-50%)`;}
@@ -376,6 +378,78 @@ if(canHoverFine)addEventListener('pointermove',e=>{
   const x=(e.clientX/innerWidth*100).toFixed(1), y=(e.clientY/innerHeight*100).toFixed(1);
   f.forEach(l=>{l.style.setProperty('--lx',x+'%');l.style.setProperty('--ly',y+'%');});
 },{passive:true});
+
+
+/* ==========================================================================
+   STABILISED PARALLAX ENGINE
+   The base engine reads getBoundingClientRect() inside its write loop, which
+   forces a synchronous layout per element per frame, and it lets the pointer
+   rotate and rescale the locked brand assets. This replaces it with a
+   batched read-then-write pass, whole-pixel output, and a locked-asset
+   policy: the camera may carry a brand asset, it may never deform it.
+   ========================================================================== */
+const LOCKED='.logowrap,.lreflect,.vwrap,.brand,.pxm-mark';
+function isLocked(el){return !!el.closest(LOCKED);}
+
+/** Brand assets keep their translation and lose everything else. */
+function unlockAssets(){
+  document.querySelectorAll('.logowrap[data-tilt],.vwrap[data-tilt]').forEach(el=>{
+    el.removeAttribute('data-tilt');el.__tilt=null;
+  });
+  document.querySelectorAll('.logowrap[data-scale],.vwrap[data-scale]').forEach(el=>{
+    el.removeAttribute('data-scale');
+  });
+  document.querySelectorAll('.logowrap[data-rot],.vwrap[data-rot]').forEach(el=>el.removeAttribute('data-rot'));
+}
+
+function installStableParallax(){
+  /* The base engine derives its offset from getBoundingClientRect() of the
+     element it has just transformed, so every extra invocation feeds the
+     previous result back in and the node creeps. Because the pointer also
+     triggers a tick, a locked asset drifts as soon as the mouse moves.
+
+     This version measures each node's document-space centre once, while it
+     is at rest, and derives everything from the scroll position. No layout
+     is read per frame, there is no feedback path, and the output lands on a
+     whole pixel. */
+  function measure(){
+    const sy=(typeof pageScroll==='number'?pageScroll:0)||window.scrollY||window.pageYOffset||0;
+    for(const P of parEls){
+      const el=P.el, prev=el.style.transform;
+      el.style.transform='none';
+      const r=el.getBoundingClientRect();
+      P.dc=r.top+sy+r.height/2;          /* centre in document space */
+      P.lk=isLocked(el);
+      el.style.transform=prev;
+      el.__pxTf=null;                     /* force one write after measuring */
+    }
+  }
+  const _collect=collectParallax;
+  collectParallax=function(){ _collect(); measure(); };
+
+  let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{measure();parallaxTick();},140)},{passive:true});
+
+  parallaxRun=function(){
+    parScheduled=false;
+    if(!parEls.length)return;
+    const vh=innerHeight, mf=(typeof MOBILE!=='undefined'&&MOBILE)?0.3:1;
+    const sy=(typeof pageScroll==='number'?pageScroll:0)||window.scrollY||window.pageYOffset||0;
+    for(let i=0;i<parEls.length;i++){
+      const P=parEls[i], el=P.el;
+      if(P.dc===undefined)continue;                 /* not measured yet */
+      const c=P.dc-sy-vh/2;
+      let tf='translate3d(0,'+Math.round(-c*P.sp*mf)+'px,0)';
+      if(!P.lk){
+        if(P.rot)tf+=' rotate('+(-c*P.rot*mf*.012).toFixed(2)+'deg)';
+        if(P.sc)tf+=' scale('+(1-Math.min(.24,Math.abs(c)*P.sc*mf*.00034)).toFixed(3)+')';
+        const tl=el.__tilt;
+        if(tl&&(tl.rx||tl.ry))
+          tf+=' perspective(900px) rotateX('+tl.rx.toFixed(2)+'deg) rotateY('+tl.ry.toFixed(2)+'deg)';
+      }
+      if(el.__pxTf!==tf){el.__pxTf=tf;el.style.transform=tf;}
+    }
+  };
+}
 
 /* ==========================================================================
    5 · COMMAND PALETTE
@@ -984,7 +1058,7 @@ function memberCardHTML(u,mini){
     </div>
     <div class="pxm-rail">
       <div class="pxm-cell"><div class="pxm-k">${esc(t('Country','País'))}</div><div class="pxm-v">${esc(cn)}</div></div>
-      <div class="pxm-cell"><div class="pxm-k">${esc(t('Member since','Miembro desde'))}</div><div class="pxm-v">${esc(joined)}</div></div>
+      <div class="pxm-cell"><div class="pxm-k">${esc(t('Since','Desde'))}</div><div class="pxm-v">${esc(joined)}</div></div>
       <div class="pxm-cell"><div class="pxm-k">${esc(t('Line','Línea'))}</div><div class="pxm-v">${esc(line)}</div></div>
       <div class="pxm-cell"><div class="pxm-k">${esc(t('Status','Estado'))}</div>
         <div class="pxm-v pxm-status"><i></i>${esc(t('Active','Activa'))}</div></div>
@@ -1512,6 +1586,7 @@ acctSectionHTML=function(sec){
    sheet styles.
    -------------------------------------------------------------------------- */
 function enhance(){
+  unlockAssets();
   /* Staggered reveal is applied only to surfaces this layer owns. Base
      grids are already choreographed by observeReveals() + pageEntrance;
      adding a second opacity owner there can leave content invisible. */
@@ -1540,7 +1615,7 @@ render=function(route,defer){
     }
   });
   enhance();
-  collectDepth();requestAnimationFrame(depthTick);
+  requestAnimationFrame(()=>{try{collectParallax();parallaxTick();}catch(e){}});
   syncPlatformUI();
   if(key&&key!=='account')logActivity('view','#/'+key);
   const u=currentUser();
@@ -1597,6 +1672,7 @@ afterLogin=function(){
    13 · DELEGATED EVENTS for the new surfaces
    ========================================================================== */
 document.addEventListener('click',e=>{
+  if(!e.target||typeof e.target.closest!=='function')return;
   /* dashboard nav */
   const ds=e.target.closest('[data-dsec]');
   if(ds){setAcctSection(ds.dataset.dsec);return;}
@@ -1735,6 +1811,7 @@ document.addEventListener('change',e=>{
 },true);
 
 document.addEventListener('input',e=>{
+  if(!e.target||typeof e.target.closest!=='function')return;
   const n=e.target.closest('[data-note]');
   if(n){const u=currentUser();if(!u)return;profile(u);
     clearTimeout(n.__t);
@@ -1760,6 +1837,8 @@ setAcctSection=function(sec){
 /* ==========================================================================
    14 · BOOT
    ========================================================================== */
+installStableParallax();
+unlockAssets();
 applyPrefs();
 mountChrome();
 initCursor();
