@@ -1,39 +1,33 @@
-# PEPTIDEX — platform layer
+# PEPTIDEX — web build
 
-A design, motion and personalisation layer that sits **on top of** the existing site.
+## What ships today
 
-> It changes no content, no copy, no branding, no logos, no products and no labels.
-> It only adds experience: interface, motion, personalisation and interaction.
-
-## Build
+`build_restore.py` produces the shipped file:
 
 ```
-python3 build_web.py        # PEPTIDEX.base.html + src/ → PEPTIDEX.html (+ index.html)
-python3 mk_testbuild.py     # _test.html — CDN libraries swapped for local stubs (testing only)
+python3 build_restore.py     # PEPTIDEX.base.html + supplied vial artwork → PEPTIDEX.html
 ```
 
-`PEPTIDEX.base.html` is the untouched site and is never edited by hand. The layer is
-appended at build time: the CSS after the existing sheet, the JS inside the existing
-module so it shares scope with the application.
+That is the **original site**, unchanged, with exactly one difference: the three
+line vials now wear the supplied production label artwork. Normalise the base64
+images out of both files and they are byte-identical — no CSS rule and no line
+of script is added, so nothing new can move, shake or re-layout.
 
-## What the layer adds
+`mk_vials.py` builds those images. It projects each supplied panel onto the
+production vial photograph by inverse cylindrical sampling of the original
+pixels: nothing is redrawn, re-typeset, recoloured or stretched, and the seat
+height is derived from each panel's own aspect ratio so the scale is uniform.
 
-| Source | Contents |
-|---|---|
-| `src/00_tokens.css` | motion curves, elevation scale, radii, spacing, surfaces, dark theme, density, accessibility, refinement pass over existing components |
-| `src/10_ui.css` | precision cursor, command palette, toasts, assistant, member dashboard, avatar studio, settings, notification centre, responsive rules |
-| `src/20_platform.js` | preferences store, profile & membership, avatar engine, cursor & magnetics, scroll progress, depth planes, command palette, notification centre, PX Assistant, dashboard and the new account sections, PDF generator, wiring |
+## The platform layer — parked, not deleted
 
-## Integration points
+`src/` and `build_web.py` hold the experience layer (navigation, membership
+card, assistant, command palette, dashboard, motion). It is **not** in the
+shipped build.
 
-The layer wraps five existing functions rather than editing them:
-`render`, `syncAccountUI`, `accountHTML`, `acctSectionHTML`, `setAcctSection`,
-plus `openProduct`, `toggleFav`, `addToList` and `afterLogin` for activity tracking.
+It kept breaking the live site in ways the local harness could not reproduce:
+the CDN is unreachable here, so GSAP, Lenis and Three.js are replaced by stubs
+and every motion change is effectively untested. Two separate regressions
+reached the user that way.
 
-Everything the layer stores lives in `localStorage` under `px-prefs`, `px-ai-log`
-and the existing `px-account` record. Nothing is transmitted.
-
-## Debug surface
-
-`window.PXP` exposes `prefs()`, `setPref()`, `toast()`, `openCmd()`, `openAI()`,
-`avatarDataURL()`, `buildDoc()`, `tierOf()`, `completion()`, `notify()`, `logActivity()`.
+If any part of it is wanted again, re-apply **one piece at a time** and confirm
+each one in a real browser before adding the next.
