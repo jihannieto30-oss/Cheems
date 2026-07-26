@@ -12,7 +12,8 @@ def rd(p):
     with open(p, encoding='utf-8') as f: return f.read()
 
 base = rd(BASE)
-css  = rd(os.path.join(SRC, '00_tokens.css')) + '\n' + rd(os.path.join(SRC, '10_ui.css'))
+css  = '\n'.join(rd(os.path.join(SRC, f)) for f in
+                 ['00_tokens.css','05_nav.css','10_ui.css','06_card.css'])
 js   = rd(os.path.join(SRC, '20_platform.js'))
 
 # 1) CSS — appended to the existing sheet so it wins on equal specificity

@@ -52,88 +52,28 @@
   --focus:0 0 0 2px var(--paper), 0 0 0 4px var(--accent);
 }
 
-/* ============================ DARK THEME =================================
-   The identity is a white-paper brand. Dark mode is offered as an
-   appearance preference — it inverts the substrate, never the marks.
-   ========================================================================= */
-html[data-theme="dark"]{
-  --paper:#0b0c0f; --ink:#f2f4f7; --muted:#9198a5;
-  --hairline:rgba(255,255,255,.10);
-  --surface:#101217;
-  --surface-2:#14171d;
-  --surface-3:#191d25;
-  --surface-sunken:#0d0f13;
-  --glass:rgba(18,20,26,.72);
-  --glass-brd:rgba(255,255,255,.09);
-  --scrim:rgba(0,0,0,.62);
-  --el-1:0 1px 2px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.3);
-  --el-2:0 2px 6px rgba(0,0,0,.42), 0 8px 20px rgba(0,0,0,.34);
-  --el-3:0 6px 14px rgba(0,0,0,.46), 0 18px 44px rgba(0,0,0,.42);
-  --el-4:0 10px 26px rgba(0,0,0,.5), 0 34px 80px rgba(0,0,0,.5);
-  --el-5:0 18px 48px rgba(0,0,0,.55), 0 60px 130px rgba(0,0,0,.6);
-  --focus:0 0 0 2px #0b0c0f, 0 0 0 4px var(--accent);
-  color-scheme:dark;
+/* ==========================================================================
+   WHITE IS THE BRAND
+   There is no dark mode and no appearance switch. The interface is always
+   bright, architectural and cold-neutral. The palette below is the material
+   language: titanium, brushed aluminium, ice.
+   ========================================================================== */
+:root{
+  --titanium-0:#ffffff;
+  --titanium-1:#f7f8fa;
+  --titanium-2:#eef0f4;
+  --titanium-3:#e3e6ec;
+  --titanium-4:#d3d8e0;
+  --titanium-ink:#5b6270;
+  --ice:#eaf1fb;
+  --ice-line:#cfe0f5;
+  --ice-glow:rgba(120,165,235,.24);
+  --alu:linear-gradient(135deg,#fdfdfe 0%,#e6eaf1 20%,#f9fafc 36%,#dde2eb 57%,#fbfcfd 73%,#e2e7ef 100%);
+  --alu-soft:linear-gradient(140deg,#ffffff 0%,#f4f6f9 45%,#fdfdfe 70%,#eff2f6 100%);
+  --acrylic:rgba(255,255,255,.72);
+  --acrylic-thick:rgba(255,255,255,.86);
+  --acrylic-blur:saturate(180%) blur(30px);
 }
-html[data-theme="dark"] body{background:var(--paper);color:var(--ink);}
-html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);}
-html[data-theme="dark"] ::selection{background:rgba(30,94,255,.34);}
-
-/* surfaces that were hard-coded white in the base sheet */
-html[data-theme="dark"] #lines,
-html[data-theme="dark"] .cat,
-html[data-theme="dark"] .info-page,
-html[data-theme="dark"] .tools-page,
-html[data-theme="dark"] .acct-page,
-html[data-theme="dark"] .track-page,
-html[data-theme="dark"] .co-page{background:var(--paper);}
-html[data-theme="dark"] .pcard,
-html[data-theme="dark"] .qstep,
-html[data-theme="dark"] .rec-card,
-html[data-theme="dark"] .acct-side,
-html[data-theme="dark"] .acct-panel,
-html[data-theme="dark"] .acct-guard,
-html[data-theme="dark"] .tool-card,
-html[data-theme="dark"] .dictcard,
-html[data-theme="dark"] .co-card,
-html[data-theme="dark"] .co-box,
-html[data-theme="dark"] .faq-i,
-html[data-theme="dark"] .ct-card{background:var(--surface);border-color:var(--hairline);}
-html[data-theme="dark"] .pcard:hover{background:var(--surface-2);}
-html[data-theme="dark"] input,
-html[data-theme="dark"] select,
-html[data-theme="dark"] textarea{background:var(--surface-2);color:var(--ink);border-color:var(--hairline);}
-html[data-theme="dark"] input::placeholder,
-html[data-theme="dark"] textarea::placeholder{color:var(--muted);}
-html[data-theme="dark"] .iconbtn{background:rgba(255,255,255,.05);}
-html[data-theme="dark"] .iconbtn:hover{background:var(--ink);color:var(--paper);}
-html[data-theme="dark"] .btn{background:var(--ink);color:var(--paper);}
-html[data-theme="dark"] .btn.ghost{background:transparent;color:var(--ink);}
-html[data-theme="dark"] .btn.ghost:hover{background:var(--ink);color:var(--paper);}
-html[data-theme="dark"] header,
-html[data-theme="dark"] nav.scrolled{background:rgba(11,12,15,.74);}
-html[data-theme="dark"] #mmenu,
-html[data-theme="dark"] #auth .acard,
-html[data-theme="dark"] #wl .wcard,
-html[data-theme="dark"] #bag .bpanel,
-html[data-theme="dark"] #product .panel,
-html[data-theme="dark"] #gate .card{background:var(--surface);color:var(--ink);}
-html[data-theme="dark"] #dive .p{background:var(--paper);}
-html[data-theme="dark"] #pre{background:var(--paper);}
-html[data-theme="dark"] #pre .bar{background:var(--ink);}
-html[data-theme="dark"] nav .burger i{background:var(--ink);}
-html[data-theme="dark"] #sci{background:#06070a;}
-html[data-theme="dark"] footer{background:#06070a;}
-html[data-theme="dark"] .varchip{background:var(--surface-2);}
-html[data-theme="dark"] #bgfx{opacity:.5;}
-/* the identity marks are dark-on-white artwork — lift them, never recolour */
-html[data-theme="dark"] #home-hero .logowrap img,
-html[data-theme="dark"] nav .brand img,
-html[data-theme="dark"] #mmenu .brand img,
-html[data-theme="dark"] #pre img,
-html[data-theme="dark"] #auth-logo,
-html[data-theme="dark"] .dlogo,
-html[data-theme="dark"] footer .flogo img,
-html[data-theme="dark"] .g-av img{filter:invert(1) hue-rotate(180deg) brightness(1.08);}
 
 /* ============================ DENSITY ==================================== */
 html[data-density="compact"]{--s-7:36px; --s-8:48px; --s-9:72px; --s-10:96px; --s-11:128px;}
@@ -216,4 +156,3 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)!important;
 .px-lightfield{position:absolute;inset:-20%;pointer-events:none;z-index:0;
   background:radial-gradient(60% 50% at var(--lx,50%) var(--ly,32%),rgba(30,94,255,.11),transparent 68%);
   transition:opacity var(--d-5) var(--e-out);}
-html[data-theme="dark"] .px-lightfield{background:radial-gradient(60% 50% at var(--lx,50%) var(--ly,32%),rgba(80,130,255,.14),transparent 68%);}

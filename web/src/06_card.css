@@ -1,0 +1,153 @@
+/* ============================================================================
+   MEMBERSHIP CARD
+   A machined object, not a widget. Brushed titanium, guilloche micro-relief,
+   a light that travels with the pointer, and a body that tilts with weight.
+   ============================================================================ */
+.pxm-card{
+  position:relative;
+  width:100%;max-width:428px;aspect-ratio:1.586;   /* ISO/IEC 7810 ID-1 */
+  border-radius:22px;
+  padding:26px 28px;
+  display:flex;flex-direction:column;
+  background:var(--alu);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.95) inset,
+    0 0 0 1px rgba(20,26,40,.09),
+    0 2px 4px rgba(18,24,38,.05),
+    0 18px 40px -18px rgba(18,24,38,.35),
+    0 44px 90px -50px rgba(18,24,38,.5);
+  overflow:hidden;
+  isolation:isolate;
+  transform-style:preserve-3d;
+  transition:box-shadow var(--d-4) var(--e-out);
+  will-change:transform;
+  user-select:none;
+}
+.pxm-card:hover{
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.95) inset,
+    0 0 0 1px rgba(20,26,40,.13),
+    0 4px 8px rgba(18,24,38,.06),
+    0 28px 58px -20px rgba(18,24,38,.4),
+    0 64px 120px -55px rgba(18,24,38,.55);
+}
+
+/* guilloche — engraved, never printed */
+.pxm-card::before{
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(115deg,rgba(255,255,255,.75) 0 1px,transparent 1px 6px),
+    repeating-linear-gradient(65deg,rgba(20,26,40,.045) 0 1px,transparent 1px 8px),
+    repeating-linear-gradient(0deg,rgba(20,26,40,.016) 0 1px,transparent 1px 4px);
+  mix-blend-mode:overlay;opacity:.9;
+}
+/* the travelling light */
+.pxm-card::after{
+  content:'';position:absolute;inset:-40%;z-index:1;pointer-events:none;
+  background:
+    radial-gradient(38% 34% at var(--mx,50%) var(--my,32%),rgba(255,255,255,.92),rgba(255,255,255,0) 62%),
+    linear-gradient(115deg,transparent 36%,rgba(255,255,255,.5) 48%,transparent 60%);
+  mix-blend-mode:screen;opacity:.75;
+  transition:opacity var(--d-4) var(--e-out);
+}
+.pxm-card:hover::after{opacity:1;}
+.pxm-card>*{position:relative;z-index:2;}
+
+/* --- head ---------------------------------------------------------------- */
+.pxm-card .pxm-head{display:flex;align-items:flex-start;gap:14px;}
+.pxm-card .pxm-mark{height:34px;width:auto;opacity:.94;flex:none;}
+.pxm-card .pxm-tier{
+  margin-left:auto;display:inline-flex;align-items:center;gap:6px;
+  font-size:8.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  padding:5px 11px;border-radius:var(--r-full);
+  color:#7d6534;
+  background:linear-gradient(120deg,rgba(212,187,138,.34),rgba(212,187,138,.1));
+  box-shadow:inset 0 0 0 1px rgba(154,123,63,.34),0 1px 2px rgba(18,24,38,.06);
+}
+.pxm-card .pxm-tier::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor;}
+.pxm-card[data-tier="founding"] .pxm-tier{color:#4a4f59;
+  background:linear-gradient(120deg,rgba(196,203,214,.5),rgba(196,203,214,.14));
+  box-shadow:inset 0 0 0 1px rgba(120,130,146,.4),0 1px 2px rgba(18,24,38,.06);}
+
+/* --- portrait + identity -------------------------------------------------- */
+.pxm-card .pxm-body{display:flex;align-items:center;gap:15px;margin-top:auto;}
+.pxm-card .pxm-av{
+  width:52px;height:52px;border-radius:14px;overflow:hidden;flex:none;
+  box-shadow:0 0 0 1px rgba(20,26,40,.12),0 4px 12px -4px rgba(18,24,38,.4);
+}
+.pxm-card .pxm-av img{width:100%;height:100%;object-fit:cover;display:block;}
+.pxm-card .pxm-id{min-width:0;flex:1;}
+.pxm-card .pxm-name{
+  font-size:19px;font-weight:600;letter-spacing:-.022em;line-height:1.1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#121722;
+}
+.pxm-card .pxm-num{
+  margin-top:5px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12.5px;letter-spacing:.18em;color:#3d4552;
+  text-shadow:0 1px 0 rgba(255,255,255,.8);
+}
+
+/* --- footer rail ---------------------------------------------------------- */
+.pxm-card .pxm-rail{
+  display:flex;gap:0;margin-top:18px;padding-top:14px;
+  border-top:1px solid rgba(20,26,40,.09);
+  box-shadow:0 -1px 0 rgba(255,255,255,.8);
+}
+.pxm-card .pxm-cell{flex:1 1 0;min-width:0;padding-right:10px;}
+.pxm-card .pxm-cell+.pxm-cell{padding-left:10px;border-left:1px solid rgba(20,26,40,.07);}
+.pxm-card .pxm-k{
+  font-size:7px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  color:#7b8391;margin-bottom:5px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.pxm-card .pxm-v{
+  font-size:11.5px;font-weight:550;letter-spacing:-.005em;color:#242b38;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.pxm-card .pxm-status{display:inline-flex;align-items:center;gap:5px;}
+.pxm-card .pxm-status i{
+  width:5px;height:5px;border-radius:50%;background:var(--ok);flex:none;
+  box-shadow:0 0 0 2.5px rgba(15,157,92,.16);
+  animation:mcPulse 2.8s var(--e-out) infinite;
+}
+@keyframes mcPulse{0%,100%{box-shadow:0 0 0 2.5px rgba(15,157,92,.16)}50%{box-shadow:0 0 0 5px rgba(15,157,92,.04)}}
+html[data-motion="reduced"] .pxm-card .pxm-status i{animation:none;}
+
+/* --- compact variant for the account rail --------------------------------- */
+.pxm-card.mini{max-width:none;aspect-ratio:auto;padding:16px 17px;border-radius:16px;}
+.pxm-card.mini .pxm-rail{margin-top:13px;padding-top:11px;}
+.pxm-card.mini .pxm-av{width:42px;height:42px;border-radius:12px;}
+.pxm-card.mini .pxm-name{font-size:15.5px;}
+.pxm-card.mini .pxm-num{font-size:11px;letter-spacing:.14em;}
+.pxm-card.mini .pxm-mark{height:26px;}
+.pxm-card.mini .pxm-cell:nth-child(2),
+.pxm-card.mini .pxm-cell:nth-child(3){display:none;}
+.pxm-card.mini .pxm-cell:nth-child(4){padding-left:10px;}
+.pxm-card.mini .pxm-tier{font-size:8px;padding:4px 9px;letter-spacing:.16em;}
+.pxm-card.mini .pxm-body{margin-top:16px;}
+
+@media(max-width:520px){
+  .pxm-card{padding:20px 20px;border-radius:18px;}
+  .pxm-card .pxm-name{font-size:17px;}
+  .pxm-card .pxm-rail{flex-wrap:wrap;gap:10px 0;}
+  .pxm-card .pxm-cell{flex:0 0 50%;}
+  .pxm-card .pxm-cell:nth-child(odd)+.pxm-cell{padding-left:12px;}
+  .pxm-card .pxm-cell:nth-child(3){padding-left:0;border-left:0;}
+}
+
+/* ============================================================================
+   ARCHITECTURAL LIGHT — the surrounding surfaces
+   ============================================================================ */
+.px-lightfield{
+  background:
+    radial-gradient(58% 46% at var(--lx,50%) var(--ly,30%),var(--ice-glow),transparent 70%),
+    radial-gradient(90% 70% at 50% -10%,rgba(255,255,255,.9),transparent 60%);
+}
+.px-card{background:var(--alu-soft);}
+.px-card::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+}
+.px-qa button{background:linear-gradient(150deg,#fff,#f4f6f9);}
+.px-qa button:hover{background:linear-gradient(150deg,#fff,#eef2f8);border-color:var(--ice-line);}
+.acct-side,.acct-panel{background:var(--alu-soft)!important;}

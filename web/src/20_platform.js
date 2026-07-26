@@ -11,7 +11,7 @@
    0 · STORE — preferences and profile, layered onto the existing user object
    ========================================================================== */
 const PKEY='px-prefs';
-const DEF_PREFS={theme:'system',motion:'full',density:'default',cursor:true,dockAI:true,dash:null};
+const DEF_PREFS={motion:'full',density:'default',cursor:true,dockAI:true,dash:null};
 let PREFS=(()=>{try{return Object.assign({},DEF_PREFS,JSON.parse(localStorage.getItem(PKEY)||'{}'))}catch(e){return Object.assign({},DEF_PREFS)}})();
 function savePrefs(){try{localStorage.setItem(PKEY,JSON.stringify(PREFS))}catch(e){}}
 function setPref(k,v){PREFS[k]=v;savePrefs();applyPrefs();}
@@ -127,16 +127,15 @@ function recordSession(){
 /* ==========================================================================
    1 · APPEARANCE
    ========================================================================== */
-const mqDark=matchMedia('(prefers-color-scheme:dark)');
 const mqMotion=matchMedia('(prefers-reduced-motion:reduce)');
 function applyPrefs(){
   const root=document.documentElement;
-  const dark=PREFS.theme==='dark'||(PREFS.theme==='system'&&mqDark.matches);
-  root.setAttribute('data-theme',dark?'dark':'light');
+  /* White is the brand. There is no dark mode and no appearance switch. */
+  root.setAttribute('data-theme','light');
   root.setAttribute('data-motion',(PREFS.motion==='reduced'||mqMotion.matches)?'reduced':'full');
   root.setAttribute('data-density',PREFS.density||'default');
   const mt=document.querySelector('meta[name="theme-color"]');
-  if(mt)mt.setAttribute('content',dark?'#0b0c0f':'#ffffff');
+  if(mt)mt.setAttribute('content','#ffffff');
   const c=document.getElementById('px-cursor');
   if(c)c.style.display=(PREFS.cursor&&!reduced())?'':'none';
   const d=document.getElementById('px-ai-dock');
@@ -148,7 +147,6 @@ function applyPrefs(){
   });
 }
 const reduced=()=>PREFS.motion==='reduced'||mqMotion.matches;
-mqDark.addEventListener&&mqDark.addEventListener('change',()=>{if(PREFS.theme==='system')applyPrefs();});
 
 /* ==========================================================================
    2 · TOASTS
@@ -441,9 +439,6 @@ function cmdIndex(){
   acts.forEach(([n,s,f])=>push(t('Actions','Acciones'),K_IC.act,n,s,'↵',f));
   /* settings */
   const sets=[
-    [t('Theme · Light','Tema · Claro'),()=>setPref('theme','light')],
-    [t('Theme · Dark','Tema · Oscuro'),()=>setPref('theme','dark')],
-    [t('Theme · System','Tema · Sistema'),()=>setPref('theme','system')],
     [t('Motion · Full','Movimiento · Completo'),()=>setPref('motion','full')],
     [t('Motion · Reduced','Movimiento · Reducido'),()=>setPref('motion','reduced')],
     [t('Language · English','Idioma · Inglés'),()=>{if(LANG!=='en')document.getElementById('langTog').click();}],
@@ -985,6 +980,90 @@ function sendAI(){
   },380+Math.random()*280);
 }
 
+
+/* ==========================================================================
+   MEMBERSHIP CARD — the member's identity as an object
+   ========================================================================== */
+function memberCardHTML(u,mini){
+  if(!u)return '';
+  const p=profile(u),tier=tierOf(u);
+  const src=avatarSrc(u);
+  const ini=((p.display||u.name||u.email)||'?').trim().charAt(0).toUpperCase();
+  const joined=new Date(u.created||Date.now()).toLocaleDateString(LANG==='es'?'es-MX':'en-US',{month:'short',year:'numeric'});
+  const cn=(COUNTRIES.find(c=>c[0]===p.country)||[p.country,p.country])[1];
+  const line=p.line&&LINES[p.line]?LINES[p.line].name:t('All lines','Todas las líneas');
+  return `<div class="pxm-card${mini?' mini':''}" data-tier="${esc(tier.k)}" data-mcard>
+    <div class="pxm-head">
+      <img class="pxm-mark" src="${LOGOS.hero}" alt="PEPTIDEX"/>
+      <span class="pxm-tier">${esc(t(tier.en,tier.es))}</span>
+    </div>
+    <div class="pxm-body">
+      <div class="pxm-av">${src?`<img src="${src}" alt=""/>`:`<div class="ini" style="width:100%;height:100%;display:grid;place-items:center;font-weight:600">${esc(ini)}</div>`}</div>
+      <div class="pxm-id">
+        <div class="pxm-name">${esc(p.display||u.name||u.email)}</div>
+        <div class="pxm-num">${esc(p.cid)}</div>
+      </div>
+    </div>
+    <div class="pxm-rail">
+      <div class="pxm-cell"><div class="pxm-k">${esc(t('Country','País'))}</div><div class="pxm-v">${esc(cn)}</div></div>
+      <div class="pxm-cell"><div class="pxm-k">${esc(t('Member since','Miembro desde'))}</div><div class="pxm-v">${esc(joined)}</div></div>
+      <div class="pxm-cell"><div class="pxm-k">${esc(t('Line','Línea'))}</div><div class="pxm-v">${esc(line)}</div></div>
+      <div class="pxm-cell"><div class="pxm-k">${esc(t('Status','Estado'))}</div>
+        <div class="pxm-v pxm-status"><i></i>${esc(t('Active','Activa'))}</div></div>
+    </div>
+  </div>`;
+}
+/* the card carries light and weight — both track the pointer */
+if(canHoverFine)addEventListener('pointermove',e=>{
+  const cards=document.querySelectorAll('[data-mcard]');
+  if(!cards.length)return;
+  cards.forEach(c=>{
+    const r=c.getBoundingClientRect();
+    const ix=(e.clientX-r.left)/r.width, iy=(e.clientY-r.top)/r.height;
+    c.style.setProperty('--mx',(Math.max(-20,Math.min(120,ix*100))).toFixed(1)+'%');
+    c.style.setProperty('--my',(Math.max(-20,Math.min(120,iy*100))).toFixed(1)+'%');
+    const near=ix>-.35&&ix<1.35&&iy>-.5&&iy<1.5;
+    if(near&&!reduced())
+      c.style.transform=`perspective(1200px) rotateX(${((.5-iy)*6.5).toFixed(2)}deg) rotateY(${((ix-.5)*8.5).toFixed(2)}deg)`;
+    else if(c.style.transform) c.style.transform='';
+  });
+},{passive:true});
+
+/* ==========================================================================
+   NAVIGATION — regroup the existing controls, then let the bar breathe
+   ========================================================================== */
+function refineNav(){
+  const acc=document.querySelector('nav .navacc');
+  if(!acc||acc.dataset.pxNav)return;
+  acc.dataset.pxNav='1';
+  const sep=()=>{const s=document.createElement('span');s.className='nav-sep';s.setAttribute('aria-hidden','true');return s;};
+  const q=id=>document.getElementById(id);
+  const order=[q('px-kbtn'),sep(),acc.querySelector('[data-region-tog]'),q('langTog'),sep(),
+               q('px-bell'),q('bagNav'),q('acctNav')];
+  acc.innerHTML='';
+  order.forEach(n=>n&&acc.appendChild(n));
+}
+let _navY=0,_navHidden=false;
+function navScroll(y){
+  const h=document.querySelector('header');if(!h)return;
+  const blocked=kOpen||document.getElementById('mmenu').style.display==='block'||
+    (document.getElementById('px-notif')||{classList:{contains:()=>0}}).classList.contains('on')||
+    document.body.style.overflow==='hidden';
+  const d=y-_navY;_navY=y;
+  if(blocked||y<90){ if(_navHidden){h.classList.remove('px-nav-hide');_navHidden=false;} return; }
+  if(d>5&&!_navHidden){h.classList.add('px-nav-hide');_navHidden=true;}
+  else if(d<-7&&_navHidden){h.classList.remove('px-nav-hide');_navHidden=false;}
+}
+function initNav(){
+  refineNav();
+  addEventListener('scroll',()=>navScroll(window.scrollY||0),{passive:true});
+  try{lenis.on('scroll',({scroll})=>navScroll(scroll||0));}catch(e){}
+  /* reaching for the bar brings it back before you ask */
+  addEventListener('pointermove',e=>{
+    if(e.clientY<110&&_navHidden){document.querySelector('header').classList.remove('px-nav-hide');_navHidden=false;}
+  },{passive:true});
+}
+
 /* ==========================================================================
    10 · MEMBER DASHBOARD + new account sections
    ========================================================================== */
@@ -1023,16 +1102,16 @@ function dashHTML(){
   const R=54,C=2*Math.PI*R;
 
   return `<div class="px-dhead px-stagger">
-    <div class="av">${avatarHTML(u,96,tier.k!=='researcher')}</div>
     <div class="who">
-      <div class="eyebrow">${esc(hi)} <span class="px-tier">${esc(t(tier.en,tier.es))}</span></div>
+      <div class="eyebrow">${esc(hi)}</div>
       <h1>${esc(first)}</h1>
-      <div class="sub">${esc(p.cid)} · ${esc(p.country)} · ${esc(t('Member since','Miembro desde'))} ${new Date(u.created||Date.now()).toLocaleDateString(LANG==='es'?'es-MX':'en-US',{month:'long',year:'numeric'})}</div>
+      <div class="sub">${esc(t('Your PEPTIDEX identity, and everything attached to it.','Tu identidad PEPTIDEX, y todo lo que va con ella.'))}</div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:var(--s-5);flex-wrap:wrap">
+        <button class="btn ghost mag" data-dsec="profile" style="padding:11px 20px">${esc(t('Edit profile','Editar perfil'))}</button>
+        <button class="btn mag" data-openai style="padding:11px 20px">${esc(t('Ask PX Assistant','Preguntar al Asesor'))}</button>
+      </div>
     </div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <button class="btn ghost mag" data-dsec="profile" style="padding:11px 20px">${esc(t('Edit profile','Editar perfil'))}</button>
-      <button class="btn mag" data-openai style="padding:11px 20px">${esc(t('Ask PX Assistant','Preguntar al Asesor'))}</button>
-    </div>
+    <div class="card">${memberCardHTML(u)}</div>
   </div>
 
   <div class="px-grid">
@@ -1188,11 +1267,8 @@ function profileHTML(){
 function settingsHTML(){
   return `<div class="acct-head"><h2>${esc(t('Appearance & preferences','Apariencia y preferencias'))}</h2>
     <p>${esc(t('These follow you on this device. Nothing is transmitted.','Te siguen en este dispositivo. Nada se transmite.'))}</p></div>
-  <div class="px-set"><div class="t"><b>${esc(t('Theme','Tema'))}</b><span>${esc(t('Dark mode inverts the substrate; brand marks are never recoloured.','El modo oscuro invierte el sustrato; las marcas nunca se recolorean.'))}</span></div>
-    <div class="px-seg">
-      <button data-pref="theme:light" aria-pressed="false">${esc(t('Light','Claro'))}</button>
-      <button data-pref="theme:dark" aria-pressed="false">${esc(t('Dark','Oscuro'))}</button>
-      <button data-pref="theme:system" aria-pressed="false">${esc(t('System','Sistema'))}</button></div></div>
+  <div class="px-set"><div class="t"><b>${esc(t('Appearance','Apariencia'))}</b><span>${esc(t('White is part of the PEPTIDEX identity. The interface is always bright, architectural and cold-neutral — there is no dark mode.','El blanco es parte de la identidad PEPTIDEX. La interfaz siempre es clara, arquitectónica y de neutro frío — no hay modo oscuro.'))}</span></div>
+    <span style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--titanium-ink);white-space:nowrap">${esc(t('Titanium · fixed','Titanio · fijo'))}</span></div>
   <div class="px-set"><div class="t"><b>${esc(t('Motion','Movimiento'))}</b><span>${esc(t('Reduced disables parallax, the custom cursor and long transitions.','Reducido desactiva el parallax, el cursor y las transiciones largas.'))}</span></div>
     <div class="px-seg">
       <button data-pref="motion:full" aria-pressed="false">${esc(t('Full','Completo'))}</button>
@@ -1427,12 +1503,8 @@ accountHTML=function(){
   const u=currentUser();if(!u)return h;
   const p=profile(u);const tier=tierOf(u);
   /* richer identity block */
-  h=h.replace(/<div class="acct-av">[\s\S]*?<\/div>\s*<div class="acct-id-t">/,
-    avatarHTML(u,56,tier.k!=='researcher')+'<div class="acct-id-t">');
-  h=h.replace(/<div class="acct-hi">[^<]*<\/div>/,
-    `<div class="acct-hi"><span class="px-tier" style="font-size:8.5px;padding:3px 9px">${esc(t(tier.en,tier.es))}</span></div>`);
-  h=h.replace(/<div class="acct-mail">([\s\S]*?)<\/div>/,
-    `<div class="acct-mail">$1</div><div class="acct-mail" style="font-family:ui-monospace,monospace;font-size:10px;opacity:.7;margin-top:3px">${esc(p.cid)}</div>`);
+  h=h.replace(/<div class="acct-id">[\s\S]*?<\/div>\s*<\/div>\s*<div class="acct-nav">/,
+    '<div class="acct-id">'+memberCardHTML(u,true)+'</div><div class="acct-nav">');
   /* new nav entries before the separator */
   const extra=`
     <button data-sec="profile">${D_IC.user}${t('Profile & avatar','Perfil y avatar')}</button>
@@ -1737,6 +1809,7 @@ applyPrefs();
 mountChrome();
 initCursor();
 initMagnetic();
+initNav();
 initProgress();
 applyPrefs();
 syncPlatformUI();
@@ -1757,6 +1830,6 @@ document.querySelectorAll('.px-stagger').forEach(el=>requestAnimationFrame(()=>e
 collectDepth();requestAnimationFrame(depthTick);
 
 /* expose a small surface for debugging and for the admin account */
-window.PXP={prefs:()=>PREFS,setPref,toast,openCmd,openAI,avatarDataURL,buildDoc,tierOf,completion,
+window.PXP={prefs:()=>PREFS,setPref,toast,openCmd,openAI,avatarDataURL,buildDoc,tierOf,completion,memberCardHTML,
   notify,logActivity,version:'1.0.0'};
 })();

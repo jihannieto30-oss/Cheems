@@ -1,0 +1,150 @@
+/* ============================================================================
+   NAVIGATION — rebuilt.
+   Weightless at rest, acrylic once the page moves under it, gone the moment
+   you scroll away from it and back the instant you reach for it.
+   Nothing is removed; the same controls are re-set with air and hairlines.
+   ============================================================================ */
+header{
+  padding:22px 24px;
+  transition:transform var(--d-4) var(--e-out), opacity var(--d-3) var(--e-out);
+  will-change:transform;
+}
+header.px-nav-hide{transform:translate3d(0,-140%,0);opacity:0;pointer-events:none;}
+
+nav{
+  max-width:1280px;
+  padding:0 10px 0 18px;
+  height:58px;
+  border-radius:var(--r-full);
+  border:1px solid transparent;
+  gap:var(--s-5);
+  transition:background var(--d-4) var(--e-out), border-color var(--d-4) var(--e-out),
+             box-shadow var(--d-4) var(--e-out), backdrop-filter var(--d-4);
+}
+nav.scrolled{
+  background:var(--acrylic);
+  backdrop-filter:var(--acrylic-blur);
+  -webkit-backdrop-filter:var(--acrylic-blur);
+  border-color:rgba(20,26,40,.07);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 1px 2px rgba(18,24,38,.03),
+    0 10px 34px -16px rgba(18,24,38,.22);
+}
+
+/* --- wordmark ------------------------------------------------------------- */
+nav .brand{display:flex;align-items:center;padding:4px 6px 4px 0;flex:none;}
+nav .brand img{height:24px;transition:opacity var(--d-2) var(--e-out);}
+nav .brand:hover img{opacity:.62;}
+
+/* --- primary links: centred, generous, hairline underline ----------------- */
+nav .links{
+  display:flex;align-items:center;gap:0;
+  margin:0 auto;                /* true optical centre between brand and utilities */
+  flex:0 1 auto;
+}
+nav .links a{
+  padding:9px 17px;
+  font-size:13.5px;
+  font-weight:450;
+  letter-spacing:-.008em;
+  color:var(--titanium-ink);
+  border-radius:var(--r-full);
+  transition:color var(--d-2) var(--e-out);
+}
+nav .links a:hover,nav .links a.active{color:var(--ink);}
+nav .links a::after{
+  bottom:3px;height:1.5px;border-radius:1px;background:var(--ink);
+  transition:width var(--d-3) var(--e-out),opacity var(--d-2);
+  opacity:0;
+}
+nav .links a:hover::after{width:15px;opacity:.35;}
+nav .links a.active::after{width:15px;opacity:1;}
+
+/* --- utility cluster ------------------------------------------------------ */
+nav .navright{gap:var(--s-3);flex:none;}
+nav .navacc{gap:2px;align-items:center;}
+nav .nav-sep{
+  width:1px;height:20px;flex:none;margin:0 8px;
+  background:linear-gradient(180deg,transparent,rgba(20,26,40,.13),transparent);
+}
+
+/* bare marks — the circle chrome is gone, the hit area is not */
+nav .navacc .iconbtn,
+nav .navacc .langtog{
+  width:38px;height:38px;border:0;background:transparent;border-radius:var(--r-full);
+  color:var(--titanium-ink);
+  transition:color var(--d-2) var(--e-out),background var(--d-2) var(--e-out),transform var(--d-2) var(--e-spring);
+  box-shadow:none;
+}
+nav .navacc .iconbtn:hover,
+nav .navacc .langtog:hover{background:rgba(20,26,40,.045);color:var(--ink);transform:none;}
+nav .navacc .iconbtn:active{transform:scale(.93);}
+nav .navacc .iconbtn svg{width:19px;height:19px;stroke-width:1.55;}
+
+/* region + language read as type, not as buttons */
+nav .navacc .langtog{
+  width:auto;min-width:38px;padding:0 11px;height:34px;
+  font-size:11.5px;font-weight:600;letter-spacing:.09em;
+}
+nav .navacc .regtog{display:inline-flex;align-items:center;gap:6px;}
+
+/* the account mark carries the member portrait */
+nav .navacc .iconbtn.acct{width:34px;height:34px;padding:0;overflow:hidden;margin-left:4px;}
+nav .navacc .iconbtn.acct.in{
+  background:transparent;
+  box-shadow:0 0 0 1px rgba(20,26,40,.10),0 2px 8px -2px rgba(18,24,38,.28);
+}
+nav .navacc .iconbtn.acct.in:hover{box-shadow:0 0 0 1px rgba(20,26,40,.2),0 4px 14px -3px rgba(18,24,38,.34);}
+nav .navacc .iconbtn.acct img{width:100%;height:100%;object-fit:cover;border-radius:var(--r-full);}
+
+/* badges sit tighter now that the chrome is gone */
+nav .navacc .iconbtn .badge,
+nav .navacc .iconbtn .badge2{
+  top:2px;right:1px;min-width:15px;height:15px;font-size:9px;
+  box-shadow:0 0 0 2.5px var(--paper);
+}
+nav.scrolled .navacc .iconbtn .badge,
+nav.scrolled .navacc .iconbtn .badge2{box-shadow:0 0 0 2.5px rgba(255,255,255,.86);}
+
+/* ⌘K reads as a field, not a chip */
+.px-kbd{
+  height:34px;padding:0 12px;border-radius:var(--r-full);gap:7px;
+  border-color:rgba(20,26,40,.10);background:rgba(20,26,40,.028);
+  font-size:11px;letter-spacing:.05em;color:var(--titanium-ink);
+}
+.px-kbd:hover{background:rgba(20,26,40,.055);border-color:rgba(20,26,40,.16);color:var(--ink);}
+.px-kbd svg{opacity:.7;}
+
+/* --- the single call to action -------------------------------------------- */
+nav .navright>.btn.mag{
+  height:38px;padding:0 22px!important;font-size:13px;font-weight:500;letter-spacing:-.005em;
+  box-shadow:0 1px 2px rgba(18,24,38,.16),0 6px 18px -8px rgba(18,24,38,.45);
+}
+nav .navright>.btn.mag:hover{box-shadow:0 2px 4px rgba(18,24,38,.18),0 12px 30px -10px rgba(18,24,38,.5);}
+
+/* --- burger --------------------------------------------------------------- */
+nav .burger{
+  width:38px;height:38px;border:0;background:transparent;gap:5px;
+  transition:background var(--d-2) var(--e-out);
+}
+nav .burger:hover{background:rgba(20,26,40,.045);}
+nav .burger i{width:15px;height:1.4px;}
+
+@media(max-width:1180px){
+  nav .links a{padding:9px 12px;font-size:13px;}
+}
+@media(max-width:960px){
+  nav .links{display:none;}
+  nav .links{margin:0;}
+}
+@media(max-width:860px){
+  header{padding:14px 14px;}
+  nav{height:54px;padding:0 8px 0 14px;gap:var(--s-3);}
+  nav .navright{gap:var(--s-2);}
+  nav .nav-sep{margin:0 4px;height:18px;}
+}
+@media(max-width:560px){
+  nav .navacc .langtog{padding:0 8px;font-size:11px;}
+  nav .navacc .iconbtn{width:34px;height:34px;}
+}
