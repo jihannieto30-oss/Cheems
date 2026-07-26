@@ -24,7 +24,9 @@ for k in ('fitness', 'beauty', 'longevity'):
     LINES[k] = {'name': m.group(1), 'theme': m.group(2), 'kind': m.group(3), 'category': m.group(4)}
 
 SAMPLES = {
-    'fitness':   [['RT', 'Retatrutide', '5–60 mg', 'Triple-agonist metabolic'],
+    'fitness':   [['IG', 'IGF-1 LR3', '0.1 · 1 mg', 'Lean tissue synthesis'],
+                  ['BC', 'BPC-157', '5 · 10 · 20 mg', 'Recovery & tissue repair'],
+                  ['RT', 'Retatrutide', '5–60 mg', 'Triple-agonist metabolic'],
                   ['CP', 'CJC-1295 + Ipamorelin', '10 mg', 'Synergistic GH blend']],
     'beauty':    [['AHK', 'AHK-Cu', '50 mg', 'Copper peptide']],
     'longevity': [['EP', 'Epitalon', '10 · 20 mg', 'Telomere & pineal axis']],
@@ -34,7 +36,8 @@ html = """<!doctype html><meta charset="utf-8">
 <style>
   body{margin:0;background:#f4f5f7;font:13px/1.5 -apple-system,'Segoe UI',sans-serif;padding:24px;}
   h3{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#666;margin:26px 0 10px;}
-  .bands img{display:block;width:900px;margin-bottom:14px;box-shadow:0 8px 24px -12px rgba(0,0,0,.4);}
+  .bands figure{margin:0 0 14px;} .bands figcaption{font-size:11px;color:#777;margin-top:4px;}
+  .bands img{display:block;width:700px;box-shadow:0 8px 24px -12px rgba(0,0,0,.4);}
   .vials{display:flex;gap:18px;align-items:flex-end;background:#fff;padding:26px;border-radius:14px;}
   .vials figure{margin:0;text-align:center;}
   .vials img{height:520px;display:block;}
@@ -73,10 +76,10 @@ window.__pxLabel.kitReady.then(() => artReady).then(() => {
   };
 
   Object.keys(LINES).forEach(k => {
-    put('lb', window.__pxLabel.drawBand(k, null).toDataURL());
+    put('lb', window.__pxLabel.drawBand(k, null).canvas.toDataURL());
     put('lv', window.__pxLabel.buildVial(k, null), k);
     (SAMPLES[k] || []).forEach(p => {
-      put('cb', window.__pxLabel.drawBand(k, p).toDataURL());
+      put('cb', window.__pxLabel.drawBand(k, p).canvas.toDataURL(), p[2]);
       put('cv', window.__pxLabel.buildVial(k, p), p[1]);
     });
   });
