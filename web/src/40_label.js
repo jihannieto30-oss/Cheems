@@ -135,6 +135,25 @@ function hexagon(x, cx, cy, r){
    -------------------------------------------------------------------------- */
 const BAND_H = 900;      /* render height; the width follows from the size */
 
+/* How much of a wrap label the camera ever sees.
+
+   The label's width is the vial's circumference, so it meets itself at the
+   back and the front shows a window of it. Mapping the whole width onto the
+   front instead — which is what a flat mockup does — caps the band at about
+   three quarters of the body height before the artwork would have to be
+   squeezed horizontally to go further.
+
+   So only the window is sampled, at true scale. The band then stands as tall
+   on the glass as the guides show, the label really does wrap, and nothing is
+   stretched: the fraction is whatever makes the height come out at COVER. */
+const COVER = 0.86;      /* of the glass body */
+
+function visibleWindow(size){
+  const TH = SEAT.theta, R = SEAT.halfW / Math.sin(TH);
+  const f = (size.h / size.w) * (2 * TH * R) / (COVER * BODY.h);
+  return Math.max(0.35, Math.min(0.92, f));
+}
+
 function drawBand(lineKey, p){
   const L = LINES[lineKey], kit = KIT[lineKey], art = K[lineKey];
   const C = INK[L.kind];
@@ -154,18 +173,21 @@ function drawBand(lineKey, p){
   const pw = art.plate.width * ps, ph = art.plate.height * ps;
   x.drawImage(art.plate, (W - pw) / 2, (H - ph) / 2, pw, ph);
 
-  /* The band wraps the vial, so only the arc still facing the camera can be
-     read — roughly the middle three fifths of it. Everything that has to be
-     read is kept inside that, and the rest of the wrap carries plate. */
-  const cx = W / 2, safe = W * 0.56, copyW = W * 0.66;
+  /* The label goes all the way round the vial, so most of its width is behind
+     the glass and only a window of it ever faces the camera. Everything that
+     has to be read lives inside that window — and inside the middle of it,
+     since the window's own edges are already turning away. The rest of the
+     wrap carries plate, exactly as a real wrap label does. */
+  const V = visibleWindow(size) * W;
+  const cx = W / 2, safe = V * 0.54, copyW = V * 0.62;
   x.textAlign = 'center'; x.textBaseline = 'alphabetic';
 
   /* the Px lockup, as supplied */
-  const lb = contain({w: W * 0.34, h: H * 0.215, iw: kit.lockAR, ih: 1});
+  const lb = contain({w: V * 0.36, h: H * 0.215, iw: kit.lockAR, ih: 1});
   x.drawImage(art.lock, cx - lb.w/2, H * 0.055, lb.w, lb.h);
 
   /* the line wordmark, as supplied */
-  const wb = contain({w: W * 0.38, h: H * 0.085, iw: kit.wordAR, ih: 1});
+  const wb = contain({w: V * 0.40, h: H * 0.085, iw: kit.wordAR, ih: 1});
   x.drawImage(art.word, cx - wb.w/2, H * 0.315, wb.w, wb.h);
 
   if(p){
@@ -194,7 +216,7 @@ function drawBand(lineKey, p){
     /* the dose */
     x.fillStyle = accent;
     x.letterSpacing = (H * 0.004).toFixed(1) + 'px';
-    fit(x, p[2].toUpperCase(), '700', H * 0.070, H * 0.032, W * 0.50);
+    fit(x, p[2].toUpperCase(), '700', H * 0.070, H * 0.032, V * 0.52);
     x.fillText(p[2].toUpperCase(), cx, H * 0.655);
     x.letterSpacing = '0px';
   }
@@ -210,7 +232,7 @@ function drawBand(lineKey, p){
   /* the standing copy */
   x.strokeStyle = ruleC; x.lineWidth = Math.max(1, H * 0.0025);
   x.beginPath();
-  x.moveTo(cx - W * 0.24, H * 0.855); x.lineTo(cx + W * 0.24, H * 0.855);
+  x.moveTo(cx - V * 0.24, H * 0.855); x.lineTo(cx + V * 0.24, H * 0.855);
   x.stroke();
 
   x.fillStyle = C.sub;
@@ -219,7 +241,7 @@ function drawBand(lineKey, p){
   x.letterSpacing = '0px';
 
   /* the line's badge, at the shoulder */
-  const hr = H * 0.050, hx = W * 0.795, hy = H * 0.400;
+  const hr = H * 0.048, hx = cx + V * 0.305, hy = H * 0.400;
   x.strokeStyle = ruleC; x.lineWidth = Math.max(1.4, H * 0.0032);
   hexagon(x, hx, hy, hr); x.stroke();
 
@@ -296,12 +318,15 @@ function speculars(blank){
   return (specLayer = c);
 }
 
-function wrapBand(x, band, blank){
+function wrapBand(x, band, blank, size){
   const TH = SEAT.theta, R = SEAT.halfW / Math.sin(TH), cx = SEAT.cx;
-  const BW = band.width, BH = band.height;
+  const F = visibleWindow(size);
+  const BW = band.width * F, BH = band.height;
+  const SX = band.width * (1 - F) / 2;     /* the window, centred on the band */
 
-  /* Height follows from the projection, so the artwork is never stretched:
-     it is whatever keeps the band true where it faces the camera. */
+  /* Height follows from the projection of that window, so the artwork is
+     never stretched: it is whatever keeps the band true where it faces the
+     camera. */
   let lh = Math.round((BH / BW) * 2 * TH * R);
   lh = Math.min(lh, Math.round(BODY.h * 0.92));
   const ly0 = Math.max(BODY.y + 16,
@@ -321,7 +346,7 @@ function wrapBand(x, band, blank){
     /* the silhouette is where the surface turns away — melt into it */
     const e = Math.abs(2*um - 1);
     x.globalAlpha = e > .94 ? Math.max(0, 1 - ((e - .94) / .06) * .9) : 1;
-    x.drawImage(band, u0 * BW, 0, BW / N, BH,
+    x.drawImage(band, SX + u0 * BW, 0, BW / N, BH,
                       d0, ly0 + bow, (d1 - d0) + .7, lh - 2*bow);
   }
   x.globalAlpha = 1;
@@ -394,7 +419,7 @@ function buildVial(lineKey, p){
   x.drawImage(blank, 0, 0, VW, VH);
 
   const band = bandCache[key] || (bandCache[key] = drawBand(lineKey, p));
-  wrapBand(x, band.canvas, blank);
+  wrapBand(x, band.canvas, blank, band.size);
 
   /* the glass silhouette owns the alpha — the band never spills past it */
   const cut = x.getImageData(0, 0, VW, VH);
