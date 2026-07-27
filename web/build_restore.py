@@ -13,7 +13,7 @@ Three changes to the base file and nothing else:
 
 No colour, typography or copy elsewhere on the site is altered.
 """
-import base64, os, re
+import base64, json, os, re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC  = os.path.join(HERE, 'web_src')
@@ -63,6 +63,10 @@ css   = '\n'.join(rd(os.path.join(SRC, f)) for f in
                    '71_search.css', '72_nav.css', '30_motion.css'))
 js    = ('window.__pxBakedLines = true;\n' +
          'const PX_MASTER_LOGO = ' + repr(master).replace("'", '"', 2) + ';\n' +
+         'const PX_WATER = ' + json.dumps(
+             {k: {'tint': v['tint'], 'depth': v['depth']}
+              for k, v in json.loads(kit).items()}
+         ) + ';\n' +
          label + '\n' +
          rd(os.path.join(SRC, '50_profile.js')) + '\n' +
          rd(os.path.join(SRC, '31_motion.js')) + '\n' +

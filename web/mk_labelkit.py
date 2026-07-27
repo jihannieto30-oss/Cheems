@@ -28,7 +28,7 @@ which differs across the three panels and is a property of the artwork:
 `foil` is each line's ink colour, measured from its wordmark rather than
 chosen. It drives the hairlines and the small type on the landscape label.
 """
-from PIL import Image, ImageOps, ImageFilter, ImageChops
+from PIL import Image, ImageOps, ImageFilter, ImageChops, ImageStat
 import os, json, base64, io
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -119,6 +119,30 @@ def foil_of(src, box):
     return '#%02x%02x%02x' % tuple(round(sum(p[1][i] for p in top) / len(top)) for i in range(3))
 
 
+def water(foil_hex, plate):
+    """How this line's water looks, taken from its own material.
+
+    Two of the three lockups have no colour in them at all — steel on steel,
+    saturation four thousandths. Giving those a hue would mean inventing one,
+    which is the one thing the artwork is not for. So the light takes the
+    line's foil, and the *depth* takes the line's plate: the black panel makes
+    the deepest water, the silver one the shallowest. Three dives that differ
+    by what the line is actually made of, and none of them blue unless the line
+    is.
+    """
+    import colorsys
+    n = int(foil_hex[1:], 16)
+    r, g, b = (n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255
+    h, l, sat = colorsys.rgb_to_hls(r, g, b)
+    # a foil with colour in it is taken to full strength; one without stays
+    # the silver it is
+    sat = min(0.86, sat * 3.2) if sat > 0.06 else 0.0
+    r, g, b = colorsys.hls_to_rgb(h, 0.66, sat)
+    lum = sum(ImageStat.Stat(plate).mean[:3]) / 3 / 255
+    return {'tint': '#%02x%02x%02x' % (int(r*255), int(g*255), int(b*255)),
+            'depth': round(0.30 + lum * 0.55, 3)}
+
+
 def uri(im, q):
     b = io.BytesIO()
     im.save(b, 'WEBP', quality=q, method=6)
@@ -145,9 +169,11 @@ for k in ('fitness', 'beauty', 'longevity'):
               'lockAR': round(lock.width / lock.height, 4),
               'wordAR': round(word.width / word.height, 4),
               'foil':   foil_of(src, WORD[k])}
+    out[k].update(water(out[k]['foil'], plate))
     print('  %-10s lock %dx%-3d %5.1f KB   word %dx%-3d %5.1f KB   plate %5.1f KB   foil %s'
           % (k, lock.width, lock.height, ls / 1024,
              word.width, word.height, ws / 1024, ps / 1024, out[k]['foil']))
+    print('             water %s  depth %.2f' % (out[k]['tint'], out[k]['depth']))
 
 with open(os.path.join(M, 'labelkit.json'), 'w') as f:
     json.dump(out, f, separators=(',', ':'))

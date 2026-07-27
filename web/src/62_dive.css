@@ -32,19 +32,29 @@ html.px-diving #app{
 }
 
 /* ---------- the field goes black --------------------------------------------
-   Not blue. Black water, with one shaft of light coming down through it — far
-   enough to reach the mark and no further, so the mark still reads and the
-   rest of the screen is depth. */
+   Black water with a shaft of light coming down into it.
+
+   The shaft has to be genuinely bright, not a lighter grey: two of the three
+   line marks are near-black metal, and a mark that dark on a field that dark
+   does not read as restraint, it reads as broken. So the pool goes to daylight
+   at its centre and falls to true black well before the edges — the marks sit
+   in the light, the screen is still black, and the colour lives in the water
+   around them rather than under them. */
+#dive{--px-tint:168,168,168; --px-depth:.5;}
 #dive .px-deep{
   position:absolute; inset:0; z-index:1; pointer-events:none;
   background:
-    radial-gradient(46% 40% at 50% 42%,
-      rgba(96,102,112,.55) 0%,
-      rgba(44,47,53,.5) 38%,
-      rgba(12,13,16,.35) 70%,
+    radial-gradient(34% 30% at 50% 44%,
+      rgba(255,255,255,.97) 0%,
+      rgba(233,237,244,.88) 34%,
+      rgba(150,158,172,.5) 62%,
       transparent 100%),
+    radial-gradient(58% 50% at 50% 44%,
+      rgba(var(--px-tint), calc(.34 * var(--px-depth) + .14)) 0%,
+      rgba(var(--px-tint), calc(.14 * var(--px-depth) + .05)) 48%,
+      transparent 78%),
     radial-gradient(120% 100% at 50% 30%,
-      #14161a 0%, #0a0b0d 46%, #050607 78%, #000000 100%);
+      #101216 0%, #08090b 44%, #030405 76%, #000000 100%);
   opacity:0;
   animation:px-deep 2600ms ease-in-out;
 }
@@ -68,17 +78,17 @@ html.px-diving #app{
 }
 #dive .px-caustic i:nth-child(1){
   left:6%; top:8%; width:46%; height:52%;
-  background:radial-gradient(circle, rgba(255,255,255,.30), rgba(255,255,255,0) 68%);
+  background:radial-gradient(circle, rgba(var(--px-tint),.42), rgba(var(--px-tint),0) 68%);
   animation:px-drift-a 2600ms cubic-bezier(.4,0,.3,1);
 }
 #dive .px-caustic i:nth-child(2){
   right:2%; bottom:4%; width:54%; height:58%;
-  background:radial-gradient(circle, rgba(190,198,212,.16), rgba(190,198,212,0) 66%);
+  background:radial-gradient(circle, rgba(var(--px-tint),.34), rgba(var(--px-tint),0) 66%);
   animation:px-drift-b 2600ms cubic-bezier(.4,0,.3,1);
 }
 #dive .px-caustic i:nth-child(3){
   left:34%; bottom:16%; width:38%; height:40%;
-  background:radial-gradient(circle, rgba(255,255,255,.22), rgba(255,255,255,0) 70%);
+  background:radial-gradient(circle, rgba(255,255,255,.26), rgba(255,255,255,0) 70%);
   animation:px-drift-c 2600ms cubic-bezier(.4,0,.3,1);
 }
 @keyframes px-caust{0%{opacity:0;} 22%{opacity:1;} 66%{opacity:1;} 100%{opacity:0;}}
@@ -91,8 +101,8 @@ html.px-diving #app{
   position:absolute; left:0; right:0; top:50%; height:2px; z-index:2;
   margin-top:-1px; pointer-events:none;
   background:linear-gradient(90deg,
-    transparent, rgba(255,255,255,.4) 18%, rgba(255,255,255,.98) 50%,
-    rgba(255,255,255,.4) 82%, transparent);
+    transparent, rgba(var(--px-tint),.5) 16%, rgba(255,255,255,.98) 50%,
+    rgba(var(--px-tint),.5) 84%, transparent);
   opacity:0; will-change:transform, opacity;
   animation:px-surface 2600ms cubic-bezier(.16,.7,.2,1);
 }
@@ -112,14 +122,17 @@ html.px-diving #app{
   content:""; position:absolute; z-index:-1;
   width:min(820px, 96vw); aspect-ratio:1; border-radius:50%;
   background:radial-gradient(circle,
-    rgba(255,255,255,.34) 0%, rgba(200,208,222,.14) 34%, rgba(255,255,255,0) 64%);
+    rgba(255,255,255,.55) 0%, rgba(var(--px-tint),.18) 38%, rgba(255,255,255,0) 66%);
   opacity:0; animation:px-halo 2600ms ease-in-out;
 }
 @keyframes px-halo{0%{opacity:0; transform:scale(.6);} 34%{opacity:1; transform:scale(1);}
                    66%{opacity:1; transform:scale(1.06);} 100%{opacity:0; transform:scale(1.2);}}
 
 /* the supplied line logos are wide lockups, not square badges */
-#dive .dlogo{width:min(560px, 82vw);}
+#dive .dlogo{
+  width:min(560px, 82vw);
+  filter:drop-shadow(0 18px 40px rgba(0,0,0,.35)) drop-shadow(0 2px 6px rgba(0,0,0,.25));
+}
 
 @media (prefers-reduced-motion:reduce){
   html.px-diving #app{animation:none;}
@@ -145,8 +158,9 @@ html.px-diving #app{
   border-radius:50%; pointer-events:none;
   background:radial-gradient(circle,
     transparent 46%,
-    rgba(255,255,255,.14) 50%,
-    rgba(255,255,255,.05) 54%,
+    rgba(var(--px-tint),.30) 49.5%,
+    rgba(255,255,255,.22) 51%,
+    rgba(var(--px-tint),.10) 54%,
     transparent 60%);
   transform:scale(.01); opacity:0;
   will-change:transform, opacity;
