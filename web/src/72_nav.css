@@ -1,0 +1,93 @@
+/* ============================================================================
+   PEPTIDEX — THE BAR
+
+   The bar was a rectangle with a blur behind it: correct, and dead. It reads
+   as glass now — something the peptide field is seen *through* rather than a
+   panel sitting on top of it.
+
+   Three things do that, and none of them move the bar. Light travels across
+   its surface, slowly, the way it does across water. The glass deepens as you
+   descend, so the field behind it goes further away the more of the page you
+   have passed. And the edge holds a bright lip on top and a shadow underneath,
+   which is what makes a pane read as having thickness instead of being a
+   border.
+   ============================================================================ */
+
+nav{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;                 /* the travelling light stays inside */
+}
+
+/* the glass, and how far into it you are */
+nav.scrolled{
+  background:rgba(255,255,255,.58);
+  backdrop-filter:saturate(190%) blur(26px);
+  -webkit-backdrop-filter:saturate(190%) blur(26px);
+  border-color:rgba(255,255,255,.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),      /* the lip */
+    inset 0 -1px 0 rgba(10,20,60,.05),        /* the underside */
+    0 1px 0 rgba(255,255,255,.6),
+    0 10px 34px -16px rgba(10,20,60,.22),
+    0 30px 60px -40px rgba(10,20,60,.3);
+}
+
+/* Light crossing the pane. It travels once every eighteen seconds, which is
+   slow enough that you never catch it starting — you only notice the bar is
+   not a dead rectangle. It sits behind everything in the bar and cannot move
+   a single element. */
+nav::before{
+  content:""; position:absolute; z-index:-1;
+  top:-60%; bottom:-60%; width:38%; left:-45%;
+  pointer-events:none;
+  background:linear-gradient(100deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,.55) 42%,
+    rgba(213,226,250,.4) 58%,
+    rgba(255,255,255,0) 100%);
+  filter:blur(14px);
+  opacity:0;
+  transform:translate3d(0,0,0) rotate(8deg);
+  will-change:transform, opacity;
+}
+nav.scrolled::before{animation:px-nav-sheen 18s cubic-bezier(.45,0,.55,1) infinite;}
+@keyframes px-nav-sheen{
+  0%   {transform:translate3d(0,0,0) rotate(8deg);    opacity:0;}
+  12%  {opacity:.75;}
+  46%  {opacity:.55;}
+  62%  {transform:translate3d(310%,0,0) rotate(8deg); opacity:0;}
+  100% {transform:translate3d(310%,0,0) rotate(8deg); opacity:0;}
+}
+
+/* A second, deeper pass, out of phase with the first, so the two never line
+   up into a single repeating sweep. */
+nav::after{
+  content:""; position:absolute; z-index:-1;
+  top:-60%; bottom:-60%; width:26%; left:-35%;
+  pointer-events:none;
+  background:linear-gradient(100deg,
+    rgba(255,255,255,0), rgba(30,94,255,.10) 50%, rgba(255,255,255,0));
+  filter:blur(20px);
+  opacity:0;
+  transform:translate3d(0,0,0) rotate(8deg);
+  will-change:transform, opacity;
+}
+nav.scrolled::after{animation:px-nav-sheen 18s cubic-bezier(.5,0,.5,1) 6.5s infinite;}
+
+/* the active link's mark grows and settles rather than snapping to width */
+nav .links a::after{
+  height:2px; border-radius:2px; bottom:4px;
+  background:var(--accent);
+  transition:width .55s cubic-bezier(.22,1,.36,1), opacity .35s;
+  opacity:0;
+}
+nav .links a:hover::after{width:12px; opacity:.45;}
+nav .links a.active::after{width:18px; opacity:1;}
+
+/* the brand mark keeps its own space and never shifts */
+nav .brand img{height:26px; width:auto;}
+
+@media (prefers-reduced-motion:reduce){
+  nav.scrolled::before,nav.scrolled::after{animation:none; opacity:0;}
+}

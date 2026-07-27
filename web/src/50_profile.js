@@ -191,6 +191,48 @@ function overviewHTML(u){
 
     <div class="pv-grid">
       <div class="pv-panel">
+        <div class="pv-ph"><h3>${t('Where your interest sits','Dónde está tu interés')}</h3></div>
+        ${(() => {
+          const by = Object.keys(LINES).map(k => ({
+            k, name: LINES[k].name,
+            n: favs.filter(p => String(p).split(':')[0] === k).length
+          }));
+          const total = by.reduce((s, x) => s + x.n, 0);
+          if(!total) return `<div class="pv-empty"><p>${t('No reading yet.','Aún sin lectura.')}</p>
+            <p class="s">${t('Save a few compounds and this shows which of the three lines your work leans towards.','Guarda algunos compuestos y esto muestra hacia cuál de las tres líneas se inclina tu trabajo.')}</p>
+            <button class="btn mag" data-nav data-href="#/fitness">${t('Browse the catalog','Ver el catálogo')}</button></div>`;
+          return `<ul class="pv-lines">${by.map(x => `
+            <li><button data-nav data-href="#/${x.k}">
+              <span class="n">${esc(x.name)}</span>
+              <span class="b"><i style="width:${total ? (x.n / total * 100).toFixed(1) : 0}%"></i></span>
+              <span class="v">${x.n}</span></button></li>`).join('')}</ul>
+            <p class="pv-note">${t(
+              `${total} saved compound${total === 1 ? '' : 's'} across ${by.filter(x => x.n).length} line${by.filter(x => x.n).length === 1 ? '' : 's'}.`,
+              `${total} compuesto${total === 1 ? '' : 's'} guardado${total === 1 ? '' : 's'} en ${by.filter(x => x.n).length} línea${by.filter(x => x.n).length === 1 ? '' : 's'}.`)}</p>`;
+        })()}
+      </div>
+
+      <div class="pv-panel">
+        <div class="pv-ph"><h3>${t('Current list','Lista actual')}</h3>
+          ${listCount() ? `<button class="pv-more" data-openbag>${t('Open','Abrir')}</button>` : ''}</div>
+        ${(() => {
+          const arr = getList();
+          if(!arr.length) return `<div class="pv-empty"><p>${t('Your list is empty.','Tu lista está vacía.')}</p>
+            <p class="s">${t('Add compounds as you find them; send the whole list for quotation when it is ready.','Añade compuestos conforme los encuentres; envía la lista completa a cotizar cuando esté lista.')}</p>
+            <button class="btn mag" data-nav data-href="#/beauty">${t('Find something','Buscar algo')}</button></div>`;
+          return `<ul class="pv-favs">${arr.slice(0, 5).map(it => {
+            const P = prod(it.id); if(!P) return '';
+            return `<li><div><div class="n">${esc(P.name)}</div>
+              <div class="s">${esc(P.L.name)} · ${esc(P.vlabel || P.spec)}</div></div>
+              <span class="pv-qty">×${it.qty}</span></li>`;
+          }).join('')}</ul>
+          ${arr.length > 5 ? `<p class="pv-note">${t(`and ${arr.length - 5} more.`, `y ${arr.length - 5} más.`)}</p>` : ''}`;
+        })()}
+      </div>
+    </div>
+
+    <div class="pv-grid">
+      <div class="pv-panel">
         <div class="pv-ph"><h3>${t('Your profile','Tu perfil')}</h3><span class="pv-pct">${cp.pct}%</span></div>
         <div class="pv-bar sm"><i style="width:${cp.pct}%"></i></div>
         <ul class="pv-check">${cp.rows.map(r => `

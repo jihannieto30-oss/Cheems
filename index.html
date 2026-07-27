@@ -1259,145 +1259,123 @@
 .pv-empty p.s{font-size:12.5px;font-weight:400;color:var(--muted);line-height:1.6;margin:6px 0 18px;}
 .pv-empty .btn{font-size:12.5px;padding:11px 18px;}
 
+/* ---------- where the member's interest sits ------------------------------ */
+.pv-lines{list-style:none;}
+.pv-lines li + li{margin-top:6px;}
+.pv-lines button{
+  display:flex; align-items:center; gap:14px; width:100%; text-align:left;
+  border:none; background:none; font-family:inherit; padding:9px 0; color:var(--ink);
+}
+.pv-lines .n{flex:0 0 96px; font-size:11.5px; letter-spacing:.14em; font-weight:700;
+  text-transform:uppercase; color:var(--muted); transition:color .25s;}
+.pv-lines button:hover .n{color:var(--ink);}
+.pv-lines .b{flex:1 1 auto; height:6px; border-radius:99px;
+  background:rgba(10,20,60,.07); overflow:hidden;}
+.pv-lines .b i{display:block; height:100%; border-radius:99px; min-width:0;
+  background:linear-gradient(90deg,#0a0a0a,var(--accent));
+  transition:width .8s cubic-bezier(.22,1,.36,1);}
+.pv-lines .v{flex:0 0 auto; font-size:13px; font-weight:700; letter-spacing:-.01em;
+  min-width:18px; text-align:right;}
+
+.pv-note{font-size:11.5px; color:var(--muted); margin-top:14px; line-height:1.5;}
+.pv-qty{flex:0 0 auto; font-size:12.5px; font-weight:700; color:var(--muted);}
+
 /* ============================================================================
    PEPTIDEX — THE MEMBER PLATE
 
-   A membership card usually copies a bank card: rounded rectangle, payment
-   chip, embossed name. PEPTIDEX does not issue credit, it issues compounds, so
-   this is not a card. It is a plate — a machined piece of dark metal with the
-   member's record etched into it, the way a specimen is labelled.
+   Black metal, and as little else as possible.
 
-   What makes metal read as metal is not a gradient, it is the edge. A real
-   milled edge catches light on the side facing the lamp and goes dark on the
-   side away from it, and the face has a direction to its grain. Both are here,
-   and the sheen tracks the pointer rather than sitting still.
+   The previous pass reached for depth — heavy inner shadows, a deboss on the
+   emblem, an etched record, a sequence. It read as a rendering of a card
+   rather than as a card. This one keeps the material and drops the theatre:
+   an anodised black face with a fine grain, one honest edge, and four pieces
+   of information. Nothing is embossed, nothing is beveled twice, and the only
+   light that moves is the one following the pointer.
 
-   The one thing no card has: a sequence. Every member's plate carries a strand
-   derived from their own member ID — the same ID always gives the same strand,
-   and no two members share one. It is the closest thing to a signature a
-   peptide company can etch.
+   What makes it read as metal at this restraint is the edge. A milled edge
+   holds a bright hairline where it faces the lamp and loses it where it turns
+   away — one pixel each, no more. Everything else is grain.
    ============================================================================ */
 
 .member-card.px-plate{
-  border-radius:18px;
+  border-radius:16px;
   background:
-    /* the grain, running across the face */
-    repeating-linear-gradient(102deg,
-      rgba(255,255,255,.020) 0px, rgba(255,255,255,0) 1px,
-      rgba(0,0,0,.035) 2px,      rgba(0,0,0,0) 3.5px),
-    /* the lamp, sitting off the top-left shoulder */
-    radial-gradient(120% 100% at 22% 8%,
-      #23252b 0%, #16181d 34%, #0d0e12 66%, #050609 100%);
+    /* The grain of the anodising. Two passes at periods that do not divide
+       into each other, so they never line up into stripes — a single
+       repeating gradient reads as corduroy at any zoom. */
+    repeating-linear-gradient(97deg,
+      rgba(255,255,255,.010) 0px, rgba(255,255,255,0) 1px,
+      rgba(0,0,0,.024) 2px,      rgba(0,0,0,0) 3px),
+    repeating-linear-gradient(94deg,
+      rgba(255,255,255,.007) 0px, rgba(255,255,255,0) 2px,
+      rgba(0,0,0,.018) 4px,      rgba(0,0,0,0) 7px),
+    /* one lamp, high and to the left, and a long fall to black */
+    linear-gradient(158deg, #1c1e22 0%, #131519 38%, #0b0c0f 72%, #060708 100%);
   box-shadow:
-    /* the milled edge: light on top-left, shadow on bottom-right */
-    inset 1px 1px 0 rgba(255,255,255,.13),
-    inset -1px -1px 0 rgba(0,0,0,.9),
-    inset 0 0 0 1px rgba(255,255,255,.035),
-    inset 0 0 60px rgba(0,0,0,.5),
-    0 1px 1px rgba(255,255,255,.05),
-    0 30px 60px -28px rgba(0,0,0,.8),
-    0 70px 120px -60px rgba(0,0,0,.9);
+    inset 0 1px 0 rgba(255,255,255,.10),      /* the lit edge */
+    inset 0 -1px 0 rgba(0,0,0,.85),           /* the edge that turned away */
+    inset 0 0 0 1px rgba(255,255,255,.025),
+    0 24px 48px -26px rgba(0,0,0,.7),
+    0 60px 100px -60px rgba(0,0,0,.75);
 }
 
-/* the pointer's sheen — a soft band of light, not a spotlight */
+/* the pointer's light: one soft pass, no hotspot */
 .member-card.px-plate::after{
-  background:
-    radial-gradient(52cqw 40cqw at var(--gx,70%) var(--gy,26%),
-      rgba(255,255,255,.13), rgba(255,255,255,.03) 46%, transparent 68%);
+  background:radial-gradient(58cqw 44cqw at var(--gx,68%) var(--gy,24%),
+    rgba(255,255,255,.085), rgba(255,255,255,.02) 44%, transparent 66%);
 }
 
-/* ---------- an inlay across the face, in the line's own metal ------------- */
-.member-card.px-plate .px-inlay{
-  position:absolute; left:0; right:0; top:20.5%; height:1px; z-index:1;
-  background:linear-gradient(90deg,
-    transparent, rgba(190,196,206,.28) 12%, rgba(226,230,238,.5) 50%,
-    rgba(190,196,206,.28) 88%, transparent);
-  box-shadow:0 1px 0 rgba(0,0,0,.7);
-}
+/* the woven field behind it is too busy for this much restraint */
+.member-card.px-plate::before{opacity:.14;}
 
-/* ---------- the data plate, where a payment chip would be ----------------- */
-.member-card.px-plate .mc-chip{
-  border-radius:2.2cqw;
-  background:
-    /* the hex field etched into it */
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='12'><path d='M7 0l6 3.4v5.2L7 12l-6-3.4V3.4z' fill='none' stroke='%23000000' stroke-opacity='0.34' stroke-width='0.9'/></svg>")
-      0 0 / 2.6cqw 2.2cqw,
-    linear-gradient(148deg, #d8dbe1 0%, #9ca1aa 26%, #eef0f4 48%, #848a94 74%, #c2c6cd 100%);
-  box-shadow:
-    inset 0 .4cqw .6cqw rgba(255,255,255,.6),
-    inset 0 -.4cqw .6cqw rgba(0,0,0,.5),
-    0 .4cqw .8cqw rgba(0,0,0,.55);
-}
-.member-card.px-plate .mc-chip::before,
-.member-card.px-plate .mc-chip::after{display:none;}
+/* ---------- what the plate does not carry --------------------------------- */
+.member-card.px-plate .mc-frame,
+.member-card.px-plate .mc-chip,
+.member-card.px-plate .px-inlay,
+.member-card.px-plate .px-seq,
+.member-card.px-plate .px-etch{display:none;}
 
-/* ---------- the emblem, cut into the plate rather than printed on it ------ */
+/* the emblem stays, as the faintest shadow of itself */
 .member-card.px-plate .mc-emblem{
-  color:transparent;
-  background:linear-gradient(180deg,#111318,#0a0b0e);
-  -webkit-background-clip:text; background-clip:text;
-  text-shadow:
-    -1px -1px 1px rgba(255,255,255,.055),
-     1px  1.5px 2px rgba(0,0,0,.95);
+  color:#0c0d10;
+  text-shadow:0 1px 0 rgba(255,255,255,.02);
+  opacity:.85;
 }
 
-/* ---------- the strand: this member's own sequence ------------------------ */
-.member-card.px-plate .px-seq{
-  position:absolute; right:7cqw; top:23.5%; z-index:2; text-align:right;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-size:2.35cqw; letter-spacing:.16em; font-weight:600;
-  color:rgba(196,201,210,.5);
-  text-shadow:0 1px 0 rgba(0,0,0,.8);
+/* ---------- what it does carry -------------------------------------------- */
+.member-card.px-plate .mc-logo{
+  height:7.4cqw;
+  filter:brightness(0) invert(.86) drop-shadow(0 1px 0 rgba(0,0,0,.8));
+  opacity:.94;
 }
-.member-card.px-plate .px-seq b{
-  font-weight:700; color:rgba(228,232,240,.82);
-}
-.member-card.px-plate .px-seq small{
-  display:block; font-size:1.7cqw; letter-spacing:.3em;
-  color:rgba(140,146,158,.46); margin-bottom:.7cqw;
-}
-
-/* ---------- the etched record, bottom corner ------------------------------ */
-.member-card.px-plate .px-etch{
-  position:absolute; right:7cqw; bottom:13.5cqw; z-index:2; text-align:right;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-size:2.05cqw; letter-spacing:.2em; line-height:1.65;
-  color:rgba(150,156,166,.5);
-  text-shadow:0 1px 0 rgba(0,0,0,.85);
-}
-
-/* ---------- the type, cut in rather than laid on -------------------------- */
-.member-card.px-plate .mc-name{
-  letter-spacing:.09em;
-  filter:drop-shadow(0 1px 0 rgba(0,0,0,.9)) drop-shadow(0 -1px 0 rgba(255,255,255,.045));
-}
-.member-card.px-plate .mc-id,
-.member-card.px-plate .mc-since,
 .member-card.px-plate .mc-tier{
-  filter:drop-shadow(0 1px 0 rgba(0,0,0,.8));
+  font-size:2.3cqw; letter-spacing:.4em;
+  color:transparent;
+  background-image:linear-gradient(180deg,#9ea3ac,#6f747c);
 }
 
-/* the frame reads as the second machined step down from the face */
-.member-card.px-plate .mc-frame{
-  border-radius:2.6cqw;
-  border-color:rgba(255,255,255,.045);
-  box-shadow:
-    inset 0 0 0 1px rgba(0,0,0,.75),
-    inset 1px 1px 0 rgba(255,255,255,.05),
-    inset 0 0 6cqw rgba(0,0,0,.6);
+.member-card.px-plate .mc-idblock{top:auto; bottom:16.5cqw;}
+.member-card.px-plate .mc-name{
+  font-size:7.6cqw; font-weight:600; letter-spacing:.1em;
+  background-image:linear-gradient(180deg,#f4f5f7 0%,#c3c7ce 46%,#8f949c 62%,#dcdfe4 100%);
+}
+.member-card.px-plate .mc-id{
+  font-size:2.9cqw; letter-spacing:.34em; margin-top:2cqw;
+  background-image:linear-gradient(180deg,#8d929a,#63676e);
 }
 
-/* it lifts a little under the pointer, and nothing else moves */
-.member-card.px-plate{transition:box-shadow .5s cubic-bezier(.22,1,.36,1);}
+.member-card.px-plate .mc-brand{font-size:3.5cqw; letter-spacing:.38em;}
+.member-card.px-plate .mc-since{font-size:2.3cqw; letter-spacing:.28em;}
+
+/* it deepens under the pointer; nothing moves */
+.member-card.px-plate{transition:box-shadow .55s cubic-bezier(.22,1,.36,1);}
 .member-card.px-plate:hover{
   box-shadow:
-    inset 1px 1px 0 rgba(255,255,255,.16),
-    inset -1px -1px 0 rgba(0,0,0,.9),
-    inset 0 0 0 1px rgba(255,255,255,.05),
-    inset 0 0 60px rgba(0,0,0,.46),
-    0 1px 1px rgba(255,255,255,.06),
-    0 38px 74px -30px rgba(0,0,0,.82),
-    0 90px 150px -60px rgba(0,0,0,.92);
+    inset 0 1px 0 rgba(255,255,255,.14),
+    inset 0 -1px 0 rgba(0,0,0,.85),
+    inset 0 0 0 1px rgba(255,255,255,.035),
+    0 30px 60px -28px rgba(0,0,0,.74),
+    0 80px 130px -60px rgba(0,0,0,.8);
 }
 
 /* ============================================================================
@@ -1542,6 +1520,236 @@ html.px-diving #app{
 /* the dictionary header sits in a corner and has to stay out of the way */
 .dh-badge{height:auto; width:min(230px, 42vw);}
 @media(max-width:560px){.dh-badge{width:min(160px, 46vw);}}
+
+/* ============================================================================
+   PEPTIDEX — SEARCH
+   White, hairline, the site's own accent. The panel is the only thing on
+   screen while it is open, and it opens by rising a little rather than by
+   appearing.
+   ============================================================================ */
+
+/* ---------- the way in, in the bar ---------------------------------------- */
+.px-s-open{
+  display:flex; align-items:center; gap:9px;
+  height:36px; padding:0 12px 0 11px;
+  border:1px solid var(--hairline); border-radius:999px;
+  background:rgba(255,255,255,.7); color:var(--muted);
+  font-family:inherit; font-size:12.5px; font-weight:500;
+  transition:color .25s, border-color .25s, background .25s, box-shadow .25s;
+}
+.px-s-open svg{width:15px; height:15px; flex:0 0 15px;}
+.px-s-open .l{white-space:nowrap;}
+.px-s-open kbd{
+  font-family:inherit; font-size:10px; font-weight:600; letter-spacing:.04em;
+  color:var(--muted); background:rgba(10,20,60,.05);
+  border:1px solid var(--hairline); border-radius:6px; padding:2px 5px;
+}
+.px-s-open:hover{
+  color:var(--ink); border-color:rgba(30,94,255,.34); background:#fff;
+  box-shadow:0 8px 22px -14px rgba(10,20,60,.6);
+}
+@media(max-width:1180px){.px-s-open .l,.px-s-open kbd{display:none;}
+  .px-s-open{width:36px; padding:0; justify-content:center;}}
+
+/* ---------- the panel ------------------------------------------------------ */
+#px-search{position:fixed; inset:0; z-index:120; display:none;}
+#px-search.on{display:block;}
+html.px-search-open{overflow:hidden;}
+
+#px-search .px-s-veil{
+  position:absolute; inset:0;
+  background:rgba(244,246,250,.72);
+  backdrop-filter:blur(22px) saturate(150%);
+  -webkit-backdrop-filter:blur(22px) saturate(150%);
+  animation:px-s-veil .3s ease-out;
+}
+@keyframes px-s-veil{from{opacity:0} to{opacity:1}}
+
+#px-search .px-s-panel{
+  position:absolute; left:50%; top:11vh;
+  width:min(680px, 92vw); max-height:74vh;
+  transform:translateX(-50%);
+  display:flex; flex-direction:column; overflow:hidden;
+  background:#fff; border:1px solid var(--hairline); border-radius:20px;
+  box-shadow:0 40px 90px -40px rgba(10,20,60,.5), 0 8px 20px -12px rgba(10,20,60,.24);
+  animation:px-s-rise .42s cubic-bezier(.22,1,.36,1);
+}
+@keyframes px-s-rise{
+  from{opacity:0; transform:translateX(-50%) translateY(14px) scale(.985);}
+  to  {opacity:1; transform:translateX(-50%) translateY(0) scale(1);}
+}
+
+/* ---------- the field ------------------------------------------------------ */
+#px-search .px-s-field{
+  display:flex; align-items:center; gap:12px;
+  padding:16px 18px; border-bottom:1px solid var(--hairline); flex:0 0 auto;
+}
+#px-search .px-s-field svg{width:19px; height:19px; color:var(--muted); flex:0 0 19px;}
+#px-search .px-s-field input{
+  flex:1 1 auto; min-width:0; border:none; outline:none; background:none;
+  font-family:inherit; font-size:17px; color:var(--ink); letter-spacing:-.01em;
+}
+#px-search .px-s-field input::placeholder{color:var(--muted); opacity:.8;}
+#px-search .px-s-field kbd{
+  font-family:inherit; font-size:9.5px; font-weight:700; letter-spacing:.12em;
+  color:var(--muted); background:rgba(10,20,60,.05);
+  border:1px solid var(--hairline); border-radius:6px; padding:3px 6px;
+}
+
+/* ---------- results -------------------------------------------------------- */
+#px-search .px-s-list{flex:1 1 auto; overflow-y:auto; padding:8px;}
+#px-search .px-s-g + .px-s-g{margin-top:6px;}
+#px-search .px-s-gh{
+  font-size:9.5px; letter-spacing:.22em; text-transform:uppercase;
+  font-weight:700; color:var(--muted); padding:10px 12px 6px;
+}
+
+#px-search .px-s-row{
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  padding:10px 12px; border:none; background:none; border-radius:12px;
+  font-family:inherit; color:var(--ink); transition:background .14s;
+}
+#px-search .px-s-row.on{background:rgba(30,94,255,.075);}
+#px-search .px-s-row .i{
+  width:32px; height:32px; flex:0 0 32px; border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(10,20,60,.045); color:var(--muted);
+}
+#px-search .px-s-row.on .i{background:rgba(30,94,255,.12); color:var(--accent);}
+#px-search .px-s-row .i svg{width:16px; height:16px;}
+#px-search .px-s-row .m{flex:1 1 auto; min-width:0;}
+#px-search .px-s-row .t{
+  display:block; font-size:14px; font-weight:600; letter-spacing:-.01em;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#px-search .px-s-row .s{
+  display:block; font-size:11.5px; color:var(--muted); margin-top:2px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#px-search .px-s-row .c{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:10.5px; font-weight:600; letter-spacing:.08em; color:var(--muted);
+  border:1px solid var(--hairline); border-radius:6px; padding:3px 7px;
+  flex:0 0 auto;
+}
+#px-search mark{background:rgba(30,94,255,.16); color:inherit; border-radius:3px; padding:0 1px;}
+
+#px-search .px-s-none{
+  padding:34px 16px 40px; text-align:center; font-size:14.5px; color:var(--ink);
+}
+#px-search .px-s-none span{font-size:12.5px; color:var(--muted);}
+
+/* ---------- the footer ----------------------------------------------------- */
+#px-search .px-s-foot{
+  flex:0 0 auto; display:flex; align-items:center; gap:16px;
+  padding:10px 16px; border-top:1px solid var(--hairline);
+  font-size:11px; color:var(--muted);
+}
+#px-search .px-s-foot span{display:flex; align-items:center; gap:5px;}
+#px-search .px-s-foot .px-s-count{margin-left:auto;}
+#px-search .px-s-foot kbd{
+  font-family:inherit; font-size:10px; font-weight:600;
+  background:rgba(10,20,60,.05); border:1px solid var(--hairline);
+  border-radius:5px; padding:1px 5px; min-width:18px; text-align:center;
+}
+
+@media (prefers-reduced-motion:reduce){
+  #px-search .px-s-panel,#px-search .px-s-veil{animation:none;}
+}
+
+/* ============================================================================
+   PEPTIDEX — THE BAR
+
+   The bar was a rectangle with a blur behind it: correct, and dead. It reads
+   as glass now — something the peptide field is seen *through* rather than a
+   panel sitting on top of it.
+
+   Three things do that, and none of them move the bar. Light travels across
+   its surface, slowly, the way it does across water. The glass deepens as you
+   descend, so the field behind it goes further away the more of the page you
+   have passed. And the edge holds a bright lip on top and a shadow underneath,
+   which is what makes a pane read as having thickness instead of being a
+   border.
+   ============================================================================ */
+
+nav{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;                 /* the travelling light stays inside */
+}
+
+/* the glass, and how far into it you are */
+nav.scrolled{
+  background:rgba(255,255,255,.58);
+  backdrop-filter:saturate(190%) blur(26px);
+  -webkit-backdrop-filter:saturate(190%) blur(26px);
+  border-color:rgba(255,255,255,.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),      /* the lip */
+    inset 0 -1px 0 rgba(10,20,60,.05),        /* the underside */
+    0 1px 0 rgba(255,255,255,.6),
+    0 10px 34px -16px rgba(10,20,60,.22),
+    0 30px 60px -40px rgba(10,20,60,.3);
+}
+
+/* Light crossing the pane. It travels once every eighteen seconds, which is
+   slow enough that you never catch it starting — you only notice the bar is
+   not a dead rectangle. It sits behind everything in the bar and cannot move
+   a single element. */
+nav::before{
+  content:""; position:absolute; z-index:-1;
+  top:-60%; bottom:-60%; width:38%; left:-45%;
+  pointer-events:none;
+  background:linear-gradient(100deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,.55) 42%,
+    rgba(213,226,250,.4) 58%,
+    rgba(255,255,255,0) 100%);
+  filter:blur(14px);
+  opacity:0;
+  transform:translate3d(0,0,0) rotate(8deg);
+  will-change:transform, opacity;
+}
+nav.scrolled::before{animation:px-nav-sheen 18s cubic-bezier(.45,0,.55,1) infinite;}
+@keyframes px-nav-sheen{
+  0%   {transform:translate3d(0,0,0) rotate(8deg);    opacity:0;}
+  12%  {opacity:.75;}
+  46%  {opacity:.55;}
+  62%  {transform:translate3d(310%,0,0) rotate(8deg); opacity:0;}
+  100% {transform:translate3d(310%,0,0) rotate(8deg); opacity:0;}
+}
+
+/* A second, deeper pass, out of phase with the first, so the two never line
+   up into a single repeating sweep. */
+nav::after{
+  content:""; position:absolute; z-index:-1;
+  top:-60%; bottom:-60%; width:26%; left:-35%;
+  pointer-events:none;
+  background:linear-gradient(100deg,
+    rgba(255,255,255,0), rgba(30,94,255,.10) 50%, rgba(255,255,255,0));
+  filter:blur(20px);
+  opacity:0;
+  transform:translate3d(0,0,0) rotate(8deg);
+  will-change:transform, opacity;
+}
+nav.scrolled::after{animation:px-nav-sheen 18s cubic-bezier(.5,0,.5,1) 6.5s infinite;}
+
+/* the active link's mark grows and settles rather than snapping to width */
+nav .links a::after{
+  height:2px; border-radius:2px; bottom:4px;
+  background:var(--accent);
+  transition:width .55s cubic-bezier(.22,1,.36,1), opacity .35s;
+  opacity:0;
+}
+nav .links a:hover::after{width:12px; opacity:.45;}
+nav .links a.active::after{width:18px; opacity:1;}
+
+/* the brand mark keeps its own space and never shifts */
+nav .brand img{height:26px; width:auto;}
+
+@media (prefers-reduced-motion:reduce){
+  nav.scrolled::before,nav.scrolled::after{animation:none; opacity:0;}
+}
 
 /* ============================================================================
    PEPTIDEX — MOTION GOVERNOR
@@ -4686,6 +4894,48 @@ function overviewHTML(u){
 
     <div class="pv-grid">
       <div class="pv-panel">
+        <div class="pv-ph"><h3>${t('Where your interest sits','Dónde está tu interés')}</h3></div>
+        ${(() => {
+          const by = Object.keys(LINES).map(k => ({
+            k, name: LINES[k].name,
+            n: favs.filter(p => String(p).split(':')[0] === k).length
+          }));
+          const total = by.reduce((s, x) => s + x.n, 0);
+          if(!total) return `<div class="pv-empty"><p>${t('No reading yet.','Aún sin lectura.')}</p>
+            <p class="s">${t('Save a few compounds and this shows which of the three lines your work leans towards.','Guarda algunos compuestos y esto muestra hacia cuál de las tres líneas se inclina tu trabajo.')}</p>
+            <button class="btn mag" data-nav data-href="#/fitness">${t('Browse the catalog','Ver el catálogo')}</button></div>`;
+          return `<ul class="pv-lines">${by.map(x => `
+            <li><button data-nav data-href="#/${x.k}">
+              <span class="n">${esc(x.name)}</span>
+              <span class="b"><i style="width:${total ? (x.n / total * 100).toFixed(1) : 0}%"></i></span>
+              <span class="v">${x.n}</span></button></li>`).join('')}</ul>
+            <p class="pv-note">${t(
+              `${total} saved compound${total === 1 ? '' : 's'} across ${by.filter(x => x.n).length} line${by.filter(x => x.n).length === 1 ? '' : 's'}.`,
+              `${total} compuesto${total === 1 ? '' : 's'} guardado${total === 1 ? '' : 's'} en ${by.filter(x => x.n).length} línea${by.filter(x => x.n).length === 1 ? '' : 's'}.`)}</p>`;
+        })()}
+      </div>
+
+      <div class="pv-panel">
+        <div class="pv-ph"><h3>${t('Current list','Lista actual')}</h3>
+          ${listCount() ? `<button class="pv-more" data-openbag>${t('Open','Abrir')}</button>` : ''}</div>
+        ${(() => {
+          const arr = getList();
+          if(!arr.length) return `<div class="pv-empty"><p>${t('Your list is empty.','Tu lista está vacía.')}</p>
+            <p class="s">${t('Add compounds as you find them; send the whole list for quotation when it is ready.','Añade compuestos conforme los encuentres; envía la lista completa a cotizar cuando esté lista.')}</p>
+            <button class="btn mag" data-nav data-href="#/beauty">${t('Find something','Buscar algo')}</button></div>`;
+          return `<ul class="pv-favs">${arr.slice(0, 5).map(it => {
+            const P = prod(it.id); if(!P) return '';
+            return `<li><div><div class="n">${esc(P.name)}</div>
+              <div class="s">${esc(P.L.name)} · ${esc(P.vlabel || P.spec)}</div></div>
+              <span class="pv-qty">×${it.qty}</span></li>`;
+          }).join('')}</ul>
+          ${arr.length > 5 ? `<p class="pv-note">${t(`and ${arr.length - 5} more.`, `y ${arr.length - 5} más.`)}</p>` : ''}`;
+        })()}
+      </div>
+    </div>
+
+    <div class="pv-grid">
+      <div class="pv-panel">
         <div class="pv-ph"><h3>${t('Your profile','Tu perfil')}</h3><span class="pv-pct">${cp.pct}%</span></div>
         <div class="pv-bar sm"><i style="width:${cp.pct}%"></i></div>
         <ul class="pv-check">${cp.rows.map(r => `
@@ -4998,6 +5248,264 @@ diveTransition = function(route){
 };
 
 water();
+
+})();
+
+/* ============================================================================
+   PEPTIDEX — SEARCH
+
+   The catalogue is a hundred and thirty compounds across three lines, and the
+   only way in was to pick a line and scroll. This is the other way in.
+
+   It is built to be opened before you know what you want. With the field
+   empty it does not sit blank — it offers the three lines, a handful of
+   compounds drawn from a different part of the catalogue each time it opens,
+   and the tools. Someone who opens it out of curiosity leaves knowing one more
+   compound than they did, which is the whole point of putting it in the bar.
+
+   Selecting a compound emits the same `data-product` the cards emit, so the
+   site's own handler opens it. No second navigation path exists to drift.
+   ============================================================================ */
+(function(){
+'use strict';
+
+/* --------------------------------------------------------------------------
+   The index, built once from the site's own data.
+   -------------------------------------------------------------------------- */
+let INDEX = null;
+
+function build(){
+  if(INDEX) return INDEX;
+  const rows = [];
+
+  Object.keys(LINES).forEach(k => {
+    const L = LINES[k];
+    rows.push({kind:'line', key:k, title:L.name, sub:L.tagline,
+               hay:(L.name + ' ' + L.tagline + ' ' + L.desc + ' ' + L.category).toLowerCase(),
+               go:'nav', href:'#/' + k});
+
+    L.products.forEach((p, i) => {
+      rows.push({kind:'compound', key:k, idx:i,
+                 title:p[1], code:p[0], sub:L.name + ' · ' + p[2], note:p[3],
+                 hay:(p[0] + ' ' + p[1] + ' ' + p[2] + ' ' + p[3] + ' ' + L.name).toLowerCase(),
+                 go:'product', pid:k + ':' + i});
+    });
+  });
+
+  [['/quality',  t('Quality & COA','Calidad y COA'),   t('How every batch is verified','Cómo se verifica cada lote')],
+   ['/tools',    t('Tools','Herramientas'),            t('Reconstitution calculator, peptide dictionary','Calculadora de reconstitución, diccionario')],
+   ['/track',    t('Track a request','Rastrear solicitud'), t('Follow a quotation by its code','Sigue una cotización por su código')],
+   ['/account',  t('My account','Mi cuenta'),          t('Standing, requests, saved compounds','Posición, solicitudes, guardados')],
+   ['/faq',      t('Questions','Preguntas'),           t('What researchers ask most','Lo que más preguntan')],
+   ['/about',    t('About PEPTIDEX','Sobre PEPTIDEX'), t('Who makes this and how','Quién lo hace y cómo')]
+  ].forEach(([href, title, sub]) => {
+    rows.push({kind:'page', title, sub, hay:(title + ' ' + sub).toLowerCase(),
+               go:'nav', href:'#' + href});
+  });
+
+  return (INDEX = rows);
+}
+
+/* --------------------------------------------------------------------------
+   Scoring. A code typed in full wins outright, then the start of a name, then
+   anything the row mentions — so "BPC" lands on BPC-157 and not on the four
+   compounds whose note happens to contain the word.
+   -------------------------------------------------------------------------- */
+function rank(q){
+  const s = q.trim().toLowerCase();
+  if(!s) return [];
+  return build().map(r => {
+    const title = r.title.toLowerCase();
+    let score = 0;
+    if(r.code && r.code.toLowerCase() === s) score = 1000;
+    else if(title === s)                     score = 900;
+    else if(title.startsWith(s))             score = 700 - title.length;
+    else if(r.code && r.code.toLowerCase().startsWith(s)) score = 600;
+    else if(title.includes(s))               score = 400 - title.indexOf(s);
+    else if(r.hay.includes(s))               score = 150;
+    if(score && r.kind === 'line') score += 60;
+    return {r, score};
+  }).filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 24)
+    .map(x => x.r);
+}
+
+/* Something different to look at on every open, walked through the catalogue
+   rather than drawn at random, so it never repeats itself twice running. */
+let seed = Math.floor(Math.random() * 997);
+function suggestions(){
+  const all = build().filter(r => r.kind === 'compound');
+  const out = [];
+  for(let i = 0; i < 5; i++){
+    out.push(all[(seed + i * 37) % all.length]);
+  }
+  seed = (seed + 5 * 37 + 11) % all.length;
+  return out;
+}
+
+const IC = {
+  find:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>',
+  vial:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 3h6M10 3v5.2L6.6 18A2.4 2.4 0 0 0 8.9 21h6.2a2.4 2.4 0 0 0 2.3-3L14 8.2V3"/><path d="M7.6 15h8.8"/></svg>',
+  line:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V8M10 20V4M16 20v-9M22 20V6"/></svg>',
+  page:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg>'
+};
+
+function mark(text, q){
+  const s = q.trim();
+  if(!s) return esc(text);
+  const i = text.toLowerCase().indexOf(s.toLowerCase());
+  if(i < 0) return esc(text);
+  return esc(text.slice(0, i)) + '<mark>' + esc(text.slice(i, i + s.length)) + '</mark>' +
+         esc(text.slice(i + s.length));
+}
+
+function row(r, q){
+  const icon = r.kind === 'compound' ? IC.vial : r.kind === 'line' ? IC.line : IC.page;
+  const attr = r.go === 'product' ? 'data-product="' + r.pid + '"'
+                                  : 'data-nav data-href="' + r.href + '"';
+  return '<button class="px-s-row" ' + attr + ' role="option">' +
+         '<span class="i">' + icon + '</span>' +
+         '<span class="m"><span class="t">' + mark(r.title, q) + '</span>' +
+         '<span class="s">' + esc(r.sub || '') + '</span></span>' +
+         (r.code ? '<span class="c">' + esc(r.code) + '</span>' : '') +
+         '</button>';
+}
+
+function group(label, rows, q){
+  if(!rows.length) return '';
+  return '<div class="px-s-g"><div class="px-s-gh">' + label + '</div>' +
+         rows.map(r => row(r, q)).join('') + '</div>';
+}
+
+/* --------------------------------------------------------------------------
+   The panel.
+   -------------------------------------------------------------------------- */
+let el = null, input = null, list = null, open = false, sel = 0;
+
+function shell(){
+  if(el) return el;
+  el = document.createElement('div');
+  el.id = 'px-search';
+  el.innerHTML =
+    '<div class="px-s-veil"></div>' +
+    '<div class="px-s-panel" role="dialog" aria-modal="true" aria-label="Search">' +
+      '<div class="px-s-field">' + IC.find +
+        '<input type="text" autocomplete="off" spellcheck="false" ' +
+          'placeholder="' + t('Search compounds, lines, tools…','Busca compuestos, líneas, herramientas…') + '">' +
+        '<kbd>ESC</kbd>' +
+      '</div>' +
+      '<div class="px-s-list" role="listbox"></div>' +
+      '<div class="px-s-foot"><span><kbd>↑</kbd><kbd>↓</kbd> ' + t('to move','moverse') + '</span>' +
+        '<span><kbd>↵</kbd> ' + t('to open','abrir') + '</span>' +
+        '<span class="px-s-count"></span></div>' +
+    '</div>';
+  document.body.appendChild(el);
+  input = el.querySelector('input');
+  list  = el.querySelector('.px-s-list');
+
+  input.addEventListener('input', paint);
+  el.querySelector('.px-s-veil').addEventListener('click', close);
+  list.addEventListener('mousemove', e => {
+    const r = e.target.closest('.px-s-row');
+    if(r) setSel([...list.querySelectorAll('.px-s-row')].indexOf(r), false);
+  });
+  /* the site's own delegated handlers do the navigating; close on the way */
+  list.addEventListener('click', e => { if(e.target.closest('.px-s-row')) close(); });
+  return el;
+}
+
+function paint(){
+  const q = input.value;
+  if(!q.trim()){
+    list.innerHTML =
+      group(t('Start with a line','Empieza por una línea'), build().filter(r => r.kind === 'line'), '') +
+      group(t('From the catalogue','Del catálogo'), suggestions(), '') +
+      group(t('Elsewhere','En otra parte'), build().filter(r => r.kind === 'page').slice(0, 3), '');
+    el.querySelector('.px-s-count').textContent = '';
+  } else {
+    const hits = rank(q);
+    if(!hits.length){
+      list.innerHTML = '<div class="px-s-none">' +
+        t('Nothing matches','Nada coincide') + ' <b>' + esc(q) + '</b>.<br>' +
+        '<span>' + t('Try a code like BPC, or a line.','Prueba un código como BPC, o una línea.') + '</span></div>';
+    } else {
+      list.innerHTML =
+        group(t('Compounds','Compuestos'), hits.filter(r => r.kind === 'compound'), q) +
+        group(t('Lines','Líneas'),         hits.filter(r => r.kind === 'line'), q) +
+        group(t('Pages','Páginas'),        hits.filter(r => r.kind === 'page'), q);
+    }
+    el.querySelector('.px-s-count').textContent =
+      hits.length ? hits.length + ' ' + t('results','resultados') : '';
+  }
+  setSel(0, true);
+}
+
+function rows(){ return [...list.querySelectorAll('.px-s-row')]; }
+
+function setSel(i, scroll){
+  const rs = rows();
+  if(!rs.length) return;
+  sel = Math.max(0, Math.min(rs.length - 1, i));
+  rs.forEach((r, n) => r.classList.toggle('on', n === sel));
+  if(scroll && rs[sel]) rs[sel].scrollIntoView({block:'nearest'});
+}
+
+function show(){
+  shell();
+  if(open) return;
+  open = true;
+  el.classList.add('on');
+  document.documentElement.classList.add('px-search-open');
+  input.value = '';
+  paint();
+  requestAnimationFrame(() => input.focus());
+  if(window.lenis && lenis.stop) lenis.stop();
+}
+
+function close(){
+  if(!open) return;
+  open = false;
+  el.classList.remove('on');
+  document.documentElement.classList.remove('px-search-open');
+  if(window.lenis && lenis.start && !document.getElementById('product').style.display) lenis.start();
+}
+
+/* --------------------------------------------------------------------------
+   The way in.
+   -------------------------------------------------------------------------- */
+function button(){
+  const host = document.querySelector('nav .navacc');
+  if(!host || host.querySelector('.px-s-open')) return;
+  const b = document.createElement('button');
+  b.className = 'px-s-open';
+  b.setAttribute('aria-label', t('Search','Buscar'));
+  b.innerHTML = IC.find + '<span class="l">' + t('Search','Buscar') + '</span>' +
+                '<kbd class="px-s-k"></kbd>';
+  b.querySelector('.px-s-k').textContent =
+    /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘K' : 'Ctrl K';
+  b.addEventListener('click', show);
+  host.insertBefore(b, host.firstChild);
+}
+
+addEventListener('keydown', e => {
+  if((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')){
+    e.preventDefault(); open ? close() : show(); return;
+  }
+  if(!open) return;
+  if(e.key === 'Escape'){ e.preventDefault(); close(); }
+  else if(e.key === 'ArrowDown'){ e.preventDefault(); setSel(sel + 1, true); }
+  else if(e.key === 'ArrowUp'){   e.preventDefault(); setSel(sel - 1, true); }
+  else if(e.key === 'Enter'){
+    const r = rows()[sel];
+    if(r){ e.preventDefault(); r.click(); }
+  }
+});
+
+const _render = render;
+render = function(route, defer){ _render(route, defer); button(); };
+
+button();
 
 })();
 
