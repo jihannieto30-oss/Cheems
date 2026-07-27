@@ -1,0 +1,140 @@
+/* ============================================================================
+   PEPTIDEX — THE MEMBER PLATE
+
+   A membership card usually copies a bank card: rounded rectangle, payment
+   chip, embossed name. PEPTIDEX does not issue credit, it issues compounds, so
+   this is not a card. It is a plate — a machined piece of dark metal with the
+   member's record etched into it, the way a specimen is labelled.
+
+   What makes metal read as metal is not a gradient, it is the edge. A real
+   milled edge catches light on the side facing the lamp and goes dark on the
+   side away from it, and the face has a direction to its grain. Both are here,
+   and the sheen tracks the pointer rather than sitting still.
+
+   The one thing no card has: a sequence. Every member's plate carries a strand
+   derived from their own member ID — the same ID always gives the same strand,
+   and no two members share one. It is the closest thing to a signature a
+   peptide company can etch.
+   ============================================================================ */
+
+.member-card.px-plate{
+  border-radius:18px;
+  background:
+    /* the grain, running across the face */
+    repeating-linear-gradient(102deg,
+      rgba(255,255,255,.020) 0px, rgba(255,255,255,0) 1px,
+      rgba(0,0,0,.035) 2px,      rgba(0,0,0,0) 3.5px),
+    /* the lamp, sitting off the top-left shoulder */
+    radial-gradient(120% 100% at 22% 8%,
+      #23252b 0%, #16181d 34%, #0d0e12 66%, #050609 100%);
+  box-shadow:
+    /* the milled edge: light on top-left, shadow on bottom-right */
+    inset 1px 1px 0 rgba(255,255,255,.13),
+    inset -1px -1px 0 rgba(0,0,0,.9),
+    inset 0 0 0 1px rgba(255,255,255,.035),
+    inset 0 0 60px rgba(0,0,0,.5),
+    0 1px 1px rgba(255,255,255,.05),
+    0 30px 60px -28px rgba(0,0,0,.8),
+    0 70px 120px -60px rgba(0,0,0,.9);
+}
+
+/* the pointer's sheen — a soft band of light, not a spotlight */
+.member-card.px-plate::after{
+  background:
+    radial-gradient(52cqw 40cqw at var(--gx,70%) var(--gy,26%),
+      rgba(255,255,255,.13), rgba(255,255,255,.03) 46%, transparent 68%);
+}
+
+/* ---------- an inlay across the face, in the line's own metal ------------- */
+.member-card.px-plate .px-inlay{
+  position:absolute; left:0; right:0; top:20.5%; height:1px; z-index:1;
+  background:linear-gradient(90deg,
+    transparent, rgba(190,196,206,.28) 12%, rgba(226,230,238,.5) 50%,
+    rgba(190,196,206,.28) 88%, transparent);
+  box-shadow:0 1px 0 rgba(0,0,0,.7);
+}
+
+/* ---------- the data plate, where a payment chip would be ----------------- */
+.member-card.px-plate .mc-chip{
+  border-radius:2.2cqw;
+  background:
+    /* the hex field etched into it */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='12'><path d='M7 0l6 3.4v5.2L7 12l-6-3.4V3.4z' fill='none' stroke='%23000000' stroke-opacity='0.34' stroke-width='0.9'/></svg>")
+      0 0 / 2.6cqw 2.2cqw,
+    linear-gradient(148deg, #d8dbe1 0%, #9ca1aa 26%, #eef0f4 48%, #848a94 74%, #c2c6cd 100%);
+  box-shadow:
+    inset 0 .4cqw .6cqw rgba(255,255,255,.6),
+    inset 0 -.4cqw .6cqw rgba(0,0,0,.5),
+    0 .4cqw .8cqw rgba(0,0,0,.55);
+}
+.member-card.px-plate .mc-chip::before,
+.member-card.px-plate .mc-chip::after{display:none;}
+
+/* ---------- the emblem, cut into the plate rather than printed on it ------ */
+.member-card.px-plate .mc-emblem{
+  color:transparent;
+  background:linear-gradient(180deg,#111318,#0a0b0e);
+  -webkit-background-clip:text; background-clip:text;
+  text-shadow:
+    -1px -1px 1px rgba(255,255,255,.055),
+     1px  1.5px 2px rgba(0,0,0,.95);
+}
+
+/* ---------- the strand: this member's own sequence ------------------------ */
+.member-card.px-plate .px-seq{
+  position:absolute; right:7cqw; top:23.5%; z-index:2; text-align:right;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:2.35cqw; letter-spacing:.16em; font-weight:600;
+  color:rgba(196,201,210,.5);
+  text-shadow:0 1px 0 rgba(0,0,0,.8);
+}
+.member-card.px-plate .px-seq b{
+  font-weight:700; color:rgba(228,232,240,.82);
+}
+.member-card.px-plate .px-seq small{
+  display:block; font-size:1.7cqw; letter-spacing:.3em;
+  color:rgba(140,146,158,.46); margin-bottom:.7cqw;
+}
+
+/* ---------- the etched record, bottom corner ------------------------------ */
+.member-card.px-plate .px-etch{
+  position:absolute; right:7cqw; bottom:13.5cqw; z-index:2; text-align:right;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:2.05cqw; letter-spacing:.2em; line-height:1.65;
+  color:rgba(150,156,166,.5);
+  text-shadow:0 1px 0 rgba(0,0,0,.85);
+}
+
+/* ---------- the type, cut in rather than laid on -------------------------- */
+.member-card.px-plate .mc-name{
+  letter-spacing:.09em;
+  filter:drop-shadow(0 1px 0 rgba(0,0,0,.9)) drop-shadow(0 -1px 0 rgba(255,255,255,.045));
+}
+.member-card.px-plate .mc-id,
+.member-card.px-plate .mc-since,
+.member-card.px-plate .mc-tier{
+  filter:drop-shadow(0 1px 0 rgba(0,0,0,.8));
+}
+
+/* the frame reads as the second machined step down from the face */
+.member-card.px-plate .mc-frame{
+  border-radius:2.6cqw;
+  border-color:rgba(255,255,255,.045);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.75),
+    inset 1px 1px 0 rgba(255,255,255,.05),
+    inset 0 0 6cqw rgba(0,0,0,.6);
+}
+
+/* it lifts a little under the pointer, and nothing else moves */
+.member-card.px-plate{transition:box-shadow .5s cubic-bezier(.22,1,.36,1);}
+.member-card.px-plate:hover{
+  box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,.16),
+    inset -1px -1px 0 rgba(0,0,0,.9),
+    inset 0 0 0 1px rgba(255,255,255,.05),
+    inset 0 0 60px rgba(0,0,0,.46),
+    0 1px 1px rgba(255,255,255,.06),
+    0 38px 74px -30px rgba(0,0,0,.82),
+    0 90px 150px -60px rgba(0,0,0,.92);
+}

@@ -1,0 +1,116 @@
+/* ============================================================================
+   PEPTIDEX — THE DIVE
+
+   Entering a line was a shutter: two white panels met, a mark appeared, the
+   panels left. Flat, and over.
+
+   It is a descent now. The page you are on sinks and goes small. The water
+   closes over it and the field stops being white — it becomes depth, with
+   light moving through it. The line's mark rises out of that depth. Then the
+   water parts and the new page comes up to meet you.
+
+   Leaving a line is the same move, because leaving is also arriving.
+
+   All of it is opacity and transform on a handful of layers that only exist
+   while #dive is displayed, so it costs nothing at rest, and none of it is a
+   filter over the whole viewport — a full-screen blur held for two seconds is
+   what would make this stutter on the machines that matter.
+   ============================================================================ */
+
+/* ---------- the page sinks, then comes back up ---------------------------- */
+html.px-diving #app{
+  transform-origin:50% 42%;
+  will-change:transform, opacity;
+  animation:px-submerge 2600ms cubic-bezier(.33,0,.15,1) forwards;
+}
+@keyframes px-submerge{
+  0%   {transform:scale(1);     opacity:1;}
+  20%  {transform:scale(.952);  opacity:.22;}
+  30%  {transform:scale(1.085); opacity:0;}
+  66%  {transform:scale(1.052); opacity:0;}
+  100% {transform:scale(1);     opacity:1;}
+}
+
+/* ---------- the field stops being white and becomes depth ------------------ */
+#dive .px-deep{
+  position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:
+    radial-gradient(78% 62% at 50% 40%,
+      rgba(255,255,255,.99) 0%,
+      rgba(236,242,252,.96) 42%,
+      rgba(208,222,245,.94) 71%,
+      rgba(182,201,235,.96) 100%);
+  opacity:0;
+  animation:px-deep 2600ms ease-in-out;
+}
+@keyframes px-deep{
+  0%{opacity:0;} 17%{opacity:1;} 68%{opacity:1;} 100%{opacity:0;}
+}
+
+/* ---------- light moving through it ---------------------------------------- */
+#dive .px-caustic{
+  position:absolute; inset:-25%; z-index:1; pointer-events:none;
+  opacity:0; animation:px-caust 2600ms ease-in-out;
+}
+#dive .px-caustic i{
+  position:absolute; border-radius:50%;
+  filter:blur(70px); will-change:transform;
+}
+#dive .px-caustic i:nth-child(1){
+  left:6%; top:8%; width:46%; height:52%;
+  background:radial-gradient(circle, rgba(255,255,255,.95), rgba(255,255,255,0) 68%);
+  animation:px-drift-a 2600ms cubic-bezier(.4,0,.3,1);
+}
+#dive .px-caustic i:nth-child(2){
+  right:2%; bottom:4%; width:54%; height:58%;
+  background:radial-gradient(circle, rgba(30,94,255,.13), rgba(30,94,255,0) 66%);
+  animation:px-drift-b 2600ms cubic-bezier(.4,0,.3,1);
+}
+#dive .px-caustic i:nth-child(3){
+  left:34%; bottom:16%; width:38%; height:40%;
+  background:radial-gradient(circle, rgba(255,255,255,.8), rgba(255,255,255,0) 70%);
+  animation:px-drift-c 2600ms cubic-bezier(.4,0,.3,1);
+}
+@keyframes px-caust{0%{opacity:0;} 22%{opacity:1;} 66%{opacity:1;} 100%{opacity:0;}}
+@keyframes px-drift-a{0%{transform:translate3d(-9%,-7%,0) scale(.86);} 100%{transform:translate3d(7%,9%,0) scale(1.16);}}
+@keyframes px-drift-b{0%{transform:translate3d(8%,10%,0) scale(1.14);} 100%{transform:translate3d(-7%,-8%,0) scale(.88);}}
+@keyframes px-drift-c{0%{transform:translate3d(4%,8%,0) scale(1.05);} 100%{transform:translate3d(-6%,-10%,0) scale(.82);}}
+
+/* ---------- the surface breaking, once going down and once coming up ------- */
+#dive .px-surface{
+  position:absolute; left:0; right:0; top:50%; height:2px; z-index:2;
+  margin-top:-1px; pointer-events:none;
+  background:linear-gradient(90deg,
+    transparent, rgba(255,255,255,.4) 18%, rgba(255,255,255,.98) 50%,
+    rgba(255,255,255,.4) 82%, transparent);
+  opacity:0; will-change:transform, opacity;
+  animation:px-surface 2600ms cubic-bezier(.16,.7,.2,1);
+}
+@keyframes px-surface{
+  0%   {opacity:0;  transform:scaleX(.18) scaleY(1);}
+  7%   {opacity:1;}
+  24%  {opacity:.8; transform:scaleX(1) scaleY(150);}
+  32%  {opacity:0;  transform:scaleX(1) scaleY(220);}
+  66%  {opacity:0;  transform:scaleX(1) scaleY(220);}
+  75%  {opacity:.9; transform:scaleX(1) scaleY(130);}
+  100% {opacity:0;  transform:scaleX(.18) scaleY(1);}
+}
+
+/* ---------- the mark surfaces out of the depth ----------------------------- */
+#dive .center{z-index:3;}
+#dive .center::before{
+  content:""; position:absolute; z-index:-1;
+  width:min(760px, 92vw); aspect-ratio:1; border-radius:50%;
+  background:radial-gradient(circle, rgba(255,255,255,.95), rgba(255,255,255,0) 62%);
+  opacity:0; animation:px-halo 2600ms ease-in-out;
+}
+@keyframes px-halo{0%{opacity:0; transform:scale(.6);} 34%{opacity:1; transform:scale(1);}
+                   66%{opacity:1; transform:scale(1.06);} 100%{opacity:0; transform:scale(1.2);}}
+
+/* the supplied line logos are wide lockups, not square badges */
+#dive .dlogo{width:min(560px, 82vw);}
+
+@media (prefers-reduced-motion:reduce){
+  html.px-diving #app{animation:none;}
+  #dive .px-deep,#dive .px-caustic,#dive .px-surface,#dive .center::before{animation:none; opacity:0;}
+}

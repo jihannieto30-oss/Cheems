@@ -53,6 +53,32 @@ const IC = {
   dot:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7"/></svg>'
 };
 
+/* --------------------------------------------------------------------------
+   The member's strand.
+
+   The plate carries a peptide sequence that belongs to this member and to no
+   one else. It is not random: the member ID is hashed and the hash walks the
+   twenty amino acids, so the same ID always produces the same strand and two
+   members never share one. It is the closest thing to a signature a peptide
+   company can etch into metal.
+   -------------------------------------------------------------------------- */
+const AA = 'ACDEFGHIKLMNPQRSTVWY';
+
+function strand(id, n){
+  let h = 0x9e3779b9;
+  for(let i = 0; i < id.length; i++){
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 0x85ebca6b) >>> 0;
+    h ^= h >>> 13;
+  }
+  let out = '';
+  for(let i = 0; i < n; i++){
+    h = Math.imul(h ^ (h >>> 15), 0xc2b2ae35) >>> 0;
+    out += AA[h % AA.length];
+  }
+  return out;
+}
+
 function qa(icon, label, attrs){
   return '<button class="pv-qa-b" ' + attrs + '><span class="i">' + icon + '</span>' +
          '<span class="l">' + label + '</span>' +
@@ -110,12 +136,17 @@ function overviewHTML(u){
       </div>
 
       <div class="pv-cardwrap">
-        <div class="member-card" id="memberCard">
+        <div class="member-card px-plate" id="memberCard">
           <div class="mc-frame"></div>
           <div class="mc-emblem">PX</div>
           <div class="mc-top"><img class="mc-logo" src="${LOGOS.hero}" alt="PEPTIDEX"/><span class="mc-tier">PEPTIDEX MEMBER</span></div>
+          <div class="px-inlay"></div>
+          <div class="px-seq"><small>${t('SEQUENCE','SECUENCIA')}</small>${
+            strand(mId, 12).split('').map((a, i) => i % 4 === 0 ? '<b>' + a + '</b>' : a).join('')
+          }</div>
           <div class="mc-chip"></div>
           <div class="mc-idblock"><div class="mc-name">${esc(mFirst)}</div><div class="mc-id">${esc(mId)}</div></div>
+          <div class="px-etch">${t('ISSUE','EMISIÓN')} ${since.getFullYear()}.${String(since.getMonth()+1).padStart(2,'0')}<br>${REGION === 'usa' ? 'REG US' : 'REG MX'}</div>
           <div class="mc-foot"><span class="mc-brand">PEPTIDEX</span><span class="mc-since">${t('MEMBER SINCE','MIEMBRO DESDE')} ${since.getFullYear()}</span></div>
         </div>
       </div>

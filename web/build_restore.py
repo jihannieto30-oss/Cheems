@@ -38,15 +38,23 @@ for k in ('fitness', 'beauty', 'longevity'):
     if not n: raise SystemExit('vial_%s not found' % k)
     print('  vial_%-10s baked' % k)
 
-# ---- 2 · the layers -------------------------------------------------------
+# ---- 2 · the line logos, cut out of the supplied PDF ----------------------
+for k in ('fitness', 'beauty', 'longevity'):
+    uri = datauri(os.path.join(M, 'logo_%s.webp' % k))
+    pat = re.compile(r'(badge_' + k + r'\s*:\s*")data:image/[a-z]+;base64,[^"]+(")')
+    html, n = pat.subn(lambda m: m.group(1) + uri + m.group(2), html, count=1)
+    if not n: raise SystemExit('badge_%s not found' % k)
+    print('  badge_%-9s replaced' % k)
+
+# ---- 3 · the layers -------------------------------------------------------
 kit   = rd(os.path.join(M, 'labelkit.json'))
 label = rd(os.path.join(SRC, '40_label.js')).replace('__LABELKIT__', kit)
 css   = '\n'.join(rd(os.path.join(SRC, f)) for f in
-                  ('41_label.css', '51_profile.css', '61_drop.css', '30_motion.css'))
+                  ('41_label.css', '51_profile.css', '52_card.css', '62_dive.css', '64_logos.css', '30_motion.css'))
 js    = ('window.__pxBakedLines = true;\n' + label + '\n' +
          rd(os.path.join(SRC, '50_profile.js')) + '\n' +
          rd(os.path.join(SRC, '31_motion.js')) + '\n' +
-         rd(os.path.join(SRC, '60_drop.js')))
+         rd(os.path.join(SRC, '63_dive.js')))
 
 i = html.rindex('</style>')
 html = html[:i] + '\n/* ===== PEPTIDEX LABEL + MOTION ===== */\n' + css + '\n' + html[i:]
