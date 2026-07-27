@@ -17,27 +17,39 @@
    Reel-cut fast at both ends, held in the middle. No white anywhere except
    the light itself.
 
-   THE COST
-   Every layer here is transform and opacity on elements that only exist while
-   #dive is displayed, which is 2.6 s out of a session. Nothing is a filter
-   over the viewport — a full-screen blur held for two seconds is exactly what
-   makes this stutter on the machines that matter, and there is none.
+   WHERE THE WARP ACTUALLY LIVES
+   Nearly all of it is in 63_dive.js, drawn into one canvas. It was built here
+   first, as about ninety stacked translucent boxes, and it ran at a fifth of
+   the frame rate — not because any one of them was expensive, but because
+   there were ninety. What is left in this file is the short list of things
+   that genuinely have to be DOM:
 
-   THE SHUTTER
-   The base timeline still slides its two panels. They are transparent now, so
-   the slide shows nothing: the field is covered and uncovered by .px-void's
-   own opacity, on the beat this transition wants rather than the one the
-   panels were built for.
+     the canvas itself,
+     the mark, which is supplied artwork carrying a rim light that has to
+       follow its own alpha,
+     the page, which leaves through the camera and comes back out of it.
+
+   Three animated layers, and the shutter panels turned off.
    ============================================================================ */
 
-#dive{--px-tint:168,168,168; --px-depth:.5;}
+#dive{--px-tint:255,255,255;}
 
-/* the panels still move; they are simply not there any more */
-#dive .p{background:none !important; box-shadow:none !important;}
+/* The base timeline still slides its two panels. They are not just invisible,
+   they are gone: an animated full-viewport box costs the compositor whether or
+   not anything can be seen in it, and the field is covered and uncovered by
+   the canvas now, on this transition's beat rather than theirs. */
+#dive .p{display:none !important;}
+
+/* ---------- the warp ------------------------------------------------------ */
+#dive .px-canvas{
+  position:absolute; inset:0; z-index:1;
+  width:100%; height:100%;
+  pointer-events:none;
+}
 
 /* ---------- the page leaves through the camera, and comes back out of it ---
    render() swaps the page at 31% of the span, while nothing is visible. The
-   new page is already large and waiting at 66%; from there it settles rather
+   new page is already large and waiting at 64%; from there it settles rather
    than arrives, which is what coming out of a jump feels like. */
 html.px-diving #app{
   transform-origin:50% 46%;
@@ -51,173 +63,6 @@ html.px-diving #app{
   64%  {transform:scale(1.135); opacity:0;}
   76%  {transform:scale(1.042); opacity:1;}
   100% {transform:scale(1);     opacity:1;}
-}
-
-/* ---------- the void ------------------------------------------------------
-   Black, and only black. Every bright thing in this transition is its own
-   layer with its own life, because the one mistake that kills it is lighting
-   the field: a pool of white behind the mark eats the mark. Two of the three
-   lockups are fine copper and fine steel — thin strokes with their own
-   highlights — and a bright disc under them is not contrast, it is glare.
-   So the void keeps the field dark and lets the light travel. */
-#dive .px-void{
-  position:absolute; inset:0; z-index:0; pointer-events:none;
-  background:
-    radial-gradient(78% 66% at 50% 46%,
-      rgba(var(--px-tint), calc(.10 * var(--px-depth) + .04)) 0%,
-      transparent 76%),
-    radial-gradient(130% 108% at 50% 46%,
-      #0b0d10 0%, #060709 40%, #020304 72%, #000000 100%);
-  opacity:0;
-  animation:px-void 2600ms linear;
-}
-@keyframes px-void{
-  0%{opacity:0;} 8%{opacity:1;} 66%{opacity:1;} 80%{opacity:0;} 100%{opacity:0;}
-}
-
-/* ---------- the far end of the corridor -----------------------------------
-   The light you are travelling toward. It is the brightest thing on screen
-   while the corridor runs, and it is gone by the time the mark has landed —
-   the mark takes over as the brightest thing, which is the whole point of
-   arriving somewhere. */
-#dive .px-core{
-  position:absolute; left:50%; top:46%; z-index:1; pointer-events:none;
-  width:44vmin; height:44vmin; margin:-22vmin 0 0 -22vmin; border-radius:50%;
-  background:radial-gradient(circle,
-    rgba(255,255,255,.92) 0%,
-    rgba(var(--px-tint),.55) 34%,
-    rgba(var(--px-tint),0) 72%);
-  opacity:0; animation:px-core 2600ms cubic-bezier(.4,0,.5,1);
-}
-@keyframes px-core{
-  0%   {opacity:0;   transform:scale(.08);}
-  18%  {opacity:1;   transform:scale(.24);}
-  34%  {opacity:.58; transform:scale(.7);}
-  46%  {opacity:0;   transform:scale(1.6);}
-  100% {opacity:0;   transform:scale(1.6);}
-}
-
-/* ---------- the corridor --------------------------------------------------
-   Six hexagonal frames on one path, out of step, so a frame is always
-   arriving. Each frame is a ring of six rods with the corners cut out of it —
-   a conic mask punches the gaps, a clip-path keeps only the outline — and the
-   frames are identical apart from where they are along the path, which is
-   what makes them nest instead of scattering. They accelerate as they come:
-   that acceleration is the difference between six hexagons being scaled and
-   one corridor with depth in it.
-
-   The order is the reference's own: you jump, you are in the tube, you
-   arrive. Streaks first, then the corridor, then the mark — and the streaks
-   come back for the way out. The corridor and the streaks never hold the same
-   frame, because two kinds of speed at once is not speed, it is noise. */
-#dive .px-corridor{
-  position:absolute; inset:0; z-index:1; pointer-events:none;
-  opacity:0; animation:px-corridor 2600ms ease-out;
-}
-@keyframes px-corridor{
-  0%{opacity:0;} 14%{opacity:0;} 20%{opacity:1;} 40%{opacity:1;}
-  52%{opacity:0;} 100%{opacity:0;}
-}
-#dive .px-corridor b{
-  position:absolute; left:50%; top:46%;
-  width:76vmin; height:76vmin; margin:-38vmin 0 0 -38vmin;
-  background:linear-gradient(152deg,
-    rgba(255,255,255,.96) 0%,
-    rgba(var(--px-tint),.94) 42%,
-    rgba(255,255,255,.90) 70%,
-    rgba(var(--px-tint),.78) 100%);
-  clip-path:polygon(evenodd,
-    50% 0%, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%,
-    50% 1.5%, 91.9% 25.9%, 91.9% 74.1%, 50% 98.5%, 8.1% 74.1%, 8.1% 25.9%);
-  -webkit-mask-image:repeating-conic-gradient(from 0deg,
-    transparent 0deg 4deg, #000 5.5deg 54.5deg, transparent 56deg 60deg);
-          mask-image:repeating-conic-gradient(from 0deg,
-    transparent 0deg 4deg, #000 5.5deg 54.5deg, transparent 56deg 60deg);
-  opacity:0;
-  animation:px-ring var(--dur,1180ms) cubic-bezier(.5,.02,.7,.22) var(--d,0ms) infinite;
-}
-@keyframes px-ring{
-  0%   {transform:scale(.04) rotate(-9deg); opacity:0;}
-  18%  {opacity:1;}
-  74%  {opacity:.9;}
-  100% {transform:scale(3.6) rotate(1deg); opacity:0;}
-}
-
-/* ---------- the streaks ---------------------------------------------------
-   The warp itself. Each streak is anchored at the vanishing point and rotated
-   out along its own bearing, so it flies radially; it lengthens as it travels
-   because at speed a point source stops being a point. They run on their own
-   short cycle at their own speeds — a slow one is far away, a fast one is
-   close — and the cycle is shorter than the span, so the flow never ends
-   mid-transition, it is simply turned off. */
-#dive .px-streaks{
-  position:absolute; inset:0; z-index:1; pointer-events:none;
-  opacity:0; animation:px-streaks 2600ms ease-out;
-}
-/* out, and then out again */
-@keyframes px-streaks{
-  0%{opacity:0;} 4%{opacity:1;} 22%{opacity:1;} 34%{opacity:0;}
-  54%{opacity:0;} 61%{opacity:1;} 72%{opacity:1;} 82%{opacity:0;} 100%{opacity:0;}
-}
-#dive .px-streaks i{
-  position:absolute; left:50%; top:46%;
-  width:var(--l,28vmin); height:var(--t,1.4px);
-  margin-top:calc(var(--t,1.4px) / -2);
-  transform-origin:0 50%;
-  border-radius:var(--t,1.4px);
-  background:linear-gradient(90deg,
-    rgba(255,255,255,0) 0%,
-    rgba(255,255,255,.98) 20%,
-    rgba(var(--px-tint),.92) 56%,
-    rgba(var(--px-tint),0) 100%);
-  box-shadow:0 0 var(--g,7px) rgba(var(--px-tint),.5);
-  opacity:0;
-  animation:px-streak var(--dur,950ms) cubic-bezier(.42,0,.86,.34) var(--d,0ms) infinite;
-}
-@keyframes px-streak{
-  0%   {transform:rotate(var(--a,0deg)) translateX(1.5vmin) scaleX(.16); opacity:0;}
-  14%  {opacity:var(--o,1);}
-  76%  {opacity:var(--o,1);}
-  100% {transform:rotate(var(--a,0deg)) translateX(var(--r,80vmax)) scaleX(1); opacity:0;}
-}
-
-/* ---------- the haze the corridor travels through ------------------------- */
-#dive .px-haze{
-  position:absolute; inset:-20%; z-index:1; pointer-events:none;
-  opacity:0; animation:px-haze 2600ms ease-in-out;
-}
-#dive .px-haze i{
-  position:absolute; border-radius:50%; filter:blur(78px);
-}
-#dive .px-haze i:nth-child(1){
-  left:4%; top:6%; width:52%; height:56%;
-  background:radial-gradient(circle, rgba(var(--px-tint),.20), rgba(var(--px-tint),0) 68%);
-  animation:px-haze-a 2600ms cubic-bezier(.4,0,.3,1);
-}
-#dive .px-haze i:nth-child(2){
-  right:0%; bottom:2%; width:58%; height:60%;
-  background:radial-gradient(circle, rgba(255,255,255,.11), rgba(255,255,255,0) 70%);
-  animation:px-haze-b 2600ms cubic-bezier(.4,0,.3,1);
-}
-@keyframes px-haze{0%{opacity:0;} 18%{opacity:1;} 64%{opacity:1;} 86%{opacity:0;} 100%{opacity:0;}}
-@keyframes px-haze-a{0%{transform:translate3d(-8%,-6%,0) scale(.82);} 100%{transform:translate3d(9%,11%,0) scale(1.22);}}
-@keyframes px-haze-b{0%{transform:translate3d(9%,10%,0) scale(1.18);} 100%{transform:translate3d(-8%,-9%,0) scale(.84);}}
-
-/* ---------- the flash at the far end -------------------------------------
-   One frame of glare as the mark punches out of the corridor, and one as it
-   goes through the camera. It is what makes the two halves read as a cut
-   rather than a fade. */
-#dive .px-flash{
-  position:absolute; inset:0; z-index:2; pointer-events:none;
-  background:radial-gradient(46% 42% at 50% 46%,
-    rgba(255,255,255,.9) 0%, rgba(var(--px-tint),.38) 44%, transparent 78%);
-  opacity:0; animation:px-flash 2600ms linear;
-}
-/* one at the hand-off from corridor to streaks, one as the mark goes through
-   the camera — two cuts, and nothing in between */
-@keyframes px-flash{
-  0%{opacity:0;} 36%{opacity:0;} 41%{opacity:.6;} 50%{opacity:0;}
-  60%{opacity:0;} 66%{opacity:.7;} 76%{opacity:0;} 100%{opacity:0;}
 }
 
 /* ---------- the mark, arriving and leaving --------------------------------
@@ -237,29 +82,6 @@ html.px-diving #dive .center{
   74%  {transform:scale(2.6);}
   100% {transform:scale(3.3);}
 }
-
-/* What the mark stands in is a pocket, not a pool.
-
-   The instinct is to put light behind the mark, and it is wrong twice over: a
-   bright disc swallows Beauty's fine copper, and it does nothing at all for a
-   corridor rod passing directly behind a stroke — the rod is brighter than any
-   backing. So the middle of the screen is taken *down* instead. The corridor
-   keeps arriving; it simply gets quiet exactly where the mark is, and the rim
-   light on the mark itself does the separating. Dark in the centre, easing out
-   to nothing: monotonic, so there is no ring hanging in the frame. */
-#dive .center::before{
-  content:""; position:absolute; left:50%; top:44%; z-index:-1;
-  width:min(1240px, 138vw); aspect-ratio:1;
-  transform:translate(-50%,-50%); border-radius:50%;
-  background:radial-gradient(circle,
-    rgba(0,0,0,.80) 0%,
-    rgba(0,0,0,.66) 20%,
-    rgba(0,0,0,.34) 38%,
-    rgba(0,0,0,.10) 52%,
-    rgba(0,0,0,0) 66%);
-  opacity:0; animation:px-pool 2600ms ease-in-out;
-}
-@keyframes px-pool{0%{opacity:0;} 28%{opacity:1;} 60%{opacity:1;} 76%{opacity:0;} 100%{opacity:0;}}
 
 /* The supplied line marks are wide lockups, roughly 5:1, not square badges.
    Sized by width so they are never scaled to a height they do not have, and
@@ -284,47 +106,38 @@ html.px-diving #dive .center{
 
    So the light is put on the mark rather than under it. A drop-shadow follows
    the artwork's own alpha exactly, so what comes out is a halo hugging every
-   stroke of the supplied lockup — a rim light. Not one pixel of the artwork
-   is touched: this is entirely outside it.
+   stroke of the supplied lockup — a rim light. Not one pixel of the artwork is
+   touched: all of this is outside it.
 
-   It is declared on a wrapper, not on the image, for two reasons. The base
+   Read the chain in order, because each pass is fed the result of the last: a
+   tight white edge and the line's own light are laid on the mark first, and a
+   black spread is thrown behind all of it. That works for artwork of any tone
+   — the dark lines get an edge that separates them from the field, the light
+   one gets a pocket of black that separates it from the corridor passing
+   behind.
+
+   It is declared on a wrapper rather than on the image because the base
    timeline animates `filter` on the image itself and would overwrite anything
-   set there; and a filter belongs on a box the size of the mark, not on a
-   viewport-sized layer that is being scaled — that is the version of this
-   that drops frames. */
+   set there — and because a filter belongs on a box the size of the mark, not
+   on a viewport-sized layer that is being scaled. */
 #dive .dlogo-lit{
   display:inline-block; line-height:0;
-  /* Read in order, because a filter chain feeds each pass the result of the
-     last: a tight white edge and the line's own light are laid on the mark
-     first, and then two black spreads are thrown behind all of it. What comes
-     out works for artwork of any tone — the dark lines get an edge that
-     separates them from the field, the light one gets a pocket of black that
-     separates it from the corridor passing behind, and none of the four
-     touches a pixel of the artwork itself. */
   filter:
     drop-shadow(0 0 2px  rgba(255,255,255,.6))
     drop-shadow(0 0 10px rgba(255,255,255,.34))
     drop-shadow(0 0 28px rgba(var(--px-tint),.62))
     drop-shadow(0 0 22px rgba(0,0,0,.55));
 }
+
 #dive .hr{background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent) !important;}
 #dive .cap{color:rgba(255,255,255,.72) !important;}
 
-/* ---------- smaller screens ----------------------------------------------
-   Half the streaks and two fewer frames. The corridor still reads; the phone
-   is not asked to composite forty layers to prove it. */
 @media (max-width:820px){
-  #dive .px-streaks i:nth-child(2n){display:none;}
-  #dive .px-corridor b:nth-child(n+5){display:none;}
-  #dive .px-haze i{filter:blur(52px);}
   #dive .dlogo{max-height:20vh;}
 }
 
 @media (prefers-reduced-motion:reduce){
   html.px-diving #app{animation:none;}
   html.px-diving #dive .center{animation:none;}
-  #dive .px-corridor,#dive .px-streaks,#dive .px-haze,
-  #dive .px-flash,#dive .center::before{display:none;}
-  #dive .px-void{animation:px-void-plain 2600ms linear;}
+  #dive .dlogo-lit{filter:drop-shadow(0 0 12px rgba(255,255,255,.4));}
 }
-@keyframes px-void-plain{0%{opacity:0;} 8%{opacity:1;} 66%{opacity:1;} 96%{opacity:0;} 100%{opacity:0;}}
