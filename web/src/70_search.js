@@ -130,6 +130,10 @@ function group(label, rows, q){
    -------------------------------------------------------------------------- */
 let el = null, input = null, list = null, open = false, sel = 0;
 
+/* The pointer leads: rows light under the cursor through :hover, and the
+   keyboard's own mark only appears once someone reaches for an arrow key. */
+let keying = false;
+
 function shell(){
   if(el) return el;
   el = document.createElement('div');
@@ -140,11 +144,10 @@ function shell(){
       '<div class="px-s-field">' + IC.find +
         '<input type="text" autocomplete="off" spellcheck="false" ' +
           'placeholder="' + t('Search compounds, lines, tools…','Busca compuestos, líneas, herramientas…') + '">' +
-        '<kbd>ESC</kbd>' +
       '</div>' +
       '<div class="px-s-list" role="listbox"></div>' +
-      '<div class="px-s-foot"><span><kbd>↑</kbd><kbd>↓</kbd> ' + t('to move','moverse') + '</span>' +
-        '<span><kbd>↵</kbd> ' + t('to open','abrir') + '</span>' +
+      '<div class="px-s-foot"><span class="px-s-hint">' +
+        t('Pick one to open it.','Elige uno para abrirlo.') + '</span>' +
         '<span class="px-s-count"></span></div>' +
     '</div>';
   document.body.appendChild(el);
@@ -153,9 +156,10 @@ function shell(){
 
   input.addEventListener('input', paint);
   el.querySelector('.px-s-veil').addEventListener('click', close);
-  list.addEventListener('mousemove', e => {
-    const r = e.target.closest('.px-s-row');
-    if(r) setSel([...list.querySelectorAll('.px-s-row')].indexOf(r), false);
+  list.addEventListener('pointermove', () => {
+    if(!keying) return;
+    keying = false;
+    rows().forEach(r => r.classList.remove('on'));
   });
   /* the site's own delegated handlers do the navigating; close on the way */
   list.addEventListener('click', e => { if(e.target.closest('.px-s-row')) close(); });
@@ -194,8 +198,8 @@ function setSel(i, scroll){
   const rs = rows();
   if(!rs.length) return;
   sel = Math.max(0, Math.min(rs.length - 1, i));
-  rs.forEach((r, n) => r.classList.toggle('on', n === sel));
-  if(scroll && rs[sel]) rs[sel].scrollIntoView({block:'nearest'});
+  rs.forEach((r, n) => r.classList.toggle('on', keying && n === sel));
+  if(scroll && keying && rs[sel]) rs[sel].scrollIntoView({block:'nearest'});
 }
 
 function show(){
@@ -205,6 +209,7 @@ function show(){
   el.classList.add('on');
   document.documentElement.classList.add('px-search-open');
   input.value = '';
+  keying = false;
   paint();
   requestAnimationFrame(() => input.focus());
   if(window.lenis && lenis.stop) lenis.stop();
@@ -227,10 +232,8 @@ function button(){
   const b = document.createElement('button');
   b.className = 'px-s-open';
   b.setAttribute('aria-label', t('Search','Buscar'));
-  b.innerHTML = IC.find + '<span class="l">' + t('Search','Buscar') + '</span>' +
-                '<kbd class="px-s-k"></kbd>';
-  b.querySelector('.px-s-k').textContent =
-    /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘K' : 'Ctrl K';
+  b.innerHTML = IC.find;
+  b.title = t('Search','Buscar');
   b.addEventListener('click', show);
   host.insertBefore(b, host.firstChild);
 }
@@ -241,8 +244,8 @@ addEventListener('keydown', e => {
   }
   if(!open) return;
   if(e.key === 'Escape'){ e.preventDefault(); close(); }
-  else if(e.key === 'ArrowDown'){ e.preventDefault(); setSel(sel + 1, true); }
-  else if(e.key === 'ArrowUp'){   e.preventDefault(); setSel(sel - 1, true); }
+  else if(e.key === 'ArrowDown'){ e.preventDefault(); keying = true; setSel(sel + 1, true); }
+  else if(e.key === 'ArrowUp'){   e.preventDefault(); keying = true; setSel(sel - 1, true); }
   else if(e.key === 'Enter'){
     const r = rows()[sel];
     if(r){ e.preventDefault(); r.click(); }

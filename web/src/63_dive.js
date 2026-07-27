@@ -30,8 +30,16 @@ function water(){
   const surface = document.createElement('div');
   surface.className = 'px-surface';
 
+  /* the drop, and what it sends out */
+  const rings = [0, 1, 2].map(() => {
+    const i = document.createElement('div');
+    i.className = 'px-ripple';
+    return i;
+  });
+
   /* behind the centre, in front of the shutter */
   dive.insertBefore(surface, dive.firstChild);
+  rings.forEach(r => dive.insertBefore(r, dive.firstChild));
   dive.insertBefore(caustic, dive.firstChild);
   dive.insertBefore(deep, dive.firstChild);
 }

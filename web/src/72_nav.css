@@ -91,3 +91,41 @@ nav .brand img{height:26px; width:auto;}
 @media (prefers-reduced-motion:reduce){
   nav.scrolled::before,nav.scrolled::after{animation:none; opacity:0;}
 }
+
+/* ============================================================================
+   ROOM IN THE BAR
+
+   Eight links, a search, two toggles, two icons and a call to action, all at
+   the same weight. Nothing is removed — the site's navigation is the site's
+   navigation — but the controls stop competing: they share one size, the gaps
+   between groups say more than the gaps inside them, and the toggles read as
+   one segmented control rather than as two separate buttons.
+   ============================================================================ */
+
+nav{padding:8px 10px 8px 18px; gap:10px;}
+nav .links{gap:0;}
+nav .links a{padding:8px 11px; font-size:13px;}
+nav .navright{display:flex; align-items:center; gap:14px;}
+nav .navacc{display:flex; align-items:center; gap:7px;}
+
+/* every control in the bar is the same round 34 px */
+nav .navacc .iconbtn{width:34px; height:34px;}
+nav .navacc .iconbtn svg{width:16px; height:16px;}
+
+/* the two toggles become one segmented control */
+nav .navacc .langtog{
+  height:34px; padding:0 11px; border-radius:0;
+  font-size:11.5px; letter-spacing:.06em;
+  border:1px solid var(--hairline); border-right-width:0;
+  background:rgba(255,255,255,.7);
+}
+nav .navacc .langtog:first-of-type{border-radius:999px 0 0 999px; padding-left:13px;}
+nav .navacc .langtog + .langtog{border-right-width:1px; border-radius:0 999px 999px 0; padding-right:13px;}
+nav .navacc .regtog + .langtog{margin-left:-7px;}
+
+nav .navright > .btn{padding:10px 20px !important; font-size:13px;}
+
+@media(max-width:1240px){
+  nav .links a{padding:8px 9px; font-size:12.5px;}
+  nav .navright{gap:10px;}
+}

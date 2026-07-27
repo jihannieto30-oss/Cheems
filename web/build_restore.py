@@ -46,13 +46,24 @@ for k in ('fitness', 'beauty', 'longevity'):
     if not n: raise SystemExit('badge_%s not found' % k)
     print('  badge_%-9s replaced' % k)
 
-# ---- 3 · the layers -------------------------------------------------------
+# ---- 3 · the master logo, cut out of the supplied PDF ---------------------
+master = datauri(os.path.join(M, 'logo_master.webp'))
+
+# the bar's own mark
+pat = re.compile(r'(<a class="brand" href="#/" data-nav><img src=")data:image/[a-z]+;base64,[^"]+(")')
+html, n = pat.subn(lambda m: m.group(1) + master + m.group(2), html, count=1)
+if not n: raise SystemExit('nav brand image not found')
+print('  nav brand       replaced')
+
+# ---- 4 · the layers -------------------------------------------------------
 kit   = rd(os.path.join(M, 'labelkit.json'))
 label = rd(os.path.join(SRC, '40_label.js')).replace('__LABELKIT__', kit)
 css   = '\n'.join(rd(os.path.join(SRC, f)) for f in
                   ('41_label.css', '51_profile.css', '52_card.css', '62_dive.css', '64_logos.css',
                    '71_search.css', '72_nav.css', '30_motion.css'))
-js    = ('window.__pxBakedLines = true;\n' + label + '\n' +
+js    = ('window.__pxBakedLines = true;\n' +
+         'const PX_MASTER_LOGO = ' + repr(master).replace("'", '"', 2) + ';\n' +
+         label + '\n' +
          rd(os.path.join(SRC, '50_profile.js')) + '\n' +
          rd(os.path.join(SRC, '31_motion.js')) + '\n' +
          rd(os.path.join(SRC, '63_dive.js')) + '\n' +

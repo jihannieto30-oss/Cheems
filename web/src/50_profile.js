@@ -100,6 +100,22 @@ function completeness(u){
   return {rows: rows, pct: Math.round(rows.filter(r => r.ok).length / rows.length * 100)};
 }
 
+/* The plate. One markup, so the researcher's and the owner's are the same
+   object with a different line of standing on it. */
+function plateHTML(u, tier){
+  const mFirst = (u.name || 'Researcher').trim().split(/\s+/)[0].toUpperCase();
+  const mId    = 'PX-' + Number(u.created || Date.now()).toString(36).slice(-6).toUpperCase();
+  const since  = new Date(u.created || Date.now());
+  return `<div class="member-card px-plate" id="memberCard">
+    <div class="mc-emblem">PX</div>
+    <div class="mc-top"><img class="mc-logo" src="${PX_MASTER_LOGO}" alt="PEPTIDEX"/>
+      <span class="mc-tier">${esc(tier || t('PEPTIDEX MEMBER','MIEMBRO PEPTIDEX'))}</span></div>
+    <div class="mc-idblock"><div class="mc-name">${esc(mFirst)}</div><div class="mc-id">${esc(mId)}</div></div>
+    <div class="mc-foot"><span class="mc-brand">PEPTIDEX</span>
+      <span class="mc-since">${t('MEMBER SINCE','MIEMBRO DESDE')} ${since.getFullYear()}</span></div>
+  </div>`;
+}
+
 function overviewHTML(u){
   const dloc  = LANG === 'es' ? 'es-ES' : 'en-GB';
   const reqs  = (u.reqs || []).slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
@@ -135,21 +151,7 @@ function overviewHTML(u){
         </div>
       </div>
 
-      <div class="pv-cardwrap">
-        <div class="member-card px-plate" id="memberCard">
-          <div class="mc-frame"></div>
-          <div class="mc-emblem">PX</div>
-          <div class="mc-top"><img class="mc-logo" src="${LOGOS.hero}" alt="PEPTIDEX"/><span class="mc-tier">PEPTIDEX MEMBER</span></div>
-          <div class="px-inlay"></div>
-          <div class="px-seq"><small>${t('SEQUENCE','SECUENCIA')}</small>${
-            strand(mId, 12).split('').map((a, i) => i % 4 === 0 ? '<b>' + a + '</b>' : a).join('')
-          }</div>
-          <div class="mc-chip"></div>
-          <div class="mc-idblock"><div class="mc-name">${esc(mFirst)}</div><div class="mc-id">${esc(mId)}</div></div>
-          <div class="px-etch">${t('ISSUE','EMISIÓN')} ${since.getFullYear()}.${String(since.getMonth()+1).padStart(2,'0')}<br>${REGION === 'usa' ? 'REG US' : 'REG MX'}</div>
-          <div class="mc-foot"><span class="mc-brand">PEPTIDEX</span><span class="mc-since">${t('MEMBER SINCE','MIEMBRO DESDE')} ${since.getFullYear()}</span></div>
-        </div>
-      </div>
+      <div class="pv-cardwrap">${plateHTML(u)}</div>
     </div>
 
     <div class="pv-qa">
@@ -260,14 +262,105 @@ function overviewHTML(u){
   </div>`;
 }
 
+/* --------------------------------------------------------------------------
+   The deck.
+
+   The overview above is written for a researcher: standing, requests, what
+   they have saved. The person who owns the company opening the same page
+   wants none of that — they want the business.
+
+   isAdmin() is already true for the CEO's address, and the sidebar already
+   carries the administration sections. What was missing is the landing: this
+   is what the account page shows first when the person looking at it owns it.
+
+   Every count here comes from what this device actually holds. The live
+   figures — visits, orders, revenue — come from the cloud, and they are one
+   click away rather than half-loaded here, so this page never shows a number
+   it cannot stand behind.
+   -------------------------------------------------------------------------- */
+const DECK = [
+  {sec:'adm-dash',    en:'Dashboard',        es:'Panel',              d_en:'Live traffic, visitors and orders',   d_es:'Tráfico, visitantes y pedidos en vivo'},
+  {sec:'adm-orders',  en:'Orders',           es:'Pedidos',            d_en:'Every order, and its status',         d_es:'Cada pedido y su estado'},
+  {sec:'adm-quotes',  en:'Quotations',       es:'Cotizaciones',       d_en:'Requests waiting on a price',         d_es:'Solicitudes esperando precio'},
+  {sec:'adm-users',   en:'Customers',        es:'Clientes',           d_en:'Who has an account',                  d_es:'Quién tiene cuenta'},
+  {sec:'adm-catalog', en:'Catalog & prices', es:'Catálogo y precios', d_en:'Change what anything costs',          d_es:'Cambia lo que cuesta cada cosa'},
+  {sec:'adm-tools',   en:'Tools & config',   es:'Herramientas',       d_en:'Everything else you can correct',     d_es:'Todo lo demás que puedes corregir'}
+];
+
+function deckHTML(u){
+  const users = (ACC.users || []);
+  const reqs  = users.reduce((n, x) => n + ((x.reqs || []).length), 0);
+  const first = (u.name || 'CEO').trim().split(/\s+/)[0];
+
+  return `<div class="pv">
+    <div class="pv-head pv-deck">
+      <div class="pv-hi">
+        <div class="pv-k pv-ceo">${t('CHIEF EXECUTIVE','DIRECCIÓN GENERAL')}</div>
+        <h2>${greeting()}, ${esc(first)}.</h2>
+        <p class="pv-lead">${t(
+          'You are signed in as the owner of PEPTIDEX. Everything on the site is open to you from here — what is selling, who is asking, and what anything costs.',
+          'Has iniciado sesión como dueño de PEPTIDEX. Todo el sitio está abierto desde aquí — qué se vende, quién pregunta y cuánto cuesta cada cosa.')}</p>
+      </div>
+      <div class="pv-cardwrap">${plateHTML(u, t('PEPTIDEX · CEO','PEPTIDEX · CEO'))}</div>
+    </div>
+
+    <div class="pv-deckgrid">
+      ${DECK.map(d => `<button class="pv-deck-b" data-gosec="${d.sec}">
+        <span class="t">${t(d.en, d.es)}</span>
+        <span class="s">${t(d.d_en, d.d_es)}</span>
+        <span class="a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>`).join('')}
+    </div>
+
+    <div class="pv-grid">
+      <div class="pv-panel">
+        <div class="pv-ph"><h3>${t('On this device','En este equipo')}</h3></div>
+        <dl class="pv-dl">
+          <div><dt>${t('Accounts','Cuentas')}</dt><dd>${users.length}</dd></div>
+          <div><dt>${t('Requests','Solicitudes')}</dt><dd>${reqs}</dd></div>
+          <div><dt>${t('Region','Región')}</dt><dd>${REGION === 'usa' ? 'United States' : 'México'}</dd></div>
+          <div><dt>${t('Language','Idioma')}</dt><dd>${LANG === 'es' ? 'Español' : 'English'}</dd></div>
+        </dl>
+        <p class="pv-note">${t(
+          'These are the accounts stored in this browser. Visits, orders and revenue live in the cloud — open the Dashboard for those.',
+          'Estas son las cuentas guardadas en este navegador. Visitas, pedidos e ingresos viven en la nube — ábrelos en el Panel.')}</p>
+        <button class="pv-more wide" data-gosec="adm-dash">${t('Open the dashboard','Abrir el panel')} →</button>
+      </div>
+
+      <div class="pv-panel">
+        <div class="pv-ph"><h3>${t('Your own account','Tu propia cuenta')}</h3></div>
+        <dl class="pv-dl">
+          <div><dt>${t('Signed in as','Sesión como')}</dt><dd>${esc(u.email)}</dd></div>
+          <div><dt>${t('Member since','Miembro desde')}</dt><dd>${new Date(u.created || Date.now())
+            .toLocaleDateString(LANG === 'es' ? 'es-ES' : 'en-GB', {month:'long', year:'numeric'})}</dd></div>
+        </dl>
+        <p class="pv-note">${t(
+          'The researcher view — saved compounds, quotation list, shipping — is still yours in the sections on the left.',
+          'La vista de investigador — guardados, lista de cotización, envío — sigue siendo tuya en las secciones de la izquierda.')}</p>
+        <button class="pv-more wide" data-gosec="favorites">${t('Saved compounds','Compuestos guardados')} →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
 /* -------------------------------------------------------------------------
    Take over the overview and nothing else.
    ------------------------------------------------------------------------- */
 const _section = acctSectionHTML;
 acctSectionHTML = function(sec){
   const u = currentUser();
-  if(u && (!sec || sec === 'overview')) return overviewHTML(u);
+  if(u && (!sec || sec === 'overview')) return isAdmin() ? deckHTML(u) : overviewHTML(u);
   return _section(sec);
+};
+
+/* The sidebar greets whoever is signed in. It called the owner a research
+   member, which is true and beside the point. */
+const _account = accountHTML;
+accountHTML = function(){
+  const html = _account();
+  if(!currentUser() || !isAdmin()) return html;
+  return html.replace('class="acct-hi">' + t('Research Member','Miembro Investigador'),
+                      'class="acct-hi px-ceo-hi">' + t('Chief Executive','Dirección General'));
 };
 
 /* the panels link into the sidebar's own sections */

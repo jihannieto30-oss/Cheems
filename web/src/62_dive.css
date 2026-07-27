@@ -31,18 +31,28 @@ html.px-diving #app{
   100% {transform:scale(1);     opacity:1;}
 }
 
-/* ---------- the field stops being white and becomes depth ------------------ */
+/* ---------- the field goes black --------------------------------------------
+   Not blue. Black water, with one shaft of light coming down through it — far
+   enough to reach the mark and no further, so the mark still reads and the
+   rest of the screen is depth. */
 #dive .px-deep{
   position:absolute; inset:0; z-index:1; pointer-events:none;
   background:
-    radial-gradient(78% 62% at 50% 40%,
-      rgba(255,255,255,.99) 0%,
-      rgba(236,242,252,.96) 42%,
-      rgba(208,222,245,.94) 71%,
-      rgba(182,201,235,.96) 100%);
+    radial-gradient(46% 40% at 50% 42%,
+      rgba(96,102,112,.55) 0%,
+      rgba(44,47,53,.5) 38%,
+      rgba(12,13,16,.35) 70%,
+      transparent 100%),
+    radial-gradient(120% 100% at 50% 30%,
+      #14161a 0%, #0a0b0d 46%, #050607 78%, #000000 100%);
   opacity:0;
   animation:px-deep 2600ms ease-in-out;
 }
+/* the shutter is the same water, so the two never read as different surfaces */
+#dive .p{background:linear-gradient(180deg,#0a0b0d,#050607) !important;}
+#dive .p.bot{background:linear-gradient(0deg,#0a0b0d,#050607) !important;}
+#dive .cap{color:rgba(255,255,255,.6) !important;}
+#dive .hr{background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent) !important;}
 @keyframes px-deep{
   0%{opacity:0;} 17%{opacity:1;} 68%{opacity:1;} 100%{opacity:0;}
 }
@@ -58,17 +68,17 @@ html.px-diving #app{
 }
 #dive .px-caustic i:nth-child(1){
   left:6%; top:8%; width:46%; height:52%;
-  background:radial-gradient(circle, rgba(255,255,255,.95), rgba(255,255,255,0) 68%);
+  background:radial-gradient(circle, rgba(255,255,255,.30), rgba(255,255,255,0) 68%);
   animation:px-drift-a 2600ms cubic-bezier(.4,0,.3,1);
 }
 #dive .px-caustic i:nth-child(2){
   right:2%; bottom:4%; width:54%; height:58%;
-  background:radial-gradient(circle, rgba(30,94,255,.13), rgba(30,94,255,0) 66%);
+  background:radial-gradient(circle, rgba(190,198,212,.16), rgba(190,198,212,0) 66%);
   animation:px-drift-b 2600ms cubic-bezier(.4,0,.3,1);
 }
 #dive .px-caustic i:nth-child(3){
   left:34%; bottom:16%; width:38%; height:40%;
-  background:radial-gradient(circle, rgba(255,255,255,.8), rgba(255,255,255,0) 70%);
+  background:radial-gradient(circle, rgba(255,255,255,.22), rgba(255,255,255,0) 70%);
   animation:px-drift-c 2600ms cubic-bezier(.4,0,.3,1);
 }
 @keyframes px-caust{0%{opacity:0;} 22%{opacity:1;} 66%{opacity:1;} 100%{opacity:0;}}
@@ -100,8 +110,9 @@ html.px-diving #app{
 #dive .center{z-index:3;}
 #dive .center::before{
   content:""; position:absolute; z-index:-1;
-  width:min(760px, 92vw); aspect-ratio:1; border-radius:50%;
-  background:radial-gradient(circle, rgba(255,255,255,.95), rgba(255,255,255,0) 62%);
+  width:min(820px, 96vw); aspect-ratio:1; border-radius:50%;
+  background:radial-gradient(circle,
+    rgba(255,255,255,.34) 0%, rgba(200,208,222,.14) 34%, rgba(255,255,255,0) 64%);
   opacity:0; animation:px-halo 2600ms ease-in-out;
 }
 @keyframes px-halo{0%{opacity:0; transform:scale(.6);} 34%{opacity:1; transform:scale(1);}
@@ -113,4 +124,41 @@ html.px-diving #app{
 @media (prefers-reduced-motion:reduce){
   html.px-diving #app{animation:none;}
   #dive .px-deep,#dive .px-caustic,#dive .px-surface,#dive .center::before{animation:none; opacity:0;}
+}
+
+
+/* ============================================================================
+   THE DROP
+
+   A drop hits the surface where the mark is about to appear, and the rings
+   leave fast and slow as they spread — that slowing is what reads as water
+   rather than as circles being scaled. Three of them, out of step, so the
+   surface never pulses on a beat.
+
+   They ride the same 2600 ms as everything else in #dive and restart with it,
+   because #dive is display:none between transitions.
+   ============================================================================ */
+#dive .px-ripple{
+  position:absolute; left:50%; top:50%; z-index:1;
+  width:min(210vw, 2200px); aspect-ratio:1;
+  margin:-min(105vw, 1100px) 0 0 -min(105vw, 1100px);
+  border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle,
+    transparent 46%,
+    rgba(255,255,255,.14) 50%,
+    rgba(255,255,255,.05) 54%,
+    transparent 60%);
+  transform:scale(.01); opacity:0;
+  will-change:transform, opacity;
+  animation:px-ripple 2600ms cubic-bezier(.12,.68,.22,1) var(--d,0ms);
+}
+#dive .px-ripple:nth-of-type(2){--d:230ms; opacity:.7;}
+#dive .px-ripple:nth-of-type(3){--d:470ms; opacity:.45;}
+
+@keyframes px-ripple{
+  0%   {transform:scale(.01); opacity:0;}
+  6%   {opacity:1;}
+  34%  {transform:scale(.62); opacity:.55;}
+  52%  {transform:scale(1); opacity:0;}
+  100% {transform:scale(1); opacity:0;}
 }
