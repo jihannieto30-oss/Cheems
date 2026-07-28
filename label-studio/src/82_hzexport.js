@@ -450,6 +450,104 @@ const HZX = (() => {
   }
 
   /* =====================================================================
+     UV PRINT — the sheet that goes straight to the flatbed
+     A UV RIP resamples anything that is not already at its native grid, and
+     resampling is what softens an edge and greys a solid. So the sheet is
+     rasterised once, at the bed's own dpi, at the exact physical size, and
+     nothing scales it afterwards.
+     ===================================================================== */
+  const UV_MAX_PX = 120e6;   /* what a browser canvas will actually allocate */
+
+  function uvSheet(board, u) {
+    const sh = HZ.sheet(board.doc);
+    if (sh.px.w * sh.px.h > UV_MAX_PX)
+      throw new Error('The sheet comes to ' + (sh.px.w * sh.px.h / 1e6).toFixed(0) +
+        ' megapixels at ' + u.dpi + ' dpi, past what a browser canvas can hold (' +
+        (UV_MAX_PX / 1e6) + ' MP). Drop the dpi, or split it into fewer rows and print two sheets.');
+    const cv = document.createElement('canvas');
+    cv.width = sh.px.w; cv.height = sh.px.h;
+    const g = cv.getContext('2d');
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = 'high';
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, cv.width, cv.height);
+
+    /* the label, flattened once at the sheet's own resolution and stamped */
+    const one = HZR.flatten(board, sh.ppmm);
+    const W = board.wMM * sh.ppmm, H = board.hMM * sh.ppmm;
+    const gap = u.gap * sh.ppmm, mar = u.margin * sh.ppmm;
+    for (let r = 0; r < u.rows; r++)
+      for (let c = 0; c < u.cols; c++)
+        g.drawImage(one, Math.round(mar + c * (W + gap)), Math.round(mar + r * (H + gap)),
+          Math.round(W), Math.round(H));
+
+    if (u.marks) {
+      const px = Math.max(1, Math.round(sh.ppmm * 0.12));
+      const len = Math.round(sh.ppmm * 2.5);
+      g.strokeStyle = '#000000'; g.lineWidth = px;
+      for (let r = 0; r <= u.rows; r++) {
+        const y = Math.round(mar + r * (H + gap) - (r ? gap : 0)) + (r ? 0 : 0);
+        for (const x of [Math.round(mar), Math.round(cv.width - mar)]) {
+          g.beginPath();
+          g.moveTo(x + (x < cv.width / 2 ? -len : 0), y + .5);
+          g.lineTo(x + (x < cv.width / 2 ? 0 : len), y + .5);
+          g.stroke();
+        }
+      }
+      for (let c = 0; c <= u.cols; c++) {
+        const x = Math.round(mar + c * (W + gap) - (c ? gap : 0));
+        for (const y of [Math.round(mar), Math.round(cv.height - mar)]) {
+          g.beginPath();
+          g.moveTo(x + .5, y + (y < cv.height / 2 ? -len : 0));
+          g.lineTo(x + .5, y + (y < cv.height / 2 ? 0 : len));
+          g.stroke();
+        }
+      }
+      g.fillStyle = '#000000';
+      g.font = Math.round(sh.ppmm * 2.6) + 'px ' + BRAND.STACK.mono;
+      g.fillText(board.doc.name + '  ·  ' + (board.wMM / 25.4).toFixed(3) + '" × ' +
+        (board.hMM / 25.4).toFixed(3) + '"  ·  ' + sh.n + ' up  ·  ' + u.dpi + ' dpi',
+        Math.round(mar), Math.round(cv.height - mar * 0.30));
+    }
+    return cv;
+  }
+
+  /** The same sheet as a 1:1 PDF, for RIPs that would rather be handed one. */
+  function uvPdf(board, u) {
+    const sh = HZ.sheet(board.doc);
+    const cv = uvSheet(board, u);
+    /* straight off the canvas. Round-tripping through a data URI and an
+       Image means waiting for a decode that has not happened yet, and the
+       writer would sit on an empty buffer. */
+    const px = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
+    const n = cv.width * cv.height;
+    const rgb = new Uint8Array(n * 3);
+    for (let i = 0; i < n; i++) { rgb[i*3] = px[i*4]; rgb[i*3+1] = px[i*4+1]; rgb[i*3+2] = px[i*4+2]; }
+    const d = { w: cv.width, h: cv.height, rgb };
+    const pw = PT(sh.wMM), ph = PT(sh.hMM);
+    const objs = [];
+    const add = x => { objs.push(x); return objs.length; };
+    const imgObj = add(null), contentObj = add(null);
+    const pageObj = add(null), pagesObj = add(null), catObj = add(null), infoObj = add(null);
+    const rg = zlibStore(d.rgb);
+    objs[imgObj - 1] = { stream: rg, dict:
+      `<< /Type /XObject /Subtype /Image /Width ${d.w} /Height ${d.h} /ColorSpace /DeviceRGB ` +
+      `/BitsPerComponent 8 /Filter /FlateDecode /Length ${rg.length} >>` };
+    const content = `q ${f(pw)} 0 0 ${f(ph)} 0 0 cm /Im0 Do Q`;
+    const cb = strBytes(content);
+    objs[contentObj - 1] = { stream: cb, dict: `<< /Length ${cb.length} >>` };
+    objs[pageObj - 1] = `<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 ${f(pw)} ${f(ph)}] ` +
+      `/TrimBox [0 0 ${f(pw)} ${f(ph)}] /Resources << /XObject << /Im0 ${imgObj} 0 R >> >> ` +
+      `/Contents ${contentObj} 0 R >>`;
+    objs[pagesObj - 1] = `<< /Type /Pages /Kids [${pageObj} 0 R] /Count 1 >>`;
+    objs[catObj - 1] = `<< /Type /Catalog /Pages ${pagesObj} 0 R >>`;
+    objs[infoObj - 1] = `<< /Title (${pdfStr(board.doc.name + ' — UV sheet')}) ` +
+      `/Creator (PEPTIDEX Label Studio Pro) /Producer (hz-export · UV) ` +
+      `/Subject (${pdfStr(sh.n + ' up at ' + u.dpi + ' dpi, ' + sh.wIn.toFixed(2) + 'x' + sh.hIn.toFixed(2) + ' in, 1:1')}) ` +
+      `/CreationDate (D:${stamp()}) >>`;
+    return assemble(objs, catObj, infoObj);
+  }
+
+  /* =====================================================================
      PACKAGE
      ===================================================================== */
   function manifest(board, report) {
@@ -537,7 +635,7 @@ const HZX = (() => {
   }
 
   return {
-    svg, pdf, eps, raster, tiff, psd, pkg, manifest, readme, visible,
+    svg, pdf, eps, raster, tiff, psd, pkg, manifest, readme, visible, uvSheet, uvPdf,
     SPACES, rgb2cmyk, srgb2adobe, nearestPantone, hex2rgb, PT
   };
 })();

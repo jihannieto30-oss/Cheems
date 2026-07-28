@@ -40,7 +40,7 @@ const HZ = (() => {
      size is not stated anywhere in the supplied file, so a default is chosen
      that keeps the smallest type printable, and the operator scales from
      there. Scaling is uniform — width and height never move independently. */
-  const DEFAULT_W_MM = 96;
+  const DEFAULT_W_MM = 3.10 * 25.4;   /* the 10 mL wrap, in inches */
 
   const master = k => M[k] || M[KEYS[0]] || null;
   const aspect = k => { const m = master(k); return m ? m.w / m.h : 7; };
@@ -172,6 +172,7 @@ const HZ = (() => {
       el,
       layers: LAYERS.reduce((m2, l) => (m2[l.id] = { on: true, locked: false, exp: true }, m2), {}),
       view: { production: false, mockup: 'v10' },
+      uv: { cols: 4, rows: 6, gap: 3.175, margin: 6.35, dpi: 720, marks: true, white: false },
       meta: { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
       version: 0
     };
@@ -210,6 +211,44 @@ const HZ = (() => {
   const moved = doc => edits(doc).filter(e => e.kind === 'moved');
   const pristine = doc => edits(doc).length === 0;
 
+  /* The catalogue, flattened to the sellable SKUs.
+     Built on first use, not at load: this module is concatenated ahead of the
+     brand package, so reading BRAND.CATALOG here would touch a const that is
+     still in its temporal dead zone and take the whole file down with it. */
+  let _skus = null;
+  function skus() {
+    if (_skus) return _skus;
+    const out = [];
+    const C = (typeof BRAND !== 'undefined' && BRAND.CATALOG) ? BRAND.CATALOG : {};
+    for (const line of Object.keys(C))
+      for (const [code, name, short, vars] of C[line])
+        for (const [sku, mg] of vars) out.push({ line, code, name, short, sku, mg });
+    _skus = out;
+    return out;
+  }
+
+  /* UV sheet geometry. Everything in millimetres internally; the panel talks
+     inches because that is how the stock and the bed are specified. */
+  function sheet(doc) {
+    const u = doc.uv, t = doc.trim;
+    const w = u.margin * 2 + u.cols * t.w + (u.cols - 1) * u.gap;
+    const h = u.margin * 2 + u.rows * t.h + (u.rows - 1) * u.gap;
+    const ppmm = u.dpi / 25.4;
+    return { wMM: w, hMM: h, wIn: w / 25.4, hIn: h / 25.4, n: u.cols * u.rows,
+      px: { w: Math.round(w * ppmm), h: Math.round(h * ppmm) }, ppmm };
+  }
+
+  /* Vial wraps, in inches. A label for a vial is specified by the body's
+     circumference plus a seam, and that is what a converter quotes against —
+     so these are the sizes to pick from, in the unit they are ordered in. */
+  const WRAPS = [
+    { name: '1 mL  ·  Ø0.46″', w: 1.57 }, { name: '2 mL  ·  Ø0.63″', w: 2.11 },
+    { name: '3 mL  ·  Ø0.63″', w: 2.11 }, { name: '5 mL  ·  Ø0.87″', w: 2.85 },
+    { name: '10 mL · Ø0.94″', w: 3.10 }, { name: '15 mL · Ø1.02″', w: 3.34 },
+    { name: '20 mL · Ø1.18″', w: 3.84 }, { name: '30 mL · Ø1.30″', w: 4.21 },
+    { name: '50 mL · Ø1.57″', w: 5.06 }
+  ];
+
   /* Container sizes, for the mockup only. */
   const VIALS = {
     v1:  { ml: '1 mL',  dia: 11.6, body: 32 }, v2:  { ml: '2 mL',  dia: 16, body: 35 },
@@ -223,6 +262,7 @@ const HZ = (() => {
     SCHEMA, FAMILY, KEYS, master, aspect, DEFAULT_W_MM,
     ELEMENTS, elDef, TEXT_IDS, present, boxOf, inkOf,
     FINISHES, finish, LAYERS, layer, layerFor, plates,
-    newDoc, isHz, elOf, setWidth, setHeight, edits, moved, pristine, VIALS
+    newDoc, isHz, elOf, setWidth, setHeight, edits, moved, pristine, VIALS, WRAPS, skus, sheet,
+    get SKUS() { return skus(); }
   };
 })();

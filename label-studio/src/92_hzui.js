@@ -29,6 +29,49 @@ const HZUI = (() => {
   'use strict';
 
   let API = null, doc = null, board = null, report = null, active = false, validation = null;
+  let skuQuery = '';
+
+  /* The whole catalogue, in the panel, searchable. 118 SKUs is too many for a
+     dropdown and exactly the right number for a filtered list — picking one
+     sets the three strings that identify the product and nothing else. */
+  /* The list is drawn straight into the node, not looked up by id: panel()
+     fills its body before the body is in the document, so a querySelector at
+     build time finds nothing and the panel comes up empty. */
+  function drawSkus(node, counter) {
+    const host = node || $('#hzSkuList');
+    if (!host) return;
+    const q = skuQuery.trim().toLowerCase();
+    const hits = HZ.SKUS.filter(x => !q ||
+      (x.sku + ' ' + x.name + ' ' + x.short + ' ' + x.mg + ' ' + x.line).toLowerCase().indexOf(q) >= 0);
+    host.innerHTML = '';
+    const cur = (doc.el.compound && doc.el.compound.text) || null;
+    for (const x of hits.slice(0, 400)) {
+      host.appendChild(el('div', {
+        class: 'item', 'aria-selected': String(cur === x.short && doc.master === x.line),
+        title: x.name + ' · ' + x.sku,
+        onclick: () => edit('SKU ' + x.sku, d => {
+          d.master = x.line;
+          const nd = HZ.newDoc({ master: x.line, w: d.trim.w });
+          const keep = d.el;
+          d.el = nd.el; d.trim = nd.trim;
+          for (const id in d.el) if (keep[id]) {
+            d.el[id].colour = keep[id].colour; d.el[id].finish = keep[id].finish;
+            d.el[id].on = keep[id].on;
+          }
+          if (d.el.compound) d.el.compound.text = x.short;
+          if (d.el.mg_value) d.el.mg_value.text = x.mg;
+          if (d.el.line_name) d.el.line_name.text = x.line.toUpperCase();
+          d.name = x.name + ' ' + x.mg;
+        })
+      },
+        el('span', { class: 'hzkind' }, x.line[0].toUpperCase()),
+        el('span', { class: 'nm' }, x.name),
+        el('span', { class: 'sub' }, x.short + ' · ' + x.mg)));
+    }
+    const c = counter || $('#hzSkuCount');
+    if (c) c.textContent = hits.length + ' of ' + HZ.SKUS.length + ' SKUs' +
+      (hits.length > 400 ? ' — showing the first 400' : '');
+  }
   let sel = 'compound';
   const undoStack = [], redoStack = [];
   const MAX_UNDO = 200;
@@ -174,6 +217,19 @@ const HZUI = (() => {
         el('span', {}, 'elements'), el('b', {}, String(HZ.present(doc.master).length))));
     }, 'hzmaster', true));
 
+    /* ---- catalogue ---- */
+    host.appendChild(P('Catalogue', HZ.SKUS.length, b => {
+      const list = el('div', { class: 'list hzsku', id: 'hzSkuList' });
+      const count = el('div', { class: 'hint', id: 'hzSkuCount' }, '');
+      b.appendChild(field('Search', el('input', {
+        class: 'inp', placeholder: 'BPC, retatrutide, 10MG…', value: skuQuery,
+        oninput: ev => { skuQuery = ev.target.value; drawSkus(list, count); }
+      })));
+      b.appendChild(list);
+      b.appendChild(count);
+      drawSkus(list, count);
+    }, 'hzcat', true));
+
     /* ---- lock ---- */
     host.appendChild(P('Master Layout Lock', null, b => {
       b.appendChild(seg([{ v: 'on', n: 'ON — composition locked' }, { v: 'off', n: 'OFF' }],
@@ -192,18 +248,33 @@ const HZUI = (() => {
     /* ---- size ---- */
     host.appendChild(P('Trim size', null, b => {
       const t = doc.trim;
+      const IN = 25.4;
+      /* Inches, because a vial label is specified and ordered in inches.
+         Millimetres are still what the geometry is carried in — they are the
+         unit every one of these numbers is measured against — so the
+         conversion happens at the field and nowhere else. */
       b.appendChild(el('div', { class: 'row' },
-        el('div', { style: 'flex:1' }, field('Width (mm)', num(t.w.toFixed(2), 0.5,
-          v => edit('Width', d => HZ.setWidth(d, v)), 8, 400))),
-        el('div', { style: 'flex:1' }, field('Height (mm)', num(t.h.toFixed(2), 0.25,
-          v => edit('Height', d => HZ.setHeight(d, v)), 4, 400)))));
+        el('div', { style: 'flex:1' }, field('Width (in)', num((t.w / IN).toFixed(3), 0.01,
+          v => edit('Width', d => HZ.setWidth(d, v * IN)), 0.3, 16))),
+        el('div', { style: 'flex:1' }, field('Height (in)', num((t.h / IN).toFixed(3), 0.005,
+          v => edit('Height', d => HZ.setHeight(d, v * IN)), 0.15, 16)))));
+      b.appendChild(el('div', { class: 'hzstat' },
+        el('span', {}, 'in'), el('b', {}, (t.w / IN).toFixed(3) + ' × ' + (t.h / IN).toFixed(3)),
+        el('span', {}, 'mm'), el('b', {}, t.w.toFixed(2) + ' × ' + t.h.toFixed(2))));
+      b.appendChild(field('Standard vial wrap', sel1(
+        [{ v: '', n: 'Custom' }].concat(HZ.WRAPS.map(w => ({
+          v: String(w.w), n: w.name + '  ·  ' + w.w.toFixed(2) + '″ wrap' }))),
+        (HZ.WRAPS.find(w => Math.abs(w.w * IN - t.w) < 0.4) || {}).w != null
+          ? String((HZ.WRAPS.find(w => Math.abs(w.w * IN - t.w) < 0.4) || {}).w) : '',
+        v => { if (v) edit('Vial wrap', d => HZ.setWidth(d, parseFloat(v) * IN)); }),
+        'Circumference of the vial body plus a ⅛″ seam, in inches. Height follows the master’s own aspect.'));
       b.appendChild(el('div', { class: 'hint' },
         'Uniform, from the centre. The aspect is the master’s and cannot move, so every relationship inside the label is preserved exactly — the layout is never recalculated.'));
       b.appendChild(el('div', { class: 'row' },
-        el('div', { style: 'flex:1' }, field('Bleed (mm)', num(doc.print.bleed, 0.5,
-          v => edit('Bleed', d => d.print.bleed = v), 0, 10))),
-        el('div', { style: 'flex:1' }, field('Safe (mm)', num(doc.print.safe, 0.5,
-          v => edit('Safe', d => d.print.safe = v), 0, 10)))));
+        el('div', { style: 'flex:1' }, field('Bleed (in)', num((doc.print.bleed / 25.4).toFixed(3), 0.005,
+          v => edit('Bleed', d => d.print.bleed = v * 25.4), 0, 0.5))),
+        el('div', { style: 'flex:1' }, field('Safe (in)', num((doc.print.safe / 25.4).toFixed(3), 0.005,
+          v => edit('Safe', d => d.print.safe = v * 25.4), 0, 0.5)))));
       if (board) b.appendChild(el('div', { class: 'hzstat' },
         el('span', {}, 'artwork lands at'),
         el('b', { class: board.meta.masterPPI < 300 ? 'bad' : '' }, board.meta.masterPPI + ' PPI')));
@@ -217,6 +288,47 @@ const HZUI = (() => {
       b.appendChild(el('div', { class: 'hint' },
         'Production shows the final art alone — no guides, no boxes, no die line, nothing on top of the artwork.'));
     }, 'hzview', true));
+
+    /* ---- UV print ---- */
+    host.appendChild(P('UV print', null, b => {
+      const u = doc.uv;
+      b.appendChild(el('div', { class: 'row' },
+        el('div', { style: 'flex:1' }, field('Across', num(u.cols, 1,
+          v => edit('Columns', d => d.uv.cols = Math.max(1, Math.round(v))), 1, 40))),
+        el('div', { style: 'flex:1' }, field('Down', num(u.rows, 1,
+          v => edit('Rows', d => d.uv.rows = Math.max(1, Math.round(v))), 1, 60)))));
+      b.appendChild(el('div', { class: 'row' },
+        el('div', { style: 'flex:1' }, field('Gutter (in)', num((u.gap / 25.4).toFixed(3), 0.005,
+          v => edit('Gutter', d => d.uv.gap = v * 25.4), 0, 1))),
+        el('div', { style: 'flex:1' }, field('Margin (in)', num((u.margin / 25.4).toFixed(3), 0.01,
+          v => edit('Margin', d => d.uv.margin = v * 25.4), 0, 2)))));
+      b.appendChild(field('Resolution', sel1(
+        [600, 720, 1200, 1440].map(d2 => ({ v: String(d2), n: d2 + ' dpi' })),
+        String(u.dpi), v => edit('DPI', d => d.uv.dpi = +v)),
+        'UV flatbeds are commonly 720 or 1440 native. Matching the native grid keeps the RIP from resampling and softening the edges.'));
+      b.appendChild(el('label', { class: 'hzchk' }, el('input', {
+        type: 'checkbox', checked: u.marks ? 'checked' : null,
+        onchange: ev => edit('Marks', d => d.uv.marks = ev.target.checked)
+      }), ' Registration and cut marks'));
+      b.appendChild(el('label', { class: 'hzchk' }, el('input', {
+        type: 'checkbox', checked: u.white ? 'checked' : null,
+        onchange: ev => edit('White plate', d => d.uv.white = ev.target.checked)
+      }), ' Also write the white underbase plate'));
+
+      const sh = HZ.sheet(doc);
+      b.appendChild(el('div', { class: 'hzstat' },
+        el('span', {}, 'sheet'), el('b', {}, sh.wIn.toFixed(2) + '″ × ' + sh.hIn.toFixed(2) + '″'),
+        el('span', {}, 'labels'), el('b', {}, String(sh.n)),
+        el('span', {}, 'pixels'), el('b', {}, sh.px.w + ' × ' + sh.px.h)));
+      const heavy = sh.px.w * sh.px.h > 120e6;
+      if (heavy) b.appendChild(el('div', { class: 'note err' },
+        el('b', {}, 'Too large.'), ' ' + (sh.px.w * sh.px.h / 1e6).toFixed(0) +
+        ' megapixels at ' + u.dpi + ' dpi is past what a browser canvas can hold. Drop the dpi or the row count.'));
+      b.appendChild(btn('Print UV sheet', () => save('uvsheet'), 'pri'));
+      b.appendChild(btn('UV sheet as PDF (1:1)', () => save('uvpdf')));
+      b.appendChild(el('div', { class: 'hint' },
+        'One PNG at the stated dpi, at the exact physical size, ready to drop straight into the flatbed RIP. Nothing is scaled at print time, so nothing is resampled.'));
+    }, 'hzuvprint', true));
 
     /* ---- validation ---- */
     host.appendChild(P('Master validation', null, b => {
@@ -469,6 +581,14 @@ const HZUI = (() => {
         }));
         return dl(EXPORTER.zip(files), base() + '_separations.zip', 'application/zip'), ok(files.length + ' separation plates');
       }
+      if (kind === 'uvsheet') {
+        const cv = HZX.uvSheet(board, doc.uv);
+        return cv.toBlob(bl => { dl(bl, base() + '_UV_' + doc.uv.dpi + 'dpi.png', 'image/png');
+          API.toast('UV sheet written', HZ.sheet(doc).n + ' labels · ' + cv.width + ' × ' + cv.height + ' px at ' + doc.uv.dpi + ' dpi', 'ok'); }, 'image/png');
+      }
+      if (kind === 'uvpdf') {
+        return dl(HZX.uvPdf(board, doc.uv), base() + '_UV_sheet.pdf', 'application/pdf'), ok('UV sheet PDF, 1:1');
+      }
       if (kind === 'pkg') {
         const r = HZUV.run(board, 'X-4');
         const p = HZX.pkg(board, r, L);
@@ -542,12 +662,17 @@ const HZUI = (() => {
     doc = loadLocal() || HZ.newDoc({ master: HZ.KEYS[0] });
     sel = 'compound';
 
-    /* our own scroll hosts, prepended so nothing existing moves */
+    /* INSIDE the dock's scroller, not beside it.
+       .dock is overflow:hidden and .dockscroll is the only thing in it that
+       scrolls — mounting these as siblings put every new panel in a box that
+       could never scroll, so anything past the fold was unreachable. They go
+       in as the scroller's first children instead: the existing panels keep
+       their order underneath, and the whole column scrolls as one. */
     const L = document.createElement('div'); L.id = 'hzLeft';
     const R = document.createElement('div'); R.id = 'hzRight';
     const ls = $('#leftScroll'), rs = $('#rightScroll');
-    ls.parentNode.insertBefore(L, ls);
-    rs.parentNode.insertBefore(R, rs);
+    ls.insertBefore(L, ls.firstChild);
+    rs.insertBefore(R, rs.firstChild);
 
     HZR.preload().then(() => { render(); if (active) API.paint(); buildLeft(); buildRight(); });
     wireStage();

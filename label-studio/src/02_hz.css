@@ -83,3 +83,10 @@
 @media (max-width: 1400px) {
   .hzpal { grid-template-columns: 1fr; }
 }
+
+/* the catalogue list gets its own scroll so 118 SKUs cannot push the panel
+   stack off the bottom of the dock */
+.hzsku { max-height: 300px; overflow-y: auto; padding-right: 2px; }
+.hzsku .item { padding: 5px 8px; }
+.hzsku .item .nm { font-size: 11.5px; }
+.hzsku .item .sub { font-size: 9px; }

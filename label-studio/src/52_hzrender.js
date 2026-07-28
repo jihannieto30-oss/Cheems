@@ -95,7 +95,8 @@ const HZR = (() => {
       }
 
       /* Anything else needs the region cleared first. */
-      const pad = e.kind === 'text' ? 2 : 1;
+      /* the feather needs somewhere to run out — the pad is that room */
+      const pad = e.kind === 'text' ? Math.max(3, Math.round(b.h * 0.18)) : 2;
       prims.push({ t: 'patch', src: m.clean, objId: e.id, layer: lay,
         sx: b.x - pad, sy: b.y - pad, sw: b.w + pad * 2, sh: b.h + pad * 2,
         x: (b.x - pad) * s, y: (b.y - pad) * s, w: (b.w + pad * 2) * s, h: (b.h + pad * 2) * s,
@@ -155,6 +156,7 @@ const HZR = (() => {
     return i;
   }
   const _tint = new Map();
+  const _feather = new Map();
 
   const Canvas = {
     draw(ctx, b, opt) {
@@ -196,9 +198,34 @@ const HZR = (() => {
           break;
         }
         case 'patch': {
+          /* A CLEAN PLATE PASTED AS A RECTANGLE IS A RECTANGLE.
+             Even a good inpaint differs from its surroundings by a fraction of
+             a tone, and a hard edge turns that fraction into a visible box —
+             which under UV, on a solid panel, is the thing that reads as a
+             smudge. The patch is feathered instead: alpha runs out to nothing
+             over the padding, so the join has no edge to find. */
           const im = img(p.src);
-          if (im && im.complete && im.naturalWidth)
-            ctx.drawImage(im, p.sx, p.sy, p.sw, p.sh, p.x, p.y, p.w, p.h);
+          if (!im || !im.complete || !im.naturalWidth) break;
+          const key = p.objId + '|' + Math.round(p.sw) + 'x' + Math.round(p.sh);
+          let sp = _feather.get(key);
+          if (!sp) {
+            const W2 = Math.max(4, Math.round(p.sw)), H2 = Math.max(4, Math.round(p.sh));
+            sp = document.createElement('canvas'); sp.width = W2; sp.height = H2;
+            const g2 = sp.getContext('2d');
+            g2.drawImage(im, p.sx, p.sy, p.sw, p.sh, 0, 0, W2, H2);
+            const fx = Math.max(1, Math.round(W2 * .06)), fy = Math.max(1, Math.round(H2 * .12));
+            const d2 = g2.getImageData(0, 0, W2, H2), a2 = d2.data;
+            for (let y = 0; y < H2; y++) {
+              const ay = Math.min(1, Math.min(y, H2 - 1 - y) / fy);
+              for (let x = 0; x < W2; x++) {
+                const ax = Math.min(1, Math.min(x, W2 - 1 - x) / fx);
+                a2[(y * W2 + x) * 4 + 3] = Math.round(255 * Math.min(ax, ay));
+              }
+            }
+            g2.putImageData(d2, 0, 0);
+            _feather.set(key, sp);
+          }
+          ctx.drawImage(sp, p.x, p.y, p.w, p.h);
           break;
         }
         case 'artfill': {
