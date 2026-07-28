@@ -16,12 +16,19 @@
    family's edits through it would have meant changing that model. It gets a
    snapshot stack of its own instead, and the existing history keeps working
    the way it always did.
+
+   MASTER LAYOUT LOCK
+   On by default. While it is on, nothing can be moved, scaled or resized —
+   only text and colour are editable, which is the whole point: the approved
+   composition cannot drift. Turning it off exposes the nudge controls, and
+   from that moment the validation panel reports the document as departed from
+   the master until the element is reset.
    depends on: everything
    ============================================================================ */
 const HZUI = (() => {
   'use strict';
 
-  let API = null, doc = null, board = null, report = null, active = false;
+  let API = null, doc = null, board = null, report = null, active = false, validation = null;
   let sel = 'compound';
   const undoStack = [], redoStack = [];
   const MAX_UNDO = 200;
@@ -66,6 +73,7 @@ const HZUI = (() => {
   function render() {
     board = HZR.render(doc).artboards[0];
     report = HZUV.run(board, 'proof');
+    validation = HZR.validate(board);
     API.setScene({ artboards: [board], engine: '1.1.0-hz', docVersion: doc.version, hz: true });
     return board;
   }
@@ -131,150 +139,105 @@ const HZUI = (() => {
     host.innerHTML = '';
     const P = API.panel;
 
-    /* ---- family switch ---- */
     host.appendChild(P('Label family', null, b => {
       b.appendChild(seg([
         { v: 'portrait', n: 'Portrait master', t: 'The original 46 × 87 mm masters' },
-        { v: 'hz', n: 'Premium Horizontal', t: 'Parametric vector template' }
+        { v: 'hz', n: 'Premium Horizontal', t: 'The approved horizontal masters' }
       ], active ? 'hz' : 'portrait', v => setActive(v === 'hz')));
       b.appendChild(el('div', { class: 'hint' },
-        active ? 'Fully vector. Every object below is live geometry — nothing is flattened.'
+        active ? 'The approved artwork, drawn as delivered. Editing a string patches only that element’s own box.'
                : 'Immutable raster masters with variable-data slots.'));
     }, 'hzfamily', true));
 
     if (!active) return;
 
-    /* ---- template ---- */
-    host.appendChild(P('Premium Horizontal', null, b => {
+    /* ---- master ---- */
+    host.appendChild(P('Approved master', null, b => {
+      b.appendChild(field('Label', seg(HZ.KEYS.map(k => ({ v: k, n: k[0].toUpperCase() + k.slice(1) })),
+        doc.master, v => edit('Master → ' + v, d => {
+          const keep = JSON.parse(JSON.stringify(d.el));
+          const nd = HZ.newDoc({ master: v });
+          d.master = v; d.el = nd.el; d.trim = nd.trim; d.name = nd.name;
+          for (const id in d.el) if (keep[id]) {
+            d.el[id].on = keep[id].on; d.el[id].colour = keep[id].colour;
+            d.el[id].finish = keep[id].finish;
+          }
+        }))));
       b.appendChild(field('Document name', el('input', {
         class: 'inp', value: doc.name,
         onchange: e => edit('Rename', d => d.name = e.target.value)
       })));
+      const m = HZ.master(doc.master);
+      b.appendChild(el('div', { class: 'hzstat' },
+        el('span', {}, 'artwork'), el('b', {}, m.w + ' × ' + m.h + ' px'),
+        el('span', {}, 'aspect'), el('b', {}, (m.w / m.h).toFixed(4) + ':1'),
+        el('span', {}, 'elements'), el('b', {}, String(HZ.present(doc.master).length))));
+    }, 'hzmaster', true));
 
-      b.appendChild(field('Line', seg(
-        [{ v: 'fitness', n: 'Fitness' }, { v: 'beauty', n: 'Beauty' }, { v: 'longevity', n: 'Longevity' }],
-        doc.line, v => edit('Line → ' + v, d => {
-          d.line = v;
-          d.palette = HZ.palettesOf(v)[0].id;
-          const ln = HZ.objOf(d, 'line'); if (ln) ln.text = v.toUpperCase();
-          const ic = HZ.objOf(d, 'icon'); if (ic) ic.glyph = HZ.ICON_OF_LINE[v];
-          const lg = HZ.objOf(d, 'logo');
-          if (lg) lg.finish = v === 'beauty' ? 'foil-copper' : 'foil-silver';
-        }))));
+    /* ---- lock ---- */
+    host.appendChild(P('Master Layout Lock', null, b => {
+      b.appendChild(seg([{ v: 'on', n: 'ON — composition locked' }, { v: 'off', n: 'OFF' }],
+        doc.lock ? 'on' : 'off', v => edit('Layout lock', d => d.lock = (v === 'on'))));
+      b.appendChild(el('div', { class: 'note' + (doc.lock ? ' ok' : ' err') },
+        el('b', {}, doc.lock ? 'Locked.' : 'Unlocked.'),
+        doc.lock
+          ? ' Text and colour are editable. Nothing can be moved, scaled or resized, so the approved composition cannot drift.'
+          : ' Elements can be nudged off the approved position. Validation will report the document as modified until they are reset.'));
+      const mv = HZ.moved(doc);
+      if (mv.length) b.appendChild(el('div', { class: 'note err' },
+        el('b', {}, 'MASTER LABEL MODIFIED — REVERT REQUIRED'),
+        ' ' + mv.length + ' element(s) moved: ' + mv.map(x => HZ.elDef(x.id).label).join(', ') + '.'));
+    }, 'hzlock', true));
 
-      b.appendChild(field('Dosage template',
-        sel1(HZ.DOSES.map(x => ({ v: x.mg, n: x.mg + '  ·  ' + x.ml + '  ·  ' + x.w + ' × ' + x.h + ' mm' })),
-          doc.dosePreset, v => edit('Dose → ' + v, d => HZ.applyDose(d, v))),
-        'Sets the trim from the vial the label wraps: circumference plus a 3 mm seam, by that vial’s body height. Every dimension stays editable underneath.'));
-
-      const d = HZ.doseByMg(doc.dosePreset);
-      if (d) b.appendChild(el('div', { class: 'hzstat' },
-        el('span', {}, d.ml + ' vial'), el('b', {}, 'Ø ' + HZ.VIALS[d.vial].dia + ' mm'),
-        el('span', {}, 'body'), el('b', {}, HZ.VIALS[d.vial].body + ' mm')));
-    }, 'hztpl', true));
-
-    /* ---- geometry ---- */
-    host.appendChild(P('Geometry', null, b => {
-      const g = doc.geom;
-      const two = (l1, n1, l2, n2) => {
-        const r = el('div', { class: 'row' });
-        r.appendChild(el('div', { style: 'flex:1' }, field(l1, n1)));
-        r.appendChild(el('div', { style: 'flex:1' }, field(l2, n2)));
-        return r;
-      };
-      b.appendChild(two(
-        'Width (mm)', num(g.w, 0.1, v => edit('Width', d => {
-          if (d.geom.lockRatio) d.geom.h = Math.round(v / d.geom.ratio * 100) / 100;
-          d.geom.w = v;
-        }), 5, 400),
-        'Height (mm)', num(g.h, 0.1, v => edit('Height', d => {
-          if (d.geom.lockRatio) d.geom.w = Math.round(v * d.geom.ratio * 100) / 100;
-          d.geom.h = v;
-        }), 3, 400)));
-      b.appendChild(el('label', { class: 'hzchk' },
-        el('input', {
-          type: 'checkbox', checked: g.lockRatio ? 'checked' : null,
-          onchange: e => edit('Lock ratio', d => {
-            d.geom.lockRatio = e.target.checked;
-            if (e.target.checked) d.geom.ratio = d.geom.w / d.geom.h;
-          })
-        }), ' Keep proportion (' + (g.w / g.h).toFixed(3) + ':1)'));
-
-      b.appendChild(two(
-        'Bleed (mm)', num(g.bleed, 0.5, v => edit('Bleed', d => d.geom.bleed = v), 0, 10),
-        'Safe area (mm)', num(g.safe, 0.5, v => edit('Safe', d => d.geom.safe = v), 0, 10)));
-      b.appendChild(two(
-        'Corner radius (mm)', num(g.radius, 0.1, v => edit('Radius', d => d.geom.radius = v), 0, 20),
-        'Row gap', num(g.gap, 0.005, v => edit('Gap', d => d.geom.gap = v), 0, .3)));
-      b.appendChild(two(
-        'Padding X', num(g.padX, 0.005, v => edit('Padding X', d => d.geom.padX = v), 0, .3),
-        'Padding Y', num(g.padY, 0.005, v => edit('Padding Y', d => d.geom.padY = v), 0, .4)));
-      b.appendChild(two(
-        'Divider 1', num(g.divA, 0.005, v => edit('Divider 1', d => d.geom.divA = v), .1, .9),
-        'Divider 2', num(g.divB, 0.005, v => edit('Divider 2', d => d.geom.divB = v), .1, .95)));
+    /* ---- size ---- */
+    host.appendChild(P('Trim size', null, b => {
+      const t = doc.trim;
+      b.appendChild(el('div', { class: 'row' },
+        el('div', { style: 'flex:1' }, field('Width (mm)', num(t.w.toFixed(2), 0.5,
+          v => edit('Width', d => HZ.setWidth(d, v)), 8, 400))),
+        el('div', { style: 'flex:1' }, field('Height (mm)', num(t.h.toFixed(2), 0.25,
+          v => edit('Height', d => HZ.setHeight(d, v)), 4, 400)))));
       b.appendChild(el('div', { class: 'hint' },
-        'Dividers are fractions of the trim width. The reference composition puts them at 0.305 and 0.654.'));
-      b.appendChild(btn('Reset to the reference composition', () => edit('Reset layout', d => {
-        Object.assign(d.geom, { padX: HZ.LAYOUT.padX, padY: HZ.LAYOUT.padY, gap: HZ.LAYOUT.gap, divA: HZ.LAYOUT.divA, divB: HZ.LAYOUT.divB });
-        d.objects.forEach(o => o.ov = { dx: 0, dy: 0, sx: 1 });
-      })));
-    }, 'hzgeom', true));
+        'Uniform, from the centre. The aspect is the master’s and cannot move, so every relationship inside the label is preserved exactly — the layout is never recalculated.'));
+      b.appendChild(el('div', { class: 'row' },
+        el('div', { style: 'flex:1' }, field('Bleed (mm)', num(doc.print.bleed, 0.5,
+          v => edit('Bleed', d => d.print.bleed = v), 0, 10))),
+        el('div', { style: 'flex:1' }, field('Safe (mm)', num(doc.print.safe, 0.5,
+          v => edit('Safe', d => d.print.safe = v), 0, 10)))));
+      if (board) b.appendChild(el('div', { class: 'hzstat' },
+        el('span', {}, 'artwork lands at'),
+        el('b', { class: board.meta.masterPPI < 300 ? 'bad' : '' }, board.meta.masterPPI + ' PPI')));
+    }, 'hztrim', true));
 
-    /* ---- palette ---- */
-    host.appendChild(P('Colour preset', null, b => {
-      const grid = el('div', { class: 'hzpal' });
-      for (const p of HZ.palettesOf(doc.line).concat((doc.custom || []).filter(c => c.line === doc.line))) {
-        grid.appendChild(el('button', {
-          class: 'hzsw' + (p.id === doc.palette ? ' on' : ''), title: p.name,
-          onclick: () => edit('Palette → ' + p.name, d => d.palette = p.id)
-        },
-          el('i', { style: 'background:' + p.bg }),
-          el('u', { style: 'background:' + p.accent }),
-          el('span', {}, p.name)));
+    /* ---- view ---- */
+    host.appendChild(P('View', null, b => {
+      b.appendChild(seg([{ v: 'edit', n: 'Editing' }, { v: 'prod', n: 'Production' }],
+        doc.view.production ? 'prod' : 'edit',
+        v => edit('View', d => d.view.production = (v === 'prod'))));
+      b.appendChild(el('div', { class: 'hint' },
+        'Production shows the final art alone — no guides, no boxes, no die line, nothing on top of the artwork.'));
+    }, 'hzview', true));
+
+    /* ---- validation ---- */
+    host.appendChild(P('Master validation', null, b => {
+      const v = validation;
+      if (!v) { b.appendChild(el('div', { class: 'hint' }, 'Not yet run.')); }
+      else if (!v.ready) { b.appendChild(el('div', { class: 'hint' }, v.notes[0])); }
+      else {
+        b.appendChild(el('div', { class: 'note' + (v.pass ? ' ok' : ' err') },
+          el('b', {}, v.pass ? 'MATCHES APPROVED MASTER' : 'MASTER LABEL MODIFIED — REVERT REQUIRED'),
+          ' ' + v.notes.join(' ')));
+        b.appendChild(el('div', { class: 'hzstat' },
+          el('span', {}, 'ΔE≈'), el('b', { class: v.dE > 1 ? 'bad' : '' }, String(v.dE)),
+          el('span', {}, 'moved'), el('b', { class: v.movedCount ? 'bad' : '' }, String(v.movedCount)),
+          el('span', {}, 'patched'), el('b', {}, String(board ? board.meta.patches.length : 0))));
       }
-      b.appendChild(grid);
-
-      const P0 = HZ.pal(doc);
-      const swatch = (label, key) => field(label, el('div', { class: 'row' },
-        el('input', {
-          class: 'hzcol', type: 'color', value: P0[key] || '#000000',
-          onchange: e => edit('Colour ' + key, d => {
-            const cur = HZ.pal(d);
-            let c = (d.custom || []).find(x => x.id === d.palette);
-            if (!c) {
-              c = Object.assign({}, cur, { id: 'custom-' + Math.random().toString(36).slice(2, 7), name: cur.name + ' (custom)', line: d.line });
-              d.custom = (d.custom || []).concat([c]);
-              d.palette = c.id;
-            }
-            c[key] = e.target.value;
-          })
-        }),
-        el('input', { class: 'inp mono', value: P0[key] || '', readonly: 'readonly' })));
-      b.appendChild(swatch('Substrate', 'bg'));
-      b.appendChild(swatch('Primary ink', 'ink'));
-      b.appendChild(swatch('Secondary ink', 'ink2'));
-      b.appendChild(swatch('Accent', 'accent'));
-      b.appendChild(swatch('Rules', 'rule'));
-      b.appendChild(swatch('Badge', 'hex'));
-      b.appendChild(el('div', { class: 'hint' },
-        'Changing any colour forks the preset into a custom one, so the eleven brand presets can never be overwritten.'));
-    }, 'hzpal', true));
-
-    /* ---- substrate ---- */
-    host.appendChild(P('Substrate', null, b => {
-      b.appendChild(field('Material', sel1([
-        { v: 'vinyl-white', n: 'White vinyl' }, { v: 'vinyl-clear', n: 'Clear vinyl' },
-        { v: 'paper-matte', n: 'Matte paper' }, { v: 'paper-textured', n: 'Textured paper' },
-        { v: 'foil-board', n: 'Metallised board' }
-      ], doc.substrate.material, v => edit('Material', d => d.substrate.material = v))));
-      b.appendChild(el('label', { class: 'hzchk' },
-        el('input', {
-          type: 'checkbox', checked: doc.substrate.transparent ? 'checked' : null,
-          onchange: e => edit('Transparent', d => d.substrate.transparent = e.target.checked)
-        }), ' Transparent label'));
-      b.appendChild(el('div', { class: 'hint' },
-        'A clear substrate needs a White Ink plate under the artwork, or the vial shows through it. Preflight will block the export until one exists.'));
-    }, 'hzsub', false));
+      b.appendChild(btn('Compare against the master', () => { validation = HZR.validate(board); buildLeft(); }));
+      b.appendChild(btn('Revert everything to the master', () => {
+        edit('Revert to master', d => { const n = HZ.newDoc({ master: d.master, w: d.trim.w }); d.el = n.el; d.lock = true; });
+        validation = HZR.validate(board); buildLeft();
+      }));
+    }, 'hzval', true));
   }
 
   /* =====================================================================
@@ -286,212 +249,150 @@ const HZUI = (() => {
     host.innerHTML = '';
     if (!active) return;
     const P = API.panel;
+    const els = HZ.present(doc.master);
 
-    /* ---- objects ---- */
-    host.appendChild(P('Objects', doc.objects.length, b => {
+    host.appendChild(P('Layers', els.length, b => {
       const list = el('div', { class: 'list' });
-      for (const o of doc.objects) {
-        const row = el('div', {
-          class: 'item', 'aria-selected': String(o.id === sel),
-          onclick: () => { sel = o.id; buildRight(); API.paint(); }
+      for (const e of els) {
+        const st = doc.el[e.id];
+        const patched = board && board.meta.patches.indexOf(e.id) >= 0;
+        list.appendChild(el('div', {
+          class: 'item', 'aria-selected': String(e.id === sel),
+          onclick: () => { sel = e.id; buildRight(); API.paint(); }
         },
-          el('span', { class: 'hzkind' }, o.kind[0].toUpperCase()),
-          el('span', { class: 'nm' }, o.label),
-          o.finish !== 'none' ? el('span', { class: 'sub' }, HZ.finish(o.finish).name.replace(/^Hot Foil /, '')) : null,
-          toggle(o.on, v => edit((v ? 'Show ' : 'Hide ') + o.label, d => HZ.objOf(d, o.id).on = v), 'Visible'),
+          el('span', { class: 'hzkind' }, e.kind === 'text' ? 'T' : 'A'),
+          el('span', { class: 'nm' }, e.label),
+          patched ? el('span', { class: 'sub' }, 'edited') : null,
+          toggle(st.on !== false, v => edit((v ? 'Show ' : 'Hide ') + e.label,
+            d => d.el[e.id].on = v), 'Visible'),
           el('button', {
-            class: 'hztog' + (o.locked ? ' lock' : ''), title: 'Lock',
-            onclick: e => { e.stopPropagation(); edit('Lock ' + o.label, d => HZ.objOf(d, o.id).locked = !o.locked); }
-          }, o.locked ? '🔒' : '🔓')
-        );
-        list.appendChild(row);
-      }
-      b.appendChild(list);
-    }, 'hzobjs', true));
-
-    /* ---- inspector ---- */
-    const o = HZ.objOf(doc, sel);
-    if (o) host.appendChild(P('Inspector · ' + o.label, null, b => inspector(b, o), 'hzinsp', true));
-
-    /* ---- layers ---- */
-    host.appendChild(P('Layers', HZ.LAYERS.length, b => {
-      const list = el('div', { class: 'list' });
-      for (const L of HZ.LAYERS) {
-        const st = doc.layers[L.id];
-        const n = board ? board.prims.filter(p => p.layer === L.id).length : 0;
-        list.appendChild(el('div', { class: 'item' },
-          el('span', { class: 'nm' }, L.name),
-          el('span', { class: 'sub' }, n ? String(n) : '—'),
-          toggle(st.on !== false, v => edit((v ? 'Show ' : 'Hide ') + L.name, d => d.layers[L.id].on = v), 'Visible'),
-          el('button', {
-            class: 'hztog' + (st.locked ? ' lock' : ''), title: 'Lock layer',
-            onclick: () => edit('Lock ' + L.name, d => d.layers[L.id].locked = !st.locked)
-          }, st.locked ? '🔒' : '🔓'),
-          el('button', {
-            class: 'hztog' + (st.exp !== false ? ' on' : ''), title: 'Include in export',
-            onclick: () => edit('Export ' + L.name, d => d.layers[L.id].exp = st.exp === false)
-          }, '⤓')
-        ));
+            class: 'hztog' + (st.locked ? ' lock' : ''), title: 'Lock',
+            onclick: ev => { ev.stopPropagation(); edit('Lock ' + e.label, d => d.el[e.id].locked = !st.locked); }
+          }, st.locked ? '🔒' : '🔓')));
       }
       b.appendChild(list);
       b.appendChild(el('div', { class: 'hint' },
-        'Bleed and Safe Area are guides — they are drawn on screen and never written to an export.'));
+        'Every layer sits on its own measured box from the approved artwork. Editing one patches that box and nothing else.'));
     }, 'hzlayers', true));
 
-    /* ---- print production ---- */
+    const e = HZ.elDef(sel) && doc.el[sel] ? HZ.elDef(sel) : els[0];
+    if (e) host.appendChild(P('Inspector · ' + e.label, null, b => inspector(b, e), 'hzinsp', true));
+
     host.appendChild(P('Print production', board ? board.plates.length : 0, b => {
-      b.appendChild(field('Preview material', sel1([
-        { v: 'auto', n: 'Automatic (from preset)' }, { v: 'none', n: 'Flat — no simulation' },
-        { v: 'silver', n: 'Brushed silver' }, { v: 'titanium', n: 'Titanium' },
-        { v: 'graphite', n: 'Graphite' }, { v: 'copper', n: 'Copper' },
-        { v: 'rosegold', n: 'Rose gold' }, { v: 'champagne', n: 'Champagne' },
-        { v: 'softtouch', n: 'Soft touch' }, { v: 'lam-matte', n: 'Matte lamination' },
-        { v: 'lam-gloss', n: 'Gloss lamination' }, { v: 'textured', n: 'Textured paper' }
-      ], doc.view.material, v => edit('Material preview', d => d.view.material = v)),
-        'Preview only. It is drawn over the artwork on screen and no exporter ever reads it.'));
-
       const pl = el('div', { class: 'hzplates' });
-      for (const p of (board ? board.plates : []))
-        pl.appendChild(el('span', { class: 'tag' }, p));
+      for (const q of (board ? board.plates : [])) pl.appendChild(el('span', { class: 'tag' }, q));
       b.appendChild(field('Separations that will be written', pl));
+      const pr = el('div', { class: 'list' });
+      for (const L of HZ.LAYERS) {
+        const st = doc.layers[L.id];
+        pr.appendChild(el('div', { class: 'item' },
+          el('span', { class: 'nm' }, L.name),
+          toggle(st.on !== false, v => edit(L.name, d => d.layers[L.id].on = v), 'Visible'),
+          el('button', { class: 'hztog' + (st.exp !== false ? ' on' : ''), title: 'Include in export',
+            onclick: () => edit('Export ' + L.name, d => d.layers[L.id].exp = st.exp === false) }, '⤓')));
+      }
+      b.appendChild(pr);
+    }, 'hzprint', false));
 
-      b.appendChild(el('div', { class: 'hint' },
-        'A plate appears here as soon as an object is assigned a finish that needs one. Assign finishes in the inspector above.'));
-    }, 'hzprint', true));
-
-    /* ---- mockup ---- */
     host.appendChild(P('Preview on container', null, b => {
       b.appendChild(field('Vial', sel1(Object.keys(HZ.VIALS).map(k => ({
         v: k, n: HZ.VIALS[k].ml + '  ·  Ø' + HZ.VIALS[k].dia + ' × ' + HZ.VIALS[k].body + ' mm'
       })), doc.view.mockup, v => edit('Mockup', d => d.view.mockup = v))));
-      const cv = el('canvas', { class: 'hzmock', id: 'hzMock', width: '420', height: '360' });
+      const cv = el('canvas', { class: 'hzmock', width: '420', height: '360' });
       b.appendChild(cv);
-      const V = HZ.VIALS[doc.view.mockup];
-      const circ = Math.PI * V.dia;
-      const fits = doc.geom.w >= circ - 1;
+      const V = HZ.VIALS[doc.view.mockup], circ = Math.PI * V.dia;
+      const fits = doc.trim.w >= circ - 1;
       b.appendChild(el('div', { class: 'note' + (fits ? ' ok' : ' err') },
         el('b', {}, fits ? 'Wraps.' : 'Too narrow.'),
-        ' This vial’s circumference is ' + circ.toFixed(1) + ' mm and the label is ' +
-        doc.geom.w.toFixed(1) + ' mm wide' +
-        (fits ? ', so it closes with a ' + (doc.geom.w - circ).toFixed(1) + ' mm seam.'
-              : ' — it will not meet. Widen it by ' + (circ - doc.geom.w).toFixed(1) + ' mm or pick a smaller vial.')));
-      setTimeout(() => { try { HZR.mockup(cv, board, doc.view.mockup); } catch (e) {} }, 0);
-    }, 'hzmock', true));
+        ' Circumference ' + circ.toFixed(1) + ' mm, label ' + doc.trim.w.toFixed(1) + ' mm' +
+        (fits ? ' — a ' + (doc.trim.w - circ).toFixed(1) + ' mm seam.' : '.')));
+      setTimeout(() => { try { HZR.mockup(cv, board, doc.view.mockup); } catch (er) {} }, 0);
+    }, 'hzmock', false));
 
-    /* ---- output ---- */
     host.appendChild(P('Output', null, b => {
-      const r = report;
-      b.appendChild(el('div', { class: 'note' + (r && r.pass ? ' ok' : ' err') },
-        el('b', {}, r ? (r.pass ? 'Proof clean.' : r.counts.blocking + ' blocking') : '—'),
-        r ? ' · ' + r.counts.warning + ' warnings · ' + r.counts.info + ' notes' : ''));
+      const v = validation;
+      b.appendChild(el('div', { class: 'note' + (v && v.pass ? ' ok' : (v ? ' err' : '')) },
+        el('b', {}, v ? (v.pass ? 'Matches the approved master.' : 'MASTER LABEL MODIFIED') : 'Not validated'),
+        v && v.ready ? ' ΔE≈' + v.dE : ''));
       b.appendChild(btn('UV PRINT READY — run preflight', () => dlgPreflight(), 'pri'));
       b.appendChild(el('div', { style: 'height:8px' }));
-      const g2 = (a, b2) => el('div', { class: 'row' }, a, b2);
+      const g2 = (a, c) => el('div', { class: 'row' }, a, c);
       b.appendChild(g2(btn('SVG', () => save('svg')), btn('PDF/X-4', () => save('x4'))));
-      b.appendChild(g2(btn('PDF/X-1a', () => save('x1a')), btn('AI', () => save('ai'))));
-      b.appendChild(g2(btn('EPS', () => save('eps')), btn('TIFF', () => save('tiff'))));
+      b.appendChild(g2(btn('AI', () => save('ai')), btn('EPS', () => save('eps'))));
       b.appendChild(g2(btn('PNG 600', () => save('png600')), btn('PNG 1200', () => save('png1200'))));
-      b.appendChild(g2(btn('PSD', () => save('psd')), btn('Separations', () => save('seps'))));
       b.appendChild(el('div', { style: 'height:8px' }));
       b.appendChild(btn('Production package (.zip)', () => save('pkg'), 'pri'));
       b.appendChild(el('div', { class: 'hint' },
-        'The package carries every format, one file per plate, the manifest and the preflight report.'));
+        'The export is the approved master with your edits. Nothing is recomposed, reflowed or regenerated.'));
     }, 'hzout', true));
   }
 
   /* ---------- inspector -------------------------------------------------- */
-  function inspector(b, o) {
-    const upd = (label, fn) => edit(label, d => fn(HZ.objOf(d, o.id), d));
+  function inspector(b, e) {
+    const st = doc.el[e.id];
+    const upd = (label, fn) => edit(label, d => fn(d.el[e.id], d));
+    const m = HZ.master(doc.master);
+    const box = HZ.boxOf(doc.master, e.id);
 
-    if (o.locked) b.appendChild(el('div', { class: 'note' },
-      el('b', {}, 'Locked.'), ' Unlock it in the object list to edit.'));
+    if (st.locked) b.appendChild(el('div', { class: 'note' },
+      el('b', {}, 'Locked.'), ' Unlock it in the layer list to edit.'));
 
-    /* text */
-    if (o.kind === 'text') {
+    if (e.kind === 'text') {
+      const cur = st.text != null ? st.text : (m.strings[e.id] || '');
       b.appendChild(field('Text', el('input', {
-        class: 'inp', value: o.text, disabled: o.locked ? 'disabled' : null,
-        oninput: e => { const v = e.target.value; clearTimeout(inspector._t); inspector._t = setTimeout(() => upd('Text', x => x.text = v), 220); }
-      })));
-      const t = o.type;
-      b.appendChild(field('Case', seg([
-        { v: 'upper', n: 'ABC' }, { v: 'lower', n: 'abc' }, { v: 'none', n: 'As typed' }
-      ], t.case, v => upd('Case', x => x.type.case = v))));
-      b.appendChild(field('Alignment', seg([
-        { v: 'left', n: 'Left' }, { v: 'center', n: 'Centre' }, { v: 'right', n: 'Right' }
-      ], t.align, v => upd('Align', x => x.type.align = v))));
-      b.appendChild(field('Weight', sel1(
-        [200, 300, 400, 500, 600, 700, 800].map(w => ({ v: String(w), n: String(w) })),
-        String(t.weight), v => upd('Weight', x => x.type.weight = +v))));
-      const row2 = (l1, n1, l2, n2) => el('div', { class: 'row' },
-        el('div', { style: 'flex:1' }, field(l1, n1)), el('div', { style: 'flex:1' }, field(l2, n2)));
-      b.appendChild(row2(
-        'Cap height (× H)', num(((o.box.y1 - o.box.y0)).toFixed(4), 0.002, v => upd('Cap height', x => {
-          const c = (x.box.y0 + x.box.y1) / 2; x.box.y0 = c - v / 2; x.box.y1 = c + v / 2;
-        }), 0.01, 0.6),
-        'Tracking (em)', num(t.tracking, 0.005, v => upd('Tracking', x => x.type.tracking = v), -0.1, 1)));
-      b.appendChild(row2(
-        'Leading', num(t.leading, 0.05, v => upd('Leading', x => x.type.leading = v), 0.6, 3),
-        'Opacity', num(t.opacity, 0.05, v => upd('Opacity', x => x.type.opacity = v), 0.05, 1)));
-      const m = board && board.meta.textObjs.find(x => x.id === o.id);
-      if (m) b.appendChild(el('div', { class: 'hzstat' },
-        el('span', {}, 'sets at'), el('b', { class: m.sizePt < 5 ? 'bad' : '' }, m.sizePt.toFixed(2) + ' pt'),
-        el('span', {}, 'cap'), el('b', {}, m.capMM.toFixed(2) + ' mm'),
-        el('span', {}, 'width'), el('b', {}, m.widthMM.toFixed(2) + ' mm')));
-    }
-
-    if (o.kind === 'icon') {
-      b.appendChild(field('Glyph', sel1(HZ.ICON_KEYS.map(k => ({ v: k, n: k })), o.glyph,
-        v => upd('Icon', x => x.glyph = v))));
-      b.appendChild(field('Stroke (mm)', num(o.thickMM, 0.02, v => upd('Stroke', x => x.thickMM = v), 0.05, 3)));
-    }
-    if (o.kind === 'hex' || o.kind === 'rule' || o.kind === 'divider')
-      b.appendChild(field('Stroke (mm)', num(o.thickMM, 0.02, v => upd('Stroke', x => x.thickMM = v), 0.05, 3),
-        (o.thickMM < 0.09 ? 'Under 0.09 mm this will break up on press.' : null)));
-    if (o.kind === 'divider')
-      b.appendChild(field('Inset (× H)', num(o.inset, 0.01, v => upd('Inset', x => x.inset = v), 0, .45)));
-
-    if (o.kind === 'logo') {
-      b.appendChild(field('Supplied lockup', sel1([
-        { v: 'auto', n: 'Match the line (' + doc.line + ')' },
-        { v: 'master', n: 'Master lockup — stacked' },
-        { v: 'fitness', n: 'Fitness lockup' },
-        { v: 'beauty', n: 'Beauty lockup' },
-        { v: 'longevity', n: 'Longevity lockup' }
-      ], o.asset || 'auto', v => upd('Lockup', x => x.asset = v)),
-        'Four lockups were supplied, each already in its own metal. This chooses between the files — it never tints one to imitate another.'));
+        class: 'inp', value: cur, disabled: st.locked ? 'disabled' : null,
+        oninput: ev => { const v = ev.target.value; clearTimeout(inspector._t);
+          inspector._t = setTimeout(() => upd('Text', x => x.text = v), 260); }
+      }), st.text == null
+        ? 'Untouched — the master’s own artwork is showing. Type here and only this box is patched.'
+        : 'Edited. This box is patched from the clean plate and re-set at the master’s cap height and baseline.'));
+      if (st.text != null) b.appendChild(btn('Restore the master’s text',
+        () => upd('Restore text', x => { x.text = null; x.tracking = null; x.weight = null; })));
+      b.appendChild(field('Weight', sel1([200,300,400,500,600,700].map(w => ({ v: String(w), n: String(w) })),
+        String(st.weight || 400), v => upd('Weight', x => x.weight = +v))));
+      b.appendChild(field('Tracking (em)', num(st.tracking != null ? st.tracking : 0, 0.005,
+        v => upd('Tracking', x => x.tracking = v), -0.06, 0.6),
+        st.tracking == null ? 'Automatic: matched to the width the master sets this string at.' : null));
+      const t = board && board.meta.textObjs.find(x => x.id === e.id);
+      if (t) b.appendChild(el('div', { class: 'hzstat' },
+        el('span', {}, 'sets at'), el('b', { class: t.sizePt < 5 ? 'bad' : '' }, t.sizePt.toFixed(2) + ' pt'),
+        el('span', {}, 'width'), el('b', { class: t.over ? 'bad' : '' }, t.widthMM.toFixed(2) + ' mm'),
+        el('span', {}, 'box'), el('b', {}, t.boxW.toFixed(2) + ' mm')));
+    } else {
       b.appendChild(el('div', { class: 'note' },
-        el('b', {}, 'Supplied artwork.'),
-        ' Placed exactly as delivered and never redrawn. Position, size and finish are yours; the artwork is not.' +
-        (board && board.meta.logoPPI ? ' It lands at ' + board.meta.logoPPI + ' PPI here.' : '')));
+        el('b', {}, 'Approved artwork.'),
+        ' Placed exactly as delivered. Its shape is the master’s own — colour and finish are yours, the drawing is not.'));
     }
 
-    /* colour */
-    if (o.kind !== 'logo' && o.kind !== 'flag' && o.kind !== 'cutline') {
-      b.appendChild(field('Colour', sel1([
-        { v: 'ink', n: 'Primary ink' }, { v: 'ink2', n: 'Secondary ink' },
-        { v: 'accent', n: 'Accent' }, { v: 'rule', n: 'Rules' },
-        { v: 'hex', n: 'Badge' }, { v: 'bg', n: 'Substrate' }
-      ], o.colour, v => upd('Colour', x => x.colour = v))));
-    }
+    b.appendChild(field('Colour', el('div', { class: 'row' },
+      el('input', { class: 'hzcol', type: 'color',
+        value: st.colour || HZ.inkOf(doc.master, e.id),
+        onchange: ev => upd('Colour', x => x.colour = ev.target.value) }),
+      el('input', { class: 'inp mono', readonly: 'readonly',
+        value: st.colour || (HZ.inkOf(doc.master, e.id) + '  (measured)') })),
+      st.colour ? null : 'This is the ink measured out of the approved artwork.'));
+    if (st.colour) b.appendChild(btn('Restore the measured ink', () => upd('Restore colour', x => x.colour = null)));
 
-    /* finish */
-    if (o.kind !== 'cutline') {
-      b.appendChild(field('Print finish', sel1(
-        HZ.FINISHES.map(f => ({ v: f.id, n: f.name + (f.plate ? '  →  ' + f.plate : '') })),
-        o.finish, v => upd('Finish', x => x.finish = v)),
-        'A finish with a plate name behind it separates onto that plate on export. It is not a screen effect.'));
-      b.appendChild(field('Layer', sel1(
-        [{ v: '', n: 'Automatic (' + HZ.layerFor(o.finish) + ')' }].concat(
-          HZ.LAYERS.filter(l => l.prints).map(l => ({ v: l.id, n: l.name }))),
-        o.layerOverride || '', v => upd('Layer', x => x.layerOverride = v || null))));
-    }
+    b.appendChild(field('Print finish', sel1(HZ.FINISHES.map(f =>
+      ({ v: f.id, n: f.name + (f.plate ? '  →  ' + f.plate : '') })),
+      st.finish, v => upd('Finish', x => x.finish = v)),
+      'A finish with a plate behind it separates onto that plate on export.'));
 
-    /* nudge */
-    b.appendChild(el('div', { class: 'row' },
-      el('div', { style: 'flex:1' }, field('Nudge X (mm)', num(o.ov.dx, 0.1, v => upd('Move X', x => x.ov.dx = v)))),
-      el('div', { style: 'flex:1' }, field('Nudge Y (mm)', num(o.ov.dy, 0.1, v => upd('Move Y', x => x.ov.dy = v)))),
-      el('div', { style: 'flex:1' }, field('Scale', num(o.ov.sx, 0.02, v => upd('Scale', x => x.ov.sx = v), 0.1, 6)))));
-    b.appendChild(btn('Reset this object', () => upd('Reset ' + o.label, x => x.ov = { dx: 0, dy: 0, sx: 1 })));
+    if (box) b.appendChild(el('div', { class: 'hzstat' },
+      el('span', {}, 'master box'), el('b', {}, box.x + ',' + box.y),
+      el('b', {}, box.w + '×' + box.h + ' px')));
+
+    if (doc.lock) {
+      b.appendChild(el('div', { class: 'note' },
+        el('b', {}, 'Position locked.'), ' Turn Master Layout Lock off to move this element.'));
+    } else {
+      b.appendChild(el('div', { class: 'row' },
+        el('div', { style: 'flex:1' }, field('Nudge X (mm)', num(st.ov.dx, 0.1, v => upd('Move X', x => x.ov.dx = v)))),
+        el('div', { style: 'flex:1' }, field('Nudge Y (mm)', num(st.ov.dy, 0.1, v => upd('Move Y', x => x.ov.dy = v)))),
+        el('div', { style: 'flex:1' }, field('Scale', num(st.ov.sx, 0.02, v => upd('Scale', x => x.ov.sx = v), 0.2, 4)))));
+      b.appendChild(btn('Reset to the approved position',
+        () => upd('Reset ' + e.label, x => x.ov = { dx: 0, dy: 0, sx: 1 })));
+    }
   }
 
   /* =====================================================================
@@ -542,10 +443,7 @@ const HZUI = (() => {
   };
   const base = () => (doc.name || 'label').replace(/[^\w.-]+/g, '_').slice(0, 48);
 
-  function logoSize() {
-    const im = board.prims.find(p => p.t === 'image');
-    return { imgW: im ? im.natW : 1090, imgH: im ? im.natH : 672 };
-  }
+  function logoSize() { return {}; }
 
   function save(kind) {
     try {
@@ -553,6 +451,7 @@ const HZUI = (() => {
       if (kind === 'svg') return dl(HZX.svg(board, { bleed: true }), base() + '.svg', 'image/svg+xml'), ok('SVG');
       if (kind === 'x4') return dl(HZX.pdf(board, Object.assign({ standard: 'X-4', space: 'cmyk', cutline: true }, L)), base() + '_X-4.pdf', 'application/pdf'), ok('PDF/X-4');
       if (kind === 'x1a') return dl(HZX.pdf(board, Object.assign({ standard: 'X-1a', space: 'cmyk', cutline: true }, L)), base() + '_X-1a.pdf', 'application/pdf'), ok('PDF/X-1a');
+      if (kind === 'tiff') return dl(HZX.tiff(board, 600, { bleed: true }), base() + '_600dpi.tif', 'image/tiff'), ok('TIFF 600 dpi');
       if (kind === 'ai') return dl(HZX.pdf(board, Object.assign({ standard: 'plain', space: 'srgb', cutline: true }, L)), base() + '.ai', 'application/postscript'), ok('AI (PDF-compatible)');
       if (kind === 'eps') return dl(HZX.eps(board, { space: 'cmyk', cutline: true }), base() + '.eps', 'application/postscript'), ok('EPS');
       if (kind === 'tiff') return dl(HZX.tiff(board, 600, { bleed: true }), base() + '_600dpi.tif', 'image/tiff'), ok('TIFF 600 dpi');
@@ -605,13 +504,15 @@ const HZUI = (() => {
       if (!active) return;
       const tag = (e.target.tagName || '').toLowerCase();
       if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
-      const o = HZ.objOf(doc, sel);
       if ((e.key === 'z' || e.key === 'Z') && (e.metaKey || e.ctrlKey)) {
         e.preventDefault(); return e.shiftKey ? redo() : undo();
       }
-      if (!o || o.locked) return;
+      if (doc.lock) return;                       /* the lock means the lock */
+      const def = HZ.elDef(sel);
+      const st = doc.el[sel];
+      if (!def || !st || st.locked) return;
       const step = e.shiftKey ? 1 : 0.1;
-      const mv = (dx, dy) => { e.preventDefault(); edit('Nudge ' + o.label, d => { const t = HZ.objOf(d, o.id); t.ov.dx += dx; t.ov.dy += dy; }); };
+      const mv = (dx, dy) => { e.preventDefault(); edit('Nudge ' + def.label, d => { d.el[sel].ov.dx += dx; d.el[sel].ov.dy += dy; }); };
       if (e.key === 'ArrowLeft') mv(-step, 0);
       else if (e.key === 'ArrowRight') mv(step, 0);
       else if (e.key === 'ArrowUp') mv(0, -step);
@@ -638,7 +539,8 @@ const HZUI = (() => {
 
   function mount(api) {
     API = api;
-    doc = loadLocal() || HZ.newDoc({ mg: '10mg', line: 'fitness', compound: 'RT10' });
+    doc = loadLocal() || HZ.newDoc({ master: HZ.KEYS[0] });
+    sel = 'compound';
 
     /* our own scroll hosts, prepended so nothing existing moves */
     const L = document.createElement('div'); L.id = 'hzLeft';
@@ -647,7 +549,7 @@ const HZUI = (() => {
     ls.parentNode.insertBefore(L, ls);
     rs.parentNode.insertBefore(R, rs);
 
-    HZR.preload().then(() => { if (active) { render(); API.paint(); } buildLeft(); buildRight(); });
+    HZR.preload().then(() => { render(); if (active) API.paint(); buildLeft(); buildRight(); });
     wireStage();
 
     let was = '0';
@@ -660,6 +562,7 @@ const HZUI = (() => {
   return {
     mount, get active() { return active; }, isActive: () => active,
     getBoard: () => board, getDoc: () => doc, getReport: () => report,
+    getValidation: () => validation,
     setActive, undo, redo, render, save, dlgPreflight,
     select: id => { sel = id; buildRight(); API.paint(); },
     selectedId: () => sel

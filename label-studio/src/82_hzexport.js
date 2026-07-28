@@ -110,205 +110,203 @@ const HZX = (() => {
   }
 
   /* =====================================================================
-     SVG — live text, real geometry
+     SVG — the approved master placed, patched only where it was edited
      ===================================================================== */
   function svg(board, opt) {
     opt = opt || {};
     const doc = board.doc, W = board.wMM, H = board.hMM, bl = opt.bleed ? board.bleedMM : 0;
-    const vw = W + bl * 2, vh = H + bl * 2;
     const S = [];
-    S.push(`<?xml version="1.0" encoding="UTF-8"?>`);
-    S.push(`<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="${f(vw,3)}mm" height="${f(vh,3)}mm" viewBox="${f(-bl,4)} ${f(-bl,4)} ${f(vw,4)} ${f(vh,4)}">`);
+    S.push('<?xml version="1.0" encoding="UTF-8"?>');
+    S.push(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="${f(W+bl*2,3)}mm" height="${f(H+bl*2,3)}mm" viewBox="${f(-bl,4)} ${f(-bl,4)} ${f(W+bl*2,4)} ${f(H+bl*2,4)}">`);
     S.push(`<title>${esc(doc.name)}</title>`);
-    S.push(`<desc>PEPTIDEX Label Studio · Premium Horizontal · trim ${f(W,2)}×${f(H,2)} mm · bleed ${f(board.bleedMM,2)} mm · engine ${esc(board.family)}</desc>`);
-    if (bl) S.push(`<rect x="${f(-bl,4)}" y="${f(-bl,4)}" width="${f(vw,4)}" height="${f(vh,4)}" fill="${board.bg}"/>`);
-
-    const byLayer = {};
-    for (const p of visible(board, { cutline: true })) (byLayer[p.layer] = byLayer[p.layer] || []).push(p);
-
-    for (const L of HZ.LAYERS) {
-      const list = byLayer[L.id];
-      if (!list || !list.length) continue;
-      S.push(`<g id="${L.id}" data-plate="${esc(L.name)}">`);
-      for (const p of list) S.push(svgPrim(p));
-      S.push('</g>');
+    S.push(`<desc>PEPTIDEX approved master "${esc(doc.master)}" placed at ${f(W,2)}×${f(H,2)} mm. ` +
+           `${board.meta.patches.length} region(s) patched. No recomposition.</desc>`);
+    for (const p of board.prims) {
+      if (p.layer === 'cutline' && !opt.cutline) continue;
+      const L = doc.layers[p.layer];
+      if (L && (L.on === false || L.exp === false)) continue;
+      if (p.t === 'master') {
+        /* bleed behind, then the approved artwork at the trim, 1:1 */
+        if (bl > 0) {
+          S.push(`  <mask id="bleedring"><rect x="${f(-bl)}" y="${f(-bl)}" width="${f(W+bl*2)}" height="${f(H+bl*2)}" fill="#fff"/><rect x="0" y="0" width="${f(W)}" height="${f(H)}" fill="#000"/></mask>`);
+          S.push(`  <image mask="url(#bleedring)" x="${f(-bl)}" y="${f(-bl)}" width="${f(W+bl*2)}" height="${f(H+bl*2)}" preserveAspectRatio="none" xlink:href="${p.src}"/>`);
+        }
+        S.push(`  <image x="0" y="0" width="${f(W)}" height="${f(H)}" preserveAspectRatio="none" xlink:href="${p.src}"/>`);
+      }
+      else if (p.t === 'patch' || p.t === 'artfill') {
+        const sx = p.w / p.sw, sy = p.h / p.sh;
+        S.push(`  <clipPath id="c_${p.objId}"><rect x="${f(p.x)}" y="${f(p.y)}" width="${f(p.w)}" height="${f(p.h)}"/></clipPath>`);
+        S.push(`  <g clip-path="url(#c_${p.objId})"><image x="${f(p.x - p.sx*sx)}" y="${f(p.y - p.sy*sy)}" width="${f(p.natW*sx)}" height="${f(p.natH*sy)}" preserveAspectRatio="none" xlink:href="${p.src}"/></g>`);
+      } else if (p.t === 'text') {
+        const xs = p.chars.map(c => f(p.x + c.x, 4)).join(' ');
+        S.push(`  <text x="${xs}" y="${f(p.y)}" font-family=${JSON.stringify(BRAND.STACK.display)} font-size="${f(p.sizePx/HZR.K,4)}" font-weight="${p.weight}" fill="${p.fill}" xml:space="preserve">${esc(p.str)}</text>`);
+      } else if (p.t === 'rect' && p.stroke)
+        S.push(`  <rect x="${f(p.x)}" y="${f(p.y)}" width="${f(p.w)}" height="${f(p.h)}" fill="none" stroke="${p.stroke}" stroke-width="${f(p.sw)}" stroke-dasharray="1 1"/>`);
     }
     S.push('</svg>');
     return S.join('\n');
   }
 
-  function svgPrim(p) {
-    switch (p.t) {
-      case 'rect': {
-        const a = [`x="${f(p.x)}"`, `y="${f(p.y)}"`, `width="${f(p.w)}"`, `height="${f(p.h)}"`];
-        if (p.r) a.push(`rx="${f(p.r)}"`);
-        a.push(`fill="${p.fill || 'none'}"`);
-        if (p.stroke) a.push(`stroke="${p.stroke}"`, `stroke-width="${f(p.w2 || p.w)}"`);
-        return `  <rect ${a.join(' ')}/>`;
-      }
-      case 'dot': return `  <circle cx="${f(p.cx)}" cy="${f(p.cy)}" r="${f(p.r)}" fill="${p.fill}"/>`;
-      case 'line': return `  <line x1="${f(p.x1)}" y1="${f(p.y1)}" x2="${f(p.x2)}" y2="${f(p.y2)}" stroke="${p.stroke}" stroke-width="${f(p.w)}" stroke-linecap="butt"/>`;
-      case 'path': return `  <path d="${p.d}" fill="${p.fill || 'none'}" stroke="${p.stroke}" stroke-width="${f(p.w)}" stroke-linejoin="round" stroke-linecap="${p.cap || 'butt'}"/>`;
-      case 'image': return `  <image x="${f(p.x)}" y="${f(p.y)}" width="${f(p.w)}" height="${f(p.h)}" href="${p.src || ''}" preserveAspectRatio="none"/>`;
-      case 'text': {
-        /* per-glyph x, so the tracking in the file is the tracking on screen */
-        const xs = p.chars.map(c => f(p.x + c.x, 4)).join(' ');
-        const sz = f(p.sizePx / HZR.K, 4);
-        return `  <text x="${xs}" y="${f(p.y)}" font-family=${JSON.stringify(BRAND.STACK.display)} font-size="${sz}" font-weight="${p.weight}" fill="${p.fill}" xml:space="preserve">${esc(p.str)}</text>`;
-      }
-      default: return '';
-    }
-  }
-
   /* =====================================================================
-     PDF — written here, because no library emits X-4 correctly
+     PDF — the master as an XObject, patches clipped over it, text live
      ===================================================================== */
   function pdf(board, opt) {
     opt = opt || {};
-    const std = opt.standard || 'X-4';                  // 'X-4' | 'X-1a' | 'plain'
+    const std = opt.standard || 'X-4';
     const space = SPACES[opt.space || (std === 'plain' ? 'srgb' : 'cmyk')];
-    const doc = board.doc;
-    const bl = board.bleedMM, W = board.wMM, H = board.hMM;
-    const pw = PT(W + bl * 2), ph = PT(H + bl * 2);
-    const ox = PT(bl), oy = PT(bl);                      // trim origin inside media
-
-    /* Decode the one placed asset up front: whether the XObject exists
-       decides whether the content stream may reference it, and a reference to
-       a resource that was never written is a broken file. */
-    const listAll = visible(board, { cutline: !!opt.cutline, plate: opt.plate });
-    const ordered = HZ.LAYERS.map(L => listAll.filter(p => p.layer === L.id)).flat();
-    const placed = ordered.find(p => p.t === 'image' && p.src) || null;
-    const dec = (opt.images !== false && placed) ? decodeImage(placed, opt.imagePPI || 600) : null;
-
-    /* content stream — y flips, PDF counts up from the bottom */
-    const c = [];
+    const doc = board.doc, bl = board.bleedMM, W = board.wMM, H = board.hMM;
+    const pw = PT(W + bl * 2), ph = PT(H + bl * 2), ox = PT(bl), oy = PT(bl);
     const Y = v => PT(H) - PT(v);
     const col = (hex, stroke) => {
       const v = space.conv(hex);
-      if (space.op === 'k') return v.map(x => f(x, 5)).join(' ') + (stroke ? ' K' : ' k');
-      return v.map(x => f(x, 5)).join(' ') + (stroke ? ' RG' : ' rg');
+      return v.map(x => f(x, 5)).join(' ') + (space.op === 'k' ? (stroke ? ' K' : ' k') : (stroke ? ' RG' : ' rg'));
     };
-    c.push('q', `1 0 0 1 ${f(ox, 4)} ${f(oy, 4)} cm`);
 
-    for (const p of ordered) {
-      switch (p.t) {
-        case 'rect':
-          if (p.fill) {
-            c.push(col(p.fill));
-            if (p.r) c.push(roundRectPath(PT(p.x), Y(p.y + p.h), PT(p.w), PT(p.h), PT(p.r)), 'f');
-            else c.push(`${f(PT(p.x))} ${f(Y(p.y + p.h))} ${f(PT(p.w))} ${f(PT(p.h))} re f`);
-          }
-          if (p.stroke) {
-            c.push(col(p.stroke, true), `${f(PT(p.w2 || p.w))} w`);
-            if (p.dash) c.push(`[${p.dash.map(d => f(PT(d), 3)).join(' ')}] 0 d`);
-            c.push(`${f(PT(p.x))} ${f(Y(p.y + p.h))} ${f(PT(p.w))} ${f(PT(p.h))} re S`, '[] 0 d');
-          }
-          break;
-        case 'dot':
-          c.push(col(p.fill), circlePath(PT(p.cx), Y(p.cy), PT(p.r)), 'f');
-          break;
-        case 'line':
-          c.push(col(p.stroke, true), `${f(PT(p.w))} w 0 J`,
-            `${f(PT(p.x1))} ${f(Y(p.y1))} m ${f(PT(p.x2))} ${f(Y(p.y2))} l S`);
-          break;
-        case 'path':
-          c.push(col(p.stroke, true), `${f(PT(p.w))} w 1 j ${p.cap === 'round' ? '1' : '0'} J`,
-            pathToPdf(p.d, Y), 'S');
-          break;
-        case 'image':
-          /* the supplied lockup is the one placed asset; it rides as an XObject */
-          if (dec && p === placed)
-            c.push('q', `${f(PT(p.w))} 0 0 ${f(PT(p.h))} ${f(PT(p.x))} ${f(Y(p.y + p.h))} cm /ImLogo Do`, 'Q');
-          break;
-        case 'text': {
-          c.push('BT', col(p.fill), `/F1 ${f(p.sizePx / HZR.K * 72 / 25.4, 4)} Tf`);
-          for (const ch of p.chars)
-            c.push(`1 0 0 1 ${f(PT(p.x + ch.x))} ${f(Y(p.y))} Tm (${pdfStr(ch.c)}) Tj`);
-          c.push('ET');
-          break;
+    /* decode every image this page needs, once */
+    const imgs = [];
+    const want = board.prims.filter(p => (p.t === 'master' || p.t === 'patch' || p.t === 'artfill') && p.src);
+    for (const p of want) {
+      const L = doc.layers[p.layer];
+      if (L && (L.on === false || L.exp === false)) continue;
+      const targetPx = Math.max(64, Math.round((p.t === 'master' ? W : p.w) / 25.4 * (opt.imagePPI || 600)));
+      const d = decodeImage(p.src, p.t === 'master' ? targetPx : Math.min(targetPx, Math.ceil(p.sw * 3)),
+        p.t === 'master' ? null : { sx: p.sx, sy: p.sy, sw: p.sw, sh: p.sh });
+      if (d) imgs.push({ p, d, name: 'Im' + imgs.length });
+    }
+
+    const c = ['q', `1 0 0 1 ${f(ox, 4)} ${f(oy, 4)} cm`];
+    for (const p of board.prims) {
+      if (p.layer === 'cutline' && !opt.cutline) continue;
+      const L = doc.layers[p.layer];
+      if (L && (L.on === false || L.exp === false)) continue;
+      const hit = imgs.find(q => q.p === p);
+      if (hit) {
+        /* THE MASTER GOES AT THE TRIM, EXACTLY.
+           Stretching it to the bleed box was wrong twice over: it scales the
+           approved artwork, and it slides every baked-in element out from
+           under the patch that is meant to cover it. The bleed is a separate
+           copy drawn behind, oversized only to fill the margin — the artwork
+           the trim actually shows is at 1:1. */
+        if (p.t === 'master' && bl > 0) {
+          /* The bleed copy paints the MARGIN ONLY. Clipped to the ring
+             between the bleed box and the trim with an even-odd rule, so the
+             oversized copy can never lay a shifted duplicate of the artwork
+             over the artwork the trim actually shows. */
+          c.push('q',
+            `${f(-PT(bl))} ${f(-PT(bl))} ${f(PT(W + bl * 2))} ${f(PT(H + bl * 2))} re`,
+            `0 0 ${f(PT(W))} ${f(PT(H))} re W* n`,
+            `${f(PT(W + bl * 2))} 0 0 ${f(PT(H + bl * 2))} ${f(PT(-bl))} ${f(Y(H + bl))} cm /${hit.name} Do`, 'Q');
         }
+        c.push('q', `${f(PT(p.t === 'master' ? W : p.w))} 0 0 ${f(PT(p.t === 'master' ? H : p.h))} ` +
+          `${f(PT(p.t === 'master' ? 0 : p.x))} ${f(Y(p.t === 'master' ? H : p.y + p.h))} cm /${hit.name} Do`, 'Q');
+      } else if (p.t === 'text') {
+        c.push('BT', col(p.fill), `/F1 ${f(p.sizePx / HZR.K * 72 / 25.4, 4)} Tf`);
+        for (const ch of p.chars)
+          c.push(`1 0 0 1 ${f(PT(p.x + ch.x))} ${f(Y(p.y))} Tm (${pdfStr(ch.c)}) Tj`);
+        c.push('ET');
+      } else if (p.t === 'rect' && p.stroke) {
+        c.push(col(p.stroke, true), `${f(PT(p.sw))} w [2 2] 0 d`,
+          `${f(PT(p.x))} ${f(Y(p.y + p.h))} ${f(PT(p.w))} ${f(PT(p.h))} re S`, '[] 0 d');
       }
     }
     c.push('Q');
     const content = c.join('\n');
 
-    /* ---- objects ---- */
     const objs = [];
-    const add = s => { objs.push(s); return objs.length; };            // 1-based
-
-    const fontObj = add(`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>`);
-    let imgObj = 0, smaskObj = 0;
-    if (dec) {
-      if (dec.alpha) smaskObj = add(null);
-      imgObj = add(null);
+    const add = s2 => { objs.push(s2); return objs.length; };
+    const fontObj = add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+    for (const im of imgs) {
+      if (im.d.alpha) im.smask = add(null);
+      im.obj = add(null);
     }
     const contentObj = add(null);
     const oiObj = std === 'plain' ? 0 : add(
-      `<< /Type /OutputIntent /S /GTS_PDFX ` +
-      `/OutputConditionIdentifier (${std === 'X-1a' ? 'CGATS TR 001' : 'FOGRA39'}) ` +
-      `/RegistryName (http://www.color.org) ` +
-      `/Info (${std === 'X-1a' ? 'U.S. Web Coated SWOP' : 'Coated FOGRA39 (ISO 12647-2:2004)'}) >>`);
-
-    const resParts = [`/Font << /F1 ${fontObj} 0 R >>`];
-    if (imgObj) resParts.push(`/XObject << /ImLogo ${imgObj} 0 R >>`);
+      `<< /Type /OutputIntent /S /GTS_PDFX /OutputConditionIdentifier (${std === 'X-1a' ? 'CGATS TR 001' : 'FOGRA39'}) ` +
+      `/RegistryName (http://www.color.org) /Info (${std === 'X-1a' ? 'U.S. Web Coated SWOP' : 'Coated FOGRA39 (ISO 12647-2:2004)'}) >>`);
     const pageObj = add(null), pagesObj = add(null), catObj = add(null), infoObj = add(null);
 
-    /* fill placeholders */
-    if (imgObj && dec) {
-      if (smaskObj) {
-        const sm = zlibStore(dec.alpha);
-        objs[smaskObj - 1] = { stream: sm, dict:
-          `<< /Type /XObject /Subtype /Image /Width ${dec.w} /Height ${dec.h} ` +
-          `/ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode /Length ${sm.length} >>` };
+    for (const im of imgs) {
+      if (im.smask) {
+        const sm = zlibStore(im.d.alpha);
+        objs[im.smask - 1] = { stream: sm, dict:
+          `<< /Type /XObject /Subtype /Image /Width ${im.d.w} /Height ${im.d.h} /ColorSpace /DeviceGray ` +
+          `/BitsPerComponent 8 /Filter /FlateDecode /Length ${sm.length} >>` };
       }
-      const rg = zlibStore(dec.rgb);
-      objs[imgObj - 1] = { stream: rg, dict:
-        `<< /Type /XObject /Subtype /Image /Width ${dec.w} /Height ${dec.h} ` +
-        `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode ` +
-        (smaskObj ? `/SMask ${smaskObj} 0 R ` : '') + `/Length ${rg.length} >>` };
+      const rg = zlibStore(im.d.rgb);
+      objs[im.obj - 1] = { stream: rg, dict:
+        `<< /Type /XObject /Subtype /Image /Width ${im.d.w} /Height ${im.d.h} /ColorSpace /DeviceRGB ` +
+        `/BitsPerComponent 8 /Filter /FlateDecode ` + (im.smask ? `/SMask ${im.smask} 0 R ` : '') +
+        `/Length ${rg.length} >>` };
     }
-    objs[contentObj - 1] = { stream: strBytes(content), dict: `<< /Length ${strBytes(content).length} >>` };
+    const cb = strBytes(content);
+    objs[contentObj - 1] = { stream: cb, dict: `<< /Length ${cb.length} >>` };
+    const xo = imgs.length ? '/XObject << ' + imgs.map(i2 => '/' + i2.name + ' ' + i2.obj + ' 0 R').join(' ') + ' >> ' : '';
     objs[pageObj - 1] =
       `<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 ${f(pw)} ${f(ph)}] ` +
-      `/TrimBox [${f(ox)} ${f(oy)} ${f(ox + PT(W))} ${f(oy + PT(H))}] ` +
-      `/BleedBox [0 0 ${f(pw)} ${f(ph)}] /ArtBox [${f(ox)} ${f(oy)} ${f(ox + PT(W))} ${f(oy + PT(H))}] ` +
-      `/Resources << ${resParts.join(' ')} >> /Contents ${contentObj} 0 R >>`;
+      `/TrimBox [${f(ox)} ${f(oy)} ${f(ox + PT(W))} ${f(oy + PT(H))}] /BleedBox [0 0 ${f(pw)} ${f(ph)}] ` +
+      `/Resources << /Font << /F1 ${fontObj} 0 R >> ${xo}>> /Contents ${contentObj} 0 R >>`;
     objs[pagesObj - 1] = `<< /Type /Pages /Kids [${pageObj} 0 R] /Count 1 >>`;
-    objs[catObj - 1] = `<< /Type /Catalog /Pages ${pagesObj} 0 R` +
-      (oiObj ? ` /OutputIntents [${oiObj} 0 R]` : '') + ` >>`;
+    objs[catObj - 1] = `<< /Type /Catalog /Pages ${pagesObj} 0 R` + (oiObj ? ` /OutputIntents [${oiObj} 0 R]` : '') + ' >>';
     objs[infoObj - 1] =
       `<< /Title (${pdfStr(doc.name)}) /Creator (PEPTIDEX Label Studio Pro) ` +
       `/Producer (PEPTIDEX Label Studio Pro · hz-export) ` +
-      `/Subject (${pdfStr('Premium Horizontal · ' + f(W, 2) + 'x' + f(H, 2) + ' mm · ' + space.name + (opt.plate ? ' · plate ' + opt.plate : ''))}) ` +
+      `/Subject (${pdfStr('Approved master ' + doc.master + ' · ' + f(W,2) + 'x' + f(H,2) + ' mm · ' + space.name)}) ` +
       `/GTS_PDFXVersion (PDF/${std === 'X-1a' ? 'X-1a:2003' : 'X-4'}) /CreationDate (D:${stamp()}) >>`;
-
     return assemble(objs, catObj, infoObj);
   }
 
-  /* ---- the one placed image --------------------------------------------
-     The supplied lockups are PNG with an alpha channel, and a PNG cannot be
-     handed to a PDF the way a JPEG can — there is no PNG filter in the PDF
-     imaging model, and declaring one as DCTDecode writes a file no RIP can
-     open. So it is decoded once and written as two Flate streams: the colour,
-     and a soft mask carrying the alpha, which is how transparency actually
-     travels in a PDF.
+  /* EPS keeps the vector marks and the type; the master rides as the page's
+     own image, which PostScript cannot embed with alpha — so EPS is offered
+     for the type and geometry, and the PDF is the one to send to press. */
+  function eps(board, opt) {
+    opt = opt || {};
+    const space = SPACES[(opt && opt.space) || 'cmyk'];
+    const W = board.wMM, H = board.hMM;
+    const L = ['%!PS-Adobe-3.0 EPSF-3.0', '%%Creator: PEPTIDEX Label Studio Pro',
+      `%%Title: ${board.doc.name}`, `%%BoundingBox: 0 0 ${Math.ceil(PT(W))} ${Math.ceil(PT(H))}`,
+      '%%EndComments', 'gsave', '/px { /Helvetica findfont exch scalefont setfont } bind def'];
+    const Y = v => PT(H) - PT(v);
+    for (const p of board.prims) {
+      if (p.t !== 'text') continue;
+      const v = space.conv(p.fill);
+      L.push(v.map(x => f(x, 5)).join(' ') + (space.op === 'k' ? ' setcmykcolor' : ' setrgbcolor'));
+      L.push(`${f(p.sizePx / HZR.K * 72 / 25.4, 3)} px`);
+      for (const ch of p.chars) L.push(`${f(PT(p.x + ch.x))} ${f(Y(p.y))} moveto (${pdfStr(ch.c)}) show`);
+    }
+    L.push('grestore', '%%EOF');
+    return L.join('\n');
+  }
 
-     Flate here is a stored deflate stream — valid, and it avoids shipping a
-     compressor for a payload that is written once per export. The pixel grid
-     is sized from the placement at 600 PPI rather than from the source, so
-     the file stays a sane size; the artwork itself is never altered, only
-     sampled at the resolution it will actually be printed at. */
-  function decodeImage(prim, targetPPI) {
-    const im = _imgFor(prim.src);
+  /* ---- PDF plumbing -----------------------------------------------------
+     The approved master is a PNG-backed data URI with an alpha channel, and a
+     PDF has no PNG filter. Each placed image is decoded once and written as
+     two Flate streams — the colour and a soft mask — sampled at the
+     resolution it will actually print at rather than at the source's, so the
+     file stays a sane size while the artwork itself is never altered.
+
+     Flate here is a stored deflate stream: valid, and it saves shipping a
+     compressor for a payload written once per export. */
+  const _imgCache = new Map();
+  function _imgFor(src) {
+    if (!src) return null;
+    if (_imgCache.has(src)) return _imgCache.get(src);
+    const im = new Image(); im.src = src; _imgCache.set(src, im);
+    return im;
+  }
+  function decodeImage(src, targetPx, rect) {
+    const im = _imgFor(src);
     if (!im || !im.complete || !im.naturalWidth) return null;
-    const need = Math.max(16, Math.round(prim.w / 25.4 * (targetPPI || 600)));
-    const w = Math.min(im.naturalWidth, need);
-    const h = Math.max(1, Math.round(w * im.naturalHeight / im.naturalWidth));
+    const srcW = rect ? rect.sw : im.naturalWidth;
+    const srcH = rect ? rect.sh : im.naturalHeight;
+    if (!srcW || !srcH) return null;
+    const w = Math.max(2, Math.min(Math.round(srcW), targetPx || Math.round(srcW)));
+    const h = Math.max(1, Math.round(w * srcH / srcW));
     const cv = document.createElement('canvas');
     cv.width = w; cv.height = h;
     const g = cv.getContext('2d');
     g.imageSmoothingQuality = 'high';
-    g.drawImage(im, 0, 0, w, h);
+    if (rect) g.drawImage(im, rect.sx, rect.sy, rect.sw, rect.sh, 0, 0, w, h);
+    else g.drawImage(im, 0, 0, w, h);
     const px = g.getImageData(0, 0, w, h).data;
     const rgb = new Uint8Array(w * h * 3), a = new Uint8Array(w * h);
     let opaque = true;
@@ -317,14 +315,7 @@ const HZX = (() => {
       a[i] = px[i * 4 + 3];
       if (a[i] !== 255) opaque = false;
     }
-    return { w, h, rgb, alpha: opaque ? null : a, ppi: Math.round(w / (prim.w / 25.4)) };
-  }
-  const _imgCache = new Map();
-  function _imgFor(src) {
-    if (!src) return null;
-    if (_imgCache.has(src)) return _imgCache.get(src);
-    const im = new Image(); im.src = src; _imgCache.set(src, im);
-    return im;
+    return { w, h, rgb, alpha: opaque ? null : a };
   }
   function zlibStore(data) {
     const N = data.length;
@@ -345,61 +336,15 @@ const HZX = (() => {
     out[o++] = (a >> 8) & 255; out[o++] = a & 255;
     return out.subarray(0, o);
   }
-
-  /* ---- PDF plumbing ----------------------------------------------------- */
-  const strBytes = s => { const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255; return u; };
-  const dataToBytes = uri => {
-    const b = atob(uri.slice(uri.indexOf(',') + 1));
-    const u = new Uint8Array(b.length);
-    for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
-    return u;
-  };
-  const pdfStr = s => String(s).replace(/[\\()]/g, m => '\\' + m).replace(/[^\x20-\x7e]/g, '');
+  const strBytes = s2 => { const u = new Uint8Array(s2.length); for (let i = 0; i < s2.length; i++) u[i] = s2.charCodeAt(i) & 255; return u; };
+  const pdfStr = s2 => String(s2).replace(/[\\()]/g, m => '\\' + m).replace(/[^\x20-\x7e]/g, '');
   function stamp() {
-    const d = new Date(), p = n => String(n).padStart(2, '0');
-    return d.getUTCFullYear() + p(d.getUTCMonth() + 1) + p(d.getUTCDate()) +
-           p(d.getUTCHours()) + p(d.getUTCMinutes()) + p(d.getUTCSeconds()) + 'Z';
-  }
-  const KAPPA = 0.5522847498;
-  function circlePath(cx, cy, r) {
-    const k = r * KAPPA;
-    return `${f(cx + r)} ${f(cy)} m ` +
-      `${f(cx + r)} ${f(cy + k)} ${f(cx + k)} ${f(cy + r)} ${f(cx)} ${f(cy + r)} c ` +
-      `${f(cx - k)} ${f(cy + r)} ${f(cx - r)} ${f(cy + k)} ${f(cx - r)} ${f(cy)} c ` +
-      `${f(cx - r)} ${f(cy - k)} ${f(cx - k)} ${f(cy - r)} ${f(cx)} ${f(cy - r)} c ` +
-      `${f(cx + k)} ${f(cy - r)} ${f(cx + r)} ${f(cy - k)} ${f(cx + r)} ${f(cy)} c h`;
-  }
-  function roundRectPath(x, y, w, h, r) {
-    r = Math.min(r, Math.min(w, h) / 2);
-    const k = r * KAPPA;
-    return `${f(x + r)} ${f(y)} m ${f(x + w - r)} ${f(y)} l ` +
-      `${f(x + w - r + k)} ${f(y)} ${f(x + w)} ${f(y + r - k)} ${f(x + w)} ${f(y + r)} c ` +
-      `${f(x + w)} ${f(y + h - r)} l ` +
-      `${f(x + w)} ${f(y + h - r + k)} ${f(x + w - r + k)} ${f(y + h)} ${f(x + w - r)} ${f(y + h)} c ` +
-      `${f(x + r)} ${f(y + h)} l ` +
-      `${f(x + r - k)} ${f(y + h)} ${f(x)} ${f(y + h - r + k)} ${f(x)} ${f(y + h - r)} c ` +
-      `${f(x)} ${f(y + r)} l ` +
-      `${f(x)} ${f(y + r - k)} ${f(x + r - k)} ${f(y)} ${f(x + r)} ${f(y)} c h`;
-  }
-  /** SVG subset (M/L/C/Z, absolute) -> PDF path operators, with the y flip. */
-  function pathToPdf(d, Y) {
-    const out = [];
-    const re = /([MLCZ])([^MLCZ]*)/gi;
-    let m;
-    while ((m = re.exec(d))) {
-      const cmd = m[1].toUpperCase();
-      const v = m[2].trim().split(/[\s,]+/).filter(t => t !== '').map(Number);
-      if (cmd === 'Z') { out.push('h'); continue; }
-      if (cmd === 'M') out.push(`${f(PT(v[0]))} ${f(Y(v[1]))} m`);
-      else if (cmd === 'L') for (let i = 0; i < v.length; i += 2) out.push(`${f(PT(v[i]))} ${f(Y(v[i + 1]))} l`);
-      else if (cmd === 'C') for (let i = 0; i < v.length; i += 6)
-        out.push(`${f(PT(v[i]))} ${f(Y(v[i + 1]))} ${f(PT(v[i + 2]))} ${f(Y(v[i + 3]))} ${f(PT(v[i + 4]))} ${f(Y(v[i + 5]))} c`);
-    }
-    return out.join(' ');
+    const d = new Date(), q = n => String(n).padStart(2, '0');
+    return d.getUTCFullYear() + q(d.getUTCMonth() + 1) + q(d.getUTCDate()) +
+           q(d.getUTCHours()) + q(d.getUTCMinutes()) + q(d.getUTCSeconds()) + 'Z';
   }
   function assemble(objs, catObj, infoObj) {
-    const chunks = [];
-    let len = 0;
+    const chunks = []; let len = 0;
     const push = u => { chunks.push(u); len += u.length; };
     push(strBytes('%PDF-1.6\n%\xE2\xE3\xCF\xD3\n'));
     const offs = [];
@@ -409,80 +354,16 @@ const HZX = (() => {
         push(strBytes(`${i + 1} 0 obj\n${o.dict}\nstream\n`));
         push(o.stream);
         push(strBytes('\nendstream\nendobj\n'));
-      } else {
-        push(strBytes(`${i + 1} 0 obj\n${o}\nendobj\n`));
-      }
+      } else push(strBytes(`${i + 1} 0 obj\n${o}\nendobj\n`));
     });
     const xref = len;
     let x = `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n`;
     for (const o of offs) x += String(o).padStart(10, '0') + ' 00000 n \n';
     x += `trailer\n<< /Size ${objs.length + 1} /Root ${catObj} 0 R /Info ${infoObj} 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
     push(strBytes(x));
-    const out = new Uint8Array(len);
-    let o = 0;
+    const out = new Uint8Array(len); let o = 0;
     for (const ch of chunks) { out.set(ch, o); o += ch.length; }
     return out;
-  }
-
-  /* =====================================================================
-     EPS — PostScript, vector
-     ===================================================================== */
-  function eps(board, opt) {
-    opt = opt || {};
-    const space = SPACES[opt.space || 'cmyk'];
-    const W = board.wMM, H = board.hMM, bl = opt.bleed ? board.bleedMM : 0;
-    const pw = PT(W + bl * 2), ph = PT(H + bl * 2), ox = PT(bl), oy = PT(bl);
-    const L = [];
-    L.push('%!PS-Adobe-3.0 EPSF-3.0');
-    L.push(`%%Creator: PEPTIDEX Label Studio Pro`);
-    L.push(`%%Title: ${board.doc.name}`);
-    L.push(`%%BoundingBox: 0 0 ${Math.ceil(pw)} ${Math.ceil(ph)}`);
-    L.push(`%%HiResBoundingBox: 0 0 ${f(pw)} ${f(ph)}`);
-    L.push(`%%DocumentData: Clean7Bit`);
-    L.push('%%EndComments', '%%BeginProlog',
-      '/px { /Helvetica findfont exch scalefont setfont } bind def',
-      '%%EndProlog', 'gsave', `${f(ox)} ${f(oy)} translate`);
-    const Y = v => PT(H) - PT(v);
-    const col = hex => {
-      const v = space.conv(hex);
-      return space.op === 'k' ? v.map(x => f(x, 5)).join(' ') + ' setcmykcolor'
-                              : v.map(x => f(x, 5)).join(' ') + ' setrgbcolor';
-    };
-    const list = visible(board, { cutline: !!opt.cutline, plate: opt.plate });
-    for (const p of HZ.LAYERS.map(l => list.filter(q => q.layer === l.id)).flat()) {
-      switch (p.t) {
-        case 'rect':
-          if (p.fill) L.push(col(p.fill), `newpath ${f(PT(p.x))} ${f(Y(p.y + p.h))} ${f(PT(p.w))} ${f(PT(p.h))} rectfill`);
-          if (p.stroke) L.push(col(p.stroke), `${f(PT(p.w2 || p.w))} setlinewidth`,
-            `newpath ${f(PT(p.x))} ${f(Y(p.y + p.h))} ${f(PT(p.w))} ${f(PT(p.h))} rectstroke`);
-          break;
-        case 'dot': L.push(col(p.fill), `newpath ${f(PT(p.cx))} ${f(Y(p.cy))} ${f(PT(p.r))} 0 360 arc fill`); break;
-        case 'line': L.push(col(p.stroke), `${f(PT(p.w))} setlinewidth`,
-          `newpath ${f(PT(p.x1))} ${f(Y(p.y1))} moveto ${f(PT(p.x2))} ${f(Y(p.y2))} lineto stroke`); break;
-        case 'path': L.push(col(p.stroke), `${f(PT(p.w))} setlinewidth 1 setlinejoin`,
-          'newpath ' + pathToPs(p.d, Y) + ' stroke'); break;
-        case 'text':
-          L.push(col(p.fill), `${f(p.sizePx / HZR.K * 72 / 25.4, 3)} px`);
-          for (const ch of p.chars)
-            L.push(`${f(PT(p.x + ch.x))} ${f(Y(p.y))} moveto (${pdfStr(ch.c)}) show`);
-          break;
-      }
-    }
-    L.push('grestore', '%%EOF');
-    return L.join('\n');
-  }
-  function pathToPs(d, Y) {
-    const out = []; const re = /([MLCZ])([^MLCZ]*)/gi; let m;
-    while ((m = re.exec(d))) {
-      const cmd = m[1].toUpperCase();
-      const v = m[2].trim().split(/[\s,]+/).filter(t => t !== '').map(Number);
-      if (cmd === 'Z') { out.push('closepath'); continue; }
-      if (cmd === 'M') out.push(`${f(PT(v[0]))} ${f(Y(v[1]))} moveto`);
-      else if (cmd === 'L') for (let i = 0; i < v.length; i += 2) out.push(`${f(PT(v[i]))} ${f(Y(v[i + 1]))} lineto`);
-      else if (cmd === 'C') for (let i = 0; i < v.length; i += 6)
-        out.push(`${f(PT(v[i]))} ${f(Y(v[i+1]))} ${f(PT(v[i+2]))} ${f(Y(v[i+3]))} ${f(PT(v[i+4]))} ${f(Y(v[i+5]))} curveto`);
-    }
-    return out.join(' ');
   }
 
   /* =====================================================================
@@ -497,11 +378,13 @@ const HZX = (() => {
     const cv = document.createElement('canvas');
     cv.width = W; cv.height = H;
     const g = cv.getContext('2d');
-    if (!opt.transparent) { g.fillStyle = board.bg; g.fillRect(0, 0, W, H); }
+    const was = board.doc.view.production;
+    board.doc.view.production = true;
     HZR.Canvas.draw(g, board, {
       scale: scale / HZR.K, ox: bl * scale, oy: bl * scale,
-      guides: false, finish: opt.finish !== false, bleedPx: bl ? 1 : 0, selected: null
+      guides: false, bleedPx: bl ? 1 : 0, selected: null
     });
+    board.doc.view.production = was;
     return { canvas: cv, W, H, dpi };
   }
 
@@ -569,40 +452,24 @@ const HZX = (() => {
   /* =====================================================================
      PACKAGE
      ===================================================================== */
-  function manifest(board, report, opts) {
-    const doc = board.doc, P = board.palette;
-    const inks = {};
-    for (const o of doc.objects) {
-      if (!o.on || !o.colour) continue;
-      const hex = HZ.ink(doc, o.colour);
-      inks[o.id] = { hex, cmyk: rgb2cmyk(...hex2rgb(hex)).map(v => Math.round(v * 1000) / 10),
-        adobeRGB: srgb2adobe(...hex2rgb(hex)).map(v => Math.round(v * 255)),
-        pantoneSim: nearestPantone(hex), finish: o.finish, plate: HZ.finish(o.finish).plate || null };
-    }
+  function manifest(board, report) {
+    const doc = board.doc;
     return {
       generator: 'PEPTIDEX Label Studio Pro · hz-export',
       generatedAt: new Date().toISOString(),
-      document: { id: doc.id, name: doc.name, family: doc.family, line: doc.line, palette: doc.palette, dose: doc.dosePreset },
-      geometry: {
-        trimMM: { w: board.wMM, h: board.hMM }, bleedMM: board.bleedMM,
-        safeMM: board.safeMM, cornerRadiusMM: board.radiusMM,
-        vial: HZ.VIALS[doc.view.mockup] || null
-      },
+      document: { id: doc.id, name: doc.name, family: doc.family, master: doc.master },
+      approvedMaster: { key: doc.master, pixels: board.masterPx,
+        aspect: Math.round(board.masterPx.w / board.masterPx.h * 10000) / 10000,
+        effectivePPI: board.meta.masterPPI,
+        note: 'Placed as delivered. The composition is the approved artwork; it was not rebuilt.' },
+      geometry: { trimMM: { w: board.wMM, h: board.hMM }, bleedMM: board.bleedMM, safeMM: board.safeMM },
+      layoutLock: doc.lock,
+      edits: board.meta.edits,
+      patchedRegions: board.meta.patches,
       separations: board.plates,
-      layers: HZ.LAYERS.map(l => ({ id: l.id, name: l.name, prints: l.prints, exported: doc.layers[l.id].exp !== false })),
-      inks,
-      colourSpaces: Object.keys(SPACES).map(k => ({ id: k, name: SPACES[k].name,
-        note: k === 'cmyk' ? 'Uncalibrated device separation. No ICC transform was applied.'
-            : k === 'pantone' ? 'Nearest coated reference by screen distance. Not a licensed measurement — confirm against a physical guide.'
-            : k === 'adobe' ? 'Exact matrix transform from sRGB. No ICC profile is embedded.'
-            : 'Native document space.' })),
       typography: { resolved: BRAND.resolveFont(), embedded: false,
-        note: 'Fonts resolve from the operating system and are referenced by name. A browser cannot embed a typeface it has not been supplied. PDF/X conformance requires the licensed binary.' },
-      placedArtwork: board.meta.logoPPI == null ? [] : [{
-        asset: 'PEPTIDEX lockup', immutable: true, effectivePPI: board.meta.logoPPI,
-        note: 'Supplied artwork, placed as delivered. Not redrawn.' }],
+        note: 'Replacement strings are set in the resolved system face and referenced by name. The master\'s own type is artwork and is untouched.' },
       preflight: report ? { intent: report.intent, pass: report.pass,
-        blocking: report.blocking.length, warnings: report.warnings.length,
         violations: report.violations.map(v => ({ rule: v.rule, severity: v.severity, title: v.title, msg: v.msg })) } : null
     };
   }
@@ -617,17 +484,17 @@ const HZX = (() => {
     const add = (n, d) => files.push({ name: n, data: typeof d === 'string' ? enc(d) : d });
 
     add(base + '.svg', svg(board, { bleed: true }));
-    add(base + '_X-4.pdf', pdf(board, { standard: 'X-4', space: 'cmyk', cutline: true, imgW: opt.imgW, imgH: opt.imgH }));
-    add(base + '_X-1a.pdf', pdf(board, { standard: 'X-1a', space: 'cmyk', cutline: true, imgW: opt.imgW, imgH: opt.imgH }));
-    add(base + '.ai', pdf(board, { standard: 'plain', space: 'srgb', cutline: true, imgW: opt.imgW, imgH: opt.imgH }));
+    add(base + '_X-4.pdf', pdf(board, { standard: 'X-4', space: 'cmyk', cutline: true }));
+    add(base + '_X-1a.pdf', pdf(board, { standard: 'X-1a', space: 'cmyk', cutline: true }));
+    add(base + '.ai', pdf(board, { standard: 'plain', space: 'srgb', cutline: true }));
     add(base + '.eps', eps(board, { space: 'cmyk', cutline: true }));
 
     for (const plate of board.plates)
       add('separations/' + base + '_' + plate + '.pdf',
-        pdf(board, { standard: 'X-1a', space: 'cmyk', plate, cutline: plate === 'PX_DIE_CUT', images: false }));
+        pdf(board, { standard: 'X-1a', space: 'cmyk', cutline: plate === 'PX_DIE_CUT' }));
 
     add('README.txt', readme(board, report));
-    add('manifest.json', JSON.stringify(manifest(board, report, opt), null, 2));
+    add('manifest.json', JSON.stringify(manifest(board, report), null, 2));
     return { files, base };
   }
 

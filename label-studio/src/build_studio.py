@@ -51,6 +51,27 @@ for key, fn in (('master', 'logo_master.png'), ('fitness', 'logo_fitness.png'),
     print('  hz logo %-10s %4dx%-4d %7.1f KB' % (key, w, h, n / 1024))
 hz_js = 'const PX_HZ_LOGOS = ' + json.dumps(HZ_LOGOS, separators=(',', ':')) + ';\n'
 
+# ---- the approved horizontal masters, measured by mk_hzmaster.py ----------
+# The artwork itself, its clean plate, the pixel box of every editable element
+# and the ink measured out of each one. Nothing is redrawn at build time.
+with open(os.path.join(MST, 'hz_master.json')) as f:
+    HZM = json.load(f)
+STRINGS = {
+    'fitness':   {'compound': 'RT10', 'line_name': 'FITNESS'},
+    'beauty':    {'compound': 'GHK',  'line_name': 'BEAUTY'},
+    'longevity': {'compound': 'BPC',  'line_name': 'LONGEVITY'},
+}
+COMMON = {'mg_value': '10MG', 'tested': 'TESTED IN USA',
+          'purity': '99% PURITY', 'research': 'RESEARCH USE ONLY'}
+for k, v in HZM.items():
+    v['strings'] = dict(COMMON, **STRINGS.get(k, {}))
+    v['panelInk'] = v['inks'].get('compound', '#000000')
+    v.pop('trim', None)
+    print('  hz master %-10s %4dx%-4d  %2d elements  %5.1f KB'
+          % (k, v['w'], v['h'], len(v['elements']),
+             (len(v['src']) + len(v['clean'])) * 0.75 / 1024))
+hz_js += 'const PX_HZ_MASTER = ' + json.dumps(HZM, separators=(',', ':')) + ';\n'
+
 # ---- assemble ------------------------------------------------------------
 qr = rd(os.path.join(HERE, 'qr.js'))
 qr = qr.replace("if(typeof module!=='undefined')module.exports=QRGen;", '')

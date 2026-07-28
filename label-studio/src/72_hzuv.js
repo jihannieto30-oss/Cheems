@@ -73,41 +73,48 @@ const HZUV = (() => {
     { id: 'uv.resolution', title: 'Effective resolution',
       run(b, doc, intent) {
         const out = [];
-        if (b.meta.logoPPI == null) return out;
-        const ppi = b.meta.logoPPI;
-        const logo = HZ.objOf(doc, 'logo');
-        const foil = logo && HZ.finish(logo.finish).kind === 'foil';
-        const need = foil ? T.foilPPI : T.minPPI;
+        if (b.meta.masterPPI == null) return out;
+        const ppi = b.meta.masterPPI;
+        const need = T.minPPI;
         if (ppi < 150)
           out.push(V('uv.resolution', 'blocking', 'Placed artwork is too low resolution',
-            `The PEPTIDEX lockup lands at ${ppi} PPI at this trim size. Under 150 PPI it will visibly pixelate. Place it smaller, or supply vector artwork.`, { measured: ppi }));
+            `The approved master lands at ${ppi} PPI at this trim size. Under 150 PPI it will visibly pixelate. Print it smaller, or have the artwork re-supplied as vector.`, { measured: ppi }));
         else if (ppi < need)
           out.push(V('uv.resolution', 'warning', 'Placed artwork under target resolution',
-            `The lockup lands at ${ppi} PPI; ${need} PPI is the target${foil ? ' for foil' : ''}. It is the one placed raster in this document — everything else is vector.`, { measured: ppi }));
+            `The approved master lands at ${ppi} PPI; ${need} PPI is the print target. The supplied artwork is a 72 PPI raster, so this is the ceiling until vector art exists.`, { measured: ppi }));
         else
           out.push(V('uv.resolution', 'info', 'Placed artwork resolution',
-            `The lockup lands at ${ppi} PPI, clear of the ${need} PPI target.`, { measured: ppi }));
+            `The approved master lands at ${ppi} PPI, clear of the ${need} PPI target.`, { measured: ppi }));
         return out;
       } },
 
     /* ---- vector integrity ---- */
-    { id: 'uv.vector', title: 'Vector integrity',
-      run(b) {
-        const raster = b.prims.filter(p => p.t === 'image').length;
-        const vec = b.prims.length - raster;
-        return [V('uv.vector', 'info', 'Vector integrity',
-          `${vec} vector objects, ${raster} placed raster. Type, rules, hexagon, icons and flag are all live geometry — nothing was flattened to make this file.`)];
+    { id: 'uv.master', title: 'Approved master',
+      run(b, doc) {
+        const out = [];
+        const ed = b.meta.edits.length, pat = b.meta.patches.length;
+        out.push(V('uv.master', 'info', 'Approved artwork placed as delivered',
+          ed === 0
+            ? 'Nothing has been edited. The export is the approved master, byte for byte in its own pixels — no re-typesetting, no re-alignment, no recomposition.'
+            : `${pat} region(s) patched from the clean plate; everything outside them is still the master's own pixels.`));
+        const mv = HZ.moved(doc);
+        if (mv.length) out.push(V('uv.master-moved', 'blocking', 'MASTER LABEL MODIFIED — REVERT REQUIRED',
+          `${mv.length} element(s) have been moved off the approved position. Reset them, or turn Master Layout Lock back on, before this goes to press.`));
+        for (const t of b.meta.textObjs) if (t.over)
+          out.push(V('uv.text-over', 'warning', 'Replacement text is wider than the master’s own',
+            `“${HZ.elDef(t.id).label}” now runs ${t.widthMM.toFixed(2)} mm in a ${t.boxW.toFixed(2)} mm box. It will sit closer to its neighbour than the approved art does.`, { obj: t.id }));
+        return out;
       } },
 
     /* ---- type size ---- */
     { id: 'uv.type-size', title: 'Minimum type size',
       run(b, doc) {
         const out = [];
-        const bg = HZ.ink(doc, 'bg');
+        const bg = b.bg;
         for (const t of b.meta.textObjs) {
-          const o = HZ.objOf(doc, t.id);
-          const reversed = contrast(t.fill, bg) > 1 && lum(t.fill) > lum(bg);
-          const foil = HZ.finish(t.finishId).kind === 'foil';
+          const o = HZ.elDef(t.id);
+          const reversed = lum(t.fill) > lum(bg);
+          const foil = false;
           const need = foil ? T.minFoilPt : reversed ? T.minReversedPt : T.minTextPt;
           if (t.sizePt < need)
             out.push(V('uv.type-size', t.sizePt < need * .8 ? 'blocking' : 'warning',
@@ -118,37 +125,6 @@ const HZUV = (() => {
         return out;
       } },
 
-    /* ---- shrink-to-fit ---- */
-    { id: 'uv.type-fit', title: 'Type was reduced to fit',
-      run(b, doc) {
-        return b.meta.fitted.map(id => {
-          const o = HZ.objOf(doc, id);
-          return V('uv.type-fit', 'warning', 'Type was reduced to fit its zone',
-            `“${o ? o.label : id}” did not fit and was scaled down. It is no longer at the size it was specified at. Shorten the copy, widen the zone, or reduce the tracking.`, { obj: id });
-        });
-      } },
-
-    /* ---- hairlines ---- */
-    { id: 'uv.hairline', title: 'Minimum stroke weight',
-      run(b, doc) {
-        const out = [];
-        for (const p of b.prims) {
-          if (p.t !== 'line' && p.t !== 'path') continue;
-          if (p.layer === 'cutline') continue;
-          const fin = HZ.finish(p.finish);
-          const need = fin.kind === 'foil' ? T.minFoilStrokeMM
-                     : fin.kind === 'relief' ? T.minEmbossMM : T.minStrokeMM;
-          if (p.w < need) {
-            const o = HZ.objOf(doc, p.objId);
-            out.push(V('uv.hairline', p.w < need * .6 ? 'blocking' : 'warning',
-              'Stroke below the printable minimum',
-              `“${o ? o.label : p.objId}” is ${p.w.toFixed(3)} mm (${(p.w * 72 / 25.4).toFixed(2)} pt). The floor is ${need} mm${fin.kind !== 'flat' ? ' for ' + fin.name : ''}. Thinner than this breaks up on press.`,
-              { obj: p.objId, measured: p.w, need }));
-          }
-        }
-        return dedupe(out);
-      } },
-
     /* ---- bleed ---- */
     { id: 'uv.bleed', title: 'Bleed',
       run(b, doc) {
@@ -156,10 +132,8 @@ const HZUV = (() => {
         if (b.bleedMM < 3)
           out.push(V('uv.bleed', b.bleedMM <= 0 ? 'blocking' : 'warning', 'Bleed under 3 mm',
             `Bleed is ${b.bleedMM} mm. Roll-fed die cutting needs 3 mm; anything less shows the substrate at the trim.`, { measured: b.bleedMM }));
-        const bgObj = HZ.objOf(doc, 'bg');
-        if (bgObj && bgObj.on && !doc.substrate.transparent)
-          out.push(V('uv.bleed-fill', 'info', 'Bleed is filled',
-            'The panel extends into the bleed by edge extension, so the trim can wander without showing white.'));
+        out.push(V('uv.bleed-fill', 'info', 'Bleed is filled',
+          'The master extends into the bleed by edge extension, so the trim can wander without showing white.'));
         return out;
       } },
 
@@ -167,11 +141,11 @@ const HZUV = (() => {
     { id: 'uv.safe', title: 'Safe area',
       run(b, doc) {
         const out = [];
-        const ids = [...new Set(b.prims.filter(p => p.objId && p.objId !== 'bg' && p.objId !== 'cut').map(p => p.objId))];
-        for (const id of ids) {
-          const bx = HZR.bounds(b.prims.filter(p => p.objId === id));
+        for (const p of b.prims) {
+          const bx = p.box;
           if (!bx) continue;
-          const o = HZ.objOf(doc, id);
+          const id = p.objId;
+          const o = HZ.elDef(id);
           const nm = o ? o.label : id;
           if (bx.x < -0.01 || bx.y < -0.01 || bx.x + bx.w > b.wMM + .01 || bx.y + bx.h > b.hMM + .01) {
             out.push(V('uv.outside-trim', 'blocking', 'Object outside the trim',
@@ -190,7 +164,7 @@ const HZUV = (() => {
     { id: 'uv.contrast', title: 'Ink contrast',
       run(b, doc) {
         const out = [];
-        const bg = HZ.ink(doc, 'bg');
+        const bg = b.bg;
         for (const t of b.meta.textObjs) {
           const c = contrast(t.fill, bg);
           if (c < T.minContrast) {
@@ -214,8 +188,8 @@ const HZUV = (() => {
         else if (soft.length)
           out.push(V('uv.transparency', 'warning', 'Live transparency present',
             `${soft.length} object(s) are not fully opaque. X-4 carries transparency, but confirm the RIP flattens it the way you expect.`));
-        if (doc.substrate.transparent) {
-          const hasWhite = doc.objects.some(o => o.on && o.finish === 'whiteink');
+        if (false) {
+          const hasWhite = false;
           out.push(hasWhite
             ? V('uv.white', 'info', 'White ink present under a clear substrate',
               'A white plate is being written, which is what a transparent label needs to stop the vial showing through the artwork.')
@@ -235,8 +209,7 @@ const HZUV = (() => {
           if (!n) out.push(V('uv.plate-empty', 'warning', 'Empty plate',
             `${plate} is declared but nothing is assigned to it. An empty plate is a tooling charge for nothing.`));
         }
-        const cut = HZ.objOf(doc, 'cut');
-        if (!cut || !cut.on || doc.layers.cutline.on === false)
+        if (doc.layers.cutline.on === false)
           out.push(V('uv.diecut', 'blocking', 'No die line',
             'There is no cut line on this document. The die maker has nothing to cut to.'));
         else
@@ -269,11 +242,11 @@ const HZUV = (() => {
     { id: 'uv.registration', title: 'Registration',
       run(b, doc) {
         const out = [];
-        const relief = b.prims.filter(p => HZ.finish(p.finish).kind === 'relief');
+        const relief = b.prims.filter(p => p.finish && HZ.finish(p.finish).kind === 'relief');
         for (const p of relief) {
-          const bx = HZR.bounds([p]);
+          const bx = p.box;
           if (bx && Math.min(bx.w, bx.h) < T.minEmbossMM * 4) {
-            const o = HZ.objOf(doc, p.objId);
+            const o = HZ.elDef(p.objId);
             out.push(V('uv.emboss-small', 'warning', 'Emboss detail too fine',
               `“${o ? o.label : p.objId}” is ${Math.min(bx.w, bx.h).toFixed(2)} mm on its short side. An emboss die cannot hold detail that small — it will flatten out.`, { obj: p.objId }));
           }

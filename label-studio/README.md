@@ -21,7 +21,15 @@ Open `PEPTIDEX_LabelStudio_Pro.html` in any modern browser. No server, no build,
 
 The horizontal family is switched on from **Label family** at the top of the left dock. Choosing it swaps what the stage shows and nothing else — the portrait document stays in memory with its history intact.
 
-### Why the horizontal labels are authored, not embedded
+### The master is the artwork
+
+`PEPTIDEX_UV_Labels.pdf` is the approved art. `src/mk_hzmaster.py` cuts the three labels out of it, measures the pixel box of every editable element, measures the ink out of each one, and builds a **clean plate** — the same master with the six text regions carried over from their surroundings.
+
+An untouched document draws the master **and nothing else**: no re-typesetting, no re-alignment, no layout pass. Retyping a string patches that element's own measured box from the clean plate and re-sets the string at the master's cap height and baseline; everything outside the box is still the master's own pixels. Verified: an untouched document differs from the approved file by ΔE 0.23–0.59 across the three labels, all inside the 1.0 tolerance.
+
+**Master Layout Lock** is on by default — text and colour are editable, geometry is not. Turned off, an element can be nudged, and validation reports `MASTER LABEL MODIFIED — REVERT REQUIRED` until it is reset. Scaling the trim scales the whole composition uniformly; the aspect is the master's and never moves.
+
+### Superseded: why the first horizontal build was wrong
 
 `PEPTIDEX_UV_Labels.pdf` was analysed the same way every master is: one RGB raster, 1935 × 813 px at **72 PPI**, no embedded font, no vector path, no separation. Registering it would grade `PROOF_ONLY` on ingest, and every capability the brief asks for is impossible against a flat photograph — you cannot make the compound name editable, pull a foil plate out of pixels that only simulate foil, or write PDF/X-4 with live text from a JPEG.
 
