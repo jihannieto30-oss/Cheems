@@ -315,13 +315,21 @@ const HZR = (() => {
 
   /** Which element's measured box is under this point, in mm. */
   function hitTest(b, x, y) {
-    const cands = b.prims.filter(p => p.box || p.t === 'ghost');
-    for (let i = cands.length - 1; i >= 0; i--) {
-      const p = cands[i], bx = p.box;
-      if (!bx) continue;
-      if (x >= bx.x - .3 && x <= bx.x + bx.w + .3 && y >= bx.y - .3 && y <= bx.y + bx.h + .3) return p.objId;
+    /* Every element leaves something with a box, whether it is showing the
+       master's own pixels (a ghost), a patch, a replacement string or a
+       refilled shape — so anything on the label can be picked up, not just
+       the parts that happen to have been edited. Smallest box under the
+       point wins, so a divider inside a zone is still reachable. */
+    let best = null, bestArea = Infinity;
+    for (const p of b.prims) {
+      const bx = p.box || ((p.t === 'patch' || p.t === 'artfill') ? { x: p.x, y: p.y, w: p.w, h: p.h } : null);
+      if (!bx || !p.objId || p.objId === 'master' || p.objId === 'cutline') continue;
+      const pad = Math.max(.25, Math.min(bx.w, bx.h) * .25);
+      if (x < bx.x - pad || x > bx.x + bx.w + pad || y < bx.y - pad || y > bx.y + bx.h + pad) continue;
+      const a = bx.w * bx.h;
+      if (a < bestArea) { bestArea = a; best = p.objId; }
     }
-    return null;
+    return best;
   }
 
   function preload() {
