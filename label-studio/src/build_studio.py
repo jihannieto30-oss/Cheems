@@ -34,6 +34,23 @@ for key, name, line in LINES:
 master_js = 'const PX_MASTER_DEFS = ' + json.dumps(defs, separators=(',', ':')) + ';\n'
 catalog   = rd(os.path.join(SRC, 'catalog.json'))
 
+# ---- Premium Horizontal: the supplied lockups, placed as delivered --------
+# Four files were supplied. None is tinted, recoloured, traced or regenerated
+# here — the operator picks between them and the renderer places the bytes.
+HZ_LOGOS = {}
+for key, fn in (('master', 'logo_master.png'), ('fitness', 'logo_fitness.png'),
+                ('beauty', 'logo_beauty.png'), ('longevity', 'logo_longevity.png')):
+    path = os.path.join(MST, fn)
+    uri, n = datauri(path, 'image/png')
+    try:
+        from PIL import Image
+        w, h = Image.open(path).size
+    except Exception:
+        w, h = 1090, 672
+    HZ_LOGOS[key] = {'src': uri, 'w': w, 'h': h}
+    print('  hz logo %-10s %4dx%-4d %7.1f KB' % (key, w, h, n / 1024))
+hz_js = 'const PX_HZ_LOGOS = ' + json.dumps(HZ_LOGOS, separators=(',', ':')) + ';\n'
+
 # ---- assemble ------------------------------------------------------------
 qr = rd(os.path.join(HERE, 'qr.js'))
 qr = qr.replace("if(typeof module!=='undefined')module.exports=QRGen;", '')
@@ -43,19 +60,26 @@ brand = rd(os.path.join(SRC, '40_brand.js')).replace('__CATALOG__', catalog)
 parts = [
     rd(os.path.join(SRC, '00_head.html')),
     rd(os.path.join(SRC, '10_body.html')),
+    '<style>\n/* ==== Premium Horizontal ==== */\n' + rd(os.path.join(SRC, '02_hz.css')) + '\n</style>\n',
     '<script>\n/* ==== embedded master artwork (immutable, content-addressed) ==== */\n',
     master_js,
+    hz_js,
     "const ADMIN_PIN = 'PX-CHEEMS-2026';\n",
     '/* ==== vendored: QR generator (byte mode, EC-L, v1..5) ==== */\n', qr, '\n',
     rd(os.path.join(SRC, '20_core.js')), '\n',
+    rd(os.path.join(SRC, '22_hz.js')), '\n',
     rd(os.path.join(SRC, '30_master.js')), '\n',
     brand, '\n',
     rd(os.path.join(SRC, '50_render.js')), '\n',
+    rd(os.path.join(SRC, '52_hzrender.js')), '\n',
     rd(os.path.join(SRC, '60_state.js')), '\n',
     rd(os.path.join(SRC, '70_preflight.js')), '\n',
+    rd(os.path.join(SRC, '72_hzuv.js')), '\n',
     rd(os.path.join(SRC, '80_export.js')), '\n',
+    rd(os.path.join(SRC, '82_hzexport.js')), '\n',
     rd(os.path.join(SRC, '85_persist.js')), '\n',
     rd(os.path.join(SRC, '90_ui.js')), '\n',
+    rd(os.path.join(SRC, '92_hzui.js')), '\n',
     '</script>\n</body>\n</html>\n',
 ]
 out = ''.join(parts)

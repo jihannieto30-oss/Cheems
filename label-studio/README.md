@@ -12,6 +12,25 @@ Open `PEPTIDEX_LabelStudio_Pro.html` in any modern browser. No server, no build,
 
 `ARCHITECTURE.md` opens with a blocking finding about the supplied master artwork. Section 0 explains why the studio grades it `PROOF_ONLY` and refuses to emit a print-production package, and gives the four-step remediation path.
 
+## Two label families
+
+| Family | What it is | Output |
+|---|---|---|
+| **Portrait master** | The original 46 × 87 mm masters. Immutable raster artwork, variable-data slots. | Proofs (see §0) |
+| **Premium Horizontal** | A parametric **vector** template. Every mark is live geometry with its own typography, colour, finish and layer. | SVG · PDF/X-4 · PDF/X-1a · AI · EPS · PNG 600/1200 · TIFF · PSD · separations |
+
+The horizontal family is switched on from **Label family** at the top of the left dock. Choosing it swaps what the stage shows and nothing else — the portrait document stays in memory with its history intact.
+
+### Why the horizontal labels are authored, not embedded
+
+`PEPTIDEX_UV_Labels.pdf` was analysed the same way every master is: one RGB raster, 1935 × 813 px at **72 PPI**, no embedded font, no vector path, no separation. Registering it would grade `PROOF_ONLY` on ingest, and every capability the brief asks for is impossible against a flat photograph — you cannot make the compound name editable, pull a foil plate out of pixels that only simulate foil, or write PDF/X-4 with live text from a JPEG.
+
+So it is treated as the reference composition it is, and the label is rebuilt as vector geometry with its proportions **measured** off that file (zone divisions at 30.5 % and 65.4 % of trim, and the eight element bands). The one thing not redrawn is the PEPTIDEX lockup: the four supplied files are placed as delivered, and preflight reports the effective PPI wherever one lands.
+
+### UV PRINT READY
+
+Thirteen rules measure the scene about to be written — CMYK separation and total ink, placed-artwork resolution, minimum type size (with separate floors for reversed and foil), type that was reduced to fit, hairlines, bleed, objects outside trim and safe area, ink contrast, live transparency, empty plates, missing die line, and font embedding. `blocking` stops an export at the stated intent.
+
 ## Modes
 
 | Mode | Can change | Admin PIN |

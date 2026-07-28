@@ -1,0 +1,85 @@
+/* ============================================================================
+   Premium Horizontal — the only styling this family adds.
+   Appended after the studio's own stylesheet, and scoped to classes that did
+   not exist before it, so no existing rule is overridden and no existing
+   panel changes shape.
+   ============================================================================ */
+#hzLeft, #hzRight { display: block; }
+
+.hzunit { display: flex; align-items: center; gap: 6px; }
+.hzunit .inp { flex: 1; }
+.hzunit span { font-size: 10px; color: var(--ink3); font-family: var(--mono); }
+
+.hzchk { display: flex; align-items: center; gap: 7px; font-size: 11.5px;
+  color: var(--ink2); margin: 8px 0; cursor: pointer; }
+.hzchk input { accent-color: var(--accent); }
+
+.hzstat { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px;
+  margin-top: 8px; padding: 7px 9px; border-radius: var(--rs);
+  background: var(--panel2); border: 1px solid var(--line); }
+.hzstat span { font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink3); }
+.hzstat b { font-family: var(--mono); font-size: 11px; color: var(--ink); }
+.hzstat b.bad { color: var(--err); }
+
+/* ---- palette grid ---- */
+.hzpal { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.hzsw { display: flex; align-items: center; gap: 7px; padding: 6px 8px; cursor: pointer;
+  background: var(--panel2); border: 1px solid var(--line); border-radius: var(--rs);
+  color: var(--ink2); font-size: 11px; text-align: left; }
+.hzsw:hover { border-color: var(--line2); }
+.hzsw.on { border-color: var(--accent); background: rgba(91, 140, 255, .10); color: var(--ink); }
+.hzsw i, .hzsw u { width: 13px; height: 20px; border-radius: 3px; flex: none;
+  border: 1px solid rgba(255,255,255,.16); }
+.hzsw u { width: 6px; }
+.hzsw span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.hzcol { width: 44px; height: 32px; padding: 0; border: 1px solid var(--line2);
+  border-radius: var(--rs); background: var(--panel2); cursor: pointer; flex: none; }
+
+/* ---- object / layer rows ---- */
+.hztog { width: 24px; height: 24px; flex: none; border-radius: 5px; cursor: pointer;
+  background: var(--panel2); border: 1px solid var(--line); color: var(--ink3);
+  font-size: 11px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+.hztog:hover { border-color: var(--line2); color: var(--ink2); }
+.hztog.on { color: var(--accent); border-color: var(--accent); background: rgba(91,140,255,.12); }
+.hztog.lock { color: var(--warn); }
+
+.hzkind { width: 18px; height: 18px; flex: none; border-radius: 4px;
+  background: var(--panel3); border: 1px solid var(--line2);
+  font-family: var(--mono); font-size: 9px; color: var(--ink3);
+  display: flex; align-items: center; justify-content: center; }
+
+.hzplates { display: flex; flex-wrap: wrap; gap: 4px; }
+.hzplates .tag { font-family: var(--mono); font-size: 9px; padding: 3px 7px; border-radius: 20px;
+  background: var(--panel3); border: 1px solid var(--line2); color: var(--ink2); }
+
+/* ---- mockup ---- */
+.hzmock { width: 100%; height: auto; display: block; border-radius: var(--rs);
+  background: linear-gradient(180deg, #1a1d23, #0d1014); border: 1px solid var(--line);
+  margin-bottom: 9px; }
+:root[data-theme=light] .hzmock { background: linear-gradient(180deg, #f2f4f7, #dfe4ea); }
+
+/* ---- preflight rows ---- */
+.hzpf { padding: 9px 11px; border-radius: var(--rs); background: var(--panel2);
+  border: 1px solid var(--line); border-left: 3px solid var(--line2); }
+.hzpf.blocking { border-left-color: var(--err); }
+.hzpf.warning { border-left-color: var(--warn); }
+.hzpf.info { border-left-color: var(--ok); }
+.hzpfh { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.hzpfh b { font-size: 12px; color: var(--ink); }
+.hzpfh .sub { font-family: var(--mono); font-size: 9.5px; color: var(--ink3); margin-left: auto; }
+.hzpfm { font-size: 11.5px; line-height: 1.55; color: var(--ink2); margin-top: 4px; }
+.hzsev { font-family: var(--mono); font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 20px; border: 1px solid; }
+.hzsev.blocking { color: var(--err); border-color: var(--err); }
+.hzsev.warning { color: var(--warn); border-color: var(--warn); }
+.hzsev.info { color: var(--ok); border-color: var(--ok); }
+
+/* ---- large screens: the docks earn their width ---- */
+@media (min-width: 2200px) {
+  .dock.left, .dock.right { width: 340px; }
+  .hzpal { grid-template-columns: 1fr 1fr 1fr; }
+}
+@media (max-width: 1400px) {
+  .hzpal { grid-template-columns: 1fr; }
+}

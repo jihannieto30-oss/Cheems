@@ -116,11 +116,21 @@
     ctx.fillStyle = b.bg; ctx.fillRect(ox, oy, b.w * z, b.h * z);
     ctx.restore();
 
+    /* the Premium Horizontal family draws itself — same stage, same zoom,
+       its own vector renderer. Everything below is untouched. */
+    if (b.source === 'hz') {
+      HZR.Canvas.draw(ctx, b, {
+        scale: z, ox, oy, guides: S.guides, finish: S.finish,
+        bleedPx: S.bleed ? b.bleedMM : 0,
+        selected: (typeof HZUI !== 'undefined' && HZUI.isActive()) ? HZUI.selectedId() : null
+      });
+    } else {
     const bleedPx = (S.bleed && b.source === 'master') ? CORE.mm2px(CORE.BLEED_MM) : (S.bleed ? CORE.mm2px(CORE.BLEED_MM) : 0);
     ENGINE.CanvasRenderer.draw(ctx, b, {
       scale: z, ox, oy, guides: S.guides, slotBoxes: S.slotBoxes, selected: S.selected,
       finish: S.finish, laminate: STATE.getDoc().finishes.laminate, bleedPx, proof: S.proof
     });
+    }
     if (S.grid) drawGrid(b, z, ox, oy);
     drawRulers(b, z, ox, oy);
     lastFrameMs = performance.now() - t0;
@@ -145,7 +155,7 @@
     const cs = getComputedStyle(document.documentElement);
     const ink3 = cs.getPropertyValue('--ink3').trim() || '#5f6879';
     const acc = cs.getPropertyValue('--accent').trim() || '#5b8cff';
-    const pxPerMM = CORE.PPM * z;
+    const pxPerMM = (b && b.source === 'hz' ? HZR.K : CORE.PPM) * z;
     let stepMM = 1;
     for (const s of [1, 2, 5, 10, 20, 50, 100]) { if (s * pxPerMM >= 42) { stepMM = s; break; } stepMM = s; }
     const draw = (c, horiz, len) => {
@@ -174,6 +184,16 @@
   }
 
   function updStats(b) {
+    if (b.source === 'hz') {
+      $('#stats').innerHTML =
+        `frame  ${lastFrameMs.toFixed(1)} ms<br>` +
+        `zoom   ${(S.zoom * 100).toFixed(1)} %<br>` +
+        `trim   ${b.wMM.toFixed(2)}×${b.hMM.toFixed(2)} mm · vector<br>` +
+        `bleed  ${b.bleedMM} mm · safe ${b.safeMM} mm<br>` +
+        `prims  ${b.prims.length} (${b.prims.filter(p => p.t === 'image').length} placed raster)<br>` +
+        `plates ${b.plates.join(' ')}`;
+      return;
+    }
     const m = STATE.getMaster();
     $('#stats').innerHTML =
       `frame  ${lastFrameMs.toFixed(1)} ms<br>` +
@@ -670,6 +690,7 @@
     if (pending) return; pending = true;
     requestAnimationFrame(() => {
       pending = false;
+      if (typeof HZUI !== 'undefined' && HZUI.isActive()) { HZUI.render(); paint(); return; }
       const doc = STATE.getDoc(), master = STATE.getMaster();
       if (!doc || !master) return;
       scene = ENGINE.render(master, doc, {});
@@ -1179,6 +1200,17 @@
     paint();
   }
 
+  /* ---- bridge for the Premium Horizontal family --------------------------
+     A named surface rather than reaching into this closure, so the new family
+     can only use what is deliberately handed to it. */
+  const PX_UI = {
+    el, esc, toast, modal, panel, S, ICO,
+    paint, fit, resize, recompute, buildStatus,
+    setScene(s) { scene = s; },
+    getScene() { return scene; }
+  };
+  window.PX_UI = PX_UI;
+
   /* ---- wiring ----------------------------------------------------------- */
   $('#btnTheme').onclick = toggleTheme;
   $('#btnHelp').onclick = dlgShortcuts;
@@ -1237,6 +1269,9 @@
       });
     }
 
-    toast('Label Studio Pro', 'Master registry verified · ' + MASTERS.all().length + ' masters · ' + PREFLIGHT.RULES.length + ' preflight rules armed.', 'ok');
+    if (typeof HZUI !== 'undefined') { try { HZUI.mount(PX_UI); } catch (e) { console.error('hz mount', e); } }
+
+    toast('Label Studio Pro', 'Master registry verified · ' + MASTERS.all().length + ' masters · ' +
+      (PREFLIGHT.RULES.length + (typeof HZUV !== 'undefined' ? HZUV.RULES.length : 0)) + ' preflight rules armed.', 'ok');
   })();
 })();
