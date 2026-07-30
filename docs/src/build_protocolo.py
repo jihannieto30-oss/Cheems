@@ -82,162 +82,246 @@ To the maximum extent permitted by applicable law, PEPTIDEX and its officers, di
 By accepting this document and the accompanying materials, the recipient acknowledges having read, understood and agreed to the foregoing in its entirety."""
 
 
+
+# El aviso regulatorio del documento aprobado, palabra por palabra.  Va al pie
+# de la hoja igual que en la ficha técnica: los dos documentos salen de la misma
+# casa y deben cerrar igual.
+LEGAL = ('Regulatory Notice & Legal Disclaimer: All compounds provided by PeptideX are sold '
+         'for laboratory research and analytical reference use only (RUO). By purchasing this '
+         'material, the buyer assumes absolute, sole, and unconditional liability for any '
+         'handling, storage, application, or misuse of the product. PeptideX disclaims any and '
+         'all responsibility for damages, adverse effects, or consequences resulting from any '
+         'use outside of strictly controlled research protocols by professionals.')
+
+# Rótulos de sección.  Editables como todo lo demás; esto es sólo el arranque.
+SEC = ['DATOS DEL CLIENTE',
+       'COMPUESTOS DEL PROTOCOLO',
+       'RECOMENDACIONES GENERALES',
+       'ALMACENAMIENTO Y MANEJO',
+       'SEGUIMIENTO Y REVISIÓN',
+       'NOTAS']
+
+# Campos de cada compuesto.  Seis, no cuatro: se añadieron vía y frecuencia,
+# que son las dos preguntas que el documento anterior dejaba sin sitio y que
+# terminaban escritas a mano en el margen.
+CFIELDS = [('dosis', 'Dosis'), ('frecuencia', 'Frecuencia'), ('via', 'Vía'),
+           ('duracion', 'Duración'), ('recos', 'Recomendaciones'), ('benef', 'Beneficios')]
+
+
 # ---------------------------------------------------------------------------
 CSS = r'''
-/* ===================== PROTOCOLO ===================== */
+/* ===================== PROTOCOLO =====================
+   Misma casa que la ficha técnica: logo maestro, sello RUO, secciones
+   numeradas sobre barra azul y el aviso regulatorio al pie.  Los dos
+   documentos salen del mismo cliente y no deberían parecer de dos empresas.
+
+   NO HAY CAMPO «PREPARADO POR».  Se retiró a propósito: nombra a una persona
+   en un documento que lleva dosis, y eso es exactamente la firma que no
+   conviene que exista.  El disclosure hace el trabajo contrario — deja por
+   escrito que la pauta la fija quien recibe.
+   =============================================================== */
 #protocol{max-width:1180px;margin:0 auto;display:none;}
 body.viewpro #protocol{display:block;}
+#protocol{--pnav1:#0f275e;--pnav2:#1b449b;--pink:#101010;--pink2:#3a3f46;
+  --pmut:#8a9099;--phair:#dcdfe4;--pedit:#1e5eff;
+  --pfont:Arial,"Helvetica Neue",Helvetica,"Segoe UI",Roboto,sans-serif;
+  --pmono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;}
 
 .pro-bar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;background:#fff;
-  border:1px solid var(--hair);border-radius:14px;padding:11px 14px;margin-bottom:16px;
+  border:1px solid var(--phair);border-radius:14px;padding:11px 14px;margin-bottom:16px;
   position:sticky;top:8px;z-index:20;box-shadow:0 10px 30px -26px rgba(10,20,60,.3);}
 .pro-bar .glabel{font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--muted);}
+  color:var(--pmut);}
 .pro-bar .sp{flex:1}
-/* El facturador viste .tbtn para el chrome oscuro de la cabecera, con
+/* El facturador viste .tbtn para el chrome oscuro de su cabecera, con
    !important y color casi blanco.  Esta barra es una tarjeta blanca, así que
    ahí esos botones salían invisibles.  Se les devuelve la piel clara sólo
-   dentro de .pro-bar — no se toca la regla global, que sigue siendo correcta
-   donde fue escrita. */
-.pro-bar .tbtn{background:#fff!important;border-color:var(--hair)!important;
-  color:var(--ink)!important;font-size:12.5px;padding:9px 15px;}
-.pro-bar .tbtn:hover{background:#f6f7f9!important;border-color:var(--ink)!important;}
-.pro-bar #proPrint{background:var(--ink)!important;border-color:var(--ink)!important;color:#fff!important;}
-.pro-bar #proPrint:hover{background:#22262e!important;}
-.pro-pick{position:relative;min-width:270px;flex:1;max-width:420px}
+   dentro de .pro-bar — la regla global sigue siendo correcta donde se escribió. */
+.pro-bar .tbtn{background:#fff!important;border-color:var(--phair)!important;
+  color:var(--pink)!important;font-size:12px;padding:8px 14px;}
+.pro-bar .tbtn:hover{background:#f6f7f9!important;border-color:var(--pnav1)!important;}
+.pro-bar #proPrint{background:var(--pnav1)!important;border-color:var(--pnav1)!important;color:#fff!important;}
+.pro-bar #proPrint:hover{background:#16346f!important;}
+.pro-saved{font-size:11px;color:var(--pmut);min-width:120px}
+
+.pro-pick{position:relative;min-width:250px;flex:1;max-width:400px}
 .pro-pick input{width:100%;font-family:inherit;font-size:13px;padding:9px 13px;
-  border:1px solid var(--hair);border-radius:999px;background:#fff;outline:none}
-.pro-pick input:focus{border-color:var(--ink)}
+  border:1px solid var(--phair);border-radius:999px;background:#fff;outline:none;color:var(--pink)}
+.pro-pick input:focus{border-color:var(--pnav1)}
 .pro-drop{position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:300px;overflow-y:auto;
-  background:#fff;border:1px solid var(--hair);border-radius:13px;z-index:40;display:none;
+  background:#fff;border:1px solid var(--phair);border-radius:13px;z-index:40;display:none;
   box-shadow:0 18px 50px -20px rgba(10,20,60,.3);padding:5px}
 .pro-drop.on{display:block}
 .pro-opt{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:9px;cursor:pointer;
-  font-size:13px}
-.pro-opt:hover,.pro-opt.sel{background:var(--sunk,#f4f5f7)}
+  font-size:13px;color:var(--pink)}
+.pro-opt:hover,.pro-opt.sel{background:#f2f4f7}
 .pro-opt .on1{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pro-opt .os{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:700;
-  padding:2px 7px;border-radius:5px;border:1px solid var(--hair)}
+.pro-opt .os{font-family:var(--pmono);font-size:11px;font-weight:700;padding:2px 7px;
+  border-radius:5px;border:1px solid var(--phair)}
 .pro-opt .ol{font-size:9px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--muted);width:66px;text-align:right}
-.pro-drop .none{padding:16px;text-align:center;color:var(--muted);font-size:12.5px}
+  color:var(--pmut);width:66px;text-align:right}
+.pro-drop .none{padding:16px;text-align:center;color:var(--pmut);font-size:12.5px}
 
-/* ---- la hoja ---- */
-.pro-sheet{background:#fff;border:1px solid var(--hair);border-radius:16px;
-  padding:46px 52px 54px;box-shadow:0 24px 70px -50px rgba(10,20,60,.4);}
-.pro-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;
-  padding-bottom:20px;border-bottom:2px solid var(--ink);}
-.pro-head img{height:40px;width:auto;display:block}
-.pro-head .ttl{text-align:right}
-.pro-head .ttl h1{font-size:27px;font-weight:800;letter-spacing:.16em;line-height:1}
-.pro-head .ttl p{font-size:9.5px;letter-spacing:.28em;color:var(--muted);margin-top:5px;
-  text-transform:uppercase;font-weight:700}
+/* ---------------- la hoja ---------------- */
+.pro-sheet{background:#fff;border:1px solid var(--phair);border-radius:4px;
+  padding:34px 42px 30px;box-shadow:0 16px 50px -40px rgba(10,20,60,.5);
+  font-family:var(--pfont);color:var(--pink);font-size:14px;line-height:1.55}
 
-.pro-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:1px solid var(--hair);}
-.pro-fld{padding:15px 18px 14px;border-right:1px solid var(--hair);}
+.pro-head{text-align:center;padding-bottom:14px}
+.pro-master{height:70px;width:auto;display:block;margin:0 auto 12px}
+.pro-title{font-size:27px;font-weight:700;letter-spacing:.3em;line-height:1.1;text-transform:uppercase}
+.pro-ruo{display:inline-block;border:1px solid var(--pnav1);color:var(--pnav1);border-radius:999px;
+  padding:3px 16px;font-size:8.5px;font-weight:700;letter-spacing:.22em;margin-top:10px}
+.pro-rule{margin-top:14px;border-top:1px solid var(--phair)}
+
+.pro-sec{display:flex;align-items:center;gap:11px;margin:18px 0 9px;padding:6px 12px;
+  background:linear-gradient(90deg,var(--pnav1),var(--pnav2));border-radius:2px;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pro-n{flex-shrink:0;width:17px;height:17px;border-radius:50%;border:1px solid rgba(255,255,255,.85);
+  color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1}
+.pro-sec .pf{color:#fff}
+.pro-sec .pf:hover{border-bottom-color:rgba(255,255,255,.5)}
+.pro-sec .pf:focus{border-bottom-color:#fff;background:rgba(255,255,255,.12)}
+
+/* datos del cliente: rejilla de rótulo + hueco */
+.pro-meta{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--phair)}
+.pro-fld{padding:9px 12px;border-right:1px solid var(--phair);min-width:0}
 .pro-fld:last-child{border-right:none}
-.pro-lbl{display:block;font-size:8.5px;font-weight:800;letter-spacing:.17em;text-transform:uppercase;
-  color:var(--muted);margin-bottom:5px;}
-.pro-in{width:100%;font-family:inherit;font-size:14.5px;color:var(--ink);background:transparent;
-  border:none;border-bottom:1px dashed #d5d8dd;padding:3px 0 5px;outline:none;resize:none;
-  line-height:1.6;overflow:hidden;display:block;}
-.pro-in:focus{border-bottom-color:var(--ink);background:#fcfcfd}
-.pro-in::placeholder{color:#c3c7cd;font-style:italic}
-.pro-in.big{font-size:19px;font-weight:650;letter-spacing:-.01em}
+.pro-meta.wide{grid-template-columns:1fr;border-top:none}
+.pro-lbl{display:block;font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--pmut);margin-bottom:3px}
 
-.pro-sec{padding:22px 0 4px;border-bottom:1px solid var(--hair);}
-.pro-sec:last-of-type{border-bottom:none}
-.pro-sec>.pro-lbl{font-size:9.5px;letter-spacing:.2em;color:var(--ink);margin-bottom:10px;
-  display:flex;align-items:center;gap:9px}
-.pro-sec>.pro-lbl::after{content:"";flex:1;height:1px;background:var(--hair)}
-
-.pro-empty{padding:26px;text-align:center;border:1px dashed #d9dce1;border-radius:12px;
-  color:var(--muted);font-size:13px;margin-bottom:12px}
-
-.pro-cmp{border:1px solid var(--hair);border-radius:13px;padding:0;margin-bottom:13px;
-  overflow:hidden;position:relative}
+/* compuestos */
+.pro-empty{padding:22px;text-align:center;border:1px dashed #c9cfd8;border-radius:4px;
+  color:var(--pmut);font-size:12.5px}
+.pro-cmp{border:1px solid var(--phair);margin-bottom:11px;position:relative}
 .pro-cmp::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pl,#1b1b1b)}
-.pro-cmp-h{display:flex;align-items:center;gap:11px;padding:13px 16px 13px 19px;
-  background:#fafbfc;border-bottom:1px solid var(--hair)}
-.pro-cmp-h .nm{font-size:16px;font-weight:720;letter-spacing:-.015em;flex:1;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pro-cmp-h .sz{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;font-weight:700;
-  padding:3px 9px;border-radius:6px;border:1px solid var(--hair);background:#fff}
-.pro-cmp-h .ln{font-size:8.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
-  color:#fff;background:var(--pl,#1b1b1b);padding:3px 9px;border-radius:999px}
-.pro-x{border:none;background:transparent;cursor:pointer;font-size:17px;line-height:1;color:#b9bec5;
-  padding:3px 5px;border-radius:6px}
+.pro-cmp-h{display:flex;align-items:center;gap:10px;padding:9px 13px 9px 16px;background:#f6f7f9;
+  border-bottom:1px solid var(--phair);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pro-cmp-h .ln{font-size:8px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:#fff;background:var(--pl,#1b1b1b);padding:3px 8px;border-radius:999px;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pro-cmp-h .nm{font-size:14.5px;font-weight:700;flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.pro-cmp-h .sz{font-family:var(--pmono);font-size:11px;font-weight:700;padding:2px 8px;
+  border-radius:4px;border:1px solid var(--phair);background:#fff}
+.pro-x{border:none;background:transparent;cursor:pointer;font-size:15px;line-height:1;color:#b9bec5;
+  padding:2px 5px;border-radius:5px}
 .pro-x:hover{color:#c0392b;background:#fdf2f0}
-.pro-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
-.pro-grid .pro-fld{border-bottom:1px solid var(--hair)}
-.pro-grid .pro-fld:nth-child(2n){border-right:none}
+.pro-grid{display:grid;grid-template-columns:repeat(4,1fr)}
+.pro-grid .pro-fld{border-bottom:1px solid var(--phair)}
+.pro-grid .pro-fld:nth-child(4n){border-right:none}
 .pro-grid .pro-fld:nth-last-child(-n+2){border-bottom:none}
+.pro-grid .pro-fld.span2{grid-column:span 2}
+.pro-grid .pro-fld.span2:last-child{border-right:none}
 
-.pro-disc{background:#fafbfc;border:1px solid var(--hair);border-radius:12px;padding:17px 19px;
-  margin-top:4px}
-.pro-disc textarea{width:100%;font-family:inherit;font-size:10.5px;line-height:1.62;color:#3f444d;
-  background:transparent;border:none;outline:none;resize:none;overflow:hidden;display:block;
-  white-space:pre-wrap}
-.pro-disc textarea:focus{color:var(--ink)}
+/* disclosure y cierre */
+.pro-disc{background:#f8f9fb;border:1px solid var(--phair);padding:14px 16px;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pro-sign{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:34px}
+.pro-sign div{border-top:1px solid var(--pink);padding-top:6px;font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--pmut);font-weight:700}
+.pro-legal{margin-top:22px;padding-top:11px;border-top:1px solid var(--phair);text-align:center}
+.pro-foot{margin-top:16px;text-align:center}
+.pro-foot .a{font-size:10px;font-weight:800;letter-spacing:.34em}
+.pro-foot .b{margin-top:3px;font-size:8px;letter-spacing:.3em;color:var(--pmut)}
 
-.pro-sign{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:40px}
-.pro-sign div{border-top:1px solid var(--ink);padding-top:7px;font-size:9.5px;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--muted);font-weight:700}
-.pro-foot{margin-top:34px;padding-top:14px;border-top:1px solid var(--hair);text-align:center}
-.pro-foot .a{font-size:11px;font-weight:800;letter-spacing:.34em}
-.pro-foot .b{margin-top:3px;font-size:8.5px;letter-spacing:.3em;color:var(--muted)}
+/* ---------------- campos editables ----------------
+   Mismo trato que en la ficha: en reposo la hoja se lee como el impreso, y el
+   subrayado sólo aparece al pasar por encima. */
+.pf{width:100%;font-family:inherit;font-size:inherit;line-height:inherit;color:inherit;
+  font-weight:inherit;letter-spacing:inherit;text-align:inherit;text-transform:inherit;
+  background:transparent;border:none;border-bottom:1px dashed transparent;padding:0;
+  outline:none;resize:none;overflow:hidden;display:block;border-radius:2px;
+  transition:border-color .15s,background .15s}
+.pf:hover{border-bottom-color:#d8dce2}
+.pf:focus{border-bottom-color:var(--pedit);background:#f5f8ff}
+.pf::placeholder{color:#b9c0c9;font-style:italic;font-weight:400;letter-spacing:0;text-transform:none}
+.pf-title{font-size:27px;font-weight:700;letter-spacing:.3em;text-align:center;text-transform:uppercase}
+.pf-sect{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.pf-lbl{font-size:8.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--pmut)}
+.pf-val{font-size:13px;line-height:1.55;color:var(--pink)}
+.pf-big{font-size:18px;font-weight:700;letter-spacing:-.01em;color:var(--pink)}
+.pf-list{font-size:12.5px;line-height:1.6;color:var(--pink2)}
+.pf-disc{font-size:9.5px;line-height:1.6;color:var(--pink2);white-space:pre-wrap}
+.pf-legal{font-size:9px;line-height:1.5;color:var(--pink2);font-style:italic;font-weight:700;
+  text-align:center}
+.phint{font-size:8.5px;color:#c2c7ce;letter-spacing:.04em;margin-top:2px;display:block}
 
-.pro-saved{font-size:11.5px;color:var(--muted);min-width:130px}
+/* espejo de impresión + turno campo/espejo para las listas */
+.pm{display:none;white-space:pre-wrap;word-wrap:break-word}
+.pm ul{list-style:none;margin:0;padding:0}
+.pm li{padding-left:14px;position:relative;margin-bottom:2px}
+.pm li::before{content:"\25cf";position:absolute;left:0;top:0;font-size:.72em;line-height:1.9;
+  color:var(--pnav1)}
+.plw{position:relative;cursor:text;border-bottom:1px dashed transparent;border-radius:2px}
+.plw:hover{border-bottom-color:#d8dce2}
+.plw .pm{display:block}
+.plw.on .pm{display:none}
+.plw .pf{display:none}
+.plw.on .pf{display:block}
+.plw .pm:empty::before{content:attr(data-ph);color:#b9c0c9;font-style:italic;position:static}
 
-@media(max-width:820px){
-  .pro-sheet{padding:26px 20px 34px;border-radius:12px}
+@media(max-width:900px){
+  .pro-sheet{padding:22px 18px 26px}
   .pro-meta,.pro-grid{grid-template-columns:1fr}
-  .pro-fld{border-right:none;border-bottom:1px solid var(--hair)}
-  .pro-grid .pro-fld:nth-last-child(-n+2){border-bottom:1px solid var(--hair)}
-  .pro-grid .pro-fld:last-child{border-bottom:none}
-  .pro-sign{grid-template-columns:1fr;gap:30px}
+  .pro-fld{border-right:none;border-bottom:1px solid var(--phair)}
+  .pro-grid .pro-fld.span2{grid-column:span 1}
+  .pro-sign{grid-template-columns:1fr;gap:26px}
   .pro-bar{position:static}
 }
 
-/* ---- espejo de impresión ----
-   Un textarea se imprime con la altura que tenía en pantalla.  Al imprimir, la
-   hoja es más estrecha que la ventana, el texto reflúe a más líneas y el
-   sobrante se pierde bajo overflow:hidden.  En un disclosure legal eso no es
-   un defecto cosmético: es media cláusula que desaparece del papel.
+/* ============================================================================
+   IMPRESIÓN
 
-   Así que no se imprime el textarea.  Cada campo lleva al lado un div con el
-   mismo texto, que no tiene altura fija porque un div se dimensiona solo a
-   cualquier ancho.  En pantalla se escribe en el textarea y el div está
-   oculto; al imprimir se cambian los papeles. */
-.pro-mirror{display:none;white-space:pre-wrap;word-wrap:break-word;}
-.pro-mirror:empty::before{content:"—";color:#c3c7cd;}
-
+   Dos trampas, las mismas que en la ficha.  La hoja Carta con márgenes mide
+   unos 732 px de CSS, por debajo del punto de ruptura de móvil: sin forzarlo
+   el papel heredaría la disposición de teléfono.  Y un textarea se imprime con
+   la altura que midió en pantalla, así que se imprimen los espejos — que es lo
+   que evitó que el disclosure perdiera tres párrafos por debajo del corte.
+   ============================================================================ */
 @media print{
-  body.viewpro .pro-bar{display:none !important}
-  body.viewpro .pro-x{display:none !important}
-  body.viewpro .pro-sheet{border:none;border-radius:0;box-shadow:none;padding:0;max-width:none}
+  body.viewpro .pro-bar,body.viewpro .pro-x,body.viewpro .phint{display:none !important}
+  body.viewpro .pro-sheet{border:none;border-radius:0;box-shadow:none;padding:0;max-width:none;
+    font-size:9.6pt}
   body.viewpro textarea{display:none !important}
-  body.viewpro .pro-mirror{display:block}
-  body.viewpro .pro-in-m{font-size:14.5px;line-height:1.6;color:var(--ink);
-    border-bottom:1px dashed #e2e4e8;padding:3px 0 5px;min-height:1.6em}
-  body.viewpro .pro-in-m.big{font-size:19px;font-weight:650;letter-spacing:-.01em}
-  body.viewpro .pro-disc .pro-mirror{font-size:10.5px;line-height:1.62;color:#3f444d;border:none}
-  /* La hoja impresa es más estrecha que el punto de ruptura móvil, así que sin
-     esto el papel heredaría la disposición de teléfono: una columna y el doble
-     de páginas. */
+  body.viewpro .pm{display:block}
+  body.viewpro .pm-title{font-size:19pt;font-weight:700;letter-spacing:.3em;text-align:center;
+    text-transform:uppercase}
+  body.viewpro .pm-sect{font-size:8.4pt;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:#fff}
+  body.viewpro .pm-lbl{font-size:6.6pt;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--pmut)}
+  body.viewpro .pm-val{font-size:9pt;color:var(--pink);min-height:1.5em;
+    border-bottom:1px dashed #e2e4e8}
+  body.viewpro .pm-big{font-size:13pt;font-weight:700;color:var(--pink);min-height:1.4em;
+    border-bottom:1px dashed #e2e4e8}
+  body.viewpro .pm-list{font-size:8.8pt;line-height:1.45;color:var(--pink2)}
+  body.viewpro .pm-list:empty{min-height:3.6em;border-bottom:1px dashed #dfe2e7}
+  body.viewpro .pm-disc{font-size:7pt;line-height:1.5;color:var(--pink2)}
+  body.viewpro .pm-legal{font-size:6.4pt;line-height:1.42;font-style:italic;font-weight:700;
+    text-align:center;color:var(--pink2)}
+  /* El hueco impreso no lleva el texto guía de la aplicación: es una
+     instrucción de pantalla colada en un documento de cliente. */
+  body.viewpro .pm:empty::before{content:"" !important}
+
+  body.viewpro .pro-master{height:46pt;margin-bottom:8pt}
   body.viewpro .pro-meta{grid-template-columns:repeat(3,1fr)}
-  body.viewpro .pro-meta .pro-fld{border-right:1px solid var(--hair);border-bottom:none}
-  body.viewpro .pro-meta .pro-fld:last-child{border-right:none}
-  body.viewpro .pro-grid{grid-template-columns:1fr 1fr}
-  body.viewpro .pro-grid .pro-fld{border-bottom:1px solid var(--hair)}
-  body.viewpro .pro-grid .pro-fld:nth-child(2n){border-right:none}
+  body.viewpro .pro-grid{grid-template-columns:repeat(4,1fr)}
+  body.viewpro .pro-fld{border-right:1px solid var(--phair);border-bottom:none;padding:5pt 8pt}
+  body.viewpro .pro-fld:last-child{border-right:none}
+  body.viewpro .pro-grid .pro-fld{border-bottom:1px solid var(--phair)}
+  body.viewpro .pro-grid .pro-fld:nth-child(4n){border-right:none}
+  body.viewpro .pro-grid .pro-fld.span2:last-child{border-right:none}
   body.viewpro .pro-grid .pro-fld:nth-last-child(-n+2){border-bottom:none}
-  body.viewpro .pro-sign{grid-template-columns:1fr 1fr;gap:44px}
-  body.viewpro .pro-cmp{page-break-inside:avoid}
-  body.viewpro .pro-sec{page-break-inside:auto}
-  body.viewpro .pro-disc{page-break-inside:auto;background:#fafbfc !important;
-    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.viewpro .pro-sign{grid-template-columns:1fr 1fr;gap:40pt}
+  body.viewpro .pro-sec{margin:11pt 0 5pt;padding:3.5pt 9pt;page-break-after:avoid;
+    page-break-inside:avoid}
+  body.viewpro .pro-n{width:11pt;height:11pt;font-size:6.6pt}
+  body.viewpro .pro-cmp{page-break-inside:avoid;margin-bottom:7pt}
+  body.viewpro .pro-disc{page-break-inside:auto}
   body.viewpro .pro-empty{display:none}
+  body.viewpro .pro-legal{margin-top:14pt;padding-top:7pt}
 }
 '''
 
@@ -254,6 +338,8 @@ HTML = r'''
     <span class="sp"></span>
     <span class="pro-saved" id="proSaved"></span>
     <button class="tbtn ghost" id="proNew">＋ Nuevo</button>
+    <button class="tbtn ghost" id="proExp">Exportar</button>
+    <button class="tbtn ghost" id="proImp">Importar</button>
     <button class="tbtn ghost" id="proClear">Vaciar</button>
     <button class="tbtn" id="proPrint">Imprimir / PDF</button>
   </div>
@@ -261,47 +347,86 @@ HTML = r'''
   <div class="pro-sheet" id="proSheet">
 
     <div class="pro-head">
-      <img id="proLogo" alt="PEPTIDEX"/>
-      <div class="ttl"><h1>PROTOCOLO</h1><p>Research Use Only</p></div>
+      <img class="pro-master" id="proLogo" alt="PEPTIDEX"/>
+      <div class="pro-title"><textarea class="pf pf-title" data-k="titulo" rows="1"></textarea>
+        <div class="pm pm-title"></div></div>
+      <div class="pro-ruo">RUO · RESEARCH USE ONLY</div>
     </div>
+    <div class="pro-rule"></div>
 
-    <div class="pro-meta">
-      <div class="pro-fld" style="grid-column:1 / -1">
-        <span class="pro-lbl">Nombre del cliente</span>
-        <textarea class="pro-in big" rows="1" data-k="cliente" placeholder="Nombre completo"></textarea>
+    <div class="pro-sec"><span class="pro-n">1</span>
+      <textarea class="pf pf-sect" data-k="s1" rows="1"></textarea><div class="pm pm-sect"></div></div>
+    <div class="pro-meta wide">
+      <div class="pro-fld">
+        <span class="pro-lbl"><textarea class="pf pf-lbl" data-k="kCliente" rows="1"></textarea>
+          <div class="pm pm-lbl"></div></span>
+        <textarea class="pf pf-big" data-k="cliente" rows="1" placeholder="Nombre completo"></textarea>
+        <div class="pm pm-big"></div>
       </div>
     </div>
     <div class="pro-meta">
-      <div class="pro-fld"><span class="pro-lbl">Folio</span>
-        <textarea class="pro-in" rows="1" data-k="folio" placeholder="—"></textarea></div>
-      <div class="pro-fld"><span class="pro-lbl">Fecha</span>
-        <textarea class="pro-in" rows="1" data-k="fecha" placeholder="—"></textarea></div>
-      <div class="pro-fld"><span class="pro-lbl">Preparado por</span>
-        <textarea class="pro-in" rows="1" data-k="por" placeholder="—"></textarea></div>
-    </div>
-
-    <div class="pro-sec">
-      <span class="pro-lbl">Compuestos del protocolo</span>
-      <div id="proList"></div>
-      <div class="pro-empty" id="proEmpty">
-        Aún no hay compuestos. Búscalos arriba y añádelos: cada uno abre su propio
-        bloque de dosis, duración, recomendaciones y beneficios.
+      <div class="pro-fld">
+        <span class="pro-lbl"><textarea class="pf pf-lbl" data-k="kFolio" rows="1"></textarea>
+          <div class="pm pm-lbl"></div></span>
+        <textarea class="pf pf-val" data-k="folio" rows="1"></textarea><div class="pm pm-val"></div>
+      </div>
+      <div class="pro-fld">
+        <span class="pro-lbl"><textarea class="pf pf-lbl" data-k="kFecha" rows="1"></textarea>
+          <div class="pm pm-lbl"></div></span>
+        <textarea class="pf pf-val" data-k="fecha" rows="1"></textarea><div class="pm pm-val"></div>
+      </div>
+      <div class="pro-fld">
+        <span class="pro-lbl"><textarea class="pf pf-lbl" data-k="kContacto" rows="1"></textarea>
+          <div class="pm pm-lbl"></div></span>
+        <textarea class="pf pf-val" data-k="contacto" rows="1"></textarea><div class="pm pm-val"></div>
       </div>
     </div>
 
-    <div class="pro-sec">
-      <span class="pro-lbl">Notas generales</span>
-      <textarea class="pro-in" rows="1" data-k="notas" placeholder="—"></textarea>
+    <div class="pro-sec"><span class="pro-n">2</span>
+      <textarea class="pf pf-sect" data-k="s2" rows="1"></textarea><div class="pm pm-sect"></div></div>
+    <div id="proList"></div>
+    <div class="pro-empty" id="proEmpty">
+      Aún no hay compuestos. Búscalos en la barra de arriba: cada uno abre su propio
+      bloque de dosis, frecuencia, vía, duración, recomendaciones y beneficios.
     </div>
 
-    <div class="pro-sec">
-      <span class="pro-lbl">Disclosure</span>
-      <div class="pro-disc"><textarea data-k="disclosure" rows="1"></textarea></div>
+    <div class="pro-sec"><span class="pro-n">3</span>
+      <textarea class="pf pf-sect" data-k="s3" rows="1"></textarea><div class="pm pm-sect"></div></div>
+    <div class="plw"><textarea class="pf pf-list" data-k="general" data-list="1" rows="1"></textarea>
+      <div class="pm pm-list" data-ph="Escribe aquí las recomendaciones generales — una línea por viñeta"></div>
+      <span class="phint">una línea = una viñeta</span></div>
+
+    <div class="pro-sec"><span class="pro-n">4</span>
+      <textarea class="pf pf-sect" data-k="s4" rows="1"></textarea><div class="pm pm-sect"></div></div>
+    <div class="plw"><textarea class="pf pf-list" data-k="almacen" data-list="1" rows="1"></textarea>
+      <div class="pm pm-list" data-ph="Almacenamiento, reconstitución y manejo — una línea por viñeta"></div>
+      <span class="phint">una línea = una viñeta</span></div>
+
+    <div class="pro-sec"><span class="pro-n">5</span>
+      <textarea class="pf pf-sect" data-k="s5" rows="1"></textarea><div class="pm pm-sect"></div></div>
+    <div class="plw"><textarea class="pf pf-list" data-k="seguimiento" data-list="1" rows="1"></textarea>
+      <div class="pm pm-list" data-ph="Revisiones, controles y fechas — una línea por viñeta"></div>
+      <span class="phint">una línea = una viñeta</span></div>
+
+    <div class="pro-sec"><span class="pro-n">6</span>
+      <textarea class="pf pf-sect" data-k="s6" rows="1"></textarea><div class="pm pm-sect"></div></div>
+    <div class="plw"><textarea class="pf pf-list" data-k="notas" data-list="1" rows="1"></textarea>
+      <div class="pm pm-list" data-ph="Notas — una línea por viñeta"></div>
+      <span class="phint">una línea = una viñeta</span></div>
+
+    <div class="pro-sec"><span class="pro-n">7</span>
+      <textarea class="pf pf-sect" data-k="s7" rows="1"></textarea><div class="pm pm-sect"></div></div>
+    <div class="pro-disc">
+      <textarea class="pf pf-disc" data-k="disclosure" rows="1"></textarea><div class="pm pm-disc"></div>
     </div>
 
     <div class="pro-sign">
       <div>Firma del cliente</div>
       <div>PEPTIDEX</div>
+    </div>
+
+    <div class="pro-legal">
+      <textarea class="pf pf-legal" data-k="legal" rows="1"></textarea><div class="pm pm-legal"></div>
     </div>
 
     <div class="pro-foot">
@@ -316,10 +441,13 @@ HTML = r'''
 JS = r'''
 /* ================= PROTOCOLO ================= */
 (function(){
-  var CAT = __CATALOG__;
-  var DISC = __DISCLOSURE__;
-  var TINT = {fitness:'#1b1b1b', beauty:'#8a4f2e', longevity:'#023473'};
-  var KEY  = 'px-protocolo';
+  var CAT   = __CATALOG__;
+  var DISC  = __DISCLOSURE__;
+  var LEGAL = __LEGAL__;
+  var SEC   = __SEC__;
+  var CF    = __CFIELDS__;
+  var TINT  = {fitness:'#1b1b1b', beauty:'#8a4f2e', longevity:'#023473'};
+  var KEY   = 'px-protocolo-2';
 
   var q      = document.getElementById('proQ'),
       drop   = document.getElementById('proDrop'),
@@ -329,30 +457,57 @@ JS = r'''
       saved  = document.getElementById('proSaved');
   if(!sheet) return;
 
-  var doc = {cliente:'',folio:'',fecha:'',por:'',notas:'',disclosure:DISC,items:[]};
+  /* El documento en blanco.  Sólo tres campos nacen con texto: el título, el
+     disclosure y el aviso regulatorio.  Todo lo demás lo escribe el usuario.
+
+     NO HAY «preparado por».  Se retiró: nombrar a una persona en un documento
+     que lleva dosis es precisamente la firma que no conviene que exista. */
+  function blank(){
+    return {titulo:'PROTOCOLO',
+            kCliente:'Nombre del cliente', cliente:'',
+            kFolio:'Folio',     folio:'',
+            kFecha:'Fecha',     fecha:'',
+            kContacto:'Contacto', contacto:'',
+            s1:SEC[0], s2:SEC[1], s3:SEC[2], s4:SEC[3], s5:SEC[4], s6:SEC[5],
+            s7:'DISCLOSURE',
+            general:'', almacen:'', seguimiento:'', notas:'',
+            disclosure:DISC, legal:LEGAL, items:[]};
+  }
+  var doc = blank();
   var sel = 0, hits = [];
 
-  function esc(v){return String(v==null?'':v)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function esc(v){ return String(v==null?'':v)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-  /* Un textarea que crece con su contenido.  Se pone a 'auto' primero porque
-     scrollHeight de un textarea ya encogido nunca reporta menos de su altura
-     actual: sin ese reset el campo crece pero jamás vuelve a bajar. */
-  function grow(t){ t.style.height='auto'; t.style.height=(t.scrollHeight)+'px'; sync(t); }
+  /* Un textarea que crece con su contenido.  Se pone a 'auto' antes de medir
+     porque el scrollHeight de un textarea ya encogido nunca reporta menos de
+     su altura actual: sin ese reset el campo crece pero jamás vuelve a bajar. */
+  function grow(t){ t.style.height='auto'; t.style.height=(t.scrollHeight)+'px'; }
 
-  /* Cada textarea lleva un div gemelo que sólo existe para el papel.  Se crea
-     la primera vez que se toca el campo y desde ahí lleva su mismo texto. */
-  function sync(t){
+  /* El espejo: el div que se imprime en lugar del textarea.  Un textarea se
+     imprime con la altura que midió en pantalla, y la hoja es más estrecha que
+     la ventana — el sobrante se perdía bajo overflow:hidden, que en un
+     disclosure legal significa media cláusula fuera del papel.  Un div se
+     dimensiona solo a cualquier ancho.
+
+     Se toma el hermano siguiente y no parentNode.querySelector('.pm'): en los
+     rótulos conviven dos campos en el mismo contenedor y el primero se
+     llevaba el texto del segundo. */
+  function mirrorOf(t){
     var m=t.nextElementSibling;
-    if(!m || !m.classList.contains('pro-mirror')){
-      m=document.createElement('div');
-      m.className='pro-mirror'+(t.classList.contains('pro-in')?' pro-in-m':'')+
-                  (t.classList.contains('big')?' big':'');
-      t.parentNode.insertBefore(m, t.nextSibling);
-    }
-    m.textContent=t.value;
+    if(m && m.className.indexOf('pm')===0) return m;
+    return t.parentNode.querySelector('.pm');
   }
-  function growAll(){ [].forEach.call(sheet.querySelectorAll('textarea'), grow); }
+  function sync(t){
+    var m=mirrorOf(t); if(!m) return;
+    if(t.dataset.list){
+      var ls=t.value.split('\n').filter(function(x){ return x.trim(); });
+      m.innerHTML = ls.length
+        ? '<ul>'+ls.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>' : '';
+    }else{
+      m.textContent=t.value;
+    }
+  }
 
   /* ---- persistencia ---- */
   var saveT=null;
@@ -366,35 +521,59 @@ JS = r'''
     try{
       var raw=localStorage.getItem(KEY); if(!raw) return false;
       var d=JSON.parse(raw); if(!d||typeof d!=='object') return false;
-      doc={cliente:d.cliente||'',folio:d.folio||'',fecha:d.fecha||'',por:d.por||'',
-           notas:d.notas||'',disclosure:(typeof d.disclosure==='string'?d.disclosure:DISC),
-           items:Array.isArray(d.items)?d.items:[]};
-      return true;
+      var b=blank();
+      for(var k in b) if(d[k]!==undefined) b[k]=d[k];
+      b.items=Array.isArray(d.items)?d.items:[];
+      doc=b; return true;
     }catch(e){ return false; }
   }
 
-  /* ---- campos de la hoja (los de nivel documento, que no se reconstruyen) ---- */
+  /* ---- enlace de un campo ---- */
+  function bindField(t, obj){
+    t.value = obj[t.dataset.k] || '';
+    grow(t); sync(t);
+    t.addEventListener('input', function(){
+      obj[t.dataset.k]=t.value; grow(t); sync(t); queueSave();
+    });
+    var lw=t.closest ? t.closest('.plw') : null;
+    if(lw){
+      lw.addEventListener('mousedown', function(ev){
+        if(lw.classList.contains('on')) return;
+        ev.preventDefault(); lw.classList.add('on'); grow(t); t.focus();
+      });
+      t.addEventListener('blur', function(){ lw.classList.remove('on'); sync(t); });
+    }
+  }
+
+  /* ---- campos de nivel documento (no se reconstruyen al teclear) ---- */
   function bindDocFields(){
     [].forEach.call(sheet.querySelectorAll('[data-k]'), function(t){
       if(t.closest('.pro-cmp')) return;
-      t.value = doc[t.dataset.k] || '';
-      grow(t);
-      t.addEventListener('input', function(){
-        doc[t.dataset.k]=t.value; grow(t); queueSave();
-      });
+      bindField(t, doc);
     });
   }
 
   /* ---- bloques de compuesto ----
-     Se reconstruye la lista entera al añadir o quitar, pero NUNCA al teclear:
-     los campos se enlazan una vez y escriben directo sobre el objeto.  Volver
-     a pintar mientras alguien escribe le quita el cursor de las manos. */
+     Se reconstruye la lista al añadir o quitar, pero NUNCA al teclear: los
+     campos se enlazan una vez y escriben directo sobre el objeto.  Volver a
+     pintar mientras alguien escribe le quita el cursor de las manos. */
   function renderItems(){
     list.innerHTML='';
     doc.items.forEach(function(it, i){
       var d=document.createElement('div');
       d.className='pro-cmp';
       d.style.setProperty('--pl', TINT[it.l]||'#1b1b1b');
+      var cells='';
+      CF.forEach(function(f, n){
+        cells += '<div class="pro-fld'+(n>=4?' span2':'')+'">'+
+                 '<span class="pro-lbl">'+esc(f[1])+'</span>'+
+                 (n>=4
+                   ? '<div class="plw"><textarea class="pf pf-list" data-k="'+f[0]+'" data-list="1" rows="1"></textarea>'+
+                     '<div class="pm pm-list" data-ph="—"></div>'+
+                     '<span class="phint">una línea = una viñeta</span></div>'
+                   : '<textarea class="pf pf-val" data-k="'+f[0]+'" rows="1"></textarea><div class="pm pm-val"></div>');
+        cells += '</div>';
+      });
       d.innerHTML =
         '<div class="pro-cmp-h">'+
           '<span class="ln">'+esc(it.L)+'</span>'+
@@ -402,26 +581,15 @@ JS = r'''
           '<span class="sz">'+esc(it.s)+'</span>'+
           '<button class="pro-x" title="Quitar">✕</button>'+
         '</div>'+
-        '<div class="pro-grid">'+
-          fld('Dosis','dosis')+ fld('Duración','duracion')+
-          fld('Recomendaciones','recos')+ fld('Beneficios','benef')+
-        '</div>';
+        '<div class="pro-grid">'+cells+'</div>';
       d.querySelector('.pro-x').addEventListener('click', function(){
         doc.items.splice(i,1); renderItems(); save();
       });
-      [].forEach.call(d.querySelectorAll('textarea'), function(t){
-        var k=t.dataset.k;
-        t.value = it[k]||'';
-        t.addEventListener('input', function(){ it[k]=t.value; grow(t); queueSave(); });
-      });
       list.appendChild(d);
-      [].forEach.call(d.querySelectorAll('textarea'), grow);
+      [].forEach.call(d.querySelectorAll('textarea'), function(t){ bindField(t, it); });
     });
     empty.style.display = doc.items.length ? 'none' : 'block';
-  }
-  function fld(label,k){
-    return '<div class="pro-fld"><span class="pro-lbl">'+label+'</span>'+
-           '<textarea class="pro-in" rows="1" data-k="'+k+'" placeholder="—"></textarea></div>';
+    growAll();
   }
 
   /* ---- selector de las 118 presentaciones ---- */
@@ -451,8 +619,9 @@ JS = r'''
 
   function add(o){
     if(!o) return;
-    doc.items.push({k:o.k,n:o.n,s:o.s,l:o.l,L:o.L,
-                    dosis:'',duracion:'',recos:'',benef:''});
+    var it={k:o.k,n:o.n,s:o.s,l:o.l,L:o.L};
+    CF.forEach(function(f){ it[f[0]]=''; });
+    doc.items.push(it);
     renderItems(); save();
     q.value=''; closeDrop();
     var last=list.lastElementChild;
@@ -477,17 +646,51 @@ JS = r'''
   }
 
   /* ---- acciones ---- */
-  document.getElementById('proPrint').addEventListener('click', function(){ window.print(); });
+  function syncAll(){ [].forEach.call(sheet.querySelectorAll('textarea'), sync); }
+  document.getElementById('proPrint').addEventListener('click', function(){ syncAll(); window.print(); });
+  window.addEventListener('beforeprint', syncAll);
+
   document.getElementById('proNew').addEventListener('click', function(){
-    if(!confirm('Empezar un protocolo nuevo. Se pierde lo que no hayas impreso o guardado. ¿Continuar?')) return;
-    doc={cliente:'',folio:'',fecha:new Date().toLocaleDateString('es-MX',
-          {day:'2-digit',month:'long',year:'numeric'}),por:'',notas:'',disclosure:DISC,items:[]};
+    if(!confirm('Empezar un protocolo nuevo. Se pierde lo que no hayas impreso o exportado. ¿Continuar?')) return;
+    doc=blank();
+    doc.fecha=new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
     bindDocFields(); renderItems(); growAll(); save();
   });
   document.getElementById('proClear').addEventListener('click', function(){
     if(!confirm('Vaciar todos los campos de este protocolo. ¿Continuar?')) return;
-    doc.cliente=doc.folio=doc.fecha=doc.por=doc.notas=''; doc.items=[];
+    ['cliente','folio','fecha','contacto','general','almacen','seguimiento','notas']
+      .forEach(function(k){ doc[k]=''; });
+    doc.items=[];
     bindDocFields(); renderItems(); growAll(); save();
+  });
+  document.getElementById('proExp').addEventListener('click', function(){
+    var b=new Blob([JSON.stringify(doc,null,2)],{type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download='PEPTIDEX_Protocolo_'+(doc.cliente||'sin-nombre').replace(/[^\w\- ]+/g,'').trim()
+               .replace(/\s+/g,'-')+'.json';
+    a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); },1000);
+  });
+  var file=document.createElement('input');
+  file.type='file'; file.accept='application/json'; file.style.display='none';
+  document.body.appendChild(file);
+  document.getElementById('proImp').addEventListener('click', function(){ file.click(); });
+  file.addEventListener('change', function(){
+    var f=file.files[0]; if(!f) return;
+    var r=new FileReader();
+    r.onload=function(){
+      try{
+        var d=JSON.parse(r.result);
+        if(!d||typeof d!=='object') throw new Error('el archivo no contiene un protocolo');
+        var b=blank();
+        for(var k in b) if(d[k]!==undefined) b[k]=d[k];
+        b.items=Array.isArray(d.items)?d.items:[];
+        doc=b; bindDocFields(); renderItems(); growAll(); save();
+        alert('Protocolo importado.');
+      }catch(e){ alert('No se pudo leer el archivo: '+e.message); }
+      file.value='';
+    };
+    r.readAsText(f);
   });
 
   /* ---- arranque ---- */
@@ -497,17 +700,24 @@ JS = r'''
   bindDocFields(); renderItems();
   /* Un textarea mide mal mientras su contenedor está en display:none — el
      scrollHeight de un elemento sin caja es cero.  Se remide al entrar en la
-     vista y al cambiar el ancho de la ventana. */
+     vista y al cambiar el ancho de la ventana.  Los campos de lista viven
+     ocultos tras su espejo: esos se miden al abrirlos. */
+  function growAll(){
+    [].forEach.call(sheet.querySelectorAll('textarea'), function(t){
+      if(!t.closest('.plw')) grow(t);
+    });
+  }
   window.addEventListener('resize', growAll);
   window.PX_PROTOCOL_SHOWN = growAll;
   growAll();
 })();
 '''
-
-
 def js_payload():
-    js = JS.replace('__CATALOG__', json.dumps(ITEMS, ensure_ascii=False))
+    js = JS.replace('__CATALOG__',   json.dumps(ITEMS, ensure_ascii=False))
     js = js.replace('__DISCLOSURE__', json.dumps(DISCLOSURE, ensure_ascii=False))
+    js = js.replace('__LEGAL__',      json.dumps(LEGAL, ensure_ascii=False))
+    js = js.replace('__SEC__',        json.dumps(SEC, ensure_ascii=False))
+    js = js.replace('__CFIELDS__',    json.dumps(CFIELDS, ensure_ascii=False))
     return js
 
 

@@ -66,21 +66,48 @@ bien y ninguna es evidente:
 
 ## Protocolo
 
-El documento **es** el editor. No hay formulario a un lado y vista previa al
-otro: se escribe directamente sobre la hoja, en los huecos que están debajo de
-cada título, y lo que se ve en pantalla es lo que sale impreso.
+Misma casa que la ficha técnica: logo maestro, PROTOCOLO, sello RUO, secciones
+numeradas sobre barra azul y el aviso regulatorio al pie. Los dos documentos
+salen del mismo cliente y no deberían parecer de dos empresas.
 
-Títulos: nombre del cliente, folio, fecha, preparado por; por cada compuesto
-—**dosis, duración, recomendaciones, beneficios**—; notas generales; disclosure;
-firmas.
+```
+1  DATOS DEL CLIENTE          nombre · folio · fecha · contacto
+2  COMPUESTOS DEL PROTOCOLO   dosis · frecuencia · vía · duración
+                              recomendaciones · beneficios
+3  RECOMENDACIONES GENERALES
+4  ALMACENAMIENTO Y MANEJO
+5  SEGUIMIENTO Y REVISIÓN
+6  NOTAS
+7  DISCLOSURE
+```
 
-Todo llega en blanco salvo el **disclosure en inglés**, que viene redactado
-porque es texto legal fijo que debe ser idéntico en todos los protocolos. Sigue
-siendo editable.
+Luego las firmas y el aviso regulatorio en inglés, el mismo de la ficha.
 
-Las 118 presentaciones están cargadas en el buscador de la barra superior:
-teclear, `↑`/`↓`, `Enter`. Cada compuesto añadido abre su propio bloque con la
-tinta de su línea. Se guarda solo en el navegador.
+> **No hay campo «Preparado por».** Se retiró a propósito. Nombra a una persona
+> en un documento que lleva dosis, y ésa es exactamente la firma que no conviene
+> que exista. El disclosure hace el trabajo contrario: deja por escrito que la
+> pauta la fija quien recibe el material, no PEPTIDEX.
+>
+> La línea de firma **PEPTIDEX** al pie es de la misma familia — una
+> contrafirma sobre un documento con dosis. Se dejó porque quitarla no se pidió,
+> pero conviene decidirlo.
+
+**Todo es editable**, igual que en las fichas: el título, los siete rótulos de
+sección, los cuatro rótulos de los datos del cliente, los seis campos de cada
+compuesto, las cuatro listas, el disclosure y el aviso legal. Se hace clic sobre
+el texto y se escribe; en reposo la hoja se lee como el impreso.
+
+Todo llega **en blanco** salvo el disclosure y el aviso regulatorio, que son
+texto legal fijo y deben ser idénticos en todos los protocolos. Siguen siendo
+editables.
+
+Las 118 presentaciones están en el buscador de la barra: teclear, `↑`/`↓`,
+`Enter`. Cada compuesto abre su bloque con la tinta de su línea. Botones
+**＋ Nuevo**, **Exportar**, **Importar**, **Vaciar** e **Imprimir / PDF**. Se
+guarda solo en el navegador; para llevarlo a otra máquina, Exportar.
+
+Las secciones que queden vacías se imprimen con renglón: la hoja sirve también
+para rellenarla a mano.
 
 El mismo módulo va montado dentro del facturador como pestaña **Protocolo**,
 generado de la misma fuente — mantenerlos por separado los haría divergir en la
