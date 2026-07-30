@@ -8,6 +8,7 @@ doble clic y funcionan sin internet.
 | `PEPTIDEX_Fichas_Tecnicas.html` | Ficha técnica editable de los **56 compuestos** / **118 presentaciones** |
 | `PEPTIDEX_Fichas_Tecnicas.pdf` | Las 56 fichas impresas — **una por página** |
 | `PEPTIDEX_Protocolos.html` | Editor de **PROTOCOLO** — el documento que se llena por cliente |
+| `PEPTIDEX_Etiquetas_Niimbot.html` | Etiquetas de vial para la **Niimbot M2** — 50×30 y 40×20 mm |
 | `PEPTIDEX_Testeo_Peptidos.pdf` | Manual de **cómo se testea un péptido** — 32 páginas |
 | `PEPTIDEX_Testeo_Peptidos.html` | El mismo manual, como página web |
 
@@ -166,6 +167,78 @@ primera corrección.
 > por `sb_publishable_`, que ya está en el mismo objeto y es la que corresponde
 > a código que corre en un navegador. Ver `docs/.gitignore`.
 
+## Etiquetas · Niimbot M2
+
+Las 118 presentaciones en 50 × 30 mm y 40 × 20 mm, todo editable, con hueco
+para QR.
+
+### Por qué salían sucias
+
+Una térmica **no imprime gris**. Cada punto del cabezal quema o no quema: es un
+bitmap de un bit. Cuando se le manda un diseño con degradados, sombras o un
+logo metálico, el driver no tiene más remedio que **tramarlo** — cambiar cada
+gris por una nube de puntos negros y blancos. Esa nube, a 300 dpi y mirada de
+cerca sobre un vial, es exactamente lo que se ve como suciedad.
+
+El segundo problema es la escala. Un diseño hecho en una hoja y reescalado al
+tamaño de etiqueta se remuestrea, y remuestrear un bitmap de un bit lo destroza:
+los bordes se deshilachan y las líneas finas desaparecen o se parten.
+
+### Qué hace este archivo distinto
+
+La etiqueta **no** se diseña en CSS y luego se convierte. Se dibuja directamente
+sobre un canvas del tamaño exacto en puntos de impresora — **591 × 354 px** para
+50 × 30 mm y **472 × 236 px** para 40 × 20 mm — y se umbraliza a blanco y negro
+puro antes de mostrarla. Lo que se ve en pantalla **es** el bitmap que sale del
+cabezal, punto por punto, sin un solo reescalado por el camino. Comprobado: el
+canvas contiene exactamente dos valores, 0 y 255.
+
+Las reglas que aplica el dibujo, todas medidas a 300 dpi (11.811 px/mm):
+
+- Filete mínimo **3 px** (0.25 mm). Por debajo, el punto de la térmica se
+  ensancha y la línea sale irregular.
+- Texto mínimo **17 px** (~1.4 mm) y siempre en negrita: a un bit, una fuente
+  fina pierde la mitad de los trazos.
+- **Nada de texto pequeño en negativo.** La tinta térmica se expande al quemar
+  y los contornos se cierran; en negativo eso borra las letras. El negativo se
+  reserva para la dosis, que va grande.
+- QR con módulo entre **4 y 8 px** y zona de silencio de 4 módulos. Por debajo
+  de 4 px no lo lee un teléfono; el módulo se redondea a entero porque uno
+  fraccionario reparte medio píxel entre dos celdas y el lector pierde la
+  retícula.
+- El QR nunca pasa de un tercio del ancho. Por encima de eso el nombre del
+  compuesto se queda sin sitio y hay que encogerlo hasta que no se lee.
+
+El QR trae por defecto sólo el SKU (`PX:BC5`). Son seis caracteres, que caben
+en un QR de versión 1 — 21 módulos. Con la frase completa hacían falta 25
+módulos y el código crecía un 40 % sin identificar mejor la presentación. Se
+puede poner lo que se quiera; si crece, el archivo avisa.
+
+### Los logos
+
+Salen del PDF de las tres líneas, umbralizados a **1 bit puro** con el corte
+medido en 235 — el valor que separa la tinta del papel sin abrir agujeros
+dentro del PX. Son los mismos iconos aprobados: el hexágono de Fitness, el
+rostro de Beauty, el infinito de Longevity. No se han redibujado.
+
+### Cómo imprimir
+
+1. Elige el compuesto y ajusta lo que quieras.
+2. **Exportar PNG**. Ya viene al tamaño exacto en puntos.
+3. En la app de Niimbot: nueva etiqueta, fija el tamaño del papel, **Imagen**,
+   y elige el PNG.
+4. Colócalo **al 100 %**, ocupando la etiqueta entera. No lo estires ni lo
+   ajustes «a pantalla»: cualquier reescalado devuelve el problema del
+   principio.
+5. Densidad media-alta. Si el negro sale gris, sube; si los textos pequeños se
+   cierran, baja.
+
+**Exportar las 118** descarga todas de golpe, una por presentación, espaciadas
+220 ms — lanzarlas en el mismo tick hace que el navegador se quede con las
+primeras y descarte el resto sin avisar.
+
+Mismo candado que las fichas, y los mismos hashes.
+
 ## Manual de testeo
 
 32 páginas sobre instrumentos, métodos y **lectura de resultados**. Responde
@@ -204,6 +277,7 @@ cd docs/src
 python3 build_fichas.py          # → ../PEPTIDEX_Fichas_Tecnicas.html
 python3 build_protocolo.py       # → ../PEPTIDEX_Protocolos.html + ../PEPTIDEX_Facturador.html
 python3 build_handbook.py        # → ../PEPTIDEX_Testeo_Peptidos.html
+python3 build_etiquetas.py       # → ../PEPTIDEX_Etiquetas_Niimbot.html
 ```
 
 Los PDF se sacan del HTML con Chromium (`page.pdf`, Letter, `printBackground`).
@@ -220,7 +294,10 @@ src/build_fichas.py
 src/build_protocolo.py            el módulo, montado dos veces
 src/hb_figs.py                    las figuras, calculadas
 src/build_handbook.py
+src/build_etiquetas.py            etiquetas Niimbot M2
 src/assets/tlogos.json            logos de marca en base64
+src/assets/nb_logos.json          los mismos, a 1 bit puro para térmica
+src/assets/sha256.js              la implementación del facturador, compartida
 ```
 
 El catálogo no se duplica: se lee de `label-studio/src/catalog.json`, que sigue
