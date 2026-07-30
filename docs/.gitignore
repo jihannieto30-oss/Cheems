@@ -1,0 +1,16 @@
+# El facturador NO va al repositorio.
+#
+# Lleva la configuración de Supabase embebida en el propio HTML, y en el campo
+# `anonKey` hay una clave con prefijo sb_secret_ — una clave de servicio, no la
+# publicable.  Una clave de servicio se salta Row Level Security por completo:
+# cualquiera que abra el archivo tiene lectura y escritura sobre toda la base.
+#
+# GitHub lo bloquea en el push, y hace bien.  El archivo se entrega por fuera
+# del repositorio hasta que la clave se rote y se sustituya por la publicable
+# (sb_publishable_, que ya está en el mismo objeto y es la que corresponde a
+# código que corre en un navegador).
+PEPTIDEX_Facturador.html
+src/PEPTIDEX_Facturador.base.html
+
+__pycache__/
+*.pyc
