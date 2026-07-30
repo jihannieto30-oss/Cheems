@@ -5,17 +5,16 @@
    mark appeared between them, the panels left. Even once the water was black
    it was still a page being covered up and uncovered.
 
-   This is not that. Entering a line is a jump. The page you are on rushes at
-   the camera and is gone, the field goes to black in a fifth of a second, and
-   you are inside a corridor of light travelling toward you — hexagonal frames
-   streaming past, then the streaks, radial and stretching, the way light
-   behaves when you are moving through it faster than it can hold still. The
-   line's mark comes out of the far end of that corridor, arrives, holds, and
-   then goes through the camera. The warp decelerates, the light collapses,
-   and the destination is simply there, settling out of the glare.
+   This is one movement instead. The field goes dark, a soft light opens at
+   the centre, the line's mark rises into it and holds, then the light closes
+   and the destination settles out of it. The streaks stay because they are
+   what makes it read as travel rather than a fade — fewer of them now, slower,
+   and with longer, softer tails.
 
-   Reel-cut fast at both ends, held in the middle. No white anywhere except
-   the light itself.
+   Everything eases on one curve. No corridor, no flash cuts, no punch through
+   the lens: there is no moment where the motion changes its mind, which is
+   what made the busier version feel like work even when every frame arrived
+   on time.
 
    WHERE THE WARP ACTUALLY LIVES
    Nearly all of it is in 63_dive.js, drawn into one canvas. It was built here
@@ -27,7 +26,7 @@
      the canvas itself,
      the mark, which is supplied artwork carrying a rim light that has to
        follow its own alpha,
-     the page, which leaves through the camera and comes back out of it.
+     the page, which recedes and comes back.
 
    Three animated layers, and the shutter panels turned off.
    ============================================================================ */
@@ -47,40 +46,39 @@
   pointer-events:none;
 }
 
-/* ---------- the page leaves through the camera, and comes back out of it ---
-   render() swaps the page at 31% of the span, while nothing is visible. The
-   new page is already large and waiting at 64%; from there it settles rather
-   than arrives, which is what coming out of a jump feels like. */
+/* ---------- the page recedes, and comes back --------------------------------
+   render() swaps the page at 31% of the span, while nothing is visible, and
+   from 62% it eases back to rest. */
 html.px-diving #app{
   transform-origin:50% 46%;
   will-change:transform, opacity;
-  animation:px-warp-app 2600ms cubic-bezier(.32,0,.12,1) forwards;
+  animation:px-warp-app 2600ms cubic-bezier(.4,0,.2,1) forwards;
 }
+/* One easing, one direction. The page recedes and returns; it no longer
+   lunges at the lens and snaps back. */
 @keyframes px-warp-app{
   0%   {transform:scale(1);     opacity:1;}
-  6%   {transform:scale(1.085); opacity:.34;}
-  13%  {transform:scale(1.30);  opacity:0;}
-  64%  {transform:scale(1.135); opacity:0;}
-  76%  {transform:scale(1.042); opacity:1;}
+  10%  {transform:scale(1.055); opacity:.42;}
+  22%  {transform:scale(1.115); opacity:0;}
+  62%  {transform:scale(1.075); opacity:0;}
+  82%  {transform:scale(1.018); opacity:1;}
   100% {transform:scale(1);     opacity:1;}
 }
 
-/* ---------- the mark, arriving and leaving --------------------------------
-   The base timeline fades and unblurs the image itself. This moves the whole
-   group along the corridor: out of the far end, to rest, and then through the
-   camera. Two transforms on two different elements, so neither fights the
+/* ---------- the mark, rising and settling ---------------------------------
+   The base timeline fades and unblurs the image itself; this moves the whole
+   group. Two transforms on two different elements, so neither fights the
    other. */
 #dive .center{z-index:3;}
 html.px-diving #dive .center{
-  animation:px-arrive 2600ms cubic-bezier(.2,.72,.24,1);
+  animation:px-arrive 2600ms cubic-bezier(.33,0,.2,1);
 }
+/* The mark rises into the light and settles back out of it. No punch. */
 @keyframes px-arrive{
-  0%   {transform:scale(.36);}
-  14%  {transform:scale(.46);}
-  42%  {transform:scale(1);}
-  60%  {transform:scale(1.04);}
-  74%  {transform:scale(2.6);}
-  100% {transform:scale(3.3);}
+  0%   {transform:scale(.72);}
+  40%  {transform:scale(1);}
+  62%  {transform:scale(1.01);}
+  100% {transform:scale(1.34);}
 }
 
 /* The supplied line marks are wide lockups, roughly 5:1, not square badges.

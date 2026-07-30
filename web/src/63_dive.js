@@ -6,6 +6,22 @@
    inside, and the page's own move: out through the camera, and back out of the
    light at the other end.
 
+   SIMPLER, AND IT GLIDES
+
+   The first version of this was a corridor: six hexagonal frames rushing the
+   camera, forty-six streaks, two flash cuts and a punch through the lens. It
+   was faithful to the reference and it was busy — six things asking for
+   attention in two and a half seconds, with hard cuts between them.
+
+   What is left is one movement. The field goes dark, a soft light opens at
+   the centre, the mark rises into it, and the light closes. The streaks stay
+   because they are what makes it read as travel rather than a fade, but they
+   are fewer, slower and softer, and they no longer fight a corridor for the
+   same frame. No flash cuts. No punch. Nothing that snaps.
+
+   Everything is eased on a single smooth curve now instead of a piecewise
+   list of keyframes, so there is no moment where the motion changes its mind.
+
    ONE LAYER, NOT NINETY
 
    The first build of this was DOM: a div for the black, a div for the light at
@@ -79,19 +95,15 @@ function env(t, pts){
    reason six scaling hexagons read as one corridor with distance in it. */
 const geo = (p, a, b) => a * Math.pow(b / a, p);
 
-const E_VOID     = [[0,0],[.08,1],[.66,1],[.80,0],[1,0]];
-const E_CORRIDOR = [[0,0],[.14,0],[.20,1],[.40,1],[.52,0],[1,0]];
-const E_STREAKS  = [[0,0],[.04,1],[.22,1],[.34,0],[.54,0],[.61,1],[.72,1],[.82,0],[1,0]];
-const E_CORE     = [[0,0],[.18,1],[.34,.58],[.46,0],[1,0]];
-const E_CORESC   = [[0,.08],[.18,.24],[.34,.7],[.46,1.6],[1,1.6]];
-const E_FLASH    = [[0,0],[.36,0],[.41,.6],[.50,0],[.60,0],[.66,.7],[.76,0],[1,0]];
-const E_POCKET   = [[0,0],[.28,1],[.60,1],[.76,0],[1,0]];
-const E_RING     = [[0,0],[.18,1],[.74,.9],[1,0]];
-const E_STREAK   = [[0,0],[.14,1],[.76,1],[1,0]];
+/* Smoothstep, so every envelope arrives and leaves without a corner. A
+   piecewise-linear ramp changes direction at each knot, and at this scale the
+   eye reads those changes as the animation stuttering even when the frame
+   rate is perfect. */
+const ss = t => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+/* rise from a to b, hold, fall from c to d — one shape, softened */
+const arc = (t, a, b, c, d) => t < b ? ss((t - a) / (b - a)) : t < c ? 1 : 1 - ss((t - c) / (d - c));
 
-const N_STREAK = 46;
-const N_RING   = 6;
-const RING_MS  = 1180;
+const N_STREAK = 26;
 
 /* ---------- sprites, drawn once ------------------------------------------ */
 
@@ -129,28 +141,6 @@ function streakSprite(rgb){
     gv.addColorStop(0,  'rgba(0,0,0,1)');
     gv.addColorStop(.5, 'rgba(0,0,0,0)');
     gv.addColorStop(1,  'rgba(0,0,0,1)');
-    g.globalCompositeOperation = 'destination-out';
-    g.fillStyle = gv; g.fillRect(0, 0, W, H);
-  });
-}
-
-/* one rod of a hexagonal frame, carrying its own specular along its length —
-   which is what the reference does, rather than one gradient shared across a
-   whole frame */
-function rodSprite(rgb){
-  const W = 256, H = 12;
-  return sprite(W, H, (g) => {
-    const gr = g.createLinearGradient(0, 0, W, 0);
-    gr.addColorStop(0,   'rgba(' + rgb + ',.30)');
-    gr.addColorStop(.42, 'rgba(255,255,255,.99)');
-    gr.addColorStop(.58, 'rgba(255,255,255,.92)');
-    gr.addColorStop(1,   'rgba(' + rgb + ',.42)');
-    g.fillStyle = gr; g.fillRect(0, 0, W, H);
-    const gv = g.createLinearGradient(0, 0, 0, H);
-    gv.addColorStop(0,   'rgba(0,0,0,.9)');
-    gv.addColorStop(.34, 'rgba(0,0,0,0)');
-    gv.addColorStop(.66, 'rgba(0,0,0,0)');
-    gv.addColorStop(1,   'rgba(0,0,0,.9)');
     g.globalCompositeOperation = 'destination-out';
     g.fillStyle = gv; g.fillRect(0, 0, W, H);
   });
@@ -239,16 +229,15 @@ function plan(){
     const dur = 700 + rnd() * 480;             /* speed is depth */
     W.streaks.push({
       a:   (i * slice + rnd() * slice * .9) * Math.PI / 180,
-      len: 1.7 + rnd() * 1.9,                  /* how far its tail trails it */
-      th:  .8 + rnd() * 1.7,
+      len: 2.2 + rnd() * 2.4,                  /* longer tails, softer edges */
+      th:  .7 + rnd() * 1.1,
       far: .62 + rnd() * .5,
-      o:   .34 + rnd() * .66,
+      o:   .26 + rnd() * .5,
       dur: dur,
       off: rnd() * dur
     });
   }
-  W.rings = [];
-  for(let i = 0; i < N_RING; i++) W.rings.push({ off: i * RING_MS / N_RING });
+
 }
 
 function sprites(key){
@@ -261,7 +250,6 @@ function sprites(key){
     glow:   glowSprite(rgb, .92, .55),
     flash:  glowSprite(rgb, .90, .38),
     streak: streakSprite(rgb),
-    rod:    rodSprite(rgb),
     pocket: pocketSprite()
   };
   return rgb;
@@ -292,67 +280,36 @@ function draw(t){
   g.clearRect(0, 0, w, h);
   g.globalCompositeOperation = 'source-over';
 
-  /* the black, the haze inside it, drifting — one draw */
-  const aV = env(t, E_VOID);
+  /* the field, drifting as one draw */
+  const aV = arc(t, 0, .10, .62, .86);
   if(aV > .002){
-    const k = 1 + .16 * t;
+    const k = 1 + .10 * t;
     g.globalAlpha = aV;
-    g.drawImage(S.field, w * (-.10 * t), h * (-.06 * t), w * k, h * k);
+    g.drawImage(S.field, w * (-.06 * t), h * (-.04 * t), w * k, h * k);
   }
   if(W.reduced){ g.globalAlpha = 1; return; }
 
-  /* the light at the far end of the corridor */
-  const aC = env(t, E_CORE);
-  if(aC > .004){
-    const sc = env(t, E_CORESC) * vmin * .9;
-    g.globalAlpha = aC;
-    g.drawImage(S.glow, cx - sc/2, cy - sc/2, sc, sc);
-  }
-
-  /* additive from here: light over light gets brighter, never muddier */
   g.globalCompositeOperation = 'lighter';
 
-  /* the corridor — six frames on one path, each of six rods swung to its edge.
-     R is centre-to-vertex, and for a regular hexagon that is also the side, so
-     the edge midpoints sit at R·cos30 and a rod cut to 84% leaves the gap at
-     the corners. */
-  const aR = env(t, E_CORRIDOR);
-  if(aR > .004){
-    const Rv = vmin * .38, ap = Rv * .866, rodL = Rv * .84;
-    const ms = t * SPAN;
-    for(let i = 0; i < W.rings.length; i++){
-      let p = ((ms - W.rings[i].off) % RING_MS) / RING_MS;
-      if(p < 0) p += 1;
-      const a = aR * env(p, E_RING);
-      if(a <= .004) continue;
-      const sc  = geo(p, .04, 3.6);
-      const rot = (-9 + 10 * p) * Math.PI / 180;
-      const th  = Math.max(.7, vmin * .0092 * sc);
-      const len = rodL * sc;
-      g.globalAlpha = a;
-      for(let e = 0; e < 6; e++){
-        g.setTransform(1, 0, 0, 1, cx, cy);
-        g.rotate(rot + e * Math.PI / 3);
-        g.translate(ap * sc, 0);
-        g.rotate(Math.PI / 2);
-        g.drawImage(S.rod, -len / 2, -th / 2, len, th);
-      }
-    }
-    g.setTransform(1, 0, 0, 1, 0, 0);
+  /* the light at the centre: it opens, holds while the mark is there, closes */
+  const aC = arc(t, .04, .34, .56, .78) * .9;
+  if(aC > .004){
+    const sc = vmin * (.55 + 1.15 * ss(t));
+    g.globalAlpha = aC;
+    g.drawImage(S.glow, cx - sc / 2, cy - sc / 2, sc, sc);
   }
 
-  /* the streaks — anchored at the vanishing point, flying out along their own
-     bearing and lengthening as they go, because at speed a point source stops
-     being a point */
-  const aS = env(t, E_STREAKS);
+  /* the streaks — fewer, slower, and softest where they start, so the field
+     reads as movement rather than as a burst */
+  const aS = arc(t, .02, .26, .58, .84) * .62;
   if(aS > .004){
     const ms = t * SPAN;
     for(let i = 0; i < W.streaks.length; i++){
       const s = W.streaks[i];
       const p = ((ms + s.off) % s.dur) / s.dur;
-      const a = aS * s.o * env(p, E_STREAK);
+      const a = aS * s.o * ss(Math.min(1, p / .18)) * (1 - ss(Math.max(0, (p - .62) / .38)));
       if(a <= .004) continue;
-      const rn = geo(p, vmin * .012, R * s.far);
+      const rn = geo(p, vmin * .05, R * s.far);
       g.globalAlpha = a;
       g.setTransform(1, 0, 0, 1, cx, cy);
       g.rotate(s.a);
@@ -361,25 +318,13 @@ function draw(t){
     g.setTransform(1, 0, 0, 1, 0, 0);
   }
 
-  /* the two cuts: one as the mark comes out of the corridor, one as it goes
-     through the camera */
-  const aF = env(t, E_FLASH);
-  if(aF > .004){
-    /* the sprite is transparent past 72% of its radius, so anything beyond
-       about nine tenths of the diagonal is fill nobody ever sees */
-    const fs = R * .92;
-    g.globalAlpha = aF;
-    g.drawImage(S.flash, cx - fs/2, cy - fs/2, fs, fs);
-  }
-
-  /* and the pocket, back to normal blending so it can take light away */
+  /* and the pocket the mark stands in */
   g.globalCompositeOperation = 'source-over';
-  const aP = env(t, E_POCKET);
+  const aP = arc(t, .16, .36, .58, .80);
   if(aP > .004){
-    /* only as wide as the mark needs, not as wide as the screen */
     const ps = Math.min(w * 1.02, 1000 * W.s);
     g.globalAlpha = aP;
-    g.drawImage(S.pocket, cx - ps/2, h * .44 - ps/2, ps, ps);
+    g.drawImage(S.pocket, cx - ps / 2, h * .44 - ps / 2, ps, ps);
   }
   g.globalAlpha = 1;
 }
