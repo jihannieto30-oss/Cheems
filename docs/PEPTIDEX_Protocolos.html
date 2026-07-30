@@ -49,6 +49,48 @@ body.viewpro #protocol{display:block;}
 .pro-bar #proPrint:hover{background:#16346f!important;}
 .pro-saved{font-size:11px;color:var(--pmut);min-width:120px}
 
+/* ---------------- registro de clientes ----------------
+   El protocolo dejó de ser un documento suelto y pasó a ser un expediente:
+   cada cliente queda guardado con su folio y su fecha, y se vuelve a abrir tal
+   como se dejó.  El registro vive en este navegador — no hay servidor detrás —
+   así que el botón de exportar no es un adorno: es la única copia que
+   sobrevive a un formateo. */
+.reg-back{position:fixed;inset:0;background:rgba(10,14,22,.5);z-index:120;display:none;
+  align-items:flex-start;justify-content:center;padding:48px 20px;overflow-y:auto}
+.reg-back.on{display:flex}
+.reg{width:100%;max-width:760px;background:#fff;border-radius:14px;overflow:hidden;
+  box-shadow:0 40px 90px -40px rgba(6,12,28,.6);font-family:var(--pfont)}
+.reg-h{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--phair)}
+.reg-h h3{font-size:15px;font-weight:700;letter-spacing:-.01em;color:var(--pink);flex:1}
+.reg-h .n{font-size:11px;color:var(--pmut);font-family:var(--pmono)}
+.reg-x{border:none;background:transparent;font-size:19px;line-height:1;color:#aeb4bd;cursor:pointer;
+  padding:2px 6px;border-radius:6px}
+.reg-x:hover{color:var(--pink);background:#f2f4f7}
+.reg-s{padding:12px 20px;border-bottom:1px solid var(--phair);display:flex;gap:9px;align-items:center}
+.reg-s input{flex:1;font-family:inherit;font-size:13px;padding:9px 13px;border:1px solid var(--phair);
+  border-radius:999px;outline:none;color:var(--pink)}
+.reg-s input:focus{border-color:var(--pnav1)}
+.reg-list{max-height:52vh;overflow-y:auto}
+.reg-row{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid #f0f2f5}
+.reg-row:last-child{border-bottom:none}
+.reg-row:hover{background:#fafbfc}
+.reg-row.cur{background:#f4f8ff}
+.reg-i{flex:1;min-width:0}
+.reg-i b{display:block;font-size:14px;font-weight:700;color:var(--pink);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.reg-i span{display:block;font-size:11px;color:var(--pmut);margin-top:2px;font-family:var(--pmono)}
+.reg-b{border:1px solid var(--phair);background:#fff;border-radius:7px;cursor:pointer;
+  font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--pmut);
+  padding:5px 9px;text-transform:uppercase;white-space:nowrap}
+.reg-b:hover{border-color:var(--pnav1);color:var(--pnav1)}
+.reg-b.del:hover{border-color:#c0392b;color:#c0392b;background:#fdf2f0}
+.reg-b.go{background:var(--pnav1);border-color:var(--pnav1);color:#fff}
+.reg-b.go:hover{background:#16346f;color:#fff}
+.reg-none{padding:44px 20px;text-align:center;color:var(--pmut);font-size:13px}
+.reg-f{padding:13px 20px;border-top:1px solid var(--phair);display:flex;gap:8px;align-items:center}
+.reg-f .sp{flex:1}
+@media print{ .reg-back{display:none !important} }
+
 .pro-pick{position:relative;min-width:250px;flex:1;max-width:400px}
 .pro-pick input{width:100%;font-family:inherit;font-size:13px;padding:9px 13px;
   border:1px solid var(--phair);border-radius:999px;background:#fff;outline:none;color:var(--pink)}
@@ -244,6 +286,8 @@ body.viewpro #protocol{display:block;}
     </div>
     <span class="sp"></span>
     <span class="pro-saved" id="proSaved"></span>
+    <button class="tbtn ghost" id="proSave">Guardar</button>
+    <button class="tbtn ghost" id="proReg">Registro</button>
     <button class="tbtn ghost" id="proNew">＋ Nuevo</button>
     <button class="tbtn ghost" id="proExp">Exportar</button>
     <button class="tbtn ghost" id="proImp">Importar</button>
@@ -341,6 +385,22 @@ body.viewpro #protocol{display:block;}
       <div class="b">ENGINEERED BEYOND PERFECTION</div>
     </div>
   </div>
+
+  <div class="reg-back" id="regBack">
+    <div class="reg">
+      <div class="reg-h"><h3>Registro de clientes</h3>
+        <span class="n" id="regN"></span>
+        <button class="reg-x" id="regX" title="Cerrar">&times;</button></div>
+      <div class="reg-s"><input id="regQ" type="search" placeholder="Buscar por cliente, folio o compuesto…" autocomplete="off"/></div>
+      <div class="reg-list" id="regList"></div>
+      <div class="reg-f">
+        <button class="reg-b" id="regExpAll">Exportar registro</button>
+        <button class="reg-b" id="regImpAll">Importar registro</button>
+        <span class="sp"></span>
+        <button class="reg-b del" id="regWipe">Vaciar registro</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -378,7 +438,10 @@ document.getElementById('proLogo').src='data:image/webp;base64,UklGRtj7AQBXRUJQV
             s1:SEC[0], s2:SEC[1], s3:SEC[2], s4:SEC[3], s5:SEC[4], s6:SEC[5],
             s7:'DISCLOSURE',
             general:'', almacen:'', seguimiento:'', notas:'',
-            disclosure:DISC, legal:LEGAL, items:[]};
+            disclosure:DISC, legal:LEGAL, items:[],
+            /* Vacío mientras el protocolo no esté en el registro.  Es lo que
+               distingue «guardar este cliente» de «crear otro». */
+            _id:''};
   }
   var doc = blank();
   var sel = 0, hits = [];
@@ -599,6 +662,175 @@ document.getElementById('proLogo').src='data:image/webp;base64,UklGRtj7AQBXRUJQV
     };
     r.readAsText(f);
   });
+
+  /* ================= REGISTRO DE CLIENTES =================
+     El documento de trabajo vive en KEY; el expediente, en RKEY.  Son dos
+     cosas distintas a propósito: se puede estar escribiendo un protocolo sin
+     haberlo guardado todavía, y cerrar la pestaña no debe perderlo ni tampoco
+     ensuciar el registro con borradores.
+
+     doc._id es lo que une a los dos.  Si el documento abierto salió del
+     registro conserva su id y Guardar lo actualiza; si nació en blanco, la
+     primera vez que se guarda se le asigna uno.  Sin ese id, cada Guardar
+     crearía un cliente nuevo y el registro se llenaría de duplicados. */
+  var RKEY='px-protocolos';
+  var reg=[];
+  function regLoad(){
+    try{ var r=JSON.parse(localStorage.getItem(RKEY)); reg=Array.isArray(r)?r:[]; }
+    catch(e){ reg=[]; }
+  }
+  function regSave(){ try{ localStorage.setItem(RKEY, JSON.stringify(reg)); }catch(e){} }
+  function rid(){ return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+  function fmtWhen(ts){
+    if(!ts) return '';
+    try{ return new Date(ts).toLocaleString('es-MX',
+      {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+    catch(e){ return ''; }
+  }
+
+  function storeCurrent(){
+    var nombre=(doc.cliente||'').trim();
+    if(!nombre){ alert('Ponle nombre al cliente antes de guardarlo en el registro.'); return false; }
+    if(!doc._id) doc._id=rid();
+    var rec={id:doc._id, cliente:nombre, folio:doc.folio||'', fecha:doc.fecha||'',
+             n:doc.items.length, updated:Date.now(),
+             comp:doc.items.map(function(i){return i.n;}).join(' · '),
+             doc:JSON.parse(JSON.stringify(doc))};
+    var i=-1;
+    for(var k=0;k<reg.length;k++) if(reg[k].id===doc._id){ i=k; break; }
+    if(i>=0) reg[i]=rec; else reg.unshift(rec);
+    regSave(); save();
+    saved.textContent='Guardado en el registro';
+    return true;
+  }
+
+  function openRec(id){
+    var rec=null;
+    for(var k=0;k<reg.length;k++) if(reg[k].id===id) rec=reg[k];
+    if(!rec) return;
+    var b=blank();
+    for(var k2 in b) if(rec.doc[k2]!==undefined) b[k2]=rec.doc[k2];
+    b.items=Array.isArray(rec.doc.items)?rec.doc.items:[];
+    b._id=rec.id;
+    doc=b; bindDocFields(); renderItems(); growAll(); save();
+    closeReg();
+    sheet.scrollIntoView({block:'start',behavior:'smooth'});
+  }
+
+  var regBack=document.getElementById('regBack'),
+      regList=document.getElementById('regList'),
+      regQ=document.getElementById('regQ'),
+      regN=document.getElementById('regN');
+
+  function paintReg(){
+    var t=(regQ.value||'').trim().toLowerCase();
+    var rows=reg.filter(function(r){
+      return !t || (r.cliente+' '+r.folio+' '+r.comp).toLowerCase().indexOf(t)>=0;
+    });
+    regN.textContent=reg.length+(reg.length===1?' cliente':' clientes');
+    if(!rows.length){
+      regList.innerHTML='<div class="reg-none">'+
+        (reg.length?'Sin resultados.':'El registro está vacío. Escribe un protocolo y pulsa Guardar.')+
+        '</div>';
+      return;
+    }
+    regList.innerHTML=rows.map(function(r){
+      return '<div class="reg-row'+(r.id===doc._id?' cur':'')+'" data-id="'+esc(r.id)+'">'+
+        '<div class="reg-i"><b>'+esc(r.cliente)+'</b><span>'+
+          (r.folio?esc(r.folio)+' · ':'')+esc(r.fecha||'')+' · '+r.n+
+          (r.n===1?' compuesto':' compuestos')+' · '+esc(fmtWhen(r.updated))+
+        '</span></div>'+
+        '<button class="reg-b go" data-a="open">Abrir</button>'+
+        '<button class="reg-b" data-a="dup">Duplicar</button>'+
+        '<button class="reg-b del" data-a="del">Eliminar</button></div>';
+    }).join('');
+    [].forEach.call(regList.querySelectorAll('.reg-row'), function(row){
+      var id=row.getAttribute('data-id');
+      row.querySelector('[data-a="open"]').addEventListener('click', function(){
+        if(id===doc._id){ closeReg(); return; }
+        openRec(id);
+      });
+      row.querySelector('[data-a="dup"]').addEventListener('click', function(){
+        var src=null;
+        for(var k=0;k<reg.length;k++) if(reg[k].id===id) src=reg[k];
+        if(!src) return;
+        var copia=JSON.parse(JSON.stringify(src));
+        copia.id=rid(); copia.doc._id=copia.id;
+        copia.cliente=src.cliente+' (copia)'; copia.doc.cliente=copia.cliente;
+        copia.updated=Date.now();
+        reg.unshift(copia); regSave(); paintReg();
+      });
+      row.querySelector('[data-a="del"]').addEventListener('click', function(){
+        var src=null;
+        for(var k=0;k<reg.length;k++) if(reg[k].id===id) src=reg[k];
+        if(!src) return;
+        if(!confirm('Eliminar del registro el protocolo de «'+src.cliente+'».\nEsto no se puede deshacer.')) return;
+        reg=reg.filter(function(r){ return r.id!==id; });
+        regSave(); paintReg();
+      });
+    });
+  }
+  function openReg(){ regLoad(); paintReg(); regBack.classList.add('on'); regQ.focus(); }
+  function closeReg(){ regBack.classList.remove('on'); }
+
+  document.getElementById('proReg').addEventListener('click', openReg);
+  document.getElementById('regX').addEventListener('click', closeReg);
+  regBack.addEventListener('mousedown', function(ev){ if(ev.target===regBack) closeReg(); });
+  document.addEventListener('keydown', function(ev){
+    if(ev.key==='Escape' && regBack.classList.contains('on')) closeReg();
+  });
+  regQ.addEventListener('input', paintReg);
+
+  document.getElementById('proSave').addEventListener('click', function(){
+    if(storeCurrent()) openReg();
+  });
+
+  document.getElementById('regExpAll').addEventListener('click', function(){
+    regLoad();
+    if(!reg.length){ alert('El registro está vacío.'); return; }
+    var b=new Blob([JSON.stringify(reg,null,2)],{type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download='PEPTIDEX_Registro_Protocolos_'+new Date().toISOString().slice(0,10)+'.json';
+    a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); },1000);
+  });
+  var rfile=document.createElement('input');
+  rfile.type='file'; rfile.accept='application/json'; rfile.style.display='none';
+  document.body.appendChild(rfile);
+  document.getElementById('regImpAll').addEventListener('click', function(){ rfile.click(); });
+  rfile.addEventListener('change', function(){
+    var f=rfile.files[0]; if(!f) return;
+    var r=new FileReader();
+    r.onload=function(){
+      try{
+        var d=JSON.parse(r.result);
+        if(!Array.isArray(d)) throw new Error('el archivo no es un registro');
+        regLoad();
+        /* Se fusiona por id en lugar de reemplazar: importar el registro de
+           otra máquina no debe borrar los clientes de ésta. */
+        var seen={}, n=0;
+        reg.forEach(function(r0){ seen[r0.id]=true; });
+        d.forEach(function(r1){
+          if(!r1 || !r1.id || !r1.doc) return;
+          if(seen[r1.id]){
+            for(var k=0;k<reg.length;k++) if(reg[k].id===r1.id && (r1.updated||0)>(reg[k].updated||0)) reg[k]=r1;
+          }else{ reg.unshift(r1); n++; }
+        });
+        regSave(); paintReg();
+        alert('Importados '+n+' clientes nuevos. Los que ya existían se actualizaron si eran más recientes.');
+      }catch(e){ alert('No se pudo leer el archivo: '+e.message); }
+      rfile.value='';
+    };
+    r.readAsText(f);
+  });
+  document.getElementById('regWipe').addEventListener('click', function(){
+    regLoad();
+    if(!reg.length) return;
+    if(!confirm('Vaciar el registro entero: '+reg.length+' cliente(s).\n'+
+                'Esto no se puede deshacer. Exporta antes si quieres conservarlo. ¿Continuar?')) return;
+    reg=[]; regSave(); paintReg();
+  });
+  regLoad();
 
   /* ---- arranque ---- */
   if(!load()){

@@ -115,8 +115,10 @@ def payload():
     estructura: en cuanto el usuario puede editarlas dejan de ser una relaci\u00f3n
     con el cat\u00e1logo y pasan a ser un campo suyo."""
     out = []
+    n = 0
     for line_key, line_name, data, ink, accent in LINES:
         for c in data:
+            n += 1
             sizes, skus = sizes_for(line_key, c['id'])
 
             # 1 \u2014 descripci\u00f3n general: qu\u00e9 es y c\u00f3mo act\u00faa, en dos p\u00e1rrafos.
@@ -141,6 +143,12 @@ def payload():
                 'name':  c['name'],
                 'sub':   c.get('aka') or c['cls'],
                 'strip': STRIP[line_key],
+
+                # C\u00f3digo de documento.  Lleva el ordinal y el c\u00f3digo de compuesto
+                # del cat\u00e1logo, que es lo que permite casar la ficha con el SKU
+                # sin tener que leerla.  Editable, como todo lo dem\u00e1s.
+                'code': 'PX-FT-%02d-%s' % (n, c['id']),
+                'rev':  'Rev. 01',
 
                 # r\u00f3tulos de secci\u00f3n \u2014 editables como todo lo dem\u00e1s
                 's1': SEC[0], 's2': SEC[1], 's3': SEC[2],
@@ -332,6 +340,12 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);font-size:14p
 .fbtn.del:hover{border-color:#c0392b;color:#c0392b;background:#fdf2f0}
 .lsel{font-size:8.5px;font-weight:700;letter-spacing:.12em;color:var(--muted);background:#fff;
   border:1px solid var(--hair);border-radius:6px;padding:3px 6px;font-family:inherit;cursor:pointer}
+.fx-code{display:flex;align-items:baseline;gap:6px;margin-bottom:-8px}
+.fx-code .fx-sep{color:var(--phair,#dcdfe4);font-size:10px}
+.fx-code .f-code{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;
+  color:var(--nav1);text-transform:uppercase;width:145px;flex:0 0 145px}
+.fx-code .f-rev{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--muted);
+  width:66px;flex:0 0 66px}
 .badge{position:absolute;top:13px;left:14px;font-size:8px;font-weight:800;letter-spacing:.14em;
   text-transform:uppercase;color:var(--edit);display:none}
 .ficha.dirty .badge{display:block}
@@ -378,6 +392,45 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);font-size:14p
 
 .empty{padding:64px 20px;text-align:center;color:var(--muted);font-size:14px;display:none;
   background:#fff;border:1px solid var(--hair);border-radius:4px}
+/* ============================================================================
+   CANDADO
+
+   Mismas credenciales que el facturador y, sobre todo, MISMOS HASHES: el
+   archivo guarda dos SHA-256 y ni el correo ni la contraseña aparecen jamás en
+   texto claro dentro de él.  Quien abra el HTML con un editor no encuentra
+   nada que le sirva.
+
+   Lo que esto SÍ hace: impedir que alguien que reciba el archivo por error lo
+   abra y lea el catálogo.  Lo que NO hace: proteger el contenido de quien esté
+   decidido — todo el documento viaja dentro del propio archivo, así que un
+   SHA-256 en el cliente es una puerta, no una caja fuerte.  Para eso haría
+   falta cifrar el contenido con una clave derivada de la contraseña.
+   ============================================================================ */
+.gate{position:fixed;inset:0;z-index:200;background:#0d1117;display:none;
+  align-items:center;justify-content:center;padding:24px}
+body.locked .gate{display:flex}
+body.locked .top,body.locked .wrap{display:none}
+body.locked{overflow:hidden}
+.gate-card{width:100%;max-width:360px;text-align:center}
+.gate-card img{height:62px;width:auto;margin:0 auto 26px;display:block;
+  filter:brightness(0) invert(1)}
+.gate-card h2{color:#fff;font-size:14px;font-weight:700;letter-spacing:.26em;
+  text-transform:uppercase;margin-bottom:4px}
+.gate-card p{color:#7c8798;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  margin-bottom:24px}
+.gate input{width:100%;font-family:inherit;font-size:14px;padding:12px 15px;margin-bottom:9px;
+  border:1px solid #252c38;border-radius:9px;background:#151b24;color:#e9edf3;outline:none}
+.gate input:focus{border-color:#3a86ff;background:#19212c}
+.gate input::placeholder{color:#5d6878}
+.gate button{width:100%;font-family:inherit;font-size:13px;font-weight:700;padding:12px;
+  border:none;border-radius:9px;background:#fff;color:#0d1117;cursor:pointer;margin-top:6px}
+.gate button:hover{background:#e6eaf0}
+.gate .err{color:#ff6b5e;font-size:12px;margin-top:12px;min-height:16px}
+.gate .fine{color:#4d5666;font-size:9.5px;letter-spacing:.24em;margin-top:26px;text-transform:uppercase}
+.lock-out{font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;
+  padding:8px 6px;font-family:inherit}
+.lock-out:hover{color:var(--ink)}
+@media print{ .gate{display:none !important} body.locked .wrap{display:none !important} }
 
 @media(max-width:1040px){
   .wrap{grid-template-columns:1fr;gap:0}
@@ -430,6 +483,11 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);font-size:14p
     color:var(--ink2)}
 
   .fx-head{padding-bottom:6pt}
+  .fx-code{margin-bottom:-4pt}
+  .fx-code .m-code{font-family:var(--mono);font-size:7pt;font-weight:700;letter-spacing:.1em;
+    color:var(--nav1);text-transform:uppercase;flex:0 0 auto}
+  .fx-code .m-rev{font-family:var(--mono);font-size:7pt;letter-spacing:.08em;color:var(--muted);
+    flex:0 0 auto}
   .fx-master{height:34pt;margin-bottom:5pt}
   .fx-linelogo{height:22pt}
   .fx-kick{font-size:6.8pt;letter-spacing:.4em}
@@ -470,6 +528,23 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);font-size:14p
 </head>
 <body>
 
+<div class="gate">
+  <form class="gate-card" id="gateForm" autocomplete="on">
+    <img src="__LOGO__" alt="PEPTIDEX"/>
+    <h2>Fichas Técnicas</h2>
+    <p>Acceso restringido</p>
+    <input id="gEmail" type="email" placeholder="Correo" autocomplete="username"/>
+    <input id="gPass" type="password" placeholder="Contraseña" autocomplete="current-password"/>
+    <label style="display:flex;align-items:center;gap:7px;color:#7c8798;font-size:11.5px;
+      margin:10px 0 2px;cursor:pointer;text-align:left">
+      <input id="gKeep" type="checkbox" style="width:auto;margin:0"/> Mantener la sesión abierta
+    </label>
+    <button type="submit">Entrar</button>
+    <div class="err" id="gErr"></div>
+    <div class="fine">Engineered Beyond Perfection</div>
+  </form>
+</div>
+
 <div class="top"><div class="topin">
   <div class="brand"><img src="__LOGO__" alt="PEPTIDEX"/>
     <div class="bt"><b>Fichas Técnicas</b><span>Research Use Only</span></div></div>
@@ -491,6 +566,7 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);font-size:14p
     <button class="btn" id="imp">Importar</button>
     <button class="btn" id="rst">Restaurar todo</button>
     <button class="btn dark" id="pr">Imprimir / PDF</button>
+    <button class="lock-out" id="lockOut" title="Cerrar sesión">⎋</button>
   </div>
 </div></div>
 
@@ -502,6 +578,52 @@ body{font-family:var(--font);color:var(--ink);background:var(--bg);font-size:14p
 <input type="file" id="file" accept="application/json" style="display:none"/>
 
 <script>
+/* ---------- candado ----------
+   Sólo viajan los hashes.  Son los mismos que usa el facturador, de modo que
+   las credenciales de los dos archivos no pueden desincronizarse. */
+function sha256(ascii){function rr(v,a){return(v>>>a)|(v<<(32-a))}var mL=ascii.length*8,i,j,w=[],H=[],K=[],p=Math.pow,res='',pr=[2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,211,223,227,229,233,239,241,251,257,263,269,271,277,281,283,293,307,311];
+for(i=0;i<64;i++){K[i]=(p(pr[i],1/3)*4294967296)|0;if(i<8)H[i]=(p(pr[i],1/2)*4294967296)|0;}
+ascii+='\x80';while(ascii.length%64-56)ascii+='\x00';
+for(i=0;i<ascii.length;i++){j=ascii.charCodeAt(i);if(j>>8)return'';w[i>>2]|=j<<((3-i)%4)*8;}
+w[w.length]=(mL/4294967296)|0;w[w.length]=mL;
+for(j=0;j<w.length;){var ch=w.slice(j,j+=16),oH=H.slice(0);
+for(i=0;i<64;i++){var w15=ch[i-15],w2=ch[i-2],a=H[0],e=H[4],
+t1=H[7]+(rr(e,6)^rr(e,11)^rr(e,25))+((e&H[5])^(~e&H[6]))+K[i]+(ch[i]=i<16?ch[i]:(ch[i-16]+(rr(w15,7)^rr(w15,18)^(w15>>>3))+ch[i-7]+(rr(w2,17)^rr(w2,19)^(w2>>>10)))|0),
+t2=(rr(a,2)^rr(a,13)^rr(a,22))+((a&H[1])^(a&H[2])^(H[1]&H[2]));
+H=[(t1+t2)|0].concat(H);H[4]=(H[4]+t1)|0;H.pop();}
+for(i=0;i<8;i++)H[i]=(H[i]+oH[i])|0;}
+for(i=0;i<8;i++)for(j=3;j+1;j--){var b=(H[i]>>(j*8))&255;res+=((b<16)?0:'')+b.toString(16);}return res;}
+
+var AUTH={
+  email:'f44ff633110f3dbeac9e7ae1b45dff2ce91972c3549aed52f2467700e6a16514',
+  pass:['650cf7ef315e01ced1fd785ec634e6778178afcf8819966b27067a5729d09def',
+        '09d969942f8ae82544114b9a7494a711983323e4b7c89cc3c2db9bcbe5d84ae9']
+};
+var GKEY='px-fichas-auth';
+function unlock(){ document.body.classList.remove('locked'); }
+function lock(){
+  document.body.classList.add('locked');
+  sessionStorage.removeItem(GKEY); localStorage.removeItem(GKEY);
+  var gp=document.getElementById('gPass'); if(gp) gp.value='';
+}
+(function gate(){
+  if(sessionStorage.getItem(GKEY)==='1'||localStorage.getItem(GKEY)==='1'){ unlock(); return; }
+  document.body.classList.add('locked');
+})();
+document.getElementById('gateForm').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var em=document.getElementById('gEmail').value.trim().toLowerCase(),
+      pw=document.getElementById('gPass').value,
+      err=document.getElementById('gErr');
+  if(sha256(em)===AUTH.email && AUTH.pass.indexOf(sha256(pw))>=0){
+    (document.getElementById('gKeep').checked?localStorage:sessionStorage).setItem(GKEY,'1');
+    err.textContent=''; unlock();
+  }else{
+    err.textContent='Credenciales incorrectas.';
+    document.getElementById('gPass').value='';
+  }
+});
+
 (function(){
 "use strict";
 var ORIGINAL = __DATA__;
@@ -648,6 +770,8 @@ function fichaNode(d, n){
     '<button class="fbtn del">Eliminar</button>'+
   '</div>'+
 
+  '<div class="fx-code">'+fld('f-code','code','Código')+
+    '<span class="fx-sep">·</span>'+fld('f-rev','rev','Rev.')+'</div>'+
   '<div class="fx-head">'+
     '<img class="fx-master" src="'+MASTER+'" alt="PEPTIDEX"/>'+
     '<div class="fx-kick">Ficha Técnica</div>'+
@@ -733,7 +857,7 @@ function growAll(){
 }
 
 function qtext(d){
-  return (d.name+' '+d.sub+' '+d.v1+' '+d.v4+' '+d.skus+' '+d.sizes).toLowerCase();
+  return (d.code+' '+d.name+' '+d.sub+' '+d.v1+' '+d.v4+' '+d.skus+' '+d.sizes).toLowerCase();
 }
 function apply(){
   var shown=0;
@@ -832,6 +956,7 @@ function fit(){
 }
 window.PX_FIT = fit;
 document.getElementById('pr').addEventListener('click', function(){ syncAll(); window.print(); });
+document.getElementById('lockOut').addEventListener('click', function(){ lock(); });
 /* beforeprint se dispara con los estilos de impresión ya aplicados, que es el
    único momento en que medir tiene sentido. */
 window.addEventListener('beforeprint', function(){ syncAll(); fit(); });

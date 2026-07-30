@@ -47,6 +47,30 @@ para llevarlo a otra máquina, Exportar.
 **Los logos son los tuyos**, embebidos tal cual: el maestro en cada cabecera y
 el de línea en la tira. No se recortan, no se recolorean, no se reconstruyen.
 
+### Código de documento
+
+Cada ficha lleva arriba a la izquierda su código y su revisión —
+`PX-FT-01-BC · Rev. 01`. El código junta el ordinal con el código de compuesto
+del catálogo, que es lo que permite casar la ficha con el SKU sin leerla. Se
+busca por él desde la barra, y como todo lo demás, es editable.
+
+### Acceso
+
+El archivo pide correo y contraseña — **las mismas del facturador**, y con los
+**mismos hashes**: dentro del HTML sólo viajan dos SHA-256, así que ni el correo
+ni la contraseña aparecen nunca en texto claro. Compartir los dos hashes entre
+los dos archivos también evita que las credenciales se desincronicen.
+
+Imprimir con el candado echado no saca nada: la primera versión dejaba pasar
+`Ctrl+P`, que habría hecho inútil la puerta.
+
+> **Qué protege esto y qué no.** Impide que alguien que reciba el archivo por
+> error lo abra y lea el catálogo. **No** protege el contenido de quien esté
+> decidido: el documento entero viaja dentro del propio HTML, y un SHA-256 en el
+> navegador es una puerta, no una caja fuerte. Para eso habría que cifrar el
+> contenido con una clave derivada de la contraseña — se puede hacer, si hace
+> falta.
+
 ### Impresión
 
 **Una ficha por página, las 56 en 56 páginas.** Tres cosas hacen que eso salga
@@ -102,9 +126,28 @@ texto legal fijo y deben ser idénticos en todos los protocolos. Siguen siendo
 editables.
 
 Las 118 presentaciones están en el buscador de la barra: teclear, `↑`/`↓`,
-`Enter`. Cada compuesto abre su bloque con la tinta de su línea. Botones
-**＋ Nuevo**, **Exportar**, **Importar**, **Vaciar** e **Imprimir / PDF**. Se
-guarda solo en el navegador; para llevarlo a otra máquina, Exportar.
+`Enter`. Cada compuesto abre su bloque con la tinta de su línea.
+
+### Registro de clientes
+
+El protocolo dejó de ser un documento suelto y pasó a ser un expediente.
+**Guardar** lo archiva bajo el nombre del cliente; **Registro** abre la lista.
+
+Cada cliente aparece con folio, fecha, número de compuestos y cuándo se tocó
+por última vez, y se puede buscar por nombre, folio o compuesto. Desde ahí:
+**Abrir** —vuelve tal como se dejó—, **Duplicar** —para el cliente que repite
+con una variación— y **Eliminar**.
+
+Guardar dos veces el mismo cliente **no** crea un duplicado. El documento
+abierto lleva un identificador interno: si salió del registro, Guardar lo
+actualiza; si nació en blanco, se le asigna uno la primera vez. Sin eso, cada
+Guardar habría creado un cliente nuevo.
+
+El registro vive **en este navegador**: no hay servidor detrás. Por eso
+**Exportar registro** no es un adorno — es la única copia que sobrevive a un
+formateo. **Importar registro** fusiona por identificador en lugar de
+reemplazar, así que traer el registro de otra máquina no borra los clientes de
+ésta; de los que coinciden se queda el más reciente.
 
 Las secciones que queden vacías se imprimen con renglón: la hoja sirve también
 para rellenarla a mano.
