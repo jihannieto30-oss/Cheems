@@ -5,7 +5,8 @@ doble clic y funcionan sin internet.
 
 | Archivo | Qué es |
 |---|---|
-| `PEPTIDEX_Fichas_Tecnicas.html` | Ficha técnica de los **56 compuestos** / **118 presentaciones** del catálogo |
+| `PEPTIDEX_Fichas_Tecnicas.html` | Ficha técnica editable de los **56 compuestos** / **118 presentaciones** |
+| `PEPTIDEX_Fichas_Tecnicas.pdf` | Las 56 fichas impresas — **una por página** |
 | `PEPTIDEX_Protocolos.html` | Editor de **PROTOCOLO** — el documento que se llena por cliente |
 | `PEPTIDEX_Testeo_Peptidos.pdf` | Manual de **cómo se testea un péptido** — 32 páginas |
 | `PEPTIDEX_Testeo_Peptidos.html` | El mismo manual, como página web |
@@ -14,29 +15,54 @@ doble clic y funcionan sin internet.
 
 ## Fichas técnicas
 
-Un vademécum. Índice fijo a la izquierda que filtra en vivo, columna de fichas
-a la derecha, búsqueda por nombre, sinónimo, clase o SKU (`Ctrl/Cmd+K`), filtro
-por línea, e impresión a una ficha por página.
+La maqueta es la aprobada de PEPTIDEX, la del `Ficha_Tecnica_WS`: logo maestro,
+FICHA TÉCNICA, nombre, sello RUO, tira de línea con su logo, y seis secciones
+numeradas sobre barra azul.
 
-Las 56 fichas tienen **exactamente la misma estructura**, aunque sobre algunos
-compuestos haya diez veces más que decir que sobre otros: un documento técnico
-se consulta comparando, y comparar exige que el dato esté siempre en el mismo
-sitio.
+```
+1  DESCRIPCIÓN GENERAL
+2  COMPOSICIÓN / CONTENIDO QUÍMICO
+3  APLICACIONES Y BENEFICIOS EN USO HUMANO
+4  DOSIS Y FRECUENCIA DE USO      ← en blanco, la llenas tú
+5  RECOMENDACIONES
+6  EFECTOS SECUNDARIOS Y RIESGOS
+```
 
-Cada ficha lleva identidad química (CAS, fórmula, masa, secuencia, residuos),
-para qué es, **qué contiene realmente el vial**, mecanismo, hallazgos de
-investigación —con la especie o el tipo de estudio entre paréntesis, porque la
-diferencia entre un resultado en roedor y uno en humano es el dato más
-importante de la ficha—, vida media, reconstitución, almacenamiento,
-estabilidad química, manejo y advertencias.
+Y el aviso legal en inglés al pie, palabra por palabra el del documento.
 
-**Donde no hay dato, la ficha imprime «sin registro público».** El hueco
-declarado es información; el hueco rellenado es un riesgo. Los compuestos sin
-CAS consolidado (Adamax, Cartalax, Thymalin y las mezclas) lo dicen en su
-propia ficha.
+**Todo es editable.** Los 31 campos de cada ficha: el nombre, el subtítulo, la
+tira de línea, los seis títulos de sección, los ocho rótulos y los ocho valores
+de la tabla de composición, las cuatro listas de viñetas y el aviso legal. Se
+hace clic sobre el texto y se escribe. En reposo no se ve ni una caja: la ficha
+se lee como el impreso, y el subrayado sólo aparece al pasar por encima.
 
-Las dosis **no** aparecen, deliberadamente: el documento describe compuestos,
-no pautas de administración.
+**La sección 4 sale vacía a propósito.** Es la única que el generador no
+rellena, porque la pauta la pones tú. El recuadro punteado es el hueco.
+
+`Esc` dentro de un campo lo devuelve a su valor original sin tocar el resto.
+Cada ficha tiene **Restaurar** y **Eliminar**; arriba están **＋ Ficha**,
+**Exportar**, **Importar** y **Restaurar todo**. Se guarda solo en el navegador;
+para llevarlo a otra máquina, Exportar.
+
+**Los logos son los tuyos**, embebidos tal cual: el maestro en cada cabecera y
+el de línea en la tira. No se recortan, no se recolorean, no se reconstruyen.
+
+### Impresión
+
+**Una ficha por página, las 56 en 56 páginas.** Tres cosas hacen que eso salga
+bien y ninguna es evidente:
+
+- La hoja Carta con márgenes mide unos 732 px de CSS, por debajo del punto de
+  ruptura de móvil. Sin forzarlo, el papel heredaría la disposición de teléfono
+  y la tabla de composición se desmontaría en bloques apilados.
+- Un `textarea` se imprime con la altura que midió en pantalla, y la hoja es más
+  estrecha que la ventana: el texto reflúe a más líneas y el sobrante se pierde
+  bajo `overflow:hidden`. Por eso cada campo lleva al lado un `div` gemelo con
+  el mismo texto, oculto en pantalla y visible en el papel.
+- Diez de las 56 llevan bastante más texto que el resto. `fit()` las mide en
+  `beforeprint` y les baja el cuerpo un escalón —o dos si con uno no basta—
+  para que quepan. Cede la tipografía, no la estructura: márgenes, barra y
+  tabla no se tocan.
 
 ## Protocolo
 
@@ -110,8 +136,10 @@ python3 build_protocolo.py       # → ../PEPTIDEX_Protocolos.html + ../PEPTIDEX
 python3 build_handbook.py        # → ../PEPTIDEX_Testeo_Peptidos.html
 ```
 
-El PDF se saca del HTML con Chromium (`page.pdf`, Letter, márgenes 14/16/12 mm,
-`printBackground`).
+Los PDF se sacan del HTML con Chromium (`page.pdf`, Letter, `printBackground`).
+Para las fichas hay que fijar el viewport a **732 px de ancho** antes de llamar
+a `PX_FIT()`: es el ancho real de la caja de texto en Carta, y medir a otro
+ancho da un autoajuste equivocado.
 
 ### Fuentes
 
