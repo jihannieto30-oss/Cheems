@@ -178,14 +178,42 @@ const HZR = (() => {
       if (opt.selected) this._selection(ctx, b, opt);
     },
 
+    /* BLEED IS AN EDGE EXTENSION, NOT A SCALED COPY.
+       Drawing the whole master into the bleed box and the master again at the
+       trim puts two copies of the artwork on the artboard, and the outer one
+       is stretched: 3 mm of bleed on a label 11 mm tall makes it 53 % taller,
+       so its compound, its tagline and its TESTED IN USA all land somewhere
+       else and the label reads as doubled. That is exactly what it was doing.
+
+       The margin is filled from the master's own outermost rows and columns
+       instead — eight slices, four edges and four corners — which is what
+       bleed is for and what a converter expects to trim off. Not one pixel of
+       the artwork is duplicated. */
     _bleed(ctx, b) {
       const g = b.bleedMM;
-      const im = img((b.prims[0] || {}).src);
+      if (g <= 0) return;
+      const p0 = b.prims[0] || {};
+      const im = img(p0.src);
+      const W = b.wMM, H = b.hMM;
       ctx.save();
-      if (im && im.complete && im.naturalWidth) {
-        /* bleed by edge extension of the master itself */
-        ctx.drawImage(im, -g, -g, b.wMM + g * 2, b.hMM + g * 2);
-      } else { ctx.fillStyle = b.bg; ctx.fillRect(-g, -g, b.wMM + g * 2, b.hMM + g * 2); }
+      if (!im || !im.complete || !im.naturalWidth) {
+        ctx.fillStyle = b.bg;
+        ctx.fillRect(-g, -g, W + g * 2, H + g * 2);
+        ctx.restore();
+        return;
+      }
+      const nw = im.naturalWidth, nh = im.naturalHeight;
+      const S = Math.max(1, Math.round(Math.min(nw, nh) * 0.004));   /* rows to pull from */
+      /* edges */
+      ctx.drawImage(im, 0, 0, nw, S, 0, -g, W, g);            // top
+      ctx.drawImage(im, 0, nh - S, nw, S, 0, H, W, g);        // bottom
+      ctx.drawImage(im, 0, 0, S, nh, -g, 0, g, H);            // left
+      ctx.drawImage(im, nw - S, 0, S, nh, W, 0, g, H);        // right
+      /* corners */
+      ctx.drawImage(im, 0, 0, S, S, -g, -g, g, g);
+      ctx.drawImage(im, nw - S, 0, S, S, W, -g, g, g);
+      ctx.drawImage(im, 0, nh - S, S, S, -g, H, g, g);
+      ctx.drawImage(im, nw - S, nh - S, S, S, W, H, g, g);
       ctx.restore();
     },
 

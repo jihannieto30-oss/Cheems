@@ -779,7 +779,7 @@ const CORE = (() => {
 const HZ = (() => {
   'use strict';
 
-  const SCHEMA = 2;
+  const SCHEMA = 3;   /* 3: layout lock defaults off */
   const FAMILY = 'premium-horizontal';
 
   const M = (typeof PX_HZ_MASTER !== 'undefined') ? PX_HZ_MASTER : {};
@@ -915,7 +915,14 @@ const HZ = (() => {
       family: FAMILY, schemaVersion: SCHEMA,
       name: seed.name || ('PEPTIDEX ' + k.toUpperCase() + ' — approved master'),
       master: k,
-      lock: true,                       /* Master Layout Lock */
+      /* MASTER LAYOUT LOCK, OFF BY DEFAULT.
+         It exists because the composition must not drift by accident, and it
+         still does that job — but defaulting it on meant every attempt to move
+         anything was refused, and being told why does not help when what you
+         wanted was to move the thing. Off is the honest default for an editor:
+         the composition is protected by validation, which reports any element
+         that has left its approved position, and by the one-click revert. */
+      lock: false,
       trim: { w: seed.w || DEFAULT_W_MM, h: (seed.w || DEFAULT_W_MM) / aspect(k) },
       print: { bleed: 3, safe: 2 },
       el,
@@ -1845,14 +1852,42 @@ const HZR = (() => {
       if (opt.selected) this._selection(ctx, b, opt);
     },
 
+    /* BLEED IS AN EDGE EXTENSION, NOT A SCALED COPY.
+       Drawing the whole master into the bleed box and the master again at the
+       trim puts two copies of the artwork on the artboard, and the outer one
+       is stretched: 3 mm of bleed on a label 11 mm tall makes it 53 % taller,
+       so its compound, its tagline and its TESTED IN USA all land somewhere
+       else and the label reads as doubled. That is exactly what it was doing.
+
+       The margin is filled from the master's own outermost rows and columns
+       instead — eight slices, four edges and four corners — which is what
+       bleed is for and what a converter expects to trim off. Not one pixel of
+       the artwork is duplicated. */
     _bleed(ctx, b) {
       const g = b.bleedMM;
-      const im = img((b.prims[0] || {}).src);
+      if (g <= 0) return;
+      const p0 = b.prims[0] || {};
+      const im = img(p0.src);
+      const W = b.wMM, H = b.hMM;
       ctx.save();
-      if (im && im.complete && im.naturalWidth) {
-        /* bleed by edge extension of the master itself */
-        ctx.drawImage(im, -g, -g, b.wMM + g * 2, b.hMM + g * 2);
-      } else { ctx.fillStyle = b.bg; ctx.fillRect(-g, -g, b.wMM + g * 2, b.hMM + g * 2); }
+      if (!im || !im.complete || !im.naturalWidth) {
+        ctx.fillStyle = b.bg;
+        ctx.fillRect(-g, -g, W + g * 2, H + g * 2);
+        ctx.restore();
+        return;
+      }
+      const nw = im.naturalWidth, nh = im.naturalHeight;
+      const S = Math.max(1, Math.round(Math.min(nw, nh) * 0.004));   /* rows to pull from */
+      /* edges */
+      ctx.drawImage(im, 0, 0, nw, S, 0, -g, W, g);            // top
+      ctx.drawImage(im, 0, nh - S, nw, S, 0, H, W, g);        // bottom
+      ctx.drawImage(im, 0, 0, S, nh, -g, 0, g, H);            // left
+      ctx.drawImage(im, nw - S, 0, S, nh, W, 0, g, H);        // right
+      /* corners */
+      ctx.drawImage(im, 0, 0, S, S, -g, -g, g, g);
+      ctx.drawImage(im, nw - S, 0, S, S, W, -g, g, g);
+      ctx.drawImage(im, 0, nh - S, S, S, -g, H, g, g);
+      ctx.drawImage(im, nw - S, nh - S, S, S, W, H, g, g);
       ctx.restore();
     },
 
@@ -3368,8 +3403,21 @@ const HZX = (() => {
       if (p.t === 'master') {
         /* bleed behind, then the approved artwork at the trim, 1:1 */
         if (bl > 0) {
-          S.push(`  <mask id="bleedring"><rect x="${f(-bl)}" y="${f(-bl)}" width="${f(W+bl*2)}" height="${f(H+bl*2)}" fill="#fff"/><rect x="0" y="0" width="${f(W)}" height="${f(H)}" fill="#000"/></mask>`);
-          S.push(`  <image mask="url(#bleedring)" x="${f(-bl)}" y="${f(-bl)}" width="${f(W+bl*2)}" height="${f(H+bl*2)}" preserveAspectRatio="none" xlink:href="${p.src}"/>`);
+          /* edge extension: eight slices of the artwork's own border */
+          const t = Math.min(bl, H * .5), l = Math.min(bl, W * .5);
+          const strip = (i, cx, cy, cw, ch, sx, sy, sw2, sh2) => {
+            const kx = cw / sw2, ky = ch / sh2;
+            S.push(`  <clipPath id="bl${i}"><rect x="${f(cx)}" y="${f(cy)}" width="${f(cw)}" height="${f(ch)}"/></clipPath>`);
+            S.push(`  <g clip-path="url(#bl${i})"><image x="${f(cx - sx * kx)}" y="${f(cy - sy * ky)}" width="${f(W * kx)}" height="${f(H * ky)}" preserveAspectRatio="none" xlink:href="${p.src}"/></g>`);
+          };
+          strip(0, 0, -bl, W, bl, 0, 0, W, t);
+          strip(1, 0, H, W, bl, 0, H - t, W, t);
+          strip(2, -bl, 0, bl, H, 0, 0, l, H);
+          strip(3, W, 0, bl, H, W - l, 0, l, H);
+          strip(4, -bl, -bl, bl, bl, 0, 0, l, t);
+          strip(5, W, -bl, bl, bl, W - l, 0, l, t);
+          strip(6, -bl, H, bl, bl, 0, H - t, l, t);
+          strip(7, W, H, bl, bl, W - l, H - t, l, t);
         }
         S.push(`  <image x="0" y="0" width="${f(W)}" height="${f(H)}" preserveAspectRatio="none" xlink:href="${p.src}"/>`);
       }
@@ -3428,14 +3476,29 @@ const HZX = (() => {
            copy drawn behind, oversized only to fill the margin — the artwork
            the trim actually shows is at 1:1. */
         if (p.t === 'master' && bl > 0) {
-          /* The bleed copy paints the MARGIN ONLY. Clipped to the ring
-             between the bleed box and the trim with an even-odd rule, so the
-             oversized copy can never lay a shifted duplicate of the artwork
-             over the artwork the trim actually shows. */
-          c.push('q',
-            `${f(-PT(bl))} ${f(-PT(bl))} ${f(PT(W + bl * 2))} ${f(PT(H + bl * 2))} re`,
-            `0 0 ${f(PT(W))} ${f(PT(H))} re W* n`,
-            `${f(PT(W + bl * 2))} 0 0 ${f(PT(H + bl * 2))} ${f(PT(-bl))} ${f(Y(H + bl))} cm /${hit.name} Do`, 'Q');
+          /* Bleed by EDGE EXTENSION — the margin filled from the artwork's own
+             outermost rows and columns, clipped to each strip. A scaled copy
+             would put a shifted duplicate of the label in the margin; this
+             puts the edge there, which is what the trim is meant to eat. */
+          const strip = (cx, cy, cw, ch, sx, sy, sw2, sh2) => {
+            /* place the whole image so that the wanted source rect lands on
+               the wanted destination rect, then clip to that rect */
+            const kx = cw / sw2, ky = ch / sh2;
+            c.push('q', `${f(PT(cx))} ${f(Y(cy + ch))} ${f(PT(cw))} ${f(PT(ch))} re W n`,
+              `${f(PT(W) * kx * (W / W))} 0 0 ${f(PT(H) * ky)} ` +
+              `${f(PT(cx - sx * kx))} ${f(Y(cy + ch) - PT(H) * ky + PT(sy * ky))} cm /${hit.name} Do`, 'Q');
+          };
+          const eW = W, eH = H, e = bl;
+          /* the source rects are expressed in trim millimetres */
+          const t = Math.min(e, eH * .5), l = Math.min(e, eW * .5);
+          strip(0, -e, eW, e, 0, 0, eW, t);
+          strip(0, eH, eW, e, 0, eH - t, eW, t);
+          strip(-e, 0, e, eH, 0, 0, l, eH);
+          strip(eW, 0, e, eH, eW - l, 0, l, eH);
+          strip(-e, -e, e, e, 0, 0, l, t);
+          strip(eW, -e, e, e, eW - l, 0, l, t);
+          strip(-e, eH, e, e, 0, eH - t, l, t);
+          strip(eW, eH, e, e, eW - l, eH - t, l, t);
         }
         c.push('q', `${f(PT(p.t === 'master' ? W : p.w))} 0 0 ${f(PT(p.t === 'master' ? H : p.h))} ` +
           `${f(PT(p.t === 'master' ? 0 : p.x))} ${f(Y(p.t === 'master' ? H : p.y + p.h))} cm /${hit.name} Do`, 'Q');
@@ -5301,7 +5364,7 @@ const HZUI = (() => {
 
   let API = null, doc = null, board = null, report = null, active = false, validation = null;
   let skuQuery = '';
-  let lastEdit = null, lastEditAt = 0;
+  let lastEdit = null, lastEditAt = 0, nagged = false;
   const COALESCE_MS = 900;   /* a pause this long ends the run */
 
   /* The whole catalogue, in the panel, searchable. 118 SKUs is too many for a
@@ -5481,7 +5544,7 @@ const HZUI = (() => {
       const s = localStorage.getItem(KEY);
       if (!s) return null;
       const d = JSON.parse(s);
-      return (d && d.family === HZ.FAMILY && d.schemaVersion === HZ.SCHEMA) ? d : null;
+      return (d && d.family === HZ.FAMILY && d.schemaVersion === HZ.SCHEMA) ? d : null;   /* an older schema is dropped, not migrated */
     } catch (e) { return null; }
   }
 
@@ -5586,7 +5649,7 @@ const HZUI = (() => {
     /* ---- lock ---- */
     host.appendChild(P('Master Layout Lock', null, b => {
       b.appendChild(seg([{ v: 'on', n: 'ON — composition locked' }, { v: 'off', n: 'OFF' }],
-        doc.lock ? 'on' : 'off', v => edit('Layout lock', d => d.lock = (v === 'on'), { struct: true })));
+        doc.lock ? 'on' : 'off', v => { nagged = false; edit('Layout lock', d => d.lock = (v === 'on'), { struct: true }); }));
       b.appendChild(el('div', { class: 'note' + (doc.lock ? ' ok' : ' err') },
         el('b', {}, doc.lock ? 'Locked.' : 'Unlocked.'),
         doc.lock
@@ -5997,8 +6060,16 @@ const HZUI = (() => {
 
       const st = doc.el[id];
       if (doc.lock || !st || st.locked) {
-        if (doc.lock) API.toast('Layout locked',
-          'Master Layout Lock is on, so the composition cannot move. Turn it off in the left dock to drag this.', 'warn');
+        /* Said once. A warning that fires on every attempt stops being
+           information and becomes an obstacle. */
+        if (doc.lock && !nagged) {
+          nagged = true;
+          API.toast('Layout locked',
+            'Master Layout Lock is on. Turn it off in the left dock to move things — the validation panel will still tell you if anything leaves its approved position.', 'warn');
+        } else if (st && st.locked && !nagged) {
+          nagged = true;
+          API.toast('Layer locked', '“' + HZ.elDef(id).label + '” is locked in the layer list.', 'warn');
+        }
         return;
       }
       drag = { id, q, dx: st.ov.dx, dy: st.ov.dy, moved: false };

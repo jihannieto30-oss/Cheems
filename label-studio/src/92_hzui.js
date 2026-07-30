@@ -30,7 +30,7 @@ const HZUI = (() => {
 
   let API = null, doc = null, board = null, report = null, active = false, validation = null;
   let skuQuery = '';
-  let lastEdit = null, lastEditAt = 0;
+  let lastEdit = null, lastEditAt = 0, nagged = false;
   const COALESCE_MS = 900;   /* a pause this long ends the run */
 
   /* The whole catalogue, in the panel, searchable. 118 SKUs is too many for a
@@ -210,7 +210,7 @@ const HZUI = (() => {
       const s = localStorage.getItem(KEY);
       if (!s) return null;
       const d = JSON.parse(s);
-      return (d && d.family === HZ.FAMILY && d.schemaVersion === HZ.SCHEMA) ? d : null;
+      return (d && d.family === HZ.FAMILY && d.schemaVersion === HZ.SCHEMA) ? d : null;   /* an older schema is dropped, not migrated */
     } catch (e) { return null; }
   }
 
@@ -315,7 +315,7 @@ const HZUI = (() => {
     /* ---- lock ---- */
     host.appendChild(P('Master Layout Lock', null, b => {
       b.appendChild(seg([{ v: 'on', n: 'ON — composition locked' }, { v: 'off', n: 'OFF' }],
-        doc.lock ? 'on' : 'off', v => edit('Layout lock', d => d.lock = (v === 'on'), { struct: true })));
+        doc.lock ? 'on' : 'off', v => { nagged = false; edit('Layout lock', d => d.lock = (v === 'on'), { struct: true }); }));
       b.appendChild(el('div', { class: 'note' + (doc.lock ? ' ok' : ' err') },
         el('b', {}, doc.lock ? 'Locked.' : 'Unlocked.'),
         doc.lock
@@ -726,8 +726,16 @@ const HZUI = (() => {
 
       const st = doc.el[id];
       if (doc.lock || !st || st.locked) {
-        if (doc.lock) API.toast('Layout locked',
-          'Master Layout Lock is on, so the composition cannot move. Turn it off in the left dock to drag this.', 'warn');
+        /* Said once. A warning that fires on every attempt stops being
+           information and becomes an obstacle. */
+        if (doc.lock && !nagged) {
+          nagged = true;
+          API.toast('Layout locked',
+            'Master Layout Lock is on. Turn it off in the left dock to move things — the validation panel will still tell you if anything leaves its approved position.', 'warn');
+        } else if (st && st.locked && !nagged) {
+          nagged = true;
+          API.toast('Layer locked', '“' + HZ.elDef(id).label + '” is locked in the layer list.', 'warn');
+        }
         return;
       }
       drag = { id, q, dx: st.ov.dx, dy: st.ov.dy, moved: false };

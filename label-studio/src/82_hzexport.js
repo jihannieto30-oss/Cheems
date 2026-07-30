@@ -128,8 +128,21 @@ const HZX = (() => {
       if (p.t === 'master') {
         /* bleed behind, then the approved artwork at the trim, 1:1 */
         if (bl > 0) {
-          S.push(`  <mask id="bleedring"><rect x="${f(-bl)}" y="${f(-bl)}" width="${f(W+bl*2)}" height="${f(H+bl*2)}" fill="#fff"/><rect x="0" y="0" width="${f(W)}" height="${f(H)}" fill="#000"/></mask>`);
-          S.push(`  <image mask="url(#bleedring)" x="${f(-bl)}" y="${f(-bl)}" width="${f(W+bl*2)}" height="${f(H+bl*2)}" preserveAspectRatio="none" xlink:href="${p.src}"/>`);
+          /* edge extension: eight slices of the artwork's own border */
+          const t = Math.min(bl, H * .5), l = Math.min(bl, W * .5);
+          const strip = (i, cx, cy, cw, ch, sx, sy, sw2, sh2) => {
+            const kx = cw / sw2, ky = ch / sh2;
+            S.push(`  <clipPath id="bl${i}"><rect x="${f(cx)}" y="${f(cy)}" width="${f(cw)}" height="${f(ch)}"/></clipPath>`);
+            S.push(`  <g clip-path="url(#bl${i})"><image x="${f(cx - sx * kx)}" y="${f(cy - sy * ky)}" width="${f(W * kx)}" height="${f(H * ky)}" preserveAspectRatio="none" xlink:href="${p.src}"/></g>`);
+          };
+          strip(0, 0, -bl, W, bl, 0, 0, W, t);
+          strip(1, 0, H, W, bl, 0, H - t, W, t);
+          strip(2, -bl, 0, bl, H, 0, 0, l, H);
+          strip(3, W, 0, bl, H, W - l, 0, l, H);
+          strip(4, -bl, -bl, bl, bl, 0, 0, l, t);
+          strip(5, W, -bl, bl, bl, W - l, 0, l, t);
+          strip(6, -bl, H, bl, bl, 0, H - t, l, t);
+          strip(7, W, H, bl, bl, W - l, H - t, l, t);
         }
         S.push(`  <image x="0" y="0" width="${f(W)}" height="${f(H)}" preserveAspectRatio="none" xlink:href="${p.src}"/>`);
       }
@@ -188,14 +201,29 @@ const HZX = (() => {
            copy drawn behind, oversized only to fill the margin — the artwork
            the trim actually shows is at 1:1. */
         if (p.t === 'master' && bl > 0) {
-          /* The bleed copy paints the MARGIN ONLY. Clipped to the ring
-             between the bleed box and the trim with an even-odd rule, so the
-             oversized copy can never lay a shifted duplicate of the artwork
-             over the artwork the trim actually shows. */
-          c.push('q',
-            `${f(-PT(bl))} ${f(-PT(bl))} ${f(PT(W + bl * 2))} ${f(PT(H + bl * 2))} re`,
-            `0 0 ${f(PT(W))} ${f(PT(H))} re W* n`,
-            `${f(PT(W + bl * 2))} 0 0 ${f(PT(H + bl * 2))} ${f(PT(-bl))} ${f(Y(H + bl))} cm /${hit.name} Do`, 'Q');
+          /* Bleed by EDGE EXTENSION — the margin filled from the artwork's own
+             outermost rows and columns, clipped to each strip. A scaled copy
+             would put a shifted duplicate of the label in the margin; this
+             puts the edge there, which is what the trim is meant to eat. */
+          const strip = (cx, cy, cw, ch, sx, sy, sw2, sh2) => {
+            /* place the whole image so that the wanted source rect lands on
+               the wanted destination rect, then clip to that rect */
+            const kx = cw / sw2, ky = ch / sh2;
+            c.push('q', `${f(PT(cx))} ${f(Y(cy + ch))} ${f(PT(cw))} ${f(PT(ch))} re W n`,
+              `${f(PT(W) * kx * (W / W))} 0 0 ${f(PT(H) * ky)} ` +
+              `${f(PT(cx - sx * kx))} ${f(Y(cy + ch) - PT(H) * ky + PT(sy * ky))} cm /${hit.name} Do`, 'Q');
+          };
+          const eW = W, eH = H, e = bl;
+          /* the source rects are expressed in trim millimetres */
+          const t = Math.min(e, eH * .5), l = Math.min(e, eW * .5);
+          strip(0, -e, eW, e, 0, 0, eW, t);
+          strip(0, eH, eW, e, 0, eH - t, eW, t);
+          strip(-e, 0, e, eH, 0, 0, l, eH);
+          strip(eW, 0, e, eH, eW - l, 0, l, eH);
+          strip(-e, -e, e, e, 0, 0, l, t);
+          strip(eW, -e, e, e, eW - l, 0, l, t);
+          strip(-e, eH, e, e, 0, eH - t, l, t);
+          strip(eW, eH, e, e, eW - l, eH - t, l, t);
         }
         c.push('q', `${f(PT(p.t === 'master' ? W : p.w))} 0 0 ${f(PT(p.t === 'master' ? H : p.h))} ` +
           `${f(PT(p.t === 'master' ? 0 : p.x))} ${f(Y(p.t === 'master' ? H : p.y + p.h))} cm /${hit.name} Do`, 'Q');

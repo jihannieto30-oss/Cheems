@@ -30,7 +30,7 @@
 const HZ = (() => {
   'use strict';
 
-  const SCHEMA = 2;
+  const SCHEMA = 3;   /* 3: layout lock defaults off */
   const FAMILY = 'premium-horizontal';
 
   const M = (typeof PX_HZ_MASTER !== 'undefined') ? PX_HZ_MASTER : {};
@@ -166,7 +166,14 @@ const HZ = (() => {
       family: FAMILY, schemaVersion: SCHEMA,
       name: seed.name || ('PEPTIDEX ' + k.toUpperCase() + ' — approved master'),
       master: k,
-      lock: true,                       /* Master Layout Lock */
+      /* MASTER LAYOUT LOCK, OFF BY DEFAULT.
+         It exists because the composition must not drift by accident, and it
+         still does that job — but defaulting it on meant every attempt to move
+         anything was refused, and being told why does not help when what you
+         wanted was to move the thing. Off is the honest default for an editor:
+         the composition is protected by validation, which reports any element
+         that has left its approved position, and by the one-click revert. */
+      lock: false,
       trim: { w: seed.w || DEFAULT_W_MM, h: (seed.w || DEFAULT_W_MM) / aspect(k) },
       print: { bleed: 3, safe: 2 },
       el,
