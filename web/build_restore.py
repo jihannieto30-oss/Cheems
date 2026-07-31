@@ -60,7 +60,8 @@ kit   = rd(os.path.join(M, 'labelkit.json'))
 label = rd(os.path.join(SRC, '40_label.js')).replace('__LABELKIT__', kit)
 css   = '\n'.join(rd(os.path.join(SRC, f)) for f in
                   ('41_label.css', '51_profile.css', '52_card.css', '62_dive.css', '64_logos.css',
-                   '71_search.css', '72_nav.css', '30_motion.css'))
+                   '71_search.css', '72_nav.css', '30_motion.css',
+                   '65_mobile.css'))
 js    = ('window.__pxBakedLines = true;\n' +
          'const PX_MASTER_LOGO = ' + repr(master).replace("'", '"', 2) + ';\n' +
          'const PX_WATER = ' + json.dumps(
@@ -71,7 +72,8 @@ js    = ('window.__pxBakedLines = true;\n' +
          rd(os.path.join(SRC, '50_profile.js')) + '\n' +
          rd(os.path.join(SRC, '31_motion.js')) + '\n' +
          rd(os.path.join(SRC, '63_dive.js')) + '\n' +
-         rd(os.path.join(SRC, '70_search.js')))
+         rd(os.path.join(SRC, '70_search.js')) + '\n' +
+         rd(os.path.join(SRC, '66_mobile.js')))
 
 i = html.rindex('</style>')
 html = html[:i] + '\n/* ===== PEPTIDEX LABEL + MOTION ===== */\n' + css + '\n' + html[i:]

@@ -318,7 +318,11 @@ function speculars(blank){
   return (specLayer = c);
 }
 
-function wrapBand(x, band, blank, size){
+/* Where the band sits on the glass. Pulled out of wrapBand so that sampling
+   the artwork and lighting it can be two separate pieces of work — see the
+   note on the phases below. It is arithmetic only; calling it twice costs
+   nothing and keeps the two halves from drifting apart. */
+function bandSeat(band, size){
   const TH = SEAT.theta, R = SEAT.halfW / Math.sin(TH), cx = SEAT.cx;
   const F = visibleWindow(size);
   const BW = band.width * F, BH = band.height;
@@ -332,7 +336,14 @@ function wrapBand(x, band, blank, size){
   const ly0 = Math.max(BODY.y + 16,
               Math.min(Math.round(BODY.y + BODY.h * SEAT.centre - lh / 2),
                        BODY.y + BODY.h - lh - 16));
-  const x0 = cx - SEAT.halfW, x1 = cx + SEAT.halfW;
+  return {TH, R, cx, BW, BH, SX, lh, ly0,
+          x0: cx - SEAT.halfW, x1: cx + SEAT.halfW};
+}
+
+function wrapBandSample(x, band, size){
+  const S = bandSeat(band, size);
+  const TH = S.TH, R = S.R, cx = S.cx, BW = S.BW, BH = S.BH, SX = S.SX,
+        lh = S.lh, ly0 = S.ly0;
 
   const N = 240;
   for(let i = 0; i < N; i++){
@@ -350,6 +361,11 @@ function wrapBand(x, band, blank, size){
                       d0, ly0 + bow, (d1 - d0) + .7, lh - 2*bow);
   }
   x.globalAlpha = 1;
+}
+
+function wrapBandLight(x, band, blank, size){
+  const S = bandSeat(band, size);
+  const TH = S.TH, lh = S.lh, ly0 = S.ly0, x0 = S.x0, x1 = S.x1;
 
   x.save();
   x.beginPath(); x.rect(x0 - 2, ly0 - 2, SEAT.halfW*2 + 4, lh + 4); x.clip();
@@ -405,33 +421,112 @@ function wrapBand(x, band, blank, size){
 
 /* --------------------------------------------------------------------------
    The vial. Same path for a line and for a compound.
+
+   IN PHASES, BECAUSE ONE OF THEM IS TOO LONG TO HOLD
+
+   Measured on an emulated iPhone 12 with the CPU brake at 6×, which is about
+   what a mid-range phone on low power feels like:
+
+     the band        247 ms
+     the wrap        333 ms
+     the alpha cut   136 ms
+     the PNG          96 ms
+     -------------------
+     total           831 ms
+
+   Nothing dominates, so there is nothing to optimise away — the picture costs
+   what it costs. What was wrong is that all of it happened inside the tap that
+   opened the compound, on the main thread, in one frame. For most of a second
+   the page could not scroll, could not paint and could not answer a touch,
+   which is exactly what "se traba" means.
+
+   So the phases are handed back separately, and the wrap — the longest — is
+   handed back as two: sampling the artwork onto the curve, then lighting what
+   was sampled. buildVial still runs them straight through for whoever needs
+   the answer now: the three line vials at boot, and the harness. buildVialAsync
+   runs the same five in the same order with the event loop given a turn between
+   them, so no single frame carries more than a fifth of the work and the page
+   stays alive while the vial composes.
+
+   The picture is identical either way: same operations, same order, on the
+   same canvas. Only the gaps are new.
    -------------------------------------------------------------------------- */
-const bandCache = {}, vialCache2 = {};
+const bandCache = {}, vialCache2 = {}, vialPending = {};
 
-function buildVial(lineKey, p){
-  const key = lineKey + ':' + (p ? p[0] : '');
-  if(vialCache2[key]) return vialCache2[key];
+/* A phone browsing forty compounds used to accumulate forty PNG data URLs at
+   roughly 600 KB each — some twenty-four megabytes of strings that nothing
+   ever released. The cache keeps the last dozen and lets the rest go; a vial
+   costs under a second to rebuild and memory pressure costs the whole tab. */
+const VIAL_KEEP = 12;
+const vialLRU = [];
+function remember(key, url){
+  const at = vialLRU.indexOf(key);
+  if(at >= 0) vialLRU.splice(at, 1);
+  vialLRU.push(key);
+  while(vialLRU.length > VIAL_KEEP) delete vialCache2[vialLRU.shift()];
+  return (vialCache2[key] = url);
+}
 
+function vialKey(lineKey, p){ return lineKey + ':' + (p ? p[0] : ''); }
+
+function vialPhases(lineKey, p){
+  const key = vialKey(lineKey, p);
   const blank = IMG.blank;
   const c = document.createElement('canvas');
   c.width = VW; c.height = VH;
   const x = c.getContext('2d');
-  x.drawImage(blank, 0, 0, VW, VH);
+  let band = null;
 
-  const band = bandCache[key] || (bandCache[key] = drawBand(lineKey, p));
-  wrapBand(x, band.canvas, blank, band.size);
+  return [
+    () => {
+      x.drawImage(blank, 0, 0, VW, VH);
+      band = bandCache[key] || (bandCache[key] = drawBand(lineKey, p));
+    },
+    () => { wrapBandSample(x, band.canvas, band.size); },
+    () => { wrapBandLight(x, band.canvas, blank, band.size); },
+    () => {
+      /* the glass silhouette owns the alpha — the band never spills past it */
+      const cut = x.getImageData(0, 0, VW, VH);
+      const bc = document.createElement('canvas');
+      bc.width = VW; bc.height = VH;
+      const bx = bc.getContext('2d');
+      bx.drawImage(blank, 0, 0, VW, VH);
+      const bd = bx.getImageData(0, 0, VW, VH);
+      for(let i = 3; i < cut.data.length; i += 4) cut.data[i] = bd.data[i];
+      x.putImageData(cut, 0, 0);
+    },
+    () => remember(key, c.toDataURL('image/png'))
+  ];
+}
 
-  /* the glass silhouette owns the alpha — the band never spills past it */
-  const cut = x.getImageData(0, 0, VW, VH);
-  const bc = document.createElement('canvas');
-  bc.width = VW; bc.height = VH;
-  const bx = bc.getContext('2d');
-  bx.drawImage(blank, 0, 0, VW, VH);
-  const bd = bx.getImageData(0, 0, VW, VH);
-  for(let i = 3; i < cut.data.length; i += 4) cut.data[i] = bd.data[i];
-  x.putImageData(cut, 0, 0);
+function buildVial(lineKey, p){
+  const key = vialKey(lineKey, p);
+  if(vialCache2[key]) return remember(key, vialCache2[key]);
+  let out;
+  for(const phase of vialPhases(lineKey, p)) out = phase();
+  return out;
+}
 
-  return (vialCache2[key] = c.toDataURL('image/png'));
+/* The same vial, one phase per turn of the event loop. Two callers asking for
+   the same one at the same time share the one build rather than racing. */
+function buildVialAsync(lineKey, p){
+  const key = vialKey(lineKey, p);
+  if(vialCache2[key]) return Promise.resolve(remember(key, vialCache2[key]));
+  if(vialPending[key]) return vialPending[key];
+
+  /* A frame, then the gap after it. setTimeout alone is not enough: it yields
+     to the event loop but not to rendering, so two phases can still land in
+     the same frame and the frame is long again — measured, twice out of five
+     runs. Waiting for rAF puts us inside the frame; the setTimeout inside it
+     runs once that frame has been painted, which is exactly the free slot. */
+  const breathe = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+  const run = (async () => {
+    let out;
+    for(const phase of vialPhases(lineKey, p)){ out = phase(); await breathe(); }
+    delete vialPending[key];
+    return out;
+  })();
+  return (vialPending[key] = run);
 }
 
 /* --------------------------------------------------------------------------
@@ -454,8 +549,13 @@ Promise.all([artReady, kitReady]).then(() => {
   });
 });
 
-/* the harness reaches in through this; the site never does */
+/* the harness reaches in through this; the site never does — except for the
+   three staged entries, which 66_mobile.js needs because everything in this
+   file is closed inside its own scope */
 window.__pxLabel = {drawBand: drawBand, buildVial: buildVial, sizeFor: sizeFor,
-                    kitReady: kitReady, SIZES: SIZES, SEAT: SEAT};
+                    kitReady: kitReady, SIZES: SIZES, SEAT: SEAT,
+                    buildVialAsync: buildVialAsync,
+                    vialKey: vialKey,
+                    cached: (lineKey, p) => vialCache2[vialKey(lineKey, p)] || null};
 
 })();
