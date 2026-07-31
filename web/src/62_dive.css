@@ -67,17 +67,30 @@
   pointer-events:none;
 }
 
+/* Canvases, drawn once per route and moved by CSS from then on. A canvas is
+   already a texture, so nothing is encoded to PNG on the way out or decoded on
+   the way in — that decode used to land on the main thread on the first jump
+   to a route, and it was worth one 100 ms frame on a phone. */
 #dive .px-field,#dive .px-core{
   position:absolute; left:50%; top:46%;
   pointer-events:none; opacity:0;
-  background-repeat:no-repeat; background-size:100% 100%;
   will-change:transform, opacity;
 }
-/* Square and oversized, so no rotation can ever bring a corner into view. */
+/* Square, and just big enough that no rotation can bring a corner into view:
+   the diagonal of the viewport is ~142vmax, so 148 covers it with margin.
+
+   Bigger is not safer, it is worse. The window only ever sees the middle of
+   this sprite, so every extra vmax shrinks the fraction of the image that is
+   on screen — at 170vmax the viewport saw only the white centre and Fitness,
+   which is meant to be black, came out light grey. */
 #dive .px-field{
   z-index:1;
-  width:170vmax; height:170vmax; margin:-85vmax 0 0 -85vmax;
+  width:148vmax; height:148vmax; margin:-74vmax 0 0 -74vmax;
 }
+/* The backing store is 512², stretched to fill. Everything in it is soft light,
+   so there is nothing a finer grid would resolve — and the alternative is
+   allocating a canvas the size of the viewport for an image that never changes
+   within a transition. */
 #dive .px-core{
   z-index:3;
   width:78vmin; height:78vmin; margin:-39vmin 0 0 -39vmin;
@@ -91,11 +104,11 @@ html.px-diving #dive .px-field{
   animation:px-field 2600ms cubic-bezier(.33,0,.18,1) forwards;
 }
 @keyframes px-field{
-  0%   {transform:rotate(-19deg) scale(1.30); opacity:0;}
-  12%  {transform:rotate(-13deg) scale(1.22); opacity:1;}
-  58%  {transform:rotate(6deg)   scale(1.03); opacity:1;}
-  70%  {transform:rotate(13deg)  scale(.95);  opacity:0;}
-  100% {transform:rotate(13deg)  scale(.95);  opacity:0;}
+  0%   {transform:rotate(-17deg) scale(1.16); opacity:0;}
+  12%  {transform:rotate(-12deg) scale(1.11); opacity:1;}
+  58%  {transform:rotate(5deg)   scale(1.00); opacity:1;}
+  70%  {transform:rotate(11deg)  scale(.96);  opacity:0;}
+  100% {transform:rotate(11deg)  scale(.96);  opacity:0;}
 }
 html.px-diving #dive .px-core{
   animation:px-core 2600ms cubic-bezier(.33,0,.2,1) forwards;

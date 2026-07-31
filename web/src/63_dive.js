@@ -119,17 +119,39 @@ const END  = .70;    /* everything visual is over by here — see the note below
    two overlapping — which is what put the longest frame of the whole
    transition in the middle of a fade. */
 
-/* The chord of each route: two colours, blended across the bloom.
-   These are light, not artwork. Nothing supplied is recoloured. */
+/* THE CHORD OF EACH ROUTE — ITS OWN MATERIAL, NOT A PALETTE
+
+   The first pass gave every route a vivid two-colour chord and it was wrong in
+   the way a stock template is wrong: pretty, and belonging to nobody. Each line
+   already has a material, and the transition should be made of it.
+
+     FITNESS    black metal
+     BEAUTY     rose gold, and barely there
+     LONGEVITY  white
+
+   All three share one structure — the material at the edges, white in the
+   middle — which is what lets the same layout carry a field as dark as Fitness
+   and one as light as Longevity without either needing its own special case.
+
+   The white middle is not decoration. The base timeline stacks the mark, the
+   rule and the caption in the centre, and it styles all three for a white page:
+   a dark rule and a muted caption. On a black Fitness field they would vanish.
+   Keeping the centre white means the supplied lockup sits on exactly the ground
+   it was drawn for on every route, and nothing downstream needs to know which
+   route is playing.
+
+   `str` is the streak colour and `mode` how it is composited. On white the only
+   way to show a streak is to take light away — multiply. On the black Fitness
+   ring the opposite is true, so there the streaks are white and additive. */
 const CHORD = {
-  '':          ['#2f6bff', '#8b5cf6'],
-  fitness:     ['#1f6fff', '#00cfe8'],
-  beauty:      ['#e06a3c', '#ff4f8b'],
-  longevity:   ['#0b46a0', '#1fc3b4'],
-  quality:     ['#2f6bff', '#6ee7f9'],
-  tools:       ['#5b6bff', '#a78bfa'],
-  track:       ['#2563eb', '#7bd0ff'],
-  account:     ['#4b5bd6', '#c084fc']
+  '':          {edge:['#e9edf4','#dde4ee'], mid:'#ffffff', str:'#c3cbd8', mode:'multiply', tint:'163,175,196'},
+  fitness:     {edge:['#0a0b0d','#232830'], mid:'#ffffff', str:'#ffffff', mode:'lighter',  tint:'26,29,35'},
+  beauty:      {edge:['#f0dbd0','#e4c0b0'], mid:'#ffffff', str:'#d3a48d', mode:'multiply', tint:'201,138,99'},
+  longevity:   {edge:['#f4f7fa','#e7edf5'], mid:'#ffffff', str:'#b7c3d3', mode:'multiply', tint:'143,155,176'},
+  quality:     {edge:['#e9edf4','#dde4ee'], mid:'#ffffff', str:'#c3cbd8', mode:'multiply', tint:'163,175,196'},
+  tools:       {edge:['#e9edf4','#dde4ee'], mid:'#ffffff', str:'#c3cbd8', mode:'multiply', tint:'163,175,196'},
+  track:       {edge:['#e9edf4','#dde4ee'], mid:'#ffffff', str:'#c3cbd8', mode:'multiply', tint:'163,175,196'},
+  account:     {edge:['#e9edf4','#dde4ee'], mid:'#ffffff', str:'#c3cbd8', mode:'multiply', tint:'163,175,196'}
 };
 const chordOf = k => CHORD[k] || CHORD[''];
 
@@ -163,55 +185,48 @@ function sprite(w, h, draw){
   return c;
 }
 
-/* THE FIELD — opaque, with the colour already composed over white.
+/* THE FIELD — opaque, and composed once.
 
    It has to be opaque for two reasons. The obvious one is that it is the
-   curtain: it has to hide the page underneath. The subtler one is that on
-   white you cannot add colour by adding light — white plus anything is still
-   white — so the blend has to happen once, here, at full strength, and be
-   blitted as a finished image. Trying to tint a white field per frame gives
-   pastel mud and costs three blits instead of one.
+   curtain: it has to hide the page underneath. The subtler one is that a field
+   this large cannot be tinted per frame — on white, adding light gives white,
+   and on black, adding dark gives black — so the blend happens once, here, at
+   full strength, and is blitted as a finished image.
 
-   The two chord colours sit off-centre and opposite each other, so rotating
-   this sprite sweeps one colour through where the other was. That rotation is
-   most of what makes the field feel alive without a single extra draw. */
-function fieldSprite(c1, c2){
-  const S = 512, a = rgbOf(c1), b = rgbOf(c2);
-  return sprite(S, S, (g) => {
-    g.fillStyle = '#ffffff'; g.fillRect(0, 0, S, S);
+   Material at the edges, white in the middle. The two edge colours sit
+   off-centre and opposite each other, so rotating this sprite sweeps one
+   through where the other was: that rotation is most of what makes the field
+   feel alive, and it costs nothing beyond the one blit it was already doing. */
+function fieldSprite(g, S, ch){
+  const a = rgbOf(ch.edge[0]), b = rgbOf(ch.edge[1]);
+  g.clearRect(0, 0, S, S);
+  {
+    g.fillStyle = ch.edge[0]; g.fillRect(0, 0, S, S);
 
     const bloom = (x, y, r, rgb, al) => {
       const gr = g.createRadialGradient(x, y, 0, x, y, r);
       gr.addColorStop(0,   'rgba(' + rgb + ',' + al + ')');
-      gr.addColorStop(.42, 'rgba(' + rgb + ',' + (al * .52).toFixed(3) + ')');
-      gr.addColorStop(.78, 'rgba(' + rgb + ',' + (al * .12).toFixed(3) + ')');
+      gr.addColorStop(.46, 'rgba(' + rgb + ',' + (al * .55).toFixed(3) + ')');
       gr.addColorStop(1,   'rgba(' + rgb + ',0)');
       g.fillStyle = gr; g.fillRect(0, 0, S, S);
     };
-    bloom(S * .28, S * .32, S * .66, a, .96);
-    bloom(S * .74, S * .70, S * .62, b, .93);
-    bloom(S * .70, S * .24, S * .38, b, .52);
-    bloom(S * .24, S * .76, S * .36, a, .48);
+    bloom(S * .74, S * .30, S * .62, b, 1);
+    bloom(S * .24, S * .78, S * .56, b, .72);
+    bloom(S * .18, S * .22, S * .44, a, .70);
 
-    /* A ring of the chord around the edge. Without it the sprite is brightest
-       at the rim after the white recentring, and a field that fades outwards
-       into paper reads as washed out however saturated the blooms are. The
-       colour has to be deepest where the eye is not looking. */
-    const v = g.createRadialGradient(S/2, S*.46, S*.28, S/2, S*.46, S*.72);
-    v.addColorStop(0,   'rgba(' + a + ',0)');
-    v.addColorStop(.62, 'rgba(' + a + ',.16)');
-    v.addColorStop(1,   'rgba(' + b + ',.34)');
-    g.fillStyle = v; g.fillRect(0, 0, S, S);
-
-    /* The centre is taken back towards white so the mark always has clean
-       ground under it, whatever the rotation has swept through — but only the
-       centre. Taken too wide, this is what turned the whole field pastel. */
-    const c = g.createRadialGradient(S/2, S*.46, 0, S/2, S*.46, S*.30);
-    c.addColorStop(0,   'rgba(255,255,255,.90)');
-    c.addColorStop(.42, 'rgba(255,255,255,.56)');
+    /* The white middle, wide and very soft. Its softness is the whole
+       difference between a field with light in it and a white disc pasted on
+       a coloured square. */
+    const c = g.createRadialGradient(S/2, S*.46, 0, S/2, S*.46, S*.40);
+    c.addColorStop(0,   'rgba(255,255,255,1)');
+    c.addColorStop(.22, 'rgba(255,255,255,.99)');
+    c.addColorStop(.42, 'rgba(255,255,255,.88)');
+    c.addColorStop(.60, 'rgba(255,255,255,.62)');
+    c.addColorStop(.76, 'rgba(255,255,255,.34)');
+    c.addColorStop(.90, 'rgba(255,255,255,.12)');
     c.addColorStop(1,   'rgba(255,255,255,0)');
     g.fillStyle = c; g.fillRect(0, 0, S, S);
-  });
+  }
 }
 
 /* A streak, in the chord's colour, soft at both tips and across its thickness.
@@ -239,17 +254,15 @@ function streakSprite(c){
    that took the middle *down*; on white it does the opposite and lifts it, so
    the supplied lockup — dark artwork drawn for a white page — sits on exactly
    the ground it was designed for. */
-function coreSprite(){
-  const S = 256, r = S / 2;
-  return sprite(S, S, (g) => {
-    const gr = g.createRadialGradient(r, r, 0, r, r, r);
-    gr.addColorStop(0,   'rgba(255,255,255,.92)');
-    gr.addColorStop(.36, 'rgba(255,255,255,.72)');
-    gr.addColorStop(.66, 'rgba(255,255,255,.32)');
-    gr.addColorStop(.86, 'rgba(255,255,255,.08)');
-    gr.addColorStop(1,   'rgba(255,255,255,0)');
-    g.fillStyle = gr; g.fillRect(0, 0, S, S);
-  });
+function coreSprite(g, S){
+  const r = S / 2;
+  const gr = g.createRadialGradient(r, r, 0, r, r, r);
+  gr.addColorStop(0,   'rgba(255,255,255,.92)');
+  gr.addColorStop(.36, 'rgba(255,255,255,.72)');
+  gr.addColorStop(.66, 'rgba(255,255,255,.32)');
+  gr.addColorStop(.86, 'rgba(255,255,255,.08)');
+  gr.addColorStop(1,   'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, S, S);
 }
 
 /* ---------- the field ---------------------------------------------------- */
@@ -267,7 +280,7 @@ function rnd(){
 
 const W = {
   cv:null, g:null, w:0, h:0, s:1,
-  spr:null, key:null, lkey:null, coreURL:null,
+  spr:null, key:null, lkey:null,
   streaks:[],
   raf:0, t0:0, reduced:false
 };
@@ -284,7 +297,6 @@ function plan(){
       th:  .6 + rnd() * 1.0,
       far: .60 + rnd() * .48,
       o:   .34 + rnd() * .46,
-      c:   rnd() < .5 ? 0 : 1,                 /* which half of the chord */
       dur: dur,
       off: rnd() * dur
     });
@@ -294,9 +306,10 @@ function plan(){
 function sprites(key){
   const ch = chordOf(key);
   W.key = key;
-  /* El lienzo ya sólo lleva estelas: el campo y el núcleo son capas CSS. */
-  W.spr = { streak: [streakSprite(ch[0]), streakSprite(ch[1])] };
-  return rgbOf(ch[0]);
+  /* The canvas carries the streaks alone now: the field and the core are CSS
+     layers. */
+  W.spr = { streak: streakSprite(ch.str), mode: ch.mode };
+  return ch.tint;
 }
 
 /* El campo y el núcleo salen del lienzo.
@@ -325,17 +338,29 @@ function layers(key){
   const ch = chordOf(key);
   let f = dive.querySelector('.px-field'), c = dive.querySelector('.px-core');
   if(!f){
-    f = document.createElement('div'); f.className = 'px-field';
+    /* Canvases, not divs with a background image.
+
+       The first version encoded each sprite with toDataURL and handed the
+       browser a PNG. That costs an encode on the way out and a decode on the
+       way in, and the decode landed on the main thread on the first jump to a
+       route — one 100 ms frame on a phone, right at the start of the
+       transition, which is the worst place for it.
+
+       A canvas is already a texture. It is drawn once when the route changes
+       and from then on CSS moves it, so the compositor gets what it needs and
+       nothing is ever encoded, decoded or redrawn. */
+    f = document.createElement('canvas'); f.className = 'px-field';
+    f.width = f.height = 512;
     f.setAttribute('aria-hidden','true'); dive.insertBefore(f, dive.firstChild);
   }
   if(!c){
-    c = document.createElement('div'); c.className = 'px-core';
+    c = document.createElement('canvas'); c.className = 'px-core';
+    c.width = c.height = 256;
     c.setAttribute('aria-hidden','true'); dive.insertBefore(c, f.nextSibling);
+    coreSprite(c.getContext('2d'), 256);
   }
   if(W.lkey !== key){
-    f.style.backgroundImage = 'url(' + fieldSprite(ch[0], ch[1]).toDataURL('image/png') + ')';
-    if(!W.coreURL) W.coreURL = coreSprite().toDataURL('image/png');
-    c.style.backgroundImage = 'url(' + W.coreURL + ')';
+    fieldSprite(f.getContext('2d'), 512, ch);
     W.lkey = key;
   }
 }
@@ -371,7 +396,7 @@ function draw(t){
      tiene el color.  Corren del primer fotograma al último sin pausa. */
   const aS = arc(u, .02, .18, .58, .96) * .95;
   if(aS <= .004) return;
-  g.globalCompositeOperation = 'multiply';
+  g.globalCompositeOperation = S.mode;
   const ms = u * SPAN * END;
   for(let i = 0; i < W.streaks.length; i++){
     const s = W.streaks[i];
@@ -382,7 +407,7 @@ function draw(t){
     g.globalAlpha = a;
     g.setTransform(1, 0, 0, 1, cx, cy);
     g.rotate(s.a);
-    g.drawImage(S.streak[s.c], rn, -s.th / 2, rn * (s.len - 1), s.th);
+    g.drawImage(S.streak, rn, -s.th / 2, rn * (s.len - 1), s.th);
   }
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.globalAlpha = 1;
@@ -438,7 +463,7 @@ diveTransition = function(route){
   mount();
   const key = String(route || '').replace('/', '');
   if(W.cv){
-    const rgb = (W.key !== key || !W.spr) ? sprites(key) : rgbOf(chordOf(key)[0]);
+    const rgb = (W.key !== key || !W.spr) ? sprites(key) : chordOf(key).tint;
     layers(key);
     const dive = document.getElementById('dive');
     if(dive) dive.style.setProperty('--px-tint', rgb);
