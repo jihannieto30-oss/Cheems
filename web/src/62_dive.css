@@ -1,84 +1,154 @@
 /* ============================================================================
-   PEPTIDEX — THE WARP
+   PEPTIDEX — THE WARP, IN WHITE
 
-   The old transition was a shutter with water behind it: two panels met, the
-   mark appeared between them, the panels left. Even once the water was black
-   it was still a page being covered up and uncovered.
+   White was always the brand, and the base timeline was already white: its two
+   shutter panels are #ffffff to #f4f6f9. The black field was a detour. This
+   goes back to white and puts the colour in the light instead of the
+   background.
 
-   This is one movement instead. The field goes dark, a soft light opens at
-   the centre, the line's mark rises into it and holds, then the light closes
-   and the destination settles out of it. The streaks stay because they are
-   what makes it read as travel rather than a fade — fewer of them now, slower,
-   and with longer, softer tails.
+   WHAT THIS FILE STOPPED DOING
 
-   Everything eases on one curve. No corridor, no flash cuts, no punch through
-   the lens: there is no moment where the motion changes its mind, which is
-   what made the busier version feel like work even when every frame arrived
-   on time.
+   Three of the rules that used to live here were fighting the base stylesheet
+   rather than helping it, and they are gone:
+
+     the caption and the rule were forced to white, because the field was
+       black — the base already styles them for a white page, and now does;
+     the mark carried a four-pass rim light built to lift dark artwork off a
+       black field — on white the artwork sits on exactly the ground it was
+       drawn for, so what is left is one soft halo in the route's own colour;
+     and the page's move had a plateau in the middle, which is half of why the
+       transition read as paused.
 
    WHERE THE WARP ACTUALLY LIVES
    Nearly all of it is in 63_dive.js, drawn into one canvas. It was built here
    first, as about ninety stacked translucent boxes, and it ran at a fifth of
    the frame rate — not because any one of them was expensive, but because
    there were ninety. What is left in this file is the short list of things
-   that genuinely have to be DOM:
-
-     the canvas itself,
-     the mark, which is supplied artwork carrying a rim light that has to
-       follow its own alpha,
-     the page, which recedes and comes back.
-
-   Three animated layers, and the shutter panels turned off.
+   that genuinely have to be DOM: the canvas, the mark, and the page.
    ============================================================================ */
 
-#dive{--px-tint:255,255,255;}
+#dive{--px-tint:47,107,255;}
 
 /* The base timeline still slides its two panels. They are not just invisible,
    they are gone: an animated full-viewport box costs the compositor whether or
    not anything can be seen in it, and the field is covered and uncovered by
-   the canvas now, on this transition's beat rather than theirs. */
+   the canvas now, on this transition's beat rather than theirs.
+
+   Turning them off is also what frees the last 0.8 s of the base timeline —
+   which it spends sliding them back out — so the visual can end at 1.9 s and
+   the page can be back and interactive while the base plays out its invisible
+   tail. */
 #dive .p{display:none !important;}
 
-/* ---------- the warp ------------------------------------------------------ */
+/* ---------- the warp ------------------------------------------------------
+   THE FIELD AND THE CORE ARE CSS, NOT CANVAS, AND THAT IS THE WHOLE POINT.
+
+   Measured: with the canvas removed AND the page animation removed, the
+   transition still ran at 19 fps with eleven long frames under a 4× CPU
+   brake. The floor is not what gets drawn — it is render(), which rebuilds the
+   entire page at 0.8 s, and pageEntrance() behind it.
+
+   Which is where the real problem was. A canvas driven by requestAnimationFrame
+   runs on the main thread, so when render() blocks it for eighty milliseconds
+   the warp freezes with it. That is exactly what reads as "paused", and it
+   cannot be fixed by drawing less — only by not drawing there.
+
+   So the field and the core are two divs with a background image and a CSS
+   animation of transform and opacity. That lives on the compositor: it keeps
+   turning while the main thread is busy rebuilding the page. The canvas is
+   left with the streaks alone, which are small, and whose hitch — if any — is
+   not the whole background stopping.
+
+   Two more layers, not ninety. What sank the first version was the count, not
+   the fact of existing. */
 #dive .px-canvas{
-  position:absolute; inset:0; z-index:1;
+  position:absolute; inset:0; z-index:2;
   width:100%; height:100%;
   pointer-events:none;
 }
 
+#dive .px-field,#dive .px-core{
+  position:absolute; left:50%; top:46%;
+  pointer-events:none; opacity:0;
+  background-repeat:no-repeat; background-size:100% 100%;
+  will-change:transform, opacity;
+}
+/* Square and oversized, so no rotation can ever bring a corner into view. */
+#dive .px-field{
+  z-index:1;
+  width:170vmax; height:170vmax; margin:-85vmax 0 0 -85vmax;
+}
+#dive .px-core{
+  z-index:3;
+  width:78vmin; height:78vmin; margin:-39vmin 0 0 -39vmin;
+}
+
+/* Both turn and converge from the first frame to the last. Even where the
+   opacity holds at one, the image underneath is still moving — there is no
+   frame that looks like the frame before it, which is the other half of the
+   fix for "it feels paused". */
+html.px-diving #dive .px-field{
+  animation:px-field 2600ms cubic-bezier(.33,0,.18,1) forwards;
+}
+@keyframes px-field{
+  0%   {transform:rotate(-19deg) scale(1.30); opacity:0;}
+  12%  {transform:rotate(-13deg) scale(1.22); opacity:1;}
+  58%  {transform:rotate(6deg)   scale(1.03); opacity:1;}
+  70%  {transform:rotate(13deg)  scale(.95);  opacity:0;}
+  100% {transform:rotate(13deg)  scale(.95);  opacity:0;}
+}
+html.px-diving #dive .px-core{
+  animation:px-core 2600ms cubic-bezier(.33,0,.2,1) forwards;
+}
+@keyframes px-core{
+  0%   {transform:scale(.62); opacity:0;}
+  40%  {transform:scale(1);   opacity:1;}
+  62%  {transform:scale(1.14);opacity:1;}
+  70%  {transform:scale(1.3); opacity:0;}
+  100% {transform:scale(1.3); opacity:0;}
+}
+
 /* ---------- the page recedes, and comes back --------------------------------
-   render() swaps the page at 31% of the span, while nothing is visible, and
-   from 62% it eases back to rest. */
+   render() swaps the page at 31% of the span, while nothing is visible.
+
+   No plateau. The old version sat at one scale from 22% to 62% with the page
+   invisible, and a value that stops changing for most of a second reads as the
+   animation waiting — even at a perfect frame rate. Here the scale is moving on
+   every keyframe.
+
+   The page is home at 70%, which is where the base timeline calls
+   pageEntrance() — the destination's own arrival. Handing over exactly there
+   means the two never overlap; before, the entrance started while the page was
+   still fading in, which put the longest frame of the whole transition in the
+   middle of a fade. */
 html.px-diving #app{
   transform-origin:50% 46%;
   will-change:transform, opacity;
-  animation:px-warp-app 2600ms cubic-bezier(.4,0,.2,1) forwards;
+  animation:px-warp-app 2600ms cubic-bezier(.33,0,.18,1) forwards;
 }
-/* One easing, one direction. The page recedes and returns; it no longer
-   lunges at the lens and snaps back. */
 @keyframes px-warp-app{
   0%   {transform:scale(1);     opacity:1;}
-  10%  {transform:scale(1.055); opacity:.42;}
-  22%  {transform:scale(1.115); opacity:0;}
-  62%  {transform:scale(1.075); opacity:0;}
-  82%  {transform:scale(1.018); opacity:1;}
+  13%  {transform:scale(1.042); opacity:.34;}
+  25%  {transform:scale(1.072); opacity:0;}
+  48%  {transform:scale(1.044); opacity:0;}
+  60%  {transform:scale(1.014); opacity:.78;}
+  70%  {transform:scale(1);     opacity:1;}
   100% {transform:scale(1);     opacity:1;}
 }
 
 /* ---------- the mark, rising and settling ---------------------------------
    The base timeline fades and unblurs the image itself; this moves the whole
    group. Two transforms on two different elements, so neither fights the
-   other. */
+   other. It settles by 62%, which is where the base fades the mark out. */
 #dive .center{z-index:3;}
 html.px-diving #dive .center{
-  animation:px-arrive 2600ms cubic-bezier(.33,0,.2,1);
+  animation:px-arrive 2600ms cubic-bezier(.28,0,.2,1);
 }
-/* The mark rises into the light and settles back out of it. No punch. */
 @keyframes px-arrive{
-  0%   {transform:scale(.72);}
-  40%  {transform:scale(1);}
-  62%  {transform:scale(1.01);}
-  100% {transform:scale(1.34);}
+  0%   {transform:scale(.80);}
+  32%  {transform:scale(1);}
+  58%  {transform:scale(1.03);}
+  100% {transform:scale(1.22);}
 }
 
 /* The supplied line marks are wide lockups, roughly 5:1, not square badges.
@@ -95,40 +165,29 @@ html.px-diving #dive .center{
   object-fit:contain;
 }
 
-/* THE MARK HAS TO CARRY ITS OWN LIGHT
-   Fitness and Longevity are dark metal on transparency — drawn to sit on a
-   white page, which is the brand. On a black field they are black on black,
-   and no amount of glow behind them fixes that: a pool bright enough to lift
-   charcoal is bright enough to swallow Beauty's fine copper, and the field is
-   meant to stay black anyway.
+/* THE MARK'S HALO
 
-   So the light is put on the mark rather than under it. A drop-shadow follows
-   the artwork's own alpha exactly, so what comes out is a halo hugging every
-   stroke of the supplied lockup — a rim light. Not one pixel of the artwork is
-   touched: all of this is outside it.
+   On the black field this was a four-pass rim light, and it had to be: the
+   Fitness and Longevity lockups are dark metal drawn to sit on a white page,
+   and on black they were black on black.
 
-   Read the chain in order, because each pass is fed the result of the last: a
-   tight white edge and the line's own light are laid on the mark first, and a
-   black spread is thrown behind all of it. That works for artwork of any tone
-   — the dark lines get an edge that separates them from the field, the light
-   one gets a pocket of black that separates it from the corridor passing
-   behind.
+   On white that problem does not exist — the artwork is on the ground it was
+   designed for. What is left is one soft halo in the route's own colour, which
+   separates the mark from the bloom passing behind it and adds to the colour
+   rather than fighting it. Not one pixel of the supplied artwork is touched: a
+   drop-shadow follows its own alpha and lives entirely outside it.
 
    It is declared on a wrapper rather than on the image because the base
    timeline animates `filter` on the image itself and would overwrite anything
-   set there — and because a filter belongs on a box the size of the mark, not
-   on a viewport-sized layer that is being scaled. */
+   set there — including the base stylesheet's own drop shadow, which GSAP
+   replaces with blur(0px) on its last keyframe and never puts back. */
 #dive .dlogo-lit{
   display:inline-block; line-height:0;
   filter:
-    drop-shadow(0 0 2px  rgba(255,255,255,.6))
-    drop-shadow(0 0 10px rgba(255,255,255,.34))
-    drop-shadow(0 0 28px rgba(var(--px-tint),.62))
-    drop-shadow(0 0 22px rgba(0,0,0,.55));
+    drop-shadow(0 0 1px  rgba(255,255,255,.9))
+    drop-shadow(0 10px 26px rgba(var(--px-tint),.30))
+    drop-shadow(0 2px 8px rgba(10,20,60,.14));
 }
-
-#dive .hr{background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent) !important;}
-#dive .cap{color:rgba(255,255,255,.72) !important;}
 
 @media (max-width:820px){
   #dive .dlogo{max-height:20vh;}
@@ -137,5 +196,8 @@ html.px-diving #dive .center{
 @media (prefers-reduced-motion:reduce){
   html.px-diving #app{animation:none;}
   html.px-diving #dive .center{animation:none;}
-  #dive .dlogo-lit{filter:drop-shadow(0 0 12px rgba(255,255,255,.4));}
+  html.px-diving #dive .px-field{animation:px-fade 2600ms linear forwards;}
+  html.px-diving #dive .px-core{animation:none;}
+  @keyframes px-fade{0%,4%{opacity:0}12%,60%{opacity:1}72%,100%{opacity:0}}
+  #dive .dlogo-lit{filter:drop-shadow(0 6px 18px rgba(10,20,60,.16));}
 }

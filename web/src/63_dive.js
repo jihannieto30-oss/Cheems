@@ -48,62 +48,111 @@
    artwork and it carries a rim light that follows its own alpha, and the page
    itself. Three animated layers in total.
    ============================================================================ */
+/* ============================================================================
+   PEPTIDEX — THE WARP, IN WHITE
+
+   White was always the brand, and the base timeline was already white: its two
+   shutter panels are #ffffff to #f4f6f9. The black field was a detour. This
+   goes back to white and puts the colour in the light instead of in the
+   background — a bloom in the destination line's own chord that turns, opens
+   and closes while the mark rises through it.
+
+   WHY THE OLD ONE FELT PAUSED, AND IT WAS NOT THE FRAME RATE
+
+   Two reasons, both structural.
+
+   The envelopes held. Every element rose to full, sat there while the mark was
+   on screen, then fell — and a value that stops changing for half a second
+   reads as the animation waiting, however smooth the frames are. Here nothing
+   holds. The field turns and converges from the first frame to the last; when
+   its opacity plateaus, the image underneath is still moving, so there is no
+   moment with nothing happening in it.
+
+   And the tail was dead. The base timeline runs to 2.56 s, but its last 0.8 s
+   is spent sliding the two shutter panels back out — and those panels are
+   turned off here, because the canvas covers and uncovers the field on this
+   transition's own beat. So from 1.9 s onwards the base was animating two
+   invisible boxes while the viewer looked at a still frame. Everything now
+   finishes by 74 % of the span, around 1.9 s, and the page is back and
+   interactive while the base quietly plays out its invisible tail.
+
+   THE COLOUR
+
+   Each route gets a two-colour chord rather than a single tint. One colour is
+   flat; two blended across a bloom is what reads as depth, and it is the
+   difference between "a blue glow" and light with something behind it. The
+   chords are lighting, not artwork — no supplied asset is recoloured.
+
+   On a white ground the arithmetic inverts. Adding light to white gives white,
+   so `lighter` — which is what made the black version glow — washes everything
+   out here. The field sprite is therefore drawn opaque, with the colour already
+   composed over white inside it, and blitted as one image; the streaks darken
+   with `multiply`, because on white the only way to show colour is to take
+   light away.
+
+   ONE LAYER, NOT NINETY
+
+   The first build of this was DOM: a div for the field, six hexagonal frames,
+   forty-six streaks, two blobs of haze, a flash — about ninety positioned,
+   translucent, animated boxes over the full viewport. It looked right and ran
+   at a fifth of the frame rate. No single layer was the problem; the problem
+   was that there were ninety, each with its own raster and its own turn to be
+   composited.
+
+   So all of it is drawn into one canvas, from sprites rendered once — no
+   gradients rebuilt per frame, no blur, no masks, no clip paths. A blit that
+   covers the screen is the only genuinely expensive thing in here, and there
+   are two of them: the field and the core. The backing store is capped well
+   under the display's resolution, because every pixel of this is soft light in
+   motion and there is nothing a finer grid would resolve.
+   ============================================================================ */
 (function(){
 'use strict';
 
-const SPAN = 2600;   /* the base timeline's own length, in ms */
+const SPAN = 2600;   /* the base timeline's clock, in ms */
+const END  = .70;    /* everything visual is over by here — see the note below */
 
-/* Each line's light, taken from that line's own material by mk_labelkit.py:
-   the colour is its foil, the depth is its plate. */
-const WATER = PX_WATER;
+/* Why .70 and not something rounder: the base timeline calls pageEntrance() at
+   1.82 s, which is 70 % of the span, and that call is the destination page's
+   own arrival animation. Handing over exactly there means the warp clears as
+   the entrance starts, on a page that is already fully visible, instead of the
+   two overlapping — which is what put the longest frame of the whole
+   transition in the middle of a fade. */
 
-/* The colour of the line's light.
-   A measured foil is a *surface* colour, and a surface read off a photograph
-   is never at full intensity — #a8a8a8 as light is not silver, it is grey, and
-   grey light is what "washed out" means. So the brightest channel is taken to
-   full and the other two follow it by the same factor: the ratio between the
-   channels is untouched, which means the hue and the saturation are exactly
-   what was measured. A material with no colour in it — steel on steel —
-   therefore lights the corridor white, because white is what no colour cast
-   looks like at full intensity, and not one hue is invented to get there. */
-function lightOf(hex){
-  const n = parseInt(String(hex || '#a8a8a8').slice(1), 16);
-  const c = [n>>16 & 255, n>>8 & 255, n & 255];
-  const mx = Math.max(c[0], c[1], c[2]);
-  if(!mx) return [255, 255, 255];
-  const k = 255 / mx;
-  return c.map(v => Math.min(255, Math.round(v * k)));
-}
+/* The chord of each route: two colours, blended across the bloom.
+   These are light, not artwork. Nothing supplied is recoloured. */
+const CHORD = {
+  '':          ['#2f6bff', '#8b5cf6'],
+  fitness:     ['#1f6fff', '#00cfe8'],
+  beauty:      ['#e06a3c', '#ff4f8b'],
+  longevity:   ['#0b46a0', '#1fc3b4'],
+  quality:     ['#2f6bff', '#6ee7f9'],
+  tools:       ['#5b6bff', '#a78bfa'],
+  track:       ['#2563eb', '#7bd0ff'],
+  account:     ['#4b5bd6', '#c084fc']
+};
+const chordOf = k => CHORD[k] || CHORD[''];
+
+const hex = h => {
+  const n = parseInt(String(h).slice(1), 16);
+  return [n >> 16 & 255, n >> 8 & 255, n & 255];
+};
+const rgbOf = h => hex(h).join(',');
 
 /* ---------- the shape of it ---------------------------------------------- */
 
-/* a keyframe list, evaluated: piecewise linear, which is all any of these
-   envelopes ever needed */
-function env(t, pts){
-  if(t <= pts[0][0]) return pts[0][1];
-  for(let i = 1; i < pts.length; i++){
-    if(t <= pts[i][0]){
-      const a = pts[i-1], b = pts[i];
-      return a[1] + (b[1] - a[1]) * ((t - a[0]) / ((b[0] - a[0]) || 1));
-    }
-  }
-  return pts[pts.length-1][1];
-}
-
-/* Depth, done properly. Something approaching at constant speed grows
-   exponentially on screen, not linearly — and that exponential is the entire
-   reason six scaling hexagons read as one corridor with distance in it. */
-const geo = (p, a, b) => a * Math.pow(b / a, p);
-
 /* Smoothstep, so every envelope arrives and leaves without a corner. A
    piecewise-linear ramp changes direction at each knot, and at this scale the
-   eye reads those changes as the animation stuttering even when the frame
-   rate is perfect. */
+   eye reads those changes as the animation stuttering even when the frame rate
+   is perfect. */
 const ss = t => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
-/* rise from a to b, hold, fall from c to d — one shape, softened */
+/* rise from a to b, fall from c to d */
 const arc = (t, a, b, c, d) => t < b ? ss((t - a) / (b - a)) : t < c ? 1 : 1 - ss((t - c) / (d - c));
+/* Depth: something approaching at constant speed grows exponentially on
+   screen, not linearly. */
+const geo = (p, a, b) => a * Math.pow(b / a, p);
 
-const N_STREAK = 26;
+const N_STREAK = 30;
 
 /* ---------- sprites, drawn once ------------------------------------------ */
 
@@ -114,27 +163,67 @@ function sprite(w, h, draw){
   return c;
 }
 
-function glowSprite(rgb, inner, mid){
-  const S = 256, r = S / 2;
+/* THE FIELD — opaque, with the colour already composed over white.
+
+   It has to be opaque for two reasons. The obvious one is that it is the
+   curtain: it has to hide the page underneath. The subtler one is that on
+   white you cannot add colour by adding light — white plus anything is still
+   white — so the blend has to happen once, here, at full strength, and be
+   blitted as a finished image. Trying to tint a white field per frame gives
+   pastel mud and costs three blits instead of one.
+
+   The two chord colours sit off-centre and opposite each other, so rotating
+   this sprite sweeps one colour through where the other was. That rotation is
+   most of what makes the field feel alive without a single extra draw. */
+function fieldSprite(c1, c2){
+  const S = 512, a = rgbOf(c1), b = rgbOf(c2);
   return sprite(S, S, (g) => {
-    const gr = g.createRadialGradient(r, r, 0, r, r, r);
-    gr.addColorStop(0,   'rgba(255,255,255,' + inner + ')');
-    gr.addColorStop(.34, 'rgba(' + rgb + ',' + mid + ')');
-    gr.addColorStop(.72, 'rgba(' + rgb + ',0)');
-    gr.addColorStop(1,   'rgba(' + rgb + ',0)');
-    g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, S, S);
+
+    const bloom = (x, y, r, rgb, al) => {
+      const gr = g.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0,   'rgba(' + rgb + ',' + al + ')');
+      gr.addColorStop(.42, 'rgba(' + rgb + ',' + (al * .52).toFixed(3) + ')');
+      gr.addColorStop(.78, 'rgba(' + rgb + ',' + (al * .12).toFixed(3) + ')');
+      gr.addColorStop(1,   'rgba(' + rgb + ',0)');
+      g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    };
+    bloom(S * .28, S * .32, S * .66, a, .96);
+    bloom(S * .74, S * .70, S * .62, b, .93);
+    bloom(S * .70, S * .24, S * .38, b, .52);
+    bloom(S * .24, S * .76, S * .36, a, .48);
+
+    /* A ring of the chord around the edge. Without it the sprite is brightest
+       at the rim after the white recentring, and a field that fades outwards
+       into paper reads as washed out however saturated the blooms are. The
+       colour has to be deepest where the eye is not looking. */
+    const v = g.createRadialGradient(S/2, S*.46, S*.28, S/2, S*.46, S*.72);
+    v.addColorStop(0,   'rgba(' + a + ',0)');
+    v.addColorStop(.62, 'rgba(' + a + ',.16)');
+    v.addColorStop(1,   'rgba(' + b + ',.34)');
+    g.fillStyle = v; g.fillRect(0, 0, S, S);
+
+    /* The centre is taken back towards white so the mark always has clean
+       ground under it, whatever the rotation has swept through — but only the
+       centre. Taken too wide, this is what turned the whole field pastel. */
+    const c = g.createRadialGradient(S/2, S*.46, 0, S/2, S*.46, S*.30);
+    c.addColorStop(0,   'rgba(255,255,255,.90)');
+    c.addColorStop(.42, 'rgba(255,255,255,.56)');
+    c.addColorStop(1,   'rgba(255,255,255,0)');
+    g.fillStyle = c; g.fillRect(0, 0, S, S);
   });
 }
 
-/* a streak: white-hot at the leading end, the line's own colour trailing it,
-   soft at both tips and across its thickness so nothing here has a cut edge */
-function streakSprite(rgb){
-  const W = 256, H = 12;
+/* A streak, in the chord's colour, soft at both tips and across its thickness.
+   It darkens rather than glows: on white that is the only direction colour
+   can go. */
+function streakSprite(c){
+  const W = 256, H = 12, rgb = rgbOf(c);
   return sprite(W, H, (g) => {
     const gr = g.createLinearGradient(0, 0, W, 0);
     gr.addColorStop(0,   'rgba(' + rgb + ',0)');
-    gr.addColorStop(.20, 'rgba(255,255,255,.98)');
-    gr.addColorStop(.56, 'rgba(' + rgb + ',.92)');
+    gr.addColorStop(.24, 'rgba(' + rgb + ',1)');
+    gr.addColorStop(.60, 'rgba(' + rgb + ',.62)');
     gr.addColorStop(1,   'rgba(' + rgb + ',0)');
     g.fillStyle = gr; g.fillRect(0, 0, W, H);
     const gv = g.createLinearGradient(0, 0, 0, H);
@@ -146,57 +235,19 @@ function streakSprite(rgb){
   });
 }
 
-/* The black the whole thing happens in — WITH THE HAZE ALREADY IN IT.
-
-   The haze used to be two soft blobs drifting on their own, and they cost two
-   more full-viewport draws every frame. A blit that covers the screen is the
-   only genuinely expensive thing in this transition — one is fine, three is a
-   third of the frame rate — so the blooms are painted into this sprite once
-   and the whole field is drawn as a single image that drifts and swells
-   slightly as it goes. Same atmosphere, a third of the fill. */
-function voidSprite(rgb, depth){
-  const S = 512;
-  return sprite(S, S, (g) => {
-    let gr = g.createRadialGradient(S/2, S*.46, 0, S/2, S*.46, S*.74);
-    gr.addColorStop(0,   '#0b0d10');
-    gr.addColorStop(.40, '#060709');
-    gr.addColorStop(.72, '#020304');
-    gr.addColorStop(1,   '#000000');
-    g.fillStyle = gr; g.fillRect(0, 0, S, S);
-
-    gr = g.createRadialGradient(S/2, S*.46, 0, S/2, S*.46, S*.46);
-    gr.addColorStop(0, 'rgba(' + rgb + ',' + (.10 * depth + .04).toFixed(3) + ')');
-    gr.addColorStop(1, 'rgba(' + rgb + ',0)');
-    g.fillStyle = gr; g.fillRect(0, 0, S, S);
-
-    const bloom = (x, y, r, col, a) => {
-      const b = g.createRadialGradient(x, y, 0, x, y, r);
-      b.addColorStop(0,   'rgba(' + col + ',' + a + ')');
-      b.addColorStop(.44, 'rgba(' + col + ',' + (a * .5).toFixed(3) + ')');
-      b.addColorStop(1,   'rgba(' + col + ',0)');
-      g.fillStyle = b; g.fillRect(0, 0, S, S);
-    };
-    bloom(S * .26, S * .30, S * .40, rgb, .14);
-    bloom(S * .76, S * .70, S * .42, '255,255,255', .07);
-  });
-}
-
-/* What the mark stands in is a pocket, not a pool.
-   The instinct is to put light behind the mark and it is wrong twice over: a
-   bright disc swallows Beauty's fine copper, and it does nothing at all about
-   a corridor rod passing directly behind a stroke, because the rod is brighter
-   than any backing. So the middle is taken *down*. The corridor keeps
-   arriving; it simply goes quiet exactly where the mark is, and the rim light
-   on the mark itself does the separating. */
-function pocketSprite(){
+/* The clean white the mark stands on. On the black version this was a pocket
+   that took the middle *down*; on white it does the opposite and lifts it, so
+   the supplied lockup — dark artwork drawn for a white page — sits on exactly
+   the ground it was designed for. */
+function coreSprite(){
   const S = 256, r = S / 2;
   return sprite(S, S, (g) => {
     const gr = g.createRadialGradient(r, r, 0, r, r, r);
-    gr.addColorStop(0,   'rgba(0,0,0,.80)');
-    gr.addColorStop(.30, 'rgba(0,0,0,.66)');
-    gr.addColorStop(.57, 'rgba(0,0,0,.34)');
-    gr.addColorStop(.78, 'rgba(0,0,0,.10)');
-    gr.addColorStop(1,   'rgba(0,0,0,0)');
+    gr.addColorStop(0,   'rgba(255,255,255,.92)');
+    gr.addColorStop(.36, 'rgba(255,255,255,.72)');
+    gr.addColorStop(.66, 'rgba(255,255,255,.32)');
+    gr.addColorStop(.86, 'rgba(255,255,255,.08)');
+    gr.addColorStop(1,   'rgba(255,255,255,0)');
     g.fillStyle = gr; g.fillRect(0, 0, S, S);
   });
 }
@@ -216,8 +267,8 @@ function rnd(){
 
 const W = {
   cv:null, g:null, w:0, h:0, s:1,
-  spr:null, key:null,
-  streaks:[], rings:[],
+  spr:null, key:null, lkey:null, coreURL:null,
+  streaks:[],
   raf:0, t0:0, reduced:false
 };
 
@@ -226,33 +277,67 @@ function plan(){
   W.streaks = [];
   const slice = 360 / N_STREAK;
   for(let i = 0; i < N_STREAK; i++){
-    const dur = 700 + rnd() * 480;             /* speed is depth */
+    const dur = 620 + rnd() * 420;             /* speed is depth */
     W.streaks.push({
       a:   (i * slice + rnd() * slice * .9) * Math.PI / 180,
-      len: 2.2 + rnd() * 2.4,                  /* longer tails, softer edges */
-      th:  .7 + rnd() * 1.1,
-      far: .62 + rnd() * .5,
-      o:   .26 + rnd() * .5,
+      len: 2.0 + rnd() * 2.2,
+      th:  .6 + rnd() * 1.0,
+      far: .60 + rnd() * .48,
+      o:   .34 + rnd() * .46,
+      c:   rnd() < .5 ? 0 : 1,                 /* which half of the chord */
       dur: dur,
       off: rnd() * dur
     });
   }
-
 }
 
 function sprites(key){
-  const wv  = WATER[key] || {};
-  const rgb = lightOf(wv.tint).join(',');
-  const dep = wv.depth == null ? .5 : wv.depth;
+  const ch = chordOf(key);
   W.key = key;
-  W.spr = {
-    field:  voidSprite(rgb, dep),
-    glow:   glowSprite(rgb, .92, .55),
-    flash:  glowSprite(rgb, .90, .38),
-    streak: streakSprite(rgb),
-    pocket: pocketSprite()
-  };
-  return rgb;
+  /* El lienzo ya sólo lleva estelas: el campo y el núcleo son capas CSS. */
+  W.spr = { streak: [streakSprite(ch[0]), streakSprite(ch[1])] };
+  return rgbOf(ch[0]);
+}
+
+/* El campo y el núcleo salen del lienzo.
+
+   Medido: quitando el lienzo Y la animación de la página, la transición sigue
+   dando 19 fps con once fotogramas largos bajo un freno de CPU de 4×.  El
+   suelo no lo pone lo que dibujo — lo pone render(), que reconstruye la página
+   entera a los 0.8 s, y pageEntrance() detrás.
+
+   Y ahí está el verdadero problema: el lienzo se dibuja con requestAnimationFrame,
+   en el hilo principal.  Cuando render() lo bloquea ochenta milisegundos, el
+   warp se congela con él.  Eso es exactamente lo que se ve como «pausado», y no
+   se arregla dibujando menos: se arregla no dibujando ahí.
+
+   Así que el campo y el núcleo pasan a ser dos divs con la imagen de fondo y
+   una animación CSS de transform y opacity.  Eso vive en el compositor: sigue
+   girando aunque el hilo principal esté ocupado reconstruyendo la página.  El
+   lienzo se queda sólo con las estelas, que son pequeñas y cuyo tirón, si lo
+   hay, no es el del fondo entero parándose.
+
+   Son dos capas más, no noventa.  Lo que hundía la primera versión era el
+   número, no el hecho de existir. */
+function layers(key){
+  const dive = document.getElementById('dive');
+  if(!dive) return;
+  const ch = chordOf(key);
+  let f = dive.querySelector('.px-field'), c = dive.querySelector('.px-core');
+  if(!f){
+    f = document.createElement('div'); f.className = 'px-field';
+    f.setAttribute('aria-hidden','true'); dive.insertBefore(f, dive.firstChild);
+  }
+  if(!c){
+    c = document.createElement('div'); c.className = 'px-core';
+    c.setAttribute('aria-hidden','true'); dive.insertBefore(c, f.nextSibling);
+  }
+  if(W.lkey !== key){
+    f.style.backgroundImage = 'url(' + fieldSprite(ch[0], ch[1]).toDataURL('image/png') + ')';
+    if(!W.coreURL) W.coreURL = coreSprite().toDataURL('image/png');
+    c.style.backgroundImage = 'url(' + W.coreURL + ')';
+    W.lkey = key;
+  }
 }
 
 function fit(){
@@ -261,8 +346,7 @@ function fit(){
   const vw = Math.max(1, window.innerWidth), vh = Math.max(1, window.innerHeight);
   /* Cap the backing store. Everything drawn here is soft light in motion, so
      nothing is lost — and the pixel count is what decides whether this holds
-     sixty frames a second. A full-viewport draw is the only expensive thing
-     here, and its cost is exactly the number of pixels in it. */
+     sixty frames a second. */
   const s = Math.min(1, 1000 / Math.max(vw, vh));
   W.s = s;
   W.w = cv.width  = Math.round(vw * s);
@@ -275,63 +359,39 @@ function draw(t){
   if(!g || !S) return;
   const cx = w / 2, cy = h * .46;
   const R = Math.max(w, h), vmin = Math.min(w, h);
+  /* Compuesto contra el tramo visible, no contra el reloj del base: el último
+     30 % lo gasta el base deslizando dos paneles ocultos. */
+  const u = Math.min(1, t / END);
 
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, w, h);
-  g.globalCompositeOperation = 'source-over';
+  if(W.reduced) return;
 
-  /* the field, drifting as one draw */
-  const aV = arc(t, 0, .10, .62, .86);
-  if(aV > .002){
-    const k = 1 + .10 * t;
-    g.globalAlpha = aV;
-    g.drawImage(S.field, w * (-.06 * t), h * (-.04 * t), w * k, h * k);
+  /* LAS ESTELAS — oscurecen, porque sobre blanco es la única dirección que
+     tiene el color.  Corren del primer fotograma al último sin pausa. */
+  const aS = arc(u, .02, .18, .58, .96) * .95;
+  if(aS <= .004) return;
+  g.globalCompositeOperation = 'multiply';
+  const ms = u * SPAN * END;
+  for(let i = 0; i < W.streaks.length; i++){
+    const s = W.streaks[i];
+    const p = ((ms + s.off) % s.dur) / s.dur;
+    const a = aS * s.o * ss(Math.min(1, p / .16)) * (1 - ss(Math.max(0, (p - .58) / .42)));
+    if(a <= .004) continue;
+    const rn = geo(p, vmin * .06, R * s.far);
+    g.globalAlpha = a;
+    g.setTransform(1, 0, 0, 1, cx, cy);
+    g.rotate(s.a);
+    g.drawImage(S.streak[s.c], rn, -s.th / 2, rn * (s.len - 1), s.th);
   }
-  if(W.reduced){ g.globalAlpha = 1; return; }
-
-  g.globalCompositeOperation = 'lighter';
-
-  /* the light at the centre: it opens, holds while the mark is there, closes */
-  const aC = arc(t, .04, .34, .56, .78) * .9;
-  if(aC > .004){
-    const sc = vmin * (.55 + 1.15 * ss(t));
-    g.globalAlpha = aC;
-    g.drawImage(S.glow, cx - sc / 2, cy - sc / 2, sc, sc);
-  }
-
-  /* the streaks — fewer, slower, and softest where they start, so the field
-     reads as movement rather than as a burst */
-  const aS = arc(t, .02, .26, .58, .84) * .62;
-  if(aS > .004){
-    const ms = t * SPAN;
-    for(let i = 0; i < W.streaks.length; i++){
-      const s = W.streaks[i];
-      const p = ((ms + s.off) % s.dur) / s.dur;
-      const a = aS * s.o * ss(Math.min(1, p / .18)) * (1 - ss(Math.max(0, (p - .62) / .38)));
-      if(a <= .004) continue;
-      const rn = geo(p, vmin * .05, R * s.far);
-      g.globalAlpha = a;
-      g.setTransform(1, 0, 0, 1, cx, cy);
-      g.rotate(s.a);
-      g.drawImage(S.streak, rn, -s.th / 2, rn * (s.len - 1), s.th);
-    }
-    g.setTransform(1, 0, 0, 1, 0, 0);
-  }
-
-  /* and the pocket the mark stands in */
-  g.globalCompositeOperation = 'source-over';
-  const aP = arc(t, .16, .36, .58, .80);
-  if(aP > .004){
-    const ps = Math.min(w * 1.02, 1000 * W.s);
-    g.globalAlpha = aP;
-    g.drawImage(S.pocket, cx - ps / 2, h * .44 - ps / 2, ps, ps);
-  }
+  g.setTransform(1, 0, 0, 1, 0, 0);
   g.globalAlpha = 1;
+  g.globalCompositeOperation = 'source-over';
 }
 
 function frame(now){
   const t = (now - W.t0) / SPAN;
-  if(t >= 1){
+  if(t >= END){
     W.raf = 0;
     if(W.g){ W.g.setTransform(1,0,0,1,0,0); W.g.clearRect(0, 0, W.w, W.h); }
     return;
@@ -349,6 +409,7 @@ function mount(){
   cv.setAttribute('aria-hidden', 'true');
   dive.insertBefore(cv, dive.firstChild);
   W.cv = cv;
+  layers('');
   W.reduced = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   fit();
   plan();
@@ -356,9 +417,11 @@ function mount(){
   let rz = 0;
   addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(fit, 180); }, {passive:true});
 
-  /* the mark's rim light lives on a box the size of the mark. The base
-     timeline still finds .dlogo with its own querySelector and still owns
-     every property it animates on it — this only wraps it. */
+  /* The mark's halo lives on a box the size of the mark.  It has to be a
+     wrapper: the base timeline animates `filter` on the image itself and
+     would overwrite anything set there — including the soft drop shadow the
+     base's own stylesheet gives it, which GSAP replaces with blur(0px) on the
+     last keyframe and never puts back. */
   const img = dive.querySelector('.dlogo');
   if(img && img.parentNode && !img.parentNode.classList.contains('dlogo-lit')){
     const lit = document.createElement('span');
@@ -375,8 +438,8 @@ diveTransition = function(route){
   mount();
   const key = String(route || '').replace('/', '');
   if(W.cv){
-    const rgb = (W.key !== key || !W.spr) ? sprites(key)
-                                          : lightOf((WATER[key] || {}).tint).join(',');
+    const rgb = (W.key !== key || !W.spr) ? sprites(key) : rgbOf(chordOf(key)[0]);
+    layers(key);
     const dive = document.getElementById('dive');
     if(dive) dive.style.setProperty('--px-tint', rgb);
     W.t0 = performance.now();
@@ -399,7 +462,7 @@ diveTransition = function(route){
 mount();
 
 /* the harness needs a way in; the site itself never calls either of these */
-window.__pxSetLine = function(key){ mount(); sprites(key); };
+window.__pxSetLine = function(key){ mount(); sprites(key); layers(key); };
 window.__pxWarpDraw = function(t){
   mount();
   if(!W.spr) sprites('beauty');
