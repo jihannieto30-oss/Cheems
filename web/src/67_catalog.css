@@ -1,0 +1,133 @@
+/* ============================================================================
+   PEPTIDEX — MENOS COSAS ARRIBA
+
+   La barra tenía trece elementos al mismo peso: ocho enlaces, dos conmutadores,
+   dos iconos y un botón. Trece cosas no son una jerarquía, son una lista — y
+   una lista no dice por dónde empezar. Con dos secciones más en camino (Pens y
+   Accessories) serían quince, y quince no caben.
+
+   Quedan cuatro.
+
+     Catalog ▾   Quality   Tools   Track
+
+   Tres se fueron y ninguna se perdió:
+
+     Home       la marca ya es el enlace a inicio. Ponerlo dos veces no da dos
+                caminos, da una duda.
+     Science    es un ancla dentro de la portada, no un destino. Vive en la
+                portada y en el pie, que es donde se busca.
+     Explore    decía lo mismo que Catalog, más fuerte y en otro sitio.
+                Catalog          lo dice una vez.
+
+   Y las cinco líneas — las tres de siempre más las dos nuevas — pasan a colgar
+   de Catalog. Es lo único que crece cuando el catálogo crece: la barra ya no.
+
+   Nada de esto cambia color, tipografía ni una sola imagen entregada.
+   ============================================================================ */
+
+/* ---------- el menú de catálogo ------------------------------------------ */
+
+nav .links{position:relative;}
+
+/* El disparador es un enlace más. La flecha es lo único que lo distingue, y
+   sólo gira: nada se desplaza, nada rebota. */
+nav .links .px-cat-t{
+  display:inline-flex; align-items:center; gap:7px;
+  cursor:pointer; user-select:none;
+}
+nav .links .px-cat-t .cv{
+  width:9px; height:9px; flex:0 0 9px;
+  border-right:1.4px solid currentColor; border-bottom:1.4px solid currentColor;
+  transform:translateY(-2px) rotate(45deg);
+  transition:transform .32s cubic-bezier(.22,1,.36,1), opacity .25s;
+  opacity:.45;
+}
+nav .links .px-cat.on .px-cat-t .cv{transform:translateY(1px) rotate(-135deg); opacity:.9;}
+nav .links .px-cat.on .px-cat-t::after{width:18px; opacity:1;}
+
+/* El panel. Sale del borde inferior de la barra, alineado a su disparador, y
+   no se lleva por delante la barra: la barra tiene overflow:hidden para su
+   propia luz, así que el panel cuelga del <nav> por posición fija calculada en
+   el momento de abrirlo. */
+.px-cat-menu{
+  position:fixed; z-index:75;
+  min-width:290px; padding:10px;
+  border-radius:18px;
+  background:rgba(255,255,255,.97);
+  border:1px solid var(--hairline);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    0 24px 60px -30px rgba(10,20,60,.34),
+    0 60px 120px -70px rgba(10,20,60,.4);
+  opacity:0; transform:translateY(-8px); pointer-events:none;
+  transition:opacity .26s cubic-bezier(.22,1,.36,1), transform .26s cubic-bezier(.22,1,.36,1);
+}
+.px-cat-menu.on{opacity:1; transform:translateY(0); pointer-events:auto;}
+
+.px-cat-menu a{
+  display:flex; align-items:center; gap:13px;
+  padding:11px 13px; border-radius:12px;
+  text-decoration:none; color:var(--ink);
+  transition:background .22s;
+}
+.px-cat-menu a:hover{background:rgba(10,20,60,.045);}
+/* Los lockups de línea son piezas anchas, casi 5:1. A la altura de una fila de
+   menú se leen como manchas grises, y un logo ilegible resta más de lo que un
+   hueco quita: en el menú va el nombre, que ya es la marca. */
+.px-cat-menu a .nm{font-size:13.5px; font-weight:600; letter-spacing:-.01em;}
+.px-cat-menu a .tl{font-size:11.5px; color:var(--muted); margin-top:1px;}
+.px-cat-menu a .tx{display:flex; flex-direction:column; min-width:0;}
+
+/* Lo que todavía no abre se ve, pero se ve que no abre. */
+.px-cat-menu a.soon{opacity:.55;}
+.px-cat-menu a.soon .sn{
+  margin-left:auto; font-size:9.5px; letter-spacing:.16em; font-weight:600;
+  color:var(--muted); border:1px solid var(--hairline);
+  border-radius:999px; padding:3px 8px; white-space:nowrap;
+}
+
+.px-cat-menu .sep{height:1px; margin:8px 12px; background:var(--hairline);}
+
+@media (prefers-reduced-motion:reduce){
+  .px-cat-menu{transition:opacity .01s;}
+  nav .links .px-cat-t .cv{transition:none;}
+}
+
+/* ---------- las dos secciones que aún no tienen nada ----------------------
+   Una sección vacía es una promesa. Se escribe como una promesa: una línea,
+   mucho aire, y una sola cosa que hacer. Nada de rejillas de humo ni de tarje-
+   tas de relleno — el vacío es el mensaje, y llenarlo de adorno lo borra. */
+.px-soon{
+  min-height:78vh;
+  display:flex; align-items:center;
+  padding:120px 0 140px;
+}
+/* .wrap centra con margin:auto y un ancho máximo. Dentro de un contenedor
+   flex eso lo encoge al ancho de su contenido y lo centra, que es medio texto
+   a la deriva en mitad de la pantalla en vez de alineado con el resto del
+   sitio. Ocupa el ancho y vuelve a su rejilla. */
+.px-soon > .wrap{width:100%;}
+.px-soon .in{max-width:640px;}
+.px-soon .eyebrow{display:block;}
+.px-soon h1{
+  font-size:clamp(46px,7.4vw,104px); font-weight:600;
+  letter-spacing:-.045em; line-height:.9; margin:20px 0 0;
+}
+.px-soon .lead{
+  margin-top:26px; font-size:17px; line-height:1.66; color:var(--muted);
+  max-width:520px;
+}
+.px-soon .rule{
+  height:1px; width:96px; margin:38px 0 0;
+  background:linear-gradient(90deg,var(--ink),rgba(10,20,60,0));
+}
+.px-soon .acts{margin-top:34px; display:flex; gap:12px; flex-wrap:wrap;}
+.px-soon .note{
+  margin-top:30px; font-size:11.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted);
+}
+
+@media (max-width:860px){
+  .px-soon{min-height:0; padding:96px 0 100px;}
+  .px-soon .acts .btn{flex:1 1 100%; justify-content:center;}
+}

@@ -1,0 +1,62 @@
+/* ============================================================================
+   PEPTIDEX — CÓMO SE VEN LOS DOS NOMBRES
+
+   Cada compuesto pasa a tener dos: el propio (ATLAS) y el científico
+   (BPC-157). No compiten — se turnan. Uno lleva la voz, el otro identifica, y
+   se distinguen por tamaño y por peso, nunca por color: el color aquí es la
+   línea, y meter un segundo color rompería lo único que ya funciona.
+
+   El científico no se esconde en ningún caso. Se puede leer siempre, a un
+   tamaño en el que se puede copiar y buscar. Es el identificador del producto
+   y es lo que va en la etiqueta y en la ficha; lo que cambia es quién entra
+   primero por el ojo, no quién está.
+
+   Con html.px-name-leads los papeles son los que se ven abajo. Sin esa clase
+   —una constante en 69_names.js— se invierten sin tocar una línea de marcado.
+   ============================================================================ */
+
+/* ---------- en la tarjeta del catálogo ----------------------------------- */
+
+.pcard .px-nm{
+  font-size:21px; font-weight:600; letter-spacing:-.005em;
+  line-height:1.1; margin:8px 0 0;
+}
+/* El científico, debajo: monoespaciado, porque es un identificador y se lee
+   como tal — y con la altura justa para que la tarjeta no crezca. */
+.pcard h4.px-sci{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:12.5px; font-weight:500; letter-spacing:0;
+  color:var(--muted); margin:3px 0 14px;
+}
+
+/* Al revés: el propio pasa a ser la línea de arriba y el científico recupera
+   el tamaño con el que se diseñó la tarjeta. */
+html:not(.px-name-leads) .pcard .px-nm{
+  font-size:11px; letter-spacing:.14em; font-weight:600;
+  color:var(--muted); margin:8px 0 0;
+}
+html:not(.px-name-leads) .pcard h4.px-sci{
+  font-family:inherit; font-size:21px; font-weight:600;
+  letter-spacing:-.02em; color:var(--ink); margin:3px 0 14px;
+}
+
+/* ---------- en el compuesto abierto -------------------------------------- */
+
+#product .panel .px-nm-big{
+  font-size:clamp(38px,5.4vw,66px); font-weight:600;
+  letter-spacing:-.04em; line-height:.92; margin:10px 0 0;
+}
+#product .panel h2.px-sci-big{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:15px; font-weight:500; letter-spacing:.02em;
+  line-height:1.3; color:var(--muted); margin:8px 0 0;
+}
+
+html:not(.px-name-leads) #product .panel .px-nm-big{
+  font-size:12px; letter-spacing:.22em; font-weight:600;
+  color:var(--muted); margin:10px 0 0;
+}
+html:not(.px-name-leads) #product .panel h2.px-sci-big{
+  font-family:inherit; font-size:clamp(38px,5.4vw,66px); font-weight:600;
+  letter-spacing:-.04em; line-height:.92; color:var(--ink); margin:6px 0 10px;
+}
