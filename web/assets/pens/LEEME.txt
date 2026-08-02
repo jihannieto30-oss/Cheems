@@ -1,0 +1,25 @@
+PEPTIDEX — arte de las plumas
+=============================
+
+Deja aquí tres ficheros, uno por línea:
+
+    fitness.png
+    beauty.png
+    longevity.png
+
+PNG con canal alfa: la pieza recortada sobre transparencia, sin fondo, sin
+sombra propia y sin reflejo — la sombra y el reflejo los dibuja el sitio, y si
+vienen ya en la imagen se duplican.
+
+Después:
+
+    python3 mk_pens.py
+    python3 build_restore.py
+
+mk_pens.py recorta el margen sobrante, iguala la escala de las tres piezas y
+las comprime. No redibuja nada: mueve y reescala, nada más.
+
+Si sólo tienes el render sobre fondo negro, `python3 mk_pens.py --key` lo
+separa por luminancia. Sirve para maquetar; para publicar, no — y el motivo
+está explicado en la cabecera de mk_pens.py y en
+docs/PEPTIDEX_Pens_Render_Brief.md.

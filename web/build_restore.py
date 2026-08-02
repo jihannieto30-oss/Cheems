@@ -61,8 +61,17 @@ label = rd(os.path.join(SRC, '40_label.js')).replace('__LABELKIT__', kit)
 css   = '\n'.join(rd(os.path.join(SRC, f)) for f in
                   ('41_label.css', '51_profile.css', '52_card.css', '62_dive.css', '64_logos.css',
                    '71_search.css', '72_nav.css', '30_motion.css',
-                   '65_mobile.css', '67_catalog.css', '70_names.css'))
+                   '65_mobile.css', '67_catalog.css', '70_names.css',
+                   '71_pens.css'))
+# ---- 4b · el arte de las plumas, si ya existe ----------------------------
+# Lo produce mk_pens.py a partir de los recortes. Si no está, el escenario del
+# sitio dibuja tres contornos en su lugar y no se rompe nada.
+PENS = os.path.join(HERE, 'assets', 'pens.json')
+pens = rd(PENS) if os.path.exists(PENS) else '{}'
+print('  plumas           %d de 3' % len(json.loads(pens)))
+
 js    = ('window.__pxBakedLines = true;\n' +
+         'const PX_PENS_ART = ' + pens + ';\n' +
          'const PX_MASTER_LOGO = ' + repr(master).replace("'", '"', 2) + ';\n' +
          'const PX_WATER = ' + json.dumps(
              {k: {'tint': v['tint'], 'depth': v['depth']}

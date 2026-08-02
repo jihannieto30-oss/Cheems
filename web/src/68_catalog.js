@@ -207,13 +207,46 @@ const SOON = {
   }
 };
 
+/* El escenario. Las tres piezas a la misma escala, alineadas por la base y
+   separadas por igual, cada una con su sombra de contacto y el nombre de su
+   línea debajo.
+
+   PX_PENS_ART lo inyecta el build desde web/assets/pens.json, que produce
+   mk_pens.py a partir de los recortes. Si no hay arte —que es hoy— salen tres
+   contornos: el hueco vacío se lee como página rota, y el contorno se lee como
+   producto que aún no ha salido, que es lo que es. */
+const PENART = (typeof PX_PENS_ART !== 'undefined' && PX_PENS_ART) || {};
+
+function stageHTML(){
+  const rows = [
+    {k:'fitness',   ln:'FITNESS'},
+    {k:'beauty',    ln:'BEAUTY'},
+    {k:'longevity', ln:'LONGEVITY'}
+  ];
+  const has = rows.some(r => PENART[r.k]);
+  return '<div class="px-stage reveal">' + rows.map(r => {
+    const src = PENART[r.k];
+    return '<div class="px-plinth">' +
+      '<div class="px-pen' + (src ? '' : ' empty') + '">' +
+        (src ? '<img src="' + src + '" alt="PEPTIDEX ' + r.ln + '"/>'
+             : '<div class="ghostpen"><i></i></div>') +
+        '<div class="sh"></div>' +
+      '</div>' +
+      '<div class="ln">' + r.ln + '</div>' +
+      '<div class="dz">' + (has ? '10 MG' : t('in development','en desarrollo')) + '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
 function soonHTML(key){
   const S = SOON[key], c = PX_CAT.find(x => x.key === key);
-  return '<section class="px-soon"><div class="wrap"><div class="in">' +
+  const stage = (key === 'pens');
+  return '<section class="px-soon' + (stage ? ' stage-on' : '') + '"><div class="wrap"><div class="in">' +
     '<span class="eyebrow reveal">' + t(S.eyebrow.en, S.eyebrow.es) + '</span>' +
     '<h1 class="display reveal">' + t(S.title.en, S.title.es) + '</h1>' +
     '<div class="rule reveal"></div>' +
     '<p class="lead reveal">' + t(S.lead.en, S.lead.es) + '</p>' +
+    (stage ? stageHTML() : '') +
     '<div class="acts reveal">' +
       '<button class="btn mag" data-soon-notify="' + esc(c.name) + '">' +
         t('Tell me when it opens','Avísame cuando abra') + '</button>' +

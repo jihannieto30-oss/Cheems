@@ -1,0 +1,3 @@
+# Lo produce mk_pens.py a partir de los recortes de web/assets/pens/.
+# Es un artefacto de build, no una fuente.
+assets/pens.json
