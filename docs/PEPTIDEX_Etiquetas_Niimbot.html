@@ -445,9 +445,41 @@ var list=document.getElementById('list'), q=document.getElementById('q');
 var cur=0, zoom=2, edits={}, imgs={};
 
 /* ---------- estado ---------- */
-function load(){ try{ var d=JSON.parse(localStorage.getItem(KEY)); if(d&&typeof d==='object') edits=d; }catch(e){} }
+function load(){
+  try{ var d=JSON.parse(localStorage.getItem(KEY)); if(d&&typeof d==='object') edits=d; }catch(e){}
+  migrate();
+}
+
+/* UN SOLO CUBO POR PRESENTACIÓN, NO UNO POR TAMAÑO
+
+   Las ediciones se guardaban con la clave `compuesto|50x30`, así que lo que
+   escribías en una medida no existía en la otra: había que teclear el lote y
+   la caducidad dos veces, y al cambiar de tamaño parecía que se hubieran
+   borrado. Tenía sentido cuando las dos medidas eran dos diseños distintos.
+   Ahora son el mismo diseño a dos escalas, y el contenido es el mismo
+   contenido.
+
+   Lo que ya estuviera guardado no se pierde: se funde en la clave sin tamaño.
+   Si hay de las dos, manda la de 50×30 — es la que está por defecto y la que
+   suele llevar todo relleno — y lo que sólo exista en la pequeña se rellena
+   encima. */
+function migrate(){
+  var moved=false, out={};
+  Object.keys(edits).forEach(function(k){
+    var bar=k.indexOf('|');
+    if(bar<0){ out[k]=edits[k]; return; }
+    moved=true;
+    var base=k.slice(0,bar), win=k.slice(bar+1)==='50x30';
+    if(!out[base]) out[base]={};
+    var src=edits[k];
+    for(var f in src){
+      if(win || out[base][f]===undefined || out[base][f]==='') out[base][f]=src[f];
+    }
+  });
+  if(moved){ edits=out; save(); }
+}
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(edits)); }catch(e){} }
-function keyOf(i){ return ITEMS[i].k+'|'+size; }
+function keyOf(i){ return ITEMS[i].k; }
 
 function base(i){
   var it=ITEMS[i];
@@ -473,10 +505,66 @@ function preload(cb){
 }
 
 /* ============================ EL DIBUJO ============================
-   Se dibuja en escala de grises y al final se umbraliza de golpe.  Hacerlo al
-   revés — intentar dibujar ya en blanco y negro — obliga a renunciar al
-   antialias del texto, y sin antialias el trazado del navegador se come los
-   remates.  Dibujar suave y cortar después da letras mucho más limpias.        */
+
+   UN SOLO DISEÑO, DOS TAMAÑOS
+
+   Antes había veintitantos «si es la pequeña, entonces» repartidos por la
+   rutina, y eso no son dos tamaños de un diseño: son dos diseños que se
+   parecen.  Se nota justo donde más duele — el lema aparecía en la de 50×30 y
+   desaparecía en la de 40×20, porque se dibujaba entero o nada y en la
+   pequeña nunca cabía.
+
+   Ahora hay una sola composición y un solo número, k, que es la raíz del
+   cociente de áreas:
+
+       k = √( (472·236) / (591·354) ) = 0.73
+
+   Todo lo que ocupa sitio se multiplica por k.  El tipo también, pero con
+   suelo: por debajo de cierto cuerpo la térmica cierra los contratipos y da
+   igual lo que diga la geometría.  Así las dos etiquetas son la misma, una a
+   escala de la otra, y el lema está en las dos porque tiene su propia línea.
+
+   LA COMPOSICIÓN, Y DE DÓNDE SALE
+
+   Del lockup entregado, que se lee así:
+
+       [icono] Px
+       P E P T I D E X
+       ─────────────────
+       F I T N E S S
+       BUILD PERFORMANCE
+
+   Marca, filete, línea, lema.  La etiqueta repite esa estructura en vez de
+   inventar otra:
+
+       [icono]Px  P E P T I D E X          ▓▓▓
+                  F I T N E S S            ▓▓▓
+                                           ▓▓▓
+       BPC-157                             ▓▓▓
+       ──────────
+       1 0   M G
+       ─────────────────────────────────────────
+       BUILD PERFORMANCE      RESEARCH USE ONLY
+       LOTE 2601-BC-01 · EXP 06.27
+
+   El filete corto bajo el nombre del compuesto es el mismo gesto que el filete
+   bajo PEPTIDEX en el lockup.  Es lo que hace que la etiqueta se lea como
+   parte de la marca y no como una pegatina de inventario.
+
+   LO QUE SE HA QUITADO
+
+     el recuadro negro de la dosis   Un bloque relleno es lo contrario de esta
+                                     marca, que son filetes finos y letras muy
+                                     espaciadas sobre blanco.  La dosis pasa a
+                                     texto espaciado bajo su filete: se
+                                     encuentra igual de rápido y pesa la mitad.
+     el filete de la cabecera        El aire ya separa.  Un filete que no
+                                     separa nada sólo llena.
+
+   Quedan dos filetes en toda la etiqueta y ninguna mancha negra.  Se dibuja en
+   gris y se umbraliza al final: dibujar ya en blanco y negro obliga a
+   renunciar al antialias, y sin antialias el trazado del navegador se come los
+   remates.                                                                  */
 function draw(){
   var S=SIZES[size], W=mm(S.w), H=mm(S.h), d=data(cur), it=ITEMS[cur];
   cv.width=W; cv.height=H;
@@ -484,152 +572,250 @@ function draw(){
   ctx.fillStyle='#000'; ctx.strokeStyle='#000';
   ctx.textBaseline='alphabetic';
 
-  var small = (size==='40x20');
-  var pad   = small?mm(1.3):mm(1.8);
-  var RULE  = Math.max(3, mm(0.28));          // filete mínimo: 3 px
-  var qrOn  = d.qrOn!==false;
+  /* el único número que distingue un tamaño del otro */
+  var k = Math.sqrt((W*H)/(mm(50)*mm(30)));
 
-  /* --- QR a la derecha ---------------------------------------------------
-     El módulo se redondea a entero: un módulo fraccionario reparte medio
-     píxel entre dos celdas y el lector pierde la retícula. */
+  /* Medida en milímetros escalada.  `floor` es el mínimo en milímetros por
+     debajo del cual la térmica cierra el trazo: la escala nunca lo cruza. */
+  function u(base, floor){
+    var v = mm(base)*k;
+    if(floor!==undefined && v<mm(floor)) v=mm(floor);
+    return Math.round(v);
+  }
+
+  var pad   = u(1.8, 1.15);
+  var RULE  = Math.max(3, Math.round(mm(0.26)*k));
+  var fullW = W-pad*2;
+
+  /* --- 1 · LA FRANJA INFERIOR SE MIDE ANTES QUE NADA ----------------------
+     Su altura no depende de nada más de la etiqueta, así que fijarla primero
+     da el techo real del que dispone todo lo demás — el QR incluido.  Medirla
+     al final, como estaba, es lo que hacía que el filete acabara cruzando el
+     QR en cuanto había lote y caducidad. */
+  var fsFoot = u(1.45, 1.35);
+  var gFoot  = u(0.7, 0.45);
+  var le=[];
+  if(d.lot) le.push('LOTE '+d.lot);
+  if(d.exp) le.push('EXP '+d.exp);
+  var lotLine = le.join('   ·   ');
+
+  /* El lema y el aviso legal comparten línea si caben; si no, el aviso baja a
+     la suya.  El lema no baja nunca y no se recorta: es lo único de la
+     etiqueta que dice de qué marca es esto, además del nombre. */
+  var tag  = d.tag!==false ? String(TAG[d.line]||'').toUpperCase() : '';
+  var foot = d.foot ? String(d.foot).toUpperCase() : '';
+  ctx.font='700 '+fsFoot+'px Arial,Helvetica,sans-serif';
+  var tagTr = tag ? spFit(tag, fullW, fsFoot*0.18) : 0;
+  var tagW  = tag  ? spW(tag, tagTr) : 0;
+  var footW = foot ? ctx.measureText(foot).width : 0;
+  var shareLine = tag && foot && (tagW+footW+u(2.5,1.6) <= fullW);
+
+  var footLines = 0;
+  if(tag || foot) footLines++;
+  if(tag && foot && !shareLine) footLines++;
+  if(lotLine) footLines++;
+
+  var bottomH = footLines ? footLines*fsFoot + (footLines-1)*gFoot
+                            + RULE + u(1.0, 0.7) : 0;
+  var ceil = H-pad-bottomH;              // nada de arriba baja de aquí
+
+  /* --- 2 · EL QR, DENTRO DEL HUECO QUE QUEDA -----------------------------
+     Centrado contra [pad, ceil] y no contra el lienzo: así nunca se mete
+     debajo del filete ni pisa la franja legal.
+     El módulo se redondea a entero — uno fraccionario reparte medio píxel
+     entre dos celdas y el lector pierde la retícula. */
   var qrBox=0, qrX=0, qrY=0, mod=0, qm=null;
-  if(qrOn && typeof QRGen!=='undefined'){
+  if(d.qrOn!==false && typeof QRGen!=='undefined'){
     try{ qm=QRGen.matrix(String(d.qr||" ")); }catch(e){ qm=null; }
   }
   if(qm){
     var quiet=4, n=qm.length, tot=n+quiet*2;
-    /* El QR no debe pasar de un tercio del ancho: por encima de eso el nombre
-       del compuesto se queda sin sitio y hay que encogerlo hasta que no se lee.
-       El módulo se mantiene entre 4 y 8 px — por debajo de 4 no lo lee un
-       teléfono, y por encima de 8 sólo se gana tamaño, no legibilidad. */
-    var maxBox = Math.min(H-pad*2, Math.round(W*0.34));
+    /* No pasa de un tercio del ancho: por encima de eso el nombre del
+       compuesto se queda sin sitio y hay que encogerlo hasta que no se lee.
+       El módulo entre 4 y 8 px — por debajo de 4 no lo lee un teléfono, y por
+       encima de 8 sólo se gana tamaño, no legibilidad. */
+    var room = ceil-pad;
+    var maxBox = Math.min(room, Math.round(W*0.34));
     mod = Math.floor(maxBox/tot);
     if(mod>8) mod=8;
-    if(mod<4){                                 // se le deja crecer hasta el alto
-      mod = Math.min(8, Math.floor((H-pad*2)/tot));
-      if(mod<4) mod=4;                         // y si aun así no llega, se avisa
-    }
+    if(mod<4) mod = Math.max(4, Math.min(8, Math.floor(room/tot)));
     qrBox=tot*mod;
-    qrX=W-pad-qrBox; qrY=Math.round((H-qrBox)/2);
+    qrX=W-pad-qrBox; qrY=pad+Math.round((room-qrBox)/2);
+    if(qrY<pad) qrY=pad;
     ctx.fillStyle='#fff'; ctx.fillRect(qrX,qrY,qrBox,qrBox);
     ctx.fillStyle='#000';
     for(var yy=0;yy<n;yy++) for(var xx=0;xx<n;xx++)
       if(qm[yy][xx]) ctx.fillRect(qrX+(xx+quiet)*mod, qrY+(yy+quiet)*mod, mod, mod);
   }
 
-  var right = qrBox ? qrX-mm(1.6) : W-pad;
+  var right = qrBox ? qrX-u(1.6,1.0) : W-pad;
   var colW  = right-pad;
 
-  /* --- logo de línea ---------------------------------------------------- */
-  var y=pad;
+  /* --- 3 · CABECERA: marca, casa y línea ---------------------------------
+     La estructura del lockup entregado — [icono]Px / PEPTIDEX / línea — puesta
+     en horizontal para que quepa. */
+  var y=pad, headH=0;
   var lg=imgs[d.line];
-  if(d.logo!=='0' && lg && lg.width){
-    var lh = small ? mm(d.logo==='2'?4.2:3.4) : mm(d.logo==='2'?6.2:5.0);
-    var lw = Math.round(lg.width*lh/lg.height);
-    if(lw>colW*0.62){ lw=Math.round(colW*0.62); lh=Math.round(lg.height*lw/lg.width); }
-    ctx.drawImage(lg, pad, y, lw, lh);
+  var fsHouse = u(1.9, 1.30);
+  var fsLine  = u(1.5, 1.15);
+  var tx = pad;
 
-    /* Nombre de línea y lema, alineados al pie del logo. */
-    var tx=pad+lw+mm(1.6);
-    var hw=right-tx;                            // lo que queda hasta el QR
-    var fs1=small?mm(1.5):mm(2.0);
-    ctx.font='800 '+fs1+'px Arial,Helvetica,sans-serif';
-    ctx.fillText(clip(sp(it.L,1), hw, fs1, '800'), tx, y+lh-(small?mm(1.4):mm(2.0)));
-    if(d.tag!==false){
-      var fs2=small?mm(1.15):mm(1.45);
-      var tg=sp(TAG[d.line]||'',1);
-      ctx.font='700 '+fs2+'px Arial,Helvetica,sans-serif';
-      /* Entero o nada: un lema cortado con puntos suspensivos parece un fallo
-         de impresión, no una decisión. */
-      if(ctx.measureText(tg).width<=hw) ctx.fillText(tg, tx, y+lh);
-    }
-    y+=lh+(small?mm(1.1):mm(1.6));
+  if(d.logo!=='0' && lg && lg.width){
+    var lh = u(d.logo==='2'?5.4:4.4, 2.6);
+    var lw = Math.round(lg.width*lh/lg.height);
+    if(lw>colW*0.42){ lw=Math.round(colW*0.42); lh=Math.round(lg.height*lw/lg.width); }
+    ctx.drawImage(lg, pad, y, lw, lh);
+    tx = pad+lw+u(1.5, 0.9);
+    headH = lh;
   }
 
-  ctx.fillRect(pad, y, colW, RULE);
-  y+=RULE+(small?mm(1.3):mm(2.0));
+  /* Las dos líneas se centran contra el alto de la marca, para que el conjunto
+     lea como un bloque y no como tres cosas apiladas por casualidad. */
+  var tw = right-tx;
+  var blockH = fsHouse + u(0.7,0.45) + fsLine;
+  if(blockH>headH) headH = blockH;
+  var ty = y + Math.round((headH-blockH)/2) + fsHouse;
 
-  /* --- la franja inferior se mide antes de componer el centro -------------
-     Su altura no depende de nada más, así que fijarla primero da el techo real
-     del que dispone el nombre.  Al revés, el centro crecía y el filete acababa
-     cruzando la caja de dosis. */
-  var fullW = W-pad*2;
-  var fsl = small?mm(1.5):mm(1.75);
-  var fsf = small?mm(1.45):mm(1.65);
-  var gl  = small?mm(0.7):mm(1.0);
-  var gf  = small?mm(0.8):mm(1.1);
-  var le=[];
-  if(d.lot) le.push('LOTE '+d.lot);
-  if(d.exp) le.push('EXP '+d.exp);
+  ctx.font='700 '+fsHouse+'px Arial,Helvetica,sans-serif';
+  spDraw('PEPTIDEX', tx, ty, spFit('PEPTIDEX', tw, fsHouse*0.24));
+  ty += u(0.7,0.45)+fsLine;
+  ctx.font='700 '+fsLine+'px Arial,Helvetica,sans-serif';
+  spDraw(it.L, tx, ty, spFit(it.L, tw, fsLine*0.26));
 
-  var bottomH = 0;
-  if(d.foot)     bottomH += fsf+gf;
-  if(le.length)  bottomH += fsl+gl;
-  if(bottomH)    bottomH += Math.max(2,mm(0.2)) + (small?mm(0.8):mm(1.2));
-  var ceil = H-pad-bottomH;                    // el centro no puede pasar de aquí
+  y += headH + u(1.8, 1.1);
 
-  /* --- nombre y dosis, dentro del hueco ---------------------------------- */
-  var subH  = d.sub ? (small?mm(1.5):mm(1.9))+(small?mm(0.5):mm(0.8)) : 0;
-  var dose  = String(d.dose||'').toUpperCase();
-  var fsd   = small?mm(2.6):mm(3.4);
-  var doseH = dose ? Math.round(fsd*1.42)+(small?mm(1.1):mm(1.6)) : 0;
+  /* --- 4 · NOMBRE, FILETE Y DOSIS ---------------------------------------- */
+  var fsDose = u(2.5, 1.75);
+  var fsSub  = u(1.5, 1.20);
+  var gapR   = u(0.55, 0.35);
+  var hasDose= !!String(d.dose||'');
+  var doseH  = hasDose ? gapR+RULE+gapR+fsDose : 0;
+  var subH   = d.sub ? u(0.6,0.4)+fsSub : 0;
 
-  var nameMax = small?mm(4.6):mm(6.4);
-  var nameMin = small?mm(2.4):mm(3.0);
-  var room = ceil - y - subH - doseH;
-  if(room < nameMax) nameMax = Math.max(nameMin, Math.floor(room));
+  var nameMax = u(6.6, 2.6);
+  var nameMin = u(3.0, 2.2);
+  var free = ceil - y - doseH - subH;
+  if(free < nameMax) nameMax = Math.max(nameMin, free);
 
-  var fam = d.cond==='1' ? '"Arial Narrow",Arial,sans-serif' : 'Arial,Helvetica,sans-serif';
-  var fs  = fit(String(d.name||'').toUpperCase(), colW, nameMax, nameMin, '800', fam);
+  /* EL NOMBRE NO SE RECORTA
+
+     «CJC-1295 + IPAMO…» en un vial no es un nombre: es un fallo. Un compuesto
+     que no cabe en una línea cabe en dos — son dos palabras — y en dos líneas
+     el cuerpo puede ser mayor, no menor. Así que primero se intenta una línea;
+     si no entra sin bajar del mínimo legible, se parte por el hueco que deje
+     las dos mitades más parejas y se recompone. Recortar queda como último
+     recurso y con aviso.
+
+     Y «condensado» pasa a condensar de verdad. Antes pedía la familia
+     "Arial Narrow", que en muchos equipos no está instalada: el navegador caía
+     en Arial y la opción no hacía absolutamente nada. Ahora es una escala
+     horizontal del lienzo, que existe en todas partes y hace exactamente lo
+     que dice el nombre de la casilla. */
+  var fam = 'Arial,Helvetica,sans-serif';
+  var sx  = d.cond==='1' ? 0.84 : 1;
+  var nm  = String(d.name||'').toUpperCase();
+  var gapL = Math.round(u(0.3,0.2));
+
+  function nw(t, s){ ctx.font='800 '+s+'px '+fam; return ctx.measureText(t).width*sx; }
+  function fitLines(arr, hi){
+    for(var s=hi; s>=nameMin; s--){
+      var ok=true;
+      for(var i=0;i<arr.length;i++) if(nw(arr[i],s)>colW){ ok=false; break; }
+      if(ok) return s;
+    }
+    return 0;
+  }
+  /* el corte que deja las dos mitades más parejas */
+  function splitTwo(t){
+    var w=t.split(' ');
+    if(w.length<2) return null;
+    var best=null, score=1e9;
+    for(var i=1;i<w.length;i++){
+      var a=w.slice(0,i).join(' '), b=w.slice(i).join(' ');
+      var sc=Math.abs(a.length-b.length);
+      if(sc<score){ score=sc; best=[a,b]; }
+    }
+    return best;
+  }
+
+  var lines=[nm], fs=fitLines([nm], nameMax);
+  if(!fs){
+    var two = splitTwo(nm);
+    var f2 = two ? fitLines(two, Math.min(nameMax, Math.floor(free/2.08))) : 0;
+    if(f2){ lines=two; fs=f2; }
+    else { fs=nameMin; }          /* ni así: se recorta y se avisa */
+  }
+  var clipped = false;
+  var nameH = fs*lines.length + gapL*(lines.length-1);
+
+  /* El bloque central se centra en el hueco que le dejan la cabecera y el pie.
+     Colgado del borde de arriba, como estaba, todo el aire sobrante se
+     acumulaba en un solo sitio y la etiqueta grande parecía a medio hacer. */
+  var bodyH = nameH + doseH + subH;
+  y += Math.max(0, Math.round((ceil - y - bodyH)/2));
+
+  var nameW = 0;
   ctx.font='800 '+fs+'px '+fam;
-  y+=fs;
-  ctx.fillText(clip(String(d.name||'').toUpperCase(), colW, fs, '800'), pad, y);
+  for(var li=0; li<lines.length; li++){
+    var txt = lines[li];
+    if(nw(txt,fs) > colW){ txt = clip(txt, colW/sx, fs, '800'); clipped = true; }
+    y += fs;
+    ctx.save(); ctx.translate(pad, 0); ctx.scale(sx, 1);
+    ctx.font='800 '+fs+'px '+fam;
+    ctx.fillText(txt, 0, y);
+    ctx.restore();
+    nameW = Math.max(nameW, Math.min(colW, ctx.measureText(txt).width*sx));
+    if(li<lines.length-1) y += gapL;
+  }
+
+  /* El filete corto bajo el nombre es el mismo gesto que el filete bajo
+     PEPTIDEX en el lockup: al ancho del nombre, no al de la columna. */
+  if(hasDose){
+    y += gapR;
+    ctx.fillRect(pad, y, Math.max(nameW, u(8,5)), RULE);
+    y += RULE+gapR+fsDose;
+    ctx.font='700 '+fsDose+'px Arial,Helvetica,sans-serif';
+    /* «5mg» se escribe pegado y se lee peor: la cifra y la unidad son dos
+       cosas. Se separan al dibujar, sin tocar lo que hay escrito en el campo. */
+    var dz=String(d.dose).toUpperCase().replace(/(\d)\s*(MG|MCG|ML|IU|G)\b/g,'$1 $2');
+    spDraw(dz, pad, y, spFit(dz, colW, fsDose*0.16));
+  }
 
   if(d.sub){
-    var fss=small?mm(1.5):mm(1.9);
-    ctx.font='700 '+fss+'px Arial,Helvetica,sans-serif';
-    y+=fss+(small?mm(0.5):mm(0.8));
-    ctx.fillText(clip(String(d.sub), colW, fss, '700'), pad, y);
+    y += u(0.6,0.4)+fsSub;
+    ctx.font='700 '+fsSub+'px Arial,Helvetica,sans-serif';
+    ctx.fillText(clip(String(d.sub), colW, fsSub, '700'), pad, y);
   }
 
-  /* Dosis en negativo.  Aquí sí se puede invertir: es texto grande.  A tamaño
-     pequeño el negativo se cierra por la ganancia de punto de la térmica. */
-  if(dose){
-    ctx.font='800 '+fsd+'px Arial,Helvetica,sans-serif';
-    var tw=ctx.measureText(dose).width;
-    var bw=Math.round(tw+mm(2.4)), bh=Math.round(fsd*1.42);
-    y+=(small?mm(1.1):mm(1.6));
-    if(y+bh>ceil) y = ceil-bh;                 // último recurso: pegarla al techo
-    ctx.fillStyle='#000'; ctx.fillRect(pad, y, bw, bh);
-    ctx.fillStyle='#fff';
-    ctx.fillText(dose, pad+mm(1.2), y+bh-Math.round(bh*0.28));
-    ctx.fillStyle='#000';
-    y+=bh;
-  }
-
-  /* --- franja inferior, a ancho completo --------------------------------- */
-  var footY = H-pad;
-  if(d.foot){
-    ctx.font='700 '+fsf+'px Arial,Helvetica,sans-serif';
-    ctx.fillText(clip(String(d.foot).toUpperCase(), fullW, fsf, '700'), pad, footY);
-    footY -= fsf+gf;
-  }
-  if(le.length){
-    ctx.font='700 '+fsl+'px Arial,Helvetica,sans-serif';
-    ctx.fillText(clip(le.join('   ·   '), fullW, fsl, '700'), pad, footY);
-    footY -= fsl+gl;
-  }
-  if(bottomH){
-    ctx.fillRect(pad, Math.round(footY), fullW, Math.max(2,mm(0.2)));
+  /* --- 5 · FRANJA INFERIOR, A ANCHO COMPLETO ----------------------------- */
+  if(footLines){
+    var fy = H-pad;
+    ctx.font='700 '+fsFoot+'px Arial,Helvetica,sans-serif';
+    if(lotLine){
+      ctx.fillText(clip(lotLine, fullW, fsFoot, '700'), pad, fy);
+      fy -= fsFoot+gFoot;
+    }
+    if(tag && foot && !shareLine){
+      ctx.textAlign='right'; ctx.fillText(clip(foot, fullW, fsFoot, '700'), W-pad, fy);
+      ctx.textAlign='left';
+      fy -= fsFoot+gFoot;
+    }
+    if(tag || foot){
+      if(tag) spDraw(tag, pad, fy, tagTr);
+      if(foot && shareLine){
+        ctx.textAlign='right'; ctx.fillText(foot, W-pad, fy); ctx.textAlign='left';
+      } else if(foot && !tag){
+        ctx.fillText(clip(foot, fullW, fsFoot, '700'), pad, fy);
+      }
+      fy -= fsFoot+u(1.0,0.7);
+    }
+    ctx.fillRect(pad, Math.round(fy), fullW, RULE);
   }
 
   threshold();
-  checkWarnings(fs, mod, small);
+  checkWarnings(clipped, mod, lines.length, fsFoot, tagW, fullW);
 }
 
-/* Ajusta el cuerpo hasta que la línea quepa, y nunca por debajo del mínimo
-   legible: si aun así no cabe, se recorta con puntos suspensivos.  Encoger sin
-   suelo es lo que produce nombres de 8 px que no lee nadie. */
 function fit(txt, maxW, hi, lo, weight, fam){
   for(var s=hi; s>=lo; s-=1){
     ctx.font=weight+' '+s+'px '+fam;
@@ -644,11 +830,37 @@ function clip(txt, maxW, fs, weight){
   while(t.length>2 && ctx.measureText(t+'…').width>maxW) t=t.slice(0,-1);
   return t+'…';
 }
-/* Espaciado de letras a mano: canvas no tiene letter-spacing en todos los
-   navegadores que nos importan. */
-function sp(t, px){
-  if(!px) return t;
-  return String(t).split('').join(String.fromCharCode(8202));
+/* INTERLETRADO DE VERDAD
+
+   Antes esto metía un espacio fino (U+200A) entre cada letra, y no funcionaba:
+   el espacio fino mide una fracción de pica y a cuerpo de etiqueta desaparece.
+   El resultado era «PEPTIDEX» apretado donde el lockup pone P E P T I D E X, y
+   ese espaciado no es un detalle de la marca — es la marca.
+
+   ctx.letterSpacing existe, pero no en todo lo que nos importa. Así que se
+   dibuja letra a letra y se avanza a mano. Es exacto en cualquier navegador y
+   permite medir antes de dibujar, que es lo que hace falta para que quepa. */
+function spW(txt, tr){
+  var w=0;
+  for(var i=0;i<txt.length;i++) w += ctx.measureText(txt[i]).width + tr;
+  return w - (txt.length?tr:0);
+}
+function spDraw(txt, x, y, tr){
+  var w=0;
+  for(var i=0;i<txt.length;i++){
+    ctx.fillText(txt[i], x+w, y);
+    w += ctx.measureText(txt[i]).width + tr;
+  }
+  return w - (txt.length?tr:0);
+}
+/* Cabe o se aprieta: primero se cede interletrado, que es lo que menos duele,
+   y sólo si aun así no entra se recorta. Encoger el cuerpo aquí no sirve —
+   estas líneas ya van al mínimo legible. */
+function spFit(txt, maxW, tr0){
+  var tr=tr0;
+  while(tr>0 && spW(txt,tr)>maxW) tr -= 0.5;
+  if(tr<0) tr=0;
+  return tr;
 }
 
 /* Umbral duro.  Todo lo que no sea claro pasa a negro puro; el resto, a blanco
@@ -665,15 +877,16 @@ function threshold(){
   ctx.putImageData(im,0,0);
 }
 
-function checkWarnings(nameFs, mod, small){
+function checkWarnings(clipped, mod, nLines, fsFoot, tagW, fullW){
   var w=document.getElementById('warn'), msgs=[];
-  var minTxt = small?mm(1.45):mm(1.65);
-  if(nameFs <= (small?mm(2.4):mm(3.0)))
-    msgs.push('El nombre llegó al cuerpo mínimo y puede haberse recortado. Prueba «Nombre condensado» o quita el QR.');
+  if(clipped)
+    msgs.push('El nombre no cabe ni en dos líneas y se ha recortado. Marca «Nombre condensado» o quita el QR.');
   if(mod && mod<4)
     msgs.push('El QR quedó con módulo de '+mod+' px. Por debajo de 4 px muchos teléfonos no lo leen.');
-  if(minTxt<17)
-    msgs.push('El texto de pie queda por debajo de 1.4 mm y la térmica lo cerrará.');
+  if(fsFoot < mm(1.35))
+    msgs.push('El texto de pie queda por debajo de 1.35 mm y la térmica lo cerrará.');
+  if(tagW > fullW)
+    msgs.push('El lema no cabe a ancho completo. Acorta el aviso legal o quita el QR.');
   w.className = msgs.length?'warn on':'warn';
   w.innerHTML = msgs.map(function(m){ return '<b>Aviso</b>'+m; }).join('<br/>');
 }
