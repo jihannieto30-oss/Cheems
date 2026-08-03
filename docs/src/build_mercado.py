@@ -217,9 +217,17 @@ r = line(r, 'Las 118 presentaciones del catálogo, al precio que el mercado paga
             'En pesos y en dólares.  ' + HOY, SUB, 28)
 r += 1
 r = line(r, 'LAS DOS HOJAS QUE VAS A USAR', BOLD)
-r = line(r, 'MÉXICO   ·  las 118 presentaciones con su precio al consumidor en pesos, y su equivalente '
-            'en dólares al lado.', BODY, 28)
+r = line(r, 'MÉXICO   ·  las 118 presentaciones con su precio al consumidor en pesos, su equivalente en '
+            'dólares, y en qué se basa ese precio.', BODY, 28)
 r = line(r, 'USA      ·  las mismas 118 en dólares, con su equivalente en pesos.', BODY)
+r += 1
+r = line(r, 'CADA PRECIO DICE DE DÓNDE SALE', BOLD)
+r = line(r, 'La columna EN QUÉ SE BASA ESTE PRECIO trae, en la misma fila, la cifra de mercado de la que se '
+            'calculó y quién la publica.  No hay que ir a buscarla a otra hoja para saber si creérsela.', BODY, 42)
+r = line(r, 'Y la columna CONF. dice cuánto vale ese respaldo.  V: hay una cifra publicada para ESE compuesto '
+            '— once de las cincuenta y seis.  D: no la hay, y se usa la banda de su clase, que sí está '
+            'comprobada — las otras cuarenta y cinco, con la clase escrita al lado.', BODY, 56)
+r = line(r, 'El enlace concreto de cada compuesto está en BANDAS, y todos juntos en FUENTES.', BODY)
 r += 1
 r = line(r, 'Y TRES QUE SOSTIENEN EL NÚMERO', BOLD)
 r = line(r, 'RESUMEN  ·  de dónde sale el precio, en cinco líneas, y qué contesta y qué no.', BODY)
@@ -261,8 +269,18 @@ bs['B6'] = 'Prima del retail mexicano sobre el estadounidense'; bs['B6'].font = 
 bs['E6'] = MXF; bs['E6'].font = BLUE; bs['E6'].fill = YEL; bs['E6'].number_format = '0.00'
 bs['F6'] = 'Mediana observada comparando ocho pares MX/USA reales (ver FUENTES)'; bs['F6'].font = SUB
 
-head(bs, 8, ['CÓDIGO','COMPUESTO','LÍNEA','UNIDAD','USD/UNIDAD BAJO','USD/UNIDAD ALTO','CONF.','DE DÓNDE SALE'],
-     [10, 26, 13, 9, 15, 15, 8, 82])
+head(bs, 8, ['CÓDIGO','COMPUESTO','LÍNEA','UNIDAD','USD/UNIDAD BAJO','USD/UNIDAD ALTO','CONF.',
+             'EN QUÉ SE BASA','ENLACE'],
+     [10, 24, 12, 8, 14, 14, 7, 74, 52])
+
+# El enlace principal de cada compuesto: la fuente que dio su cifra. Los
+# derivados apuntan al comparador general, que es de donde sale la banda de su
+# clase.
+URLS = {f[0].split(' — ')[0]: f[1] for f in FUENTES}
+def url_for(src):
+    for nombre, u in URLS.items():
+        if nombre.lower().split()[0] in src.lower(): return u
+    return 'https://peptide.promo/'
 
 def unit_of(code):
     lab = VAR[code][0]['l']
@@ -275,13 +293,17 @@ for code in order:
     lo, hi, conf, src = B[code]
     ln, nm = LINES[code]
     brow[code] = r
-    vals = [code, nm, ln, unit_of(code), lo, hi, conf, src]
+    u = url_for(src)
+    vals = [code, nm, ln, unit_of(code), lo, hi, conf, src, u]
     for i,v in enumerate(vals, start=1):
         c = bs.cell(row=r, column=i, value=v)
         c.font = BLUE if i in (5,6) else BODY
         c.alignment = Alignment(vertical='top', wrap_text=(i==8))
         c.border = BOX
         if i in (5,6): c.number_format = UMG; c.fill = YEL
+        if i == 9:
+            c.hyperlink = u
+            c.font = Font(name=F, size=9, color='1E5EFF', underline='single')
         if i == 7:
             c.alignment = Alignment(horizontal='center')
             c.font = Font(name=F, size=10, bold=True,
@@ -324,8 +346,9 @@ def market_sheet(name, mx):
 
     head(ws, 5,
          ['LÍNEA', 'COMPUESTO', 'PRESENTACIÓN',
-          'PRECIO AL CONSUMIDOR (%s)' % home, 'EQUIVALE A (%s)' % alt],
-         [14, 30, 15, 24, 18])
+          'PRECIO AL CONSUMIDOR (%s)' % home, 'EQUIVALE A (%s)' % alt,
+          'EN QUÉ SE BASA ESTE PRECIO', 'CONF.'],
+         [13, 26, 14, 23, 17, 86, 7])
 
     r = 6
     for code in order:
@@ -339,16 +362,30 @@ def market_sheet(name, mx):
             precio = ('=ROUND(AVERAGE(BANDAS!$E$%d,BANDAS!$F$%d)*%g%s/%g,0)*%g'
                       % (br, br, q, k, step, step))
             equiv  = ('=D%d/BANDAS!$E$5' % r) if mx else ('=D%d*BANDAS!$E$5' % r)
-            for i, val in enumerate([ln, nm, v['l'], precio, equiv], start=1):
+            # La base no se copia: se trae de BANDAS con INDEX/MATCH sobre el
+            # nombre del compuesto. Corregir una fuente allí corrige las dos
+            # listas, y no puede quedar una fila diciendo una cosa y la hoja de
+            # al lado diciendo otra.
+            base = ('=INDEX(BANDAS!$H$9:$H$%d,MATCH($B%d,BANDAS!$B$9:$B$%d,0))'
+                    % (nB, r, nB))
+            conf = ('=INDEX(BANDAS!$G$9:$G$%d,MATCH($B%d,BANDAS!$B$9:$B$%d,0))'
+                    % (nB, r, nB))
+            for i, val in enumerate([ln, nm, v['l'], precio, equiv, base, conf], start=1):
                 c = ws.cell(row=r, column=i, value=val)
                 c.font = BODY; c.border = BOX
                 if i == 4: c.number_format = hfmt; c.fill = YEL; c.font = BOLD
                 if i == 5: c.number_format = afmt
                 if i == 3: c.alignment = Alignment(horizontal='right')
+                if i == 6: c.font = Font(name=F, size=9, color='5F6875')
+                if i == 6: c.alignment = Alignment(vertical='center', wrap_text=True)
+                if i == 7: c.alignment = Alignment(horizontal='center')
+                if i == 7: c.font = Font(name=F, size=10, bold=True,
+                                         color='2F7A3D' if B[code][2]=='V' else '8A6D3B')
+            ws.row_dimensions[r].height = 26
             r += 1
     last = r-1
     ws.freeze_panes = 'A6'
-    ws.auto_filter.ref = 'A5:E%d' % last
+    ws.auto_filter.ref = 'A5:G%d' % last
     return last
 
 LAST_MX = market_sheet('MÉXICO', True)
