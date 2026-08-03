@@ -199,8 +199,8 @@ const SOON = {
     nuevo:  true,
     eyebrow:{en:'PepX · Reusable Pen Injectors', es:'PepX · Plumas reutilizables'},
     title:  {en:'Pens.',                          es:'Pens.'},
-    lead:   {en:'Three instruments, one per line. Reusable, 60 units, finished to the same standard as what they carry.',
-             es:'Tres instrumentos, uno por línea. Reutilizables, 60 unidades, acabados al mismo estándar que lo que transportan.'}
+    lead:   {en:'Three instruments, one per line. Reusable, and finished to the same standard as what they carry.',
+             es:'Tres instrumentos, uno por línea. Reutilizables, y acabados al mismo estándar que lo que transportan.'}
   },
   accessories:{
     eyebrow:{en:'PEPTIDEX · Accessories', es:'PEPTIDEX · Accesorios'},
