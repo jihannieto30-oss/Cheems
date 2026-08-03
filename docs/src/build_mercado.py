@@ -212,44 +212,36 @@ def line(r, txt, font=BODY, h=None):
     return r+1
 
 r = 2
-r = line(r, 'PEPTIDEX · ESTUDIO DE MERCADO DE PRECIOS DE VENTA', TITLE); ws.row_dimensions[2].height = 24
-r = line(r, 'Las 118 presentaciones del catálogo, con el precio al que el mercado las vende hoy y el precio '
-            'de venta que conviene, en pesos y en dólares.  ' + HOY, SUB, 32)
+r = line(r, 'PEPTIDEX · PRECIO AL CONSUMIDOR', TITLE); ws.row_dimensions[2].height = 24
+r = line(r, 'Las 118 presentaciones del catálogo, al precio que el mercado paga hoy.  '
+            'En pesos y en dólares.  ' + HOY, SUB, 28)
 r += 1
-r = line(r, 'QUÉ HAY EN CADA HOJA', BOLD)
-r = line(r, 'RESUMEN  ·  las preguntas que hace quien sabe de negocios, con su cifra al lado.  Empieza aquí.', BODY)
-r = line(r, 'MÉXICO   ·  las 118 presentaciones en pesos.  La columna amarilla, PRECIO SUGERIDO, es la respuesta.', BODY)
-r = line(r, 'USA      ·  las mismas 118 en dólares.', BODY)
-r = line(r, 'BANDAS   ·  el motor.  La banda de precio por unidad de cada compuesto, con su fuente.  Cambiar un '
-            'número aquí actualiza las dos hojas de arriba.', BODY, 28)
-r = line(r, 'FUENTES  ·  cada enlace consultado y qué dato salió de él.', BODY)
+r = line(r, 'LAS DOS HOJAS QUE VAS A USAR', BOLD)
+r = line(r, 'MÉXICO   ·  las 118 presentaciones con su precio al consumidor en pesos, y su equivalente '
+            'en dólares al lado.', BODY, 28)
+r = line(r, 'USA      ·  las mismas 118 en dólares, con su equivalente en pesos.', BODY)
 r += 1
-r = line(r, 'CÓMO SE LLEGA AL PRECIO SUGERIDO', BOLD)
-r = line(r, '1 ·  Se busca el precio real de cada compuesto en el mercado y se expresa por unidad — por mg casi '
-            'siempre, por UI en la hormona de crecimiento y por ml en el lipotrópico.', BODY, 28)
-r = line(r, '2 ·  Esa banda por unidad se multiplica por la cantidad de cada presentación.  Así el vial de 20 mg '
-            'sale del mismo número que el de 5 mg, que es como se comporta el mercado.', BODY, 28)
-r = line(r, '3 ·  El sugerido es el punto medio de la banda, redondeado.  Ni el suelo — que es guerra de precio — '
-            'ni el techo, que sólo lo sostiene una marca ya conocida.', BODY, 28)
+r = line(r, 'Y TRES QUE SOSTIENEN EL NÚMERO', BOLD)
+r = line(r, 'RESUMEN  ·  de dónde sale el precio, en cinco líneas, y qué contesta y qué no.', BODY)
+r = line(r, 'BANDAS   ·  el precio de mercado por unidad de cada compuesto, con su fuente.  Es el único '
+            'sitio con números escritos a mano: las 236 filas de las dos listas son fórmulas contra él.  '
+            'Cambia ahí el tipo de cambio y se actualiza el libro entero.', BODY, 42)
+r = line(r, 'FUENTES  ·  cada enlace consultado y qué dato dio.', BODY)
 r += 1
-r = line(r, 'LO QUE HAY QUE MIRAR PRIMERO', BOLD)
-r = line(r, '·  La columna «¿DÓNDE QUEDAS?» dice, en una palabra, si tu precio de hoy está por debajo del mercado, '
-            'dentro, o por encima.  Ordena por ella y tienes la lista de qué revisar.', BODY, 28)
-r = line(r, '·  La columna CONFIANZA distingue lo comprobado de lo deducido.  V significa que hay una cifra '
-            'publicada para ESE compuesto.  D significa que no la hay y se usó la banda de su clase — que sí '
-            'está comprobada.  De las 56 moléculas, 11 son V y 45 son D.', BODY, 42)
-r = line(r, '·  En la hoja MÉXICO, la columna COMPETIDOR trae el precio real de una tienda mexicana cuando lo hay. '
-            'Ocho compuestos lo tienen y es el dato más duro del libro.', BODY, 28)
+r = line(r, 'CÓMO SE LLEGÓ AL PRECIO', BOLD)
+r = line(r, 'El mercado no cotiza viales, cotiza materia: el vial de 20 mg vale cuatro veces el de 5 mg del '
+            'mismo compuesto.  Así que se busca el precio por unidad de cada compuesto —por mg casi siempre— '
+            'y se multiplica por la cantidad de la presentación.', BODY, 42)
+r = line(r, 'De cada compuesto se localizó el más barato y el más caro del mercado.  El precio de las listas '
+            'es el punto medio: ni el suelo, que es guerra de precio, ni el techo, que sólo lo sostiene una '
+            'marca ya conocida.', BODY, 42)
 r += 1
-r = line(r, 'LO QUE ESTE LIBRO NO ES', BOLD)
-r = line(r, 'Las columnas de mercado y el precio sugerido son fórmulas, no números escritos: se calculan al '
-            'abrir el libro en Excel, Google Sheets o Numbers.  Si lo miras en la vista previa del teléfono sin '
-            'abrirlo, esas tres columnas pueden salir vacías — no es un error del archivo.', BODY, 42)
-r += 1
-r = line(r, 'No es un cálculo de tu margen: no lleva tu costo, porque no lo tengo.  Cuando lo pongas al lado del '
-            'precio sugerido, el margen sale solo.', BODY, 28)
-r = line(r, 'Y no es una foto fija.  Los precios de este mercado se mueven semana a semana — tirzepatida y '
-            'retatrutida son las más volátiles.  Conviene revisar las BANDAS cada trimestre; está hecho para eso.', BODY, 28)
+r = line(r, 'DOS COSAS QUE CONVIENE SABER', BOLD)
+r = line(r, 'De las 56 moléculas, 11 tienen una cifra publicada para ese compuesto exacto y 45 usan la banda '
+            'de su clase, que sí está comprobada.  En BANDAS van marcadas V y D.  Antes de fijar precio en '
+            'los diez que más vendas, abre esas fuentes y confirma el número del día.', BODY, 42)
+r = line(r, 'Las columnas de precio son fórmulas: se calculan al abrir el libro en Excel, Google Sheets o '
+            'Numbers.  En la vista previa del teléfono pueden salir vacías — no es un error del archivo.', BODY, 42)
 r += 1
 r = line(r, 'Research Use Only — no para uso humano ni veterinario.', SUB)
 
@@ -299,48 +291,41 @@ nB = r-1
 bs.freeze_panes = 'A9'
 
 # ---------------------------------------------------------------------------
-# 3 y 4 · MÉXICO y USA
+# 3 y 4 · MÉXICO y USA — LISTA DE PRECIOS, Y NADA MÁS
 #
-# Una fila por presentación y el precio de venta en las DOS monedas. Un libro
-# que obliga a saltar de hoja para convertir se lee dos veces y se cree la
-# mitad; con las dos columnas juntas, la cifra que se va a citar en una reunión
-# ya está escrita.
+# Cinco columnas. Qué es, de cuánto, y a cuánto se le vende al consumidor en
+# pesos y en dólares.
 #
-# Aquí no hay costo. Este libro es sobre precio de venta, y mezclar las dos
-# cosas en una tabla es la forma más rápida de que alguien lea un margen donde
-# no lo hay.
+# La versión anterior traía además el precio actual, la banda de mercado y una
+# columna que decía si se estaba cobrando de más o de menos. Todo eso era
+# cierto y era útil, y era también lo que hacía falta explicar antes de poder
+# leer la tabla. Una lista de precios que necesita una lección no es una lista
+# de precios.
+#
+# El análisis no se ha perdido: el precio de cada fila sigue saliendo por
+# fórmula de la banda de mercado de su compuesto, en BANDAS, con su fuente al
+# lado. Lo que se ha ido de aquí es el andamio, no el cálculo.
 # ---------------------------------------------------------------------------
 def qty_of(lab):
     return float(lab.split()[0])
 
-ROWMAP = {}          # (hoja, código, cantidad) -> fila, para el resumen
-
 def market_sheet(name, mx):
     ws = wb.create_sheet(name)
     ws.sheet_view.showGridLines = False
-    ws['B2'] = 'PEPTIDEX · PRECIO DE VENTA — ' + name
+    ws['B2'] = 'PEPTIDEX · PRECIO AL CONSUMIDOR — ' + name
     ws['B2'].font = TITLE
-    ws['B3'] = ('Las 118 presentaciones del catálogo con el precio al que el mercado de ' + name +
-                ' las vende hoy y el precio de venta sugerido, en pesos y en dólares.  ' + HOY)
+    ws['B3'] = ('Las 118 presentaciones del catálogo, al precio que el mercado de ' + name +
+                ' paga hoy.  En pesos y en dólares.  ' + HOY)
     ws['B3'].font = SUB
 
-    home, alt   = ('MXN', 'USD') if mx else ('USD', 'MXN')
-    hfmt, afmt  = (MXN, USD)     if mx else (USD, MXN)
-    step        = 50 if mx else 1
+    home, alt  = ('MXN', 'USD') if mx else ('USD', 'MXN')
+    hfmt, afmt = (MXN, USD)     if mx else (USD, MXN)
+    step       = 50 if mx else 1
 
-    cols = ['LÍNEA','CÓDIGO','COMPUESTO','CANT.','UNIDAD',
-            'PRECIO ACTUAL\nPEPTIDEX (%s)' % home,
-            'MERCADO\nBAJO (%s)' % home,
-            'MERCADO\nALTO (%s)' % home,
-            'VENTA SUGERIDA\n(%s)' % home,
-            'VENTA SUGERIDA\n(%s)' % alt,
-            'POR UNIDAD\n(%s)' % home,
-            '¿DÓNDE QUEDAS?','CONF.']
-    wid  = [12, 9, 24, 8, 8, 15, 14, 14, 16, 16, 13, 16, 7]
-    if mx:
-        cols += ['COMPETIDOR MX','QUIÉN']
-        wid  += [15, 20]
-    head(ws, 5, cols, wid)
+    head(ws, 5,
+         ['LÍNEA', 'COMPUESTO', 'PRESENTACIÓN',
+          'PRECIO AL CONSUMIDOR (%s)' % home, 'EQUIVALE A (%s)' % alt],
+         [14, 30, 15, 24, 18])
 
     r = 6
     for code in order:
@@ -348,89 +333,56 @@ def market_sheet(name, mx):
         for v in VAR[code]:
             q  = qty_of(v['l'])
             br = brow[code]
-            # La banda vive en USD por unidad. En la hoja de México se lleva a
-            # pesos con el tipo de cambio y la prima del retail mexicano, los
-            # dos en BANDAS: cambiarlos ahí mueve las 236 filas.
-            k  = '*BANDAS!$E$5*BANDAS!$E$6' if mx else ''
-            ROWMAP[(name, code, q)] = r
-            row = [ln, code, nm, q, v['l'].split()[-1],
-                   v['m'] if mx else v['u'],
-                   '=BANDAS!$E$%d*$D%d%s' % (br, r, k),
-                   '=BANDAS!$F$%d*$D%d%s' % (br, r, k),
-                   '=ROUND(AVERAGE(G%d,H%d)/%g,0)*%g' % (r, r, step, step),
-                   ('=I%d/BANDAS!$E$5' % r) if mx else ('=I%d*BANDAS!$E$5' % r),
-                   '=IF($D%d=0,"",I%d/$D%d)' % (r, r, r),
-                   '=IF(F%d="","",IF(F%d<G%d,"POR DEBAJO",IF(F%d>H%d,"POR ENCIMA","EN MERCADO")))'
-                     % (r, r, r, r, r),
-                   B[code][2]]
-            if mx:
-                o = OBS_MX.get(code, {}).get(int(q) if q == int(q) else q)
-                row += [o[0] if o else '', o[1] if o else '']
-            for i, val in enumerate(row, start=1):
+            # La banda vive en USD por unidad. En México se lleva a pesos con el
+            # tipo de cambio y la prima del retail mexicano, los dos en BANDAS.
+            k = '*BANDAS!$E$5*BANDAS!$E$6' if mx else ''
+            precio = ('=ROUND(AVERAGE(BANDAS!$E$%d,BANDAS!$F$%d)*%g%s/%g,0)*%g'
+                      % (br, br, q, k, step, step))
+            equiv  = ('=D%d/BANDAS!$E$5' % r) if mx else ('=D%d*BANDAS!$E$5' % r)
+            for i, val in enumerate([ln, nm, v['l'], precio, equiv], start=1):
                 c = ws.cell(row=r, column=i, value=val)
                 c.font = BODY; c.border = BOX
-                if i in (6,7,8,9,14): c.number_format = hfmt
-                if i == 10:           c.number_format = afmt
-                if i == 11:           c.number_format = UMG
-                if i == 4:            c.number_format = '#,##0.###'
-                if i == 6:            c.font = BLUE
-                if i in (9,10):       c.fill = YEL; c.font = BOLD
-                if i in (12,13):      c.alignment = Alignment(horizontal='center')
-                if i == 13:
-                    c.font = Font(name=F, size=10, bold=True,
-                                  color='2F7A3D' if B[code][2]=='V' else '8A6D3B')
+                if i == 4: c.number_format = hfmt; c.fill = YEL; c.font = BOLD
+                if i == 5: c.number_format = afmt
+                if i == 3: c.alignment = Alignment(horizontal='right')
             r += 1
     last = r-1
-    ws.freeze_panes = 'D6'
-    ws.auto_filter.ref = 'A5:%s%d' % (get_column_letter(len(cols)), last)
+    ws.freeze_panes = 'A6'
+    ws.auto_filter.ref = 'A5:E%d' % last
     return last
 
 LAST_MX = market_sheet('MÉXICO', True)
 LAST_US = market_sheet('USA',    False)
 
 # ---------------------------------------------------------------------------
-# 5 · RESUMEN — las preguntas que hace quien sabe de negocios, contestadas
-#
-# Un anexo de 118 filas no contesta nada por sí solo: hay que leerlo entero y
-# sacar las conclusiones a mano. Esta hoja las trae hechas, con la cifra al
-# lado, y dice también las tres preguntas que este estudio NO puede contestar —
-# porque un estudio que aparenta contestarlo todo es el que no se cree nadie.
+# 5 · RESUMEN — lo que va a preguntar quien sabe de negocios
 # ---------------------------------------------------------------------------
 rs = wb.create_sheet('RESUMEN')
 rs.sheet_view.showGridLines = False
-for col, w in zip('ABCDEFG', [3, 52, 16, 16, 16, 16, 44]):
+for col, w in zip('ABCDEFG', [3, 50, 16, 16, 4, 4, 52]):
     rs.column_dimensions[col].width = w
 
 MX, US = "'MÉXICO'", "'USA'"
-def q_(txt, row, big=False):
-    c = rs.cell(row=row, column=2, value=txt)
-    c.font = Font(name=F, size=11, bold=True, color=INK) if big else BODY
-    c.alignment = Alignment(wrap_text=True, vertical='center')
-    return row
-
-rs['B2'] = 'PEPTIDEX · RESUMEN DE PRECIOS'; rs['B2'].font = TITLE
-rs['B3'] = ('Las preguntas que hace quien sabe de negocios, con su cifra al lado.  '
-            'El detalle está en MÉXICO y en USA; esto es lo que hay que saber antes de abrirlas.  ' + HOY)
-rs['B3'].font = SUB; rs.row_dimensions[3].height = 28
+rs['B2'] = 'PEPTIDEX · RESUMEN'; rs['B2'].font = TITLE
+rs['B3'] = ('De dónde sale el precio de las dos listas, y qué contesta y qué no.  ' + HOY)
+rs['B3'].font = SUB
 rs.merge_cells('B3:G3')
 
 r = 5
 def block(title):
     global r
     c = rs.cell(row=r, column=2, value=title)
-    c.font = Font(name=F, size=9, bold=True, color='FFFFFF')
-    c.fill = H_FILL
+    c.font = Font(name=F, size=9, bold=True, color='FFFFFF'); c.fill = H_FILL
     c.alignment = Alignment(vertical='center', indent=1)
-    for cc in range(3, 8):
-        rs.cell(row=r, column=cc).fill = H_FILL
+    for cc in range(3, 8): rs.cell(row=r, column=cc).fill = H_FILL
     rs.row_dimensions[r].height = 22
     r += 1
 
-def kpi(label, f_mx, f_us, nota='', fmt_mx=MXN, fmt_us=USD):
+def kpi(label, f_mx, f_us, nota='', fmt=MXN, fmt2=USD):
     global r
     rs.cell(row=r, column=2, value=label).font = BODY
-    a = rs.cell(row=r, column=3, value=f_mx); a.font = BOLD; a.number_format = fmt_mx
-    b = rs.cell(row=r, column=4, value=f_us); b.font = BOLD; b.number_format = fmt_us
+    a = rs.cell(row=r, column=3, value=f_mx); a.font = BOLD; a.number_format = fmt
+    b = rs.cell(row=r, column=4, value=f_us); b.font = BOLD; b.number_format = fmt2
     n = rs.cell(row=r, column=7, value=nota); n.font = SUB
     n.alignment = Alignment(wrap_text=True, vertical='center')
     for cc in (2,3,4,7): rs.cell(row=r, column=cc).border = BOX
@@ -440,130 +392,72 @@ rs.cell(row=r, column=3, value='MÉXICO (MXN)').font = Font(name=F, size=9, bold
 rs.cell(row=r, column=4, value='USA (USD)').font    = Font(name=F, size=9, bold=True, color='5F6875')
 r += 1
 
-block('¿CUÁNTO VALE EL CATÁLOGO A PRECIO DE VENTA?')
-kpi('Suma de las 118 presentaciones al precio actual',
-    '=SUM(%s!$F$6:$F$%d)' % (MX, LAST_MX), '=SUM(%s!$F$6:$F$%d)' % (US, LAST_US),
-    'Es el valor de una unidad de cada presentación, no una previsión de ventas.')
-kpi('Suma al precio de venta sugerido',
-    '=SUM(%s!$I$6:$I$%d)' % (MX, LAST_MX), '=SUM(%s!$I$6:$I$%d)' % (US, LAST_US),
-    'Punto medio de la banda de mercado de cada compuesto.')
-kpi('Diferencia', '=C%d-C%d' % (r-1, r-2), '=D%d-D%d' % (r-1, r-2),
-    'Lo que el catálogo deja sobre la mesa hoy, o lo que cobra de más.')
-kpi('Diferencia en porcentaje', '=IF(C%d=0,"",C%d/C%d)' % (r-3, r-1, r-3),
-    '=IF(D%d=0,"",D%d/D%d)' % (r-3, r-1, r-3), '', '0.0%', '0.0%')
-
-block('¿DÓNDE ESTÁ EL PRECIO ACTUAL CONTRA EL MERCADO?')
-for etq in ('POR DEBAJO', 'EN MERCADO', 'POR ENCIMA'):
-    nota = {'POR DEBAJO':'Se está vendiendo por debajo de lo que el mercado paga.',
-            'EN MERCADO':'Dentro de la banda: no hay que tocar nada.',
-            'POR ENCIMA':'Por encima de la banda; sostenerlo exige una marca ya reconocida.'}[etq]
-    kpi(etq + ' — presentaciones',
-        '=COUNTIF(%s!$L$6:$L$%d,"%s")' % (MX, LAST_MX, etq),
-        '=COUNTIF(%s!$L$6:$L$%d,"%s")' % (US, LAST_US, etq),
-        nota, '#,##0', '#,##0')
-kpi('Total de presentaciones',
-    '=COUNTA(%s!$B$6:$B$%d)' % (MX, LAST_MX), '=COUNTA(%s!$B$6:$B$%d)' % (US, LAST_US),
-    '', '#,##0', '#,##0')
-
-block('¿CÓMO SE POSICIONA CADA LÍNEA?')
-rs.cell(row=r, column=2, value='Precio de venta sugerido por unidad, media de la línea').font = BODY
-rs.cell(row=r, column=7, value='El número que define si una línea es cara o barata; el vial sólo dice cuánto material lleva.').font = SUB
-rs.cell(row=r, column=7).alignment = Alignment(wrap_text=True, vertical='center')
-r += 1
-for ln in ('FITNESS', 'BEAUTY', 'LONGEVITY'):
-    kpi('   ' + ln,
-        '=AVERAGEIF(%s!$A$6:$A$%d,"%s",%s!$K$6:$K$%d)' % (MX, LAST_MX, ln, MX, LAST_MX),
-        '=AVERAGEIF(%s!$A$6:$A$%d,"%s",%s!$K$6:$K$%d)' % (US, LAST_US, ln, US, LAST_US),
-        '', UMG, UMG)
-
-block('¿CUÁNTO ME CREO ESTOS PRECIOS?')
-kpi('Compuestos con cifra publicada para ese compuesto (V)',
-    '=COUNTIF(BANDAS!$G$9:$G$%d,"V")' % nB, '=COUNTIF(BANDAS!$G$9:$G$%d,"V")' % nB,
-    'Hay un precio real localizado para esa molécula. Es el mismo dato en los dos mercados.',
-    '#,##0', '#,##0')
-kpi('Compuestos por banda de su clase (D)',
-    '=COUNTIF(BANDAS!$G$9:$G$%d,"D")' % nB, '=COUNTIF(BANDAS!$G$9:$G$%d,"D")' % nB,
-    'No hay cifra para esa molécula; se usa la banda de su clase, que sí está comprobada.',
-    '#,##0', '#,##0')
-kpi('Presentaciones con precio real de un competidor mexicano',
-    '=COUNT(%s!$N$6:$N$%d)' % (MX, LAST_MX), '',
-    'El dato más duro del libro: precio publicado por una tienda, con nombre.', '#,##0', '#,##0')
-kpi('Fuentes consultadas', len(FUENTES), len(FUENTES),
-    'Todas listadas en la hoja FUENTES, con qué dato dio cada una.', '#,##0', '#,##0')
-
-block('LOS DIEZ MOVIMIENTOS QUE MÁS PESAN')
-rs.cell(row=r, column=2, value='Ordenados por la diferencia en pesos entre el precio actual y el sugerido. '
-        'Tocar estos diez mueve más que tocar los otros ciento ocho.').font = SUB
-rs.cell(row=r, column=2).alignment = Alignment(wrap_text=True, vertical='center')
-rs.merge_cells(start_row=r, start_column=2, end_row=r, end_column=7)
-rs.row_dimensions[r].height = 26
-r += 1
-
-for i, txt in enumerate(['PRESENTACIÓN','ACTUAL (MXN)','SUGERIDO (MXN)','DIFERENCIA','SUGERIDO (USD)','QUÉ PASA'], start=2):
-    c = rs.cell(row=r, column=i, value=txt)
-    c.font = Font(name=F, size=9, bold=True, color='5F6875'); c.border = BOX
-r += 1
-
-# El orden se decide en Python — una hoja escrita por openpyxl no puede
-# ordenarse sola — pero cada celda sigue siendo una referencia viva a MÉXICO,
-# así que los números no se congelan aquí.
-movers = []
-for (hoja, code, q), rowi in ROWMAP.items():
-    if hoja != 'MÉXICO': continue
-    lo, hi = B[code][0], B[code][1]
-    k = FX*MXF
-    sug = round((lo*q*k + hi*q*k)/2/50)*50
-    cur = next(v['m'] for v in VAR[code] if qty_of(v['l']) == q)
-    movers.append((abs(sug-cur), code, q, rowi, sug-cur))
-movers.sort(reverse=True)
-
-for _, code, q, rowi, delta in movers[:10]:
-    vals = ["=%s!$C%d&\" \"&%s!$D%d&\" \"&%s!$E%d" % (MX, rowi, MX, rowi, MX, rowi),
-            '=%s!$F%d' % (MX, rowi),
-            '=%s!$I%d' % (MX, rowi),
-            '=%s!$I%d-%s!$F%d' % (MX, rowi, MX, rowi),
-            '=%s!$J%d' % (MX, rowi),
-            'Se está cobrando de más' if delta < 0 else 'Se está cobrando de menos']
-    for i, v in enumerate(vals, start=2):
-        c = rs.cell(row=r, column=i, value=v)
-        c.font = BODY; c.border = BOX
-        if i in (3,4,5): c.number_format = MXN
-        if i == 6:       c.number_format = USD
-        if i == 5:       c.font = BOLD
-        if i == 7:       c.font = Font(name=F, size=10,
-                                       color='8A6D3B' if delta < 0 else '2F7A3D')
-    r += 1
-
-block('LO QUE ESTE ESTUDIO NO CONTESTA')
-for t in ('Margen. No lleva costo, y sin costo no hay margen. Puesto el costo al lado de la columna '
-          'de venta sugerida, sale solo.',
-          'Volumen. Dice a cuánto se vende cada presentación, no cuántas se venden. El valor del '
-          'catálogo de arriba es una unidad de cada una, no una previsión.',
-          'Elasticidad. No dice cuánto cae la demanda si se sube el precio. Eso sólo lo contesta '
-          'subirlo en un compuesto y mirar dos meses.',
-          'Tamaño del mercado. No hay cifra pública fiable del mercado de péptidos de investigación '
-          'en México, y poner una inventada haría dudar del resto del libro.'):
+block('DE DÓNDE SALE EL PRECIO')
+for t in ('El mercado no cotiza viales, cotiza materia: el vial de 20 mg vale cuatro veces el de 5 mg del '
+          'mismo compuesto. Por eso se busca el precio por UNIDAD — mg casi siempre, UI en la hormona de '
+          'crecimiento, ml en el lipotrópico — y se multiplica por la cantidad de cada presentación.',
+          'De cada compuesto se localizó el precio más barato y el más caro del mercado. El precio de las '
+          'listas es el punto medio: ni el suelo, que es guerra de precio, ni el techo, que sólo lo '
+          'sostiene una marca ya conocida.',
+          'Todo eso está en la hoja BANDAS, compuesto por compuesto y con su fuente. Es el único sitio del '
+          'libro con números escritos a mano: las 236 filas de las dos listas son fórmulas contra ella. '
+          'Cambiando ahí el tipo de cambio o una banda se actualiza el libro entero.'):
     c = rs.cell(row=r, column=2, value='·  ' + t); c.font = BODY
     c.alignment = Alignment(wrap_text=True, vertical='top')
     rs.merge_cells(start_row=r, start_column=2, end_row=r, end_column=7)
-    rs.row_dimensions[r].height = 30
+    rs.row_dimensions[r].height = 40
+    r += 1
+
+block('LAS CIFRAS')
+kpi('Valor del catálogo a precio al consumidor',
+    '=SUM(%s!$D$6:$D$%d)' % (MX, LAST_MX), '=SUM(%s!$D$6:$D$%d)' % (US, LAST_US),
+    'Una unidad de cada presentación. No es una previsión de ventas.')
+kpi('Presentaciones', '=COUNTA(%s!$B$6:$B$%d)' % (MX, LAST_MX),
+    '=COUNTA(%s!$B$6:$B$%d)' % (US, LAST_US), '', '#,##0', '#,##0')
+kpi('Precio medio por presentación',
+    '=IF(C%d=0,"",C%d/C%d)' % (r-1, r-2, r-1), '=IF(D%d=0,"",D%d/D%d)' % (r-1, r-2, r-1),
+    'México sale más caro que USA por la prima del retail mexicano, que está en BANDAS.')
+
+block('CUÁNTO CREERSE CADA PRECIO')
+kpi('Compuestos con cifra publicada para ese compuesto',
+    '=COUNTIF(BANDAS!$G$9:$G$%d,"V")' % nB, '=COUNTIF(BANDAS!$G$9:$G$%d,"V")' % nB,
+    'Marcados V en BANDAS. Hay un precio real localizado para esa molécula.', '#,##0', '#,##0')
+kpi('Compuestos por banda de su clase',
+    '=COUNTIF(BANDAS!$G$9:$G$%d,"D")' % nB, '=COUNTIF(BANDAS!$G$9:$G$%d,"D")' % nB,
+    'Marcados D. No hay cifra para esa molécula; se usa la de su clase, que sí está comprobada.',
+    '#,##0', '#,##0')
+kpi('Fuentes consultadas', len(FUENTES), len(FUENTES),
+    'Listadas en FUENTES, con el dato que dio cada una.', '#,##0', '#,##0')
+kpi('Precios reales de competidores mexicanos', len(OBS_MX), '',
+    'Ocho compuestos con precio publicado por una tienda mexicana, con nombre. En BANDAS.',
+    '#,##0', '#,##0')
+
+block('LO QUE ESTE ESTUDIO NO CONTESTA')
+for t in ('Margen. No lleva costo, y sin costo no hay margen. Puesto el costo al lado de la columna de '
+          'precio, sale solo.',
+          'Volumen. Dice a cuánto se vende cada presentación, no cuántas se venden.',
+          'Elasticidad. No dice cuánto cae la demanda si se sube el precio. Eso sólo lo contesta subirlo '
+          'en un compuesto y mirar dos meses.',
+          'Tamaño del mercado. No hay cifra pública fiable de péptidos de investigación en México, y '
+          'poner una inventada haría dudar del resto del libro.'):
+    c = rs.cell(row=r, column=2, value='·  ' + t); c.font = BODY
+    c.alignment = Alignment(wrap_text=True, vertical='top')
+    rs.merge_cells(start_row=r, start_column=2, end_row=r, end_column=7)
+    rs.row_dimensions[r].height = 28
     r += 1
 
 r += 1
 c = rs.cell(row=r, column=2, value='Los precios de este mercado se mueven semana a semana — tirzepatida y '
-            'retatrutida son las más volátiles. Conviene revisar la hoja BANDAS cada trimestre: cambiando '
-            'ahí un número se actualiza el libro entero.')
+            'retatrutida son las más volátiles. Conviene revisar BANDAS cada trimestre.')
 c.font = SUB; c.alignment = Alignment(wrap_text=True, vertical='top')
 rs.merge_cells(start_row=r, start_column=2, end_row=r, end_column=7)
-rs.row_dimensions[r].height = 30
+rs.row_dimensions[r].height = 28
 r += 2
-c = rs.cell(row=r, column=2, value='Research Use Only — no para uso humano ni veterinario.'); c.font = SUB
+rs.cell(row=r, column=2, value='Research Use Only — no para uso humano ni veterinario.').font = SUB
 
-# orden final de las hojas
-ORDER = ['LÉEME', 'RESUMEN', 'MÉXICO', 'USA', 'BANDAS', 'FUENTES']
 
 # ---------------------------------------------------------------------------
-# 5 · FUENTES
+# 6 · FUENTES
 # ---------------------------------------------------------------------------
 fs = wb.create_sheet('FUENTES')
 fs.sheet_view.showGridLines = False
@@ -574,33 +468,31 @@ fs['B3'].font = SUB
 head(fs, 5, ['MERCADO','FUENTE','QUÉ DATO DIO','ENLACE'], [14, 26, 78, 60])
 r = 6
 for nombre, url, dato, mercado in FUENTES:
-    for i,v in enumerate([mercado, nombre, dato, url], start=1):
+    for i, v in enumerate([mercado, nombre, dato, url], start=1):
         c = fs.cell(row=r, column=i, value=v)
         c.font = BODY; c.border = BOX
-        c.alignment = Alignment(vertical='top', wrap_text=(i==3))
+        c.alignment = Alignment(vertical='top', wrap_text=(i == 3))
         if i == 4:
-            c.hyperlink = url; c.font = Font(name=F, size=10, color='1E5EFF', underline='single')
+            c.hyperlink = url
+            c.font = Font(name=F, size=10, color='1E5EFF', underline='single')
     r += 1
 r += 1
 fs.cell(row=r, column=2, value='NOTA SOBRE EL MÉTODO').font = BOLD
 r += 1
-for t in ['El acceso directo a las tiendas está bloqueado desde este entorno, así que los precios se han '
-          'triangulado con buscador sobre varios comparadores y fichas de producto en lugar de leerse de la '
-          'tienda una por una.',
-          'Por eso el libro separa V de D en vez de dar todo por igual: donde hay una cifra publicada para ese '
+for t in ('El acceso directo a las tiendas está bloqueado desde el entorno donde se generó esto, así que los '
+          'precios se triangularon con buscador sobre varios comparadores y fichas de producto en lugar de '
+          'leerse de la tienda una por una.',
+          'Por eso BANDAS separa V de D en vez de dar todo por igual: donde hay una cifra publicada para ese '
           'compuesto se marca V; donde no la hay, se usa la banda de su clase y se marca D.',
-          'Antes de fijar precio en los diez compuestos que más vendas, conviene abrir esos enlaces y confirmar '
-          'el número del día. Son diez comprobaciones, no ciento dieciocho.']:
+          'Antes de fijar precio en los diez compuestos que más vendas, conviene abrir esos enlaces y '
+          'confirmar el número del día. Son diez comprobaciones, no ciento dieciocho.'):
     c = fs.cell(row=r, column=2, value='·  ' + t); c.font = BODY
     c.alignment = Alignment(wrap_text=True, vertical='top')
     fs.merge_cells(start_row=r, start_column=2, end_row=r, end_column=4)
-    fs.row_dimensions[r].height = 30
+    fs.row_dimensions[r].height = 32
     r += 1
 
-# El entorno donde se genera esto no puede recalcular (LibreOffice no arranca:
-# falla hasta con un fichero de una sola fórmula), así que las celdas salen sin
-# valor en caché. Esta marca obliga a Excel, Google Sheets y Numbers a calcular
-# el libro entero en cuanto se abre, que es lo que resuelve el caso real.
+ORDER = ['LÉEME', 'MÉXICO', 'USA', 'RESUMEN', 'BANDAS', 'FUENTES']
 wb._sheets = [wb[n] for n in ORDER]
 wb.calculation.fullCalcOnLoad = True
 wb.save(OUT)
