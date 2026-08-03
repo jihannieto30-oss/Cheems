@@ -68,7 +68,7 @@ css   = '\n'.join(rd(os.path.join(SRC, f)) for f in
 # sitio dibuja tres contornos en su lugar y no se rompe nada.
 PENS = os.path.join(HERE, 'assets', 'pens.json')
 pens = rd(PENS) if os.path.exists(PENS) else '{}'
-print('  plumas           %d de 3' % len(json.loads(pens)))
+print('  plumas           %d de 3' % len([k for k in json.loads(pens) if not k.startswith('_')]))
 
 js    = ('window.__pxBakedLines = true;\n' +
          'const PX_PENS_ART = ' + pens + ';\n' +

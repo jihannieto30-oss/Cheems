@@ -20,8 +20,8 @@ const PX_CAT = [
   {route:'/fitness',     key:'fitness',     badge:'badge_fitness'},
   {route:'/beauty',      key:'beauty',      badge:'badge_beauty'},
   {route:'/longevity',   key:'longevity',   badge:'badge_longevity'},
-  {route:'/pens',        key:'pens',        soon:true,
-   name:'PepX Pens',     tagline:{en:'Precision Instruments', es:'Instrumentos de precisión'}},
+  {route:'/pens',        key:'pens',        nuevo:true,
+   name:'PepX Pens',     tagline:{en:'Reusable Pen Injectors', es:'Plumas reutilizables'}},
   {route:'/accessories', key:'accessories', soon:true,
    name:'Accessories',   tagline:{en:'Around the Vial',       es:'Alrededor del vial'}}
 ];
@@ -92,7 +92,8 @@ function fillMenu(){
            'data-href="#' + c.route + '" role="menuitem" class="' + (soon ? 'soon' : '') + '">' +
            '<span class="tx"><span class="nm">' + esc(nameOf(c)) + '</span>' +
            '<span class="tl">' + esc(tagOf(c)) + '</span></span>' +
-           (soon ? '<span class="sn">' + t('SOON','PRONTO') + '</span>' : '') +
+           (soon  ? '<span class="sn">' + t('SOON','PRONTO') + '</span>' : '') +
+           (c.nuevo ? '<span class="sn nw">' + t('NEW','NUEVO') + '</span>' : '') +
            '</a>';
   };
   const live = PX_CAT.filter(c => !c.soon).map(row).join('');
@@ -156,13 +157,14 @@ function extendMobile(){
   inner.__px = true;
   const after = inner.querySelector('a[href="#/longevity"]');
   if(!after) return;
-  PX_CAT.filter(c => c.soon).reverse().forEach(c => {
+  PX_CAT.filter(c => c.soon || c.nuevo).reverse().forEach(c => {
+    const suf = c.nuevo ? [' · new',' · nuevo'] : [' · soon',' · pronto'];
     const a = document.createElement('a');
     a.href = '#' + c.route;
     a.setAttribute('data-nav','');
-    a.setAttribute('data-en', c.name + ' · soon');
-    a.setAttribute('data-es', c.name + ' · pronto');
-    a.textContent = c.name + t(' · soon',' · pronto');
+    a.setAttribute('data-en', c.name + suf[0]);
+    a.setAttribute('data-es', c.name + suf[1]);
+    a.textContent = c.name + t(suf[0], suf[1]);
     after.insertAdjacentElement('afterend', a);
   });
 }
@@ -171,7 +173,7 @@ function extendQuote(){
   const sel = document.querySelector('#wl-form select[name=interest]');
   if(!sel || sel.__px) return;
   sel.__px = true;
-  PX_CAT.filter(c => c.soon).forEach(c => {
+  PX_CAT.filter(c => c.soon || c.nuevo).forEach(c => {
     const o = document.createElement('option');
     o.value = c.name;
     o.setAttribute('data-en', c.name);
@@ -194,10 +196,11 @@ function extendQuote(){
    -------------------------------------------------------------------------- */
 const SOON = {
   pens:{
-    eyebrow:{en:'PepX · Instruments', es:'PepX · Instrumentos'},
-    title:  {en:'Pens.',              es:'Pens.'},
-    lead:   {en:'A precision instrument held to the same standard as what it carries. In development — nothing is open yet, and nothing here is a specification.',
-             es:'Un instrumento de precisión al mismo estándar que lo que transporta. En desarrollo — todavía no hay nada abierto, y nada de esto es una especificación.'}
+    nuevo:  true,
+    eyebrow:{en:'PepX · Reusable Pen Injectors', es:'PepX · Plumas reutilizables'},
+    title:  {en:'Pens.',                          es:'Pens.'},
+    lead:   {en:'Three instruments, one per line. Reusable, 60 units, finished to the same standard as what they carry.',
+             es:'Tres instrumentos, uno por línea. Reutilizables, 60 unidades, acabados al mismo estándar que lo que transportan.'}
   },
   accessories:{
     eyebrow:{en:'PEPTIDEX · Accessories', es:'PEPTIDEX · Accesorios'},
@@ -217,6 +220,9 @@ const SOON = {
    producto que aún no ha salido, que es lo que es. */
 const PENART = (typeof PX_PENS_ART !== 'undefined' && PX_PENS_ART) || {};
 
+/* El correo de contacto, en un solo sitio. */
+const PX_MAIL = 'official.peptidex@outlook.com';
+
 function stageHTML(){
   const rows = [
     {k:'fitness',   ln:'FITNESS'},
@@ -224,16 +230,21 @@ function stageHTML(){
     {k:'longevity', ln:'LONGEVITY'}
   ];
   const has = rows.some(r => PENART[r.k]);
-  return '<div class="px-stage reveal">' + rows.map(r => {
+  /* En modo panel la imagen entregada ya trae su propio lockup, su nombre de
+     línea y su sombra. Repetirlos en CSS sería decirlo dos veces y desalinearlo
+     una de ellas, así que el escenario se calla y sólo coloca. */
+  const panel = PENART._mode === 'panel';
+  return '<div class="px-stage reveal' + (panel ? ' panel' : '') + '">' + rows.map(r => {
     const src = PENART[r.k];
     return '<div class="px-plinth">' +
       '<div class="px-pen' + (src ? '' : ' empty') + '">' +
         (src ? '<img src="' + src + '" alt="PEPTIDEX ' + r.ln + '"/>'
              : '<div class="ghostpen"><i></i></div>') +
-        '<div class="sh"></div>' +
+        (panel ? '' : '<div class="sh"></div>') +
       '</div>' +
-      '<div class="ln">' + r.ln + '</div>' +
-      '<div class="dz">' + (has ? '10 MG' : t('in development','en desarrollo')) + '</div>' +
+      (panel ? '' :
+        '<div class="ln">' + r.ln + '</div>' +
+        '<div class="dz">' + (has ? '10 MG' : t('in development','en desarrollo')) + '</div>') +
     '</div>';
   }).join('') + '</div>';
 }
@@ -242,17 +253,23 @@ function soonHTML(key){
   const S = SOON[key], c = PX_CAT.find(x => x.key === key);
   const stage = (key === 'pens');
   return '<section class="px-soon' + (stage ? ' stage-on' : '') + '"><div class="wrap"><div class="in">' +
-    '<span class="eyebrow reveal">' + t(S.eyebrow.en, S.eyebrow.es) + '</span>' +
+    '<span class="eyebrow reveal">' + t(S.eyebrow.en, S.eyebrow.es) +
+      (S.nuevo ? '<i class="px-new">' + t('NEW','NUEVO') + '</i>' : '') + '</span>' +
     '<h1 class="display reveal">' + t(S.title.en, S.title.es) + '</h1>' +
     '<div class="rule reveal"></div>' +
     '<p class="lead reveal">' + t(S.lead.en, S.lead.es) + '</p>' +
     (stage ? stageHTML() : '') +
     '<div class="acts reveal">' +
-      '<button class="btn mag" data-soon-notify="' + esc(c.name) + '">' +
-        t('Tell me when it opens','Avísame cuando abra') + '</button>' +
+      (c.nuevo
+        ? '<a class="btn mag" href="mailto:' + PX_MAIL + '?subject=' +
+          encodeURIComponent('PepX Pens — ' + t('enquiry','consulta')) + '">' +
+          t('Write to us','Escríbenos') + '</a>'
+        : '<button class="btn mag" data-soon-notify="' + esc(c.name) + '">' +
+          t('Tell me when it opens','Avísame cuando abra') + '</button>') +
       '<a class="btn ghost mag" href="#/fitness" data-nav data-href="#/fitness">' +
         t('See the catalog','Ver el catálogo') + '</a>' +
     '</div>' +
+    (c.nuevo ? '<a class="px-mail reveal" href="mailto:' + PX_MAIL + '">' + PX_MAIL + '</a>' : '') +
     '<div class="note reveal">' + t('Research use only','Solo uso en investigación') + '</div>' +
   '</div></div></section>' + footerHTML();
 }

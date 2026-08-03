@@ -152,3 +152,84 @@
   .px-soon.stage-on{padding:92px 0 96px;}
   .px-soon.stage-on .acts{margin-top:44px;}
 }
+
+/* ============================================================================
+   MODO PANEL — CUANDO LA IMAGEN YA ES LA COMPOSICIÓN
+
+   El arte entregado no son tres recortes sueltos: son tres paneles completos,
+   cada uno con su marca, su nombre de línea, «REUSABLE PEN INJECTOR», «60
+   UNITS» y su propia sombra, fotografiados sobre un fondo de 254,254,254 —
+   un nivel por debajo del blanco de la página, invisible al ojo.
+
+   Con eso, todo lo que este escenario sabía hacer sobra. La sombra de contacto
+   estaría debajo de otra sombra; el reflejo duplicaría un suelo que ya existe;
+   y el rótulo de línea diría por segunda vez lo que la imagen ya dice, con la
+   fuente de la web en vez de la del lockup. Dos veces lo mismo y desalineado
+   una de ellas.
+
+   Así que en modo panel el escenario se calla y sólo coloca: tres columnas,
+   mismo alto, mismo espacio. Ni un píxel del PDF se toca — sólo se recortó,
+   que es elegir una región, no rehacerla.
+   ============================================================================ */
+
+.px-stage.panel{
+  --pen-h:min(64vh, 620px);
+  gap:clamp(4px, 1.4vw, 26px);   /* los paneles ya traen su propio aire dentro */
+  align-items:stretch;
+
+  /* EL PAPEL DE LA FOTO, NO EL DE LA PÁGINA
+
+     El fondo del PDF es 254,254,254 y el de la página es 255. Un solo nivel —
+     0.4 % de luminancia— pero sobre una superficie tan grande y tan plana el
+     ojo lo lee igual: aparecían tres cajas tenues, una por panel.
+
+     No se toca la imagen para arreglarlo. Se le da al escenario el mismo papel
+     que trae la foto, con aire alrededor: los tres paneles se funden en un
+     campo continuo y el único borde que queda es el del campo entero, que a un
+     nivel de distancia no se ve. */
+  background:#fefefe;
+  padding:clamp(16px,2.6vw,38px) clamp(8px,1.6vw,26px);
+  border-radius:22px;
+}
+.px-stage.panel .px-pen{
+  height:var(--pen-h);
+  align-items:center;
+}
+.px-stage.panel .px-pen img{
+  -webkit-box-reflect:none;       /* el suelo ya está en la foto */
+}
+.px-stage.panel .px-plinth .ln,
+.px-stage.panel .px-plinth .dz{display:none;}
+
+@media (max-width:860px){
+  .px-stage.panel{
+    --pen-h:min(56vh, 460px);
+    gap:26px;
+  }
+}
+
+/* ---------- el distintivo NUEVO ------------------------------------------
+   Va pegado al epígrafe, no al titular: el titular es el nombre del producto y
+   no debería llevar nada colgando. Y no parpadea — lo nuevo se nota por estar,
+   no por moverse. */
+.px-soon .eyebrow .px-new{
+  display:inline-block; vertical-align:2px;
+  margin-left:12px; padding:3px 9px;
+  font-size:9.5px; font-style:normal; font-weight:700; letter-spacing:.18em;
+  color:#fff; background:var(--ink);
+  border-radius:999px;
+}
+
+/* ---------- el correo, escrito entero -------------------------------------
+   Debajo de los botones y en claro. Un botón que dice «escríbenos» esconde la
+   dirección, y quien quiere copiarla a su cliente de correo tiene que hacer
+   clic para verla. */
+.px-mail{
+  display:inline-block; margin-top:22px;
+  font-size:13.5px; letter-spacing:.02em;
+  color:var(--muted); text-decoration:none;
+  border-bottom:1px solid var(--hairline);
+  padding-bottom:3px;
+  transition:color .25s, border-color .25s;
+}
+.px-mail:hover{color:var(--ink); border-color:var(--ink);}

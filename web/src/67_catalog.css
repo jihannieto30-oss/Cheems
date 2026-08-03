@@ -88,6 +88,12 @@ nav .links .px-cat.on .px-cat-t::after{width:18px; opacity:1;}
 
 .px-cat-menu .sep{height:1px; margin:8px 12px; background:var(--hairline);}
 
+/* Lo nuevo sí abre, así que ni se atenúa ni se manda al final: se queda con
+   las que están vivas y lo dice en negro. */
+.px-cat-menu a .sn.nw{
+  color:#fff; background:var(--ink); border-color:var(--ink);
+}
+
 @media (prefers-reduced-motion:reduce){
   .px-cat-menu{transition:opacity .01s;}
   nav .links .px-cat-t .cv{transition:none;}

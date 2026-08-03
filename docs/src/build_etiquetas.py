@@ -537,18 +537,11 @@ function draw(){
   /* El lema y el aviso legal comparten línea si caben; si no, el aviso baja a
      la suya.  El lema no baja nunca y no se recorta: es lo único de la
      etiqueta que dice de qué marca es esto, además del nombre. */
-  var tag  = d.tag!==false ? String(TAG[d.line]||'').toUpperCase() : '';
+  /* El lema ya no vive aquí: subió a la cabecera con la marca. El pie se queda
+     con lo que de verdad es pie. */
   var foot = d.foot ? String(d.foot).toUpperCase() : '';
   ctx.font='700 '+fsFoot+'px Arial,Helvetica,sans-serif';
-  var tagTr = tag ? spFit(tag, fullW, fsFoot*0.18) : 0;
-  var tagW  = tag  ? spW(tag, tagTr) : 0;
-  var footW = foot ? ctx.measureText(foot).width : 0;
-  var shareLine = tag && foot && (tagW+footW+u(2.5,1.6) <= fullW);
-
-  var footLines = 0;
-  if(tag || foot) footLines++;
-  if(tag && foot && !shareLine) footLines++;
-  if(lotLine) footLines++;
+  var footLines = (foot?1:0) + (lotLine?1:0);
 
   var bottomH = footLines ? footLines*fsFoot + (footLines-1)*gFoot
                             + RULE + u(1.0, 0.7) : 0;
@@ -593,6 +586,7 @@ function draw(){
   var lg=imgs[d.line];
   var fsHouse = u(1.9, 1.30);
   var fsLine  = u(1.5, 1.15);
+  var fsTag   = u(1.15, 1.00);
   var tx = pad;
 
   if(d.logo!=='0' && lg && lg.width){
@@ -606,16 +600,32 @@ function draw(){
 
   /* Las dos líneas se centran contra el alto de la marca, para que el conjunto
      lea como un bloque y no como tres cosas apiladas por casualidad. */
+  /* El lema va aquí, bajo la marca — no en el pie.
+
+     El lockup entregado se lee de arriba abajo: marca, casa, línea, lema. Con
+     el lema abajo del todo la etiqueta contaba la marca en dos trozos
+     separados por el nombre del compuesto, que es justo lo que rompe la
+     lectura. Ahora el bloque de marca es uno solo y el pie se queda con lo que
+     de verdad es pie: lote, caducidad y aviso legal. */
+  var tag0 = d.tag!==false ? String(TAG[d.line]||'').toUpperCase() : '';
   var tw = right-tx;
-  var blockH = fsHouse + u(0.7,0.45) + fsLine;
+  var gapH = u(0.6,0.4), gapT = u(0.75,0.5);
+  var blockH = fsHouse + gapH + fsLine + (tag0 ? gapT + fsTag : 0);
   if(blockH>headH) headH = blockH;
   var ty = y + Math.round((headH-blockH)/2) + fsHouse;
 
   ctx.font='700 '+fsHouse+'px Arial,Helvetica,sans-serif';
   spDraw('PEPTIDEX', tx, ty, spFit('PEPTIDEX', tw, fsHouse*0.24));
-  ty += u(0.7,0.45)+fsLine;
+  ty += gapH+fsLine;
   ctx.font='700 '+fsLine+'px Arial,Helvetica,sans-serif';
   spDraw(it.L, tx, ty, spFit(it.L, tw, fsLine*0.26));
+  if(tag0){
+    ty += gapT+fsTag;
+    ctx.font='700 '+fsTag+'px Arial,Helvetica,sans-serif';
+    ctx.fillStyle='#3a3f48';                      /* un punto por debajo del negro */
+    spDraw(tag0, tx, ty, spFit(tag0, tw, fsTag*0.20));
+    ctx.fillStyle='#000';
+  }
 
   y += headH + u(1.8, 1.1);
 
@@ -730,25 +740,17 @@ function draw(){
       ctx.fillText(clip(lotLine, fullW, fsFoot, '700'), pad, fy);
       fy -= fsFoot+gFoot;
     }
-    if(tag && foot && !shareLine){
-      ctx.textAlign='right'; ctx.fillText(clip(foot, fullW, fsFoot, '700'), W-pad, fy);
-      ctx.textAlign='left';
-      fy -= fsFoot+gFoot;
-    }
-    if(tag || foot){
-      if(tag) spDraw(tag, pad, fy, tagTr);
-      if(foot && shareLine){
-        ctx.textAlign='right'; ctx.fillText(foot, W-pad, fy); ctx.textAlign='left';
-      } else if(foot && !tag){
-        ctx.fillText(clip(foot, fullW, fsFoot, '700'), pad, fy);
-      }
+    if(foot){
+      ctx.fillText(clip(foot, fullW, fsFoot, '700'), pad, fy);
       fy -= fsFoot+u(1.0,0.7);
+    } else {
+      fy -= u(1.0,0.7)-gFoot;
     }
     ctx.fillRect(pad, Math.round(fy), fullW, RULE);
   }
 
   threshold();
-  checkWarnings(clipped, mod, lines.length, fsFoot, tagW, fullW);
+  checkWarnings(clipped, mod, lines.length, fsFoot, 0, fullW);
 }
 
 function fit(txt, maxW, hi, lo, weight, fam){
