@@ -551,14 +551,22 @@ function line(pts, win, m){
   const Y = v => PT + (1 - (v-bot)/(top-bot)) * (H - PT - PB);
   const avg = mean(vs);
 
-  let d = '', a = '';
+  /* SIN RELLENO BAJO LA CURVA, Y A PROPÓSITO
+
+     Una frecuencia en reposo que se mueve entre 67 y 74 no se puede dibujar
+     desde cero: saldrían siete puntos pegados. Así que este eje está truncado,
+     y en un eje truncado el área bajo la curva no mide nada — el suelo es una
+     cifra elegida, no el cero. Rellenarla infla visualmente una diferencia de
+     siete latidos hasta que parece un desplome.
+
+     La curva de vida media sí arranca en cero, y por eso allí el relleno sí
+     está y aquí no. */
+  let d = '';
   pts.forEach((p, i) => { d += (i ? 'L' : 'M') + X(p.d).toFixed(1) + ' ' + Y(p.v).toFixed(1) + ' '; });
-  a = 'M' + X(pts[0].d).toFixed(1) + ' ' + (H-PB) + ' ' + d.slice(1) +
-      'L' + X(pts[pts.length-1].d).toFixed(1) + ' ' + (H-PB) + ' Z';
 
   let g = '<line class="rule" x1="0" y1="' + Y(avg).toFixed(1) + '" x2="' + CW +
           '" y2="' + Y(avg).toFixed(1) + '"/>';
-  g += '<path class="area" d="' + a + '"/><path class="ln" d="' + d + '"/>';
+  g += '<path class="ln" d="' + d + '"/>';
   /* sólo se marca el extremo: un punto en cada valor es ruido */
   const last = pts[pts.length-1];
   g += '<circle class="dot" cx="' + X(last.d).toFixed(1) + '" cy="' + Y(last.v).toFixed(1) +
@@ -569,8 +577,7 @@ function line(pts, win, m){
   /* preserveAspectRatio="none" estiraría el trazo; aquí sí se conserva */
   return '<svg class="bars" viewBox="0 0 ' + CW + ' ' + H + '" preserveAspectRatio="none" ' +
          'role="img" aria-label="' + esc2(mName(m)) + '">' +
-         '<style>.area{fill:' + 'var(--s1)' + ';opacity:.1}.ln{stroke:var(--s1)}.dot{fill:var(--s1)}</style>' +
-         g + '</svg>';
+         '<style>.ln{stroke:var(--s1)}.dot{fill:var(--s1)}</style>' + g + '</svg>';
 }
 
 /* El eje de abajo. Con catorce días o menos caben las iniciales; con más, tres
@@ -595,19 +602,18 @@ function axis(slots, win, H, band){
   return g;
 }
 
-/* la curvita de la portada */
+/* La curvita de la portada. También sin relleno, y por lo mismo: su escala va
+   del mínimo al máximo de los datos, no de cero. */
 function spark(vals){
   if(vals.length < 2) return '';
-  const W = 600, H = 54, P = 7;
+  const W = 600, H = 54, P = 8;
   const lo = mn(vals), hi = mx(vals), rg = (hi-lo) || 1;
   const X = i => P + i * (W - P*2) / (vals.length - 1);
   const Y = v => H - P - ((v-lo)/rg) * (H - P*2);
   let d = '';
   vals.forEach((v,i) => { d += (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1) + ' '; });
-  const a = 'M' + X(0).toFixed(1) + ' ' + (H-P) + ' ' + d.slice(1) +
-            'L' + X(vals.length-1).toFixed(1) + ' ' + (H-P) + ' Z';
   return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
-    '<path class="area" d="' + a + '"/><path class="ln" d="' + d + '"/>' +
+    '<path class="ln" d="' + d + '"/>' +
     '<circle class="dot" cx="' + X(vals.length-1).toFixed(1) + '" cy="' +
       Y(vals[vals.length-1]).toFixed(1) + '" r="4"/></svg>';
 }
@@ -1121,14 +1127,20 @@ function labHL(){
     /* el ahora */
     g += '<line class="now" x1="' + X(back).toFixed(1) + '" y1="' + PT + '" x2="' +
          X(back).toFixed(1) + '" y2="' + (H-PB) + '"/>';
+    /* Aquí SÍ va relleno: este eje arranca en cero, así que el área bajo la
+       curva es la cantidad de verdad y no una cifra elegida. Sólo bajo el
+       tramo ya ocurrido — lo proyectado se queda en línea de puntos, porque
+       rellenar una previsión la disfraza de dato. */
     cur.forEach((s, i) => {
       let d1 = '', d2 = '';
       s.row.forEach((v, j) => {
-        const cmd = (j === 0 ? 'M' : 'L') + X(j).toFixed(1) + ' ' + Y(v).toFixed(1) + ' ';
-        if(j <= back) d1 += cmd;
+        if(j <= back) d1 += (j === 0 ? 'M' : 'L') + X(j).toFixed(1) + ' ' + Y(v).toFixed(1) + ' ';
         if(j >= back) d2 += (j === back ? 'M' : 'L') + X(j).toFixed(1) + ' ' + Y(v).toFixed(1) + ' ';
       });
-      g += '<path class="ln" d="' + d1 + '" style="stroke:' + SER[i] + '"/>' +
+      const area = 'M' + X(0).toFixed(1) + ' ' + (H-PB) + ' ' + d1.slice(1) +
+                   'L' + X(back).toFixed(1) + ' ' + (H-PB) + ' Z';
+      g += '<path d="' + area + '" style="fill:' + SER[i] + ';opacity:.09"/>' +
+           '<path class="ln" d="' + d1 + '" style="stroke:' + SER[i] + '"/>' +
            '<path class="ln proj" d="' + d2 + '" style="stroke:' + SER[i] + '"/>' +
            '<circle class="dot" cx="' + X(back).toFixed(1) + '" cy="' +
              Y(s.row[back]).toFixed(1) + '" r="4.5" style="fill:' + SER[i] + '"/>';
