@@ -62,7 +62,7 @@ css   = '\n'.join(rd(os.path.join(SRC, f)) for f in
                   ('41_label.css', '51_profile.css', '52_card.css', '62_dive.css', '64_logos.css',
                    '71_search.css', '72_nav.css', '30_motion.css',
                    '65_mobile.css', '67_catalog.css', '70_names.css',
-                   '71_pens.css'))
+                   '71_pens.css', '80_app.css'))
 # ---- 4b · el arte de las plumas, si ya existe ----------------------------
 # Lo produce mk_pens.py a partir de los recortes. Si no está, el escenario del
 # sitio dibuja tres contornos en su lugar y no se rompe nada.
@@ -84,7 +84,8 @@ js    = ('window.__pxBakedLines = true;\n' +
          rd(os.path.join(SRC, '70_search.js')) + '\n' +
          rd(os.path.join(SRC, '66_mobile.js')) + '\n' +
          rd(os.path.join(SRC, '68_catalog.js')) + '\n' +
-         rd(os.path.join(SRC, '69_names.js')))
+         rd(os.path.join(SRC, '69_names.js')) + '\n' +
+         rd(os.path.join(SRC, '81_app.js')))
 
 i = html.rindex('</style>')
 html = html[:i] + '\n/* ===== PEPTIDEX LABEL + MOTION ===== */\n' + css + '\n' + html[i:]

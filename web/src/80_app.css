@@ -1,0 +1,352 @@
+/* ============================================================================
+   PepX — LA APLICACIÓN
+
+   Una isla negra dentro de un sitio blanco.
+
+   La marca es blanca y no se toca. Pero una herramienta que se abre todos los
+   días no es una tienda: se mira de noche, se mira con una mano, y se mira
+   durante meses. El negro no es un capricho de estilo aquí — es lo que hace
+   que la aplicación se sienta un sitio distinto del catálogo aunque viva en la
+   misma dirección, y lo que evita que una pantalla de datos a las once de la
+   noche queme.
+
+   Todo el color de esta hoja está encerrado en .pxapp. Nada de lo que hay aquí
+   puede escaparse a la tienda: las variables se redeclaran dentro del
+   contenedor, no en :root.
+   ============================================================================ */
+
+.pxapp{
+  --bg:#0a0b0d;          /* el fondo, casi negro pero no cero */
+  --card:#131519;        /* una superficie por encima */
+  --card2:#1b1e24;       /* y otra más */
+  --line:#252932;        /* el filete */
+  --tx:#f2f4f8;          /* el texto */
+  --tx2:#8b93a1;         /* el texto secundario */
+  --tx3:#5b6270;         /* el terciario */
+  --ok:#4ade80;
+  --warn:#f5a524;
+  --bad:#f87171;
+  --accent:#ffffff;      /* en negro, el acento es el blanco */
+
+  background:var(--bg);
+  color:var(--tx);
+  min-height:100vh;
+  padding:0 0 calc(84px + env(safe-area-inset-bottom));
+  -webkit-font-smoothing:antialiased;
+}
+
+/* LA TIENDA SE APAGA DENTRO DE LA APP
+
+   La barra del sitio es fija, con z-index 60, y se montaba encima de la
+   cabecera de PepX: se veían las dos a la vez y ninguna mandaba. Una
+   aplicación con la navegación de otra cosa flotando encima no se lee como una
+   aplicación.
+
+   Así que dentro de #/app la barra de la tienda no se oculta a medias — se
+   quita del flujo entera, y el <body> se pone negro para que el rebote del
+   scroll en iOS no enseñe papel blanco por debajo. La salida a la tienda vive
+   en la propia cabecera de la app, que es donde se busca. */
+html.px-app header,
+html.px-app #nav,
+html.px-app #bgfx{display:none !important;}
+html.px-app,
+html.px-app body{background:#0a0b0d;}
+
+.pxapp .back{
+  background:none; border:0; cursor:pointer; font-family:inherit;
+  color:var(--tx3); font-size:11px; letter-spacing:.16em; font-weight:700;
+  text-transform:uppercase; padding:6px 0; text-decoration:none;
+  display:inline-flex; align-items:center; gap:7px;
+  transition:color .2s;
+}
+.pxapp .back:hover{color:var(--tx);}
+
+/* La tienda pinta sobre papel blanco. Dentro de la app, no. */
+.pxapp *,
+.pxapp *::before,
+.pxapp *::after{box-sizing:border-box;}
+
+.pxapp .wrap{max-width:940px; margin:0 auto; padding:0 20px;}
+
+/* ---------- la barra de la app ------------------------------------------ */
+.pxapp .abar{
+  position:sticky; top:0; z-index:30;
+  background:rgba(10,11,13,.92);
+  border-bottom:1px solid var(--line);
+  padding:calc(14px + env(safe-area-inset-top)) 0 14px;
+}
+.pxapp .abar .in{
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+}
+.pxapp .brandx{display:flex; align-items:baseline; gap:9px;}
+.pxapp .brandx b{font-size:19px; font-weight:700; letter-spacing:-.03em;}
+.pxapp .brandx i{
+  font-style:normal; font-size:9.5px; letter-spacing:.24em;
+  color:var(--tx3); text-transform:uppercase;
+}
+.pxapp .tierchip{
+  font-size:9.5px; letter-spacing:.18em; font-weight:700;
+  padding:5px 10px; border-radius:999px;
+  border:1px solid var(--line); color:var(--tx2);
+}
+.pxapp .tierchip.pro{background:var(--tx); color:var(--bg); border-color:var(--tx);}
+
+/* ---------- cabecera de pestaña ----------------------------------------- */
+.pxapp .phead{padding:30px 0 6px;}
+.pxapp .phead .k{
+  font-size:10px; letter-spacing:.26em; color:var(--tx3);
+  text-transform:uppercase; font-weight:700;
+}
+.pxapp .phead h2{
+  font-size:clamp(28px,5.6vw,38px); font-weight:600;
+  letter-spacing:-.035em; margin:10px 0 0; line-height:1.02;
+}
+.pxapp .phead p{margin:8px 0 0; color:var(--tx2); font-size:14.5px; line-height:1.55;}
+
+/* ---------- tarjetas ------------------------------------------------------ */
+.pxapp .card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:18px 18px;
+  margin-top:14px;
+}
+.pxapp .card.pad0{padding:0; overflow:hidden;}
+.pxapp .ctitle{
+  font-size:10.5px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--tx3); font-weight:700; margin-bottom:12px;
+}
+
+/* ---------- lo de hoy ----------------------------------------------------- */
+.pxapp .dose{
+  display:flex; align-items:center; gap:14px;
+  padding:16px 18px; border-bottom:1px solid var(--line);
+}
+.pxapp .dose:last-child{border-bottom:0;}
+.pxapp .dose .tick{
+  flex:0 0 30px; width:30px; height:30px; border-radius:50%;
+  border:1.6px solid var(--line); background:transparent;
+  display:flex; align-items:center; justify-content:center;
+  color:transparent; font-size:15px; cursor:pointer;
+  transition:background .2s, border-color .2s, color .2s;
+}
+.pxapp .dose .tick:hover{border-color:var(--tx2);}
+.pxapp .dose.done .tick{background:var(--tx); border-color:var(--tx); color:var(--bg);}
+.pxapp .dose .nm{font-size:15.5px; font-weight:600; letter-spacing:-.01em;}
+.pxapp .dose .mt{font-size:12.5px; color:var(--tx2); margin-top:2px;}
+.pxapp .dose.done .nm{color:var(--tx3); text-decoration:line-through;}
+.pxapp .dose .rt{margin-left:auto; text-align:right;}
+.pxapp .dose .rt b{font-size:15px; font-weight:600;}
+.pxapp .dose .rt span{display:block; font-size:11px; color:var(--tx3); margin-top:2px;}
+
+/* ---------- números grandes ---------------------------------------------- */
+.pxapp .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px;}
+.pxapp .stat{
+  background:var(--card); border:1px solid var(--line);
+  border-radius:16px; padding:16px 14px;
+}
+.pxapp .stat b{display:block; font-size:26px; font-weight:600; letter-spacing:-.03em;}
+.pxapp .stat span{
+  display:block; margin-top:4px; font-size:10.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--tx3);
+}
+
+/* ---------- lo que la app dice ------------------------------------------- */
+.pxapp .tips{margin-top:14px;}
+.pxapp .tip{
+  display:flex; gap:12px; align-items:flex-start;
+  background:var(--card); border:1px solid var(--line);
+  border-left:2px solid var(--tx3);
+  border-radius:12px; padding:14px 16px; margin-top:10px;
+}
+.pxapp .tip.w{border-left-color:var(--warn);}
+.pxapp .tip.b{border-left-color:var(--bad);}
+.pxapp .tip .tt{font-size:13.5px; font-weight:600;}
+.pxapp .tip .td{font-size:13px; color:var(--tx2); margin-top:3px; line-height:1.5;}
+
+/* ---------- formularios --------------------------------------------------- */
+.pxapp label{
+  display:block; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--tx3); font-weight:700; margin:14px 0 6px;
+}
+.pxapp input,.pxapp select,.pxapp textarea{
+  width:100%; background:var(--card2); color:var(--tx);
+  border:1px solid var(--line); border-radius:11px;
+  padding:12px 13px; font-size:15px; font-family:inherit;
+  outline:none; transition:border-color .2s;
+  -webkit-appearance:none; appearance:none;
+}
+.pxapp select{
+  background-image:linear-gradient(45deg,transparent 50%,var(--tx3) 50%),
+                   linear-gradient(135deg,var(--tx3) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+  background-size:5px 5px, 5px 5px; background-repeat:no-repeat;
+  padding-right:36px;
+}
+.pxapp textarea{min-height:76px; resize:vertical; line-height:1.5;}
+.pxapp input:focus,.pxapp select:focus,.pxapp textarea:focus{border-color:var(--tx2);}
+.pxapp .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.pxapp .row3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;}
+
+.pxapp .abtn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  background:var(--tx); color:var(--bg);
+  border:0; border-radius:999px; cursor:pointer;
+  padding:13px 24px; font-size:14px; font-weight:650; font-family:inherit;
+  transition:opacity .2s;
+}
+.pxapp .abtn:hover{opacity:.86;}
+.pxapp .abtn.ghost{background:transparent; color:var(--tx); border:1px solid var(--line);}
+.pxapp .abtn.ghost:hover{border-color:var(--tx2); opacity:1;}
+.pxapp .abtn.sm{padding:9px 16px; font-size:12.5px;}
+.pxapp .abtn.wide{width:100%;}
+.pxapp .acts2{display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;}
+
+/* ---------- días de la semana --------------------------------------------- */
+.pxapp .dow{display:flex; gap:6px; margin-top:6px;}
+.pxapp .dow button{
+  flex:1; background:var(--card2); color:var(--tx3);
+  border:1px solid var(--line); border-radius:9px;
+  padding:10px 0; font-size:11.5px; font-weight:700; cursor:pointer;
+  font-family:inherit; transition:background .2s,color .2s,border-color .2s;
+}
+.pxapp .dow button.on{background:var(--tx); color:var(--bg); border-color:var(--tx);}
+
+/* ---------- lista de protocolos ------------------------------------------- */
+.pxapp .plan{
+  display:flex; align-items:flex-start; gap:14px;
+  padding:16px 18px; border-bottom:1px solid var(--line);
+}
+.pxapp .plan:last-child{border-bottom:0;}
+.pxapp .plan .bd{min-width:0; flex:1;}
+.pxapp .plan .nm{font-size:15.5px; font-weight:600;}
+.pxapp .plan .mt{font-size:12.5px; color:var(--tx2); margin-top:3px;}
+.pxapp .plan .x{
+  background:none; border:0; color:var(--tx3); cursor:pointer;
+  font-size:17px; padding:2px 4px; line-height:1; font-family:inherit;
+}
+.pxapp .plan .x:hover{color:var(--bad);}
+.pxapp .plan.off .nm,.pxapp .plan.off .mt{color:var(--tx3);}
+
+/* ---------- la curva ------------------------------------------------------ */
+.pxapp .spark{width:100%; height:120px; display:block;}
+.pxapp .spark path{fill:none; stroke:var(--tx); stroke-width:1.6;
+  stroke-linejoin:round; stroke-linecap:round;}
+.pxapp .spark .area{fill:rgba(255,255,255,.06); stroke:none;}
+.pxapp .spark .grid{stroke:var(--line); stroke-width:1;}
+.pxapp .spark circle{fill:var(--tx);}
+
+/* ---------- la racha ------------------------------------------------------ */
+.pxapp .streak{display:flex; gap:4px; margin-top:12px; flex-wrap:wrap;}
+.pxapp .streak i{
+  width:13px; height:13px; border-radius:3px;
+  background:var(--card2); border:1px solid var(--line);
+}
+.pxapp .streak i.on{background:var(--tx); border-color:var(--tx);}
+.pxapp .streak i.miss{background:transparent; border-color:#3a2226;}
+
+/* ---------- vacío ---------------------------------------------------------- */
+.pxapp .empty{
+  text-align:center; padding:40px 20px; color:var(--tx3);
+}
+.pxapp .empty b{display:block; font-size:15px; color:var(--tx2); font-weight:600;}
+.pxapp .empty span{display:block; margin-top:6px; font-size:13.5px; line-height:1.55;}
+
+/* ---------- la suscripción ------------------------------------------------- */
+.pxapp .tiers{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:16px;}
+.pxapp .tier{
+  background:var(--card); border:1px solid var(--line);
+  border-radius:18px; padding:22px 20px; position:relative;
+}
+.pxapp .tier.on{border-color:var(--tx);}
+.pxapp .tier .nm{font-size:11px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--tx3); font-weight:700;}
+.pxapp .tier .pr{font-size:34px; font-weight:600; letter-spacing:-.04em; margin:12px 0 2px;}
+.pxapp .tier .pr small{font-size:13px; font-weight:500; color:var(--tx3); letter-spacing:0;}
+.pxapp .tier ul{list-style:none; margin:16px 0 0; padding:0;}
+.pxapp .tier li{
+  font-size:13.5px; color:var(--tx2); padding:7px 0 7px 20px;
+  position:relative; line-height:1.45;
+}
+.pxapp .tier li::before{
+  content:""; position:absolute; left:0; top:13px;
+  width:7px; height:7px; border-radius:50%; background:var(--tx3);
+}
+.pxapp .tier.on li::before{background:var(--tx);}
+.pxapp .tier .cur{
+  position:absolute; top:18px; right:18px;
+  font-size:9px; letter-spacing:.16em; font-weight:700;
+  background:var(--tx); color:var(--bg); padding:4px 9px; border-radius:999px;
+}
+
+/* ---------- la barra de abajo ---------------------------------------------- */
+.pxapp .tabs{
+  position:fixed; left:0; right:0; bottom:0; z-index:40;
+  background:rgba(10,11,13,.96);
+  border-top:1px solid var(--line);
+  padding:8px 0 calc(8px + env(safe-area-inset-bottom));
+  display:flex;
+}
+.pxapp .tabs button{
+  flex:1; background:none; border:0; cursor:pointer; font-family:inherit;
+  color:var(--tx3); padding:6px 2px;
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  transition:color .2s;
+}
+.pxapp .tabs button svg{width:21px; height:21px; stroke:currentColor; fill:none;
+  stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;}
+.pxapp .tabs button span{font-size:10px; letter-spacing:.04em; font-weight:600;}
+.pxapp .tabs button.on{color:var(--tx);}
+
+/* ---------- el aviso ------------------------------------------------------- */
+.pxapp .ruo{
+  margin:26px 0 6px; padding-top:18px; border-top:1px solid var(--line);
+  font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--tx3); text-align:center; line-height:1.7;
+}
+
+@media (min-width:861px){
+  .pxapp .tabs{
+    position:sticky; top:0; bottom:auto;
+    max-width:940px; margin:0 auto; padding:10px 20px;
+    background:transparent; border-top:0; border-bottom:1px solid var(--line);
+  }
+  .pxapp .tabs button{flex:0 0 auto; flex-direction:row; gap:8px; padding:8px 16px;
+    border-radius:999px;}
+  .pxapp .tabs button.on{background:var(--card);}
+  .pxapp{padding-bottom:60px;}
+  .pxapp .row3{grid-template-columns:repeat(3,1fr);}
+}
+@media (max-width:520px){
+  /* Tres números caben en 390 px si se les baja el cuerpo. Dos arriba y uno
+     ancho abajo parecía una rejilla rota, no una decisión. */
+  .pxapp .stats{gap:8px;}
+  .pxapp .stat{padding:14px 10px;}
+  .pxapp .stat b{font-size:21px;}
+  .pxapp .stat span{font-size:9px; letter-spacing:.08em;}
+  .pxapp .tiers{grid-template-columns:1fr;}
+  .pxapp .row3{grid-template-columns:1fr;}
+}
+
+/* ============================================================================
+   LA PUERTA — el enlace de la tienda a la app
+
+   Vive fuera de .pxapp porque vive en la tienda: es lo único de esta hoja que
+   se pinta sobre blanco. Va la última de la barra, después de las cuatro
+   secciones, porque no es una sección más — es lo otro que hay aquí.
+   ============================================================================ */
+nav .links a.px-door{
+  display:inline-flex; align-items:center; gap:7px;
+}
+nav .links a.px-door .nw{
+  font-size:8.5px; font-weight:700; letter-spacing:.16em; line-height:1;
+  padding:3px 6px 2px;
+  color:#fff; background:var(--ink);
+  border-radius:999px;
+  /* que no herede el subrayado animado del enlace ni se mueva con él */
+  transform:translateY(-1px);
+}
+@media (max-width:860px){
+  /* En el menú móvil el distintivo sobra: ahí el enlace ya dice «la app». */
+  #mmenu .inner a.px-door{opacity:.9;}
+}
