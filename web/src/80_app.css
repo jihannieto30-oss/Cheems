@@ -1,875 +1,897 @@
 /* ============================================================================
-   PepX — LA APLICACIÓN
+   PEPTIDEX · PepX — SISTEMA VISUAL
 
-   BLANCA, COMO LA MARCA
+   Monocromo. Dos temas. Primero el oscuro.
 
-   La primera versión era negra. Se pidió negra y se entregó negra, y estaba
-   mal: PEPTIDEX es blanco, y una aplicación que se abre desde la tienda no
-   puede sentirse otra empresa. Además, en las capturas de referencia lo negro
-   era el modo opcional — la calculadora y las curvas son blancas.
+   LA REGLA QUE GOBIERNA TODO
 
-   Así que esto es blanco. Y blanco de lujo, que no es lo mismo que blanco:
+   El color no significa nada. Ni estado, ni serie, ni categoría, ni jerarquía.
+   Todo eso lo llevan la luminosidad, la escala, el peso, el espacio, el trazo y
+   la palabra. Es la restricción más dura del sistema y es exactamente la que lo
+   hace ver caro: cuando no puedes gastar color, gastas aire.
 
-     el papel no es el objeto    la página es #fbfbfc y las tarjetas #ffffff.
-                                 Un punto de diferencia, invisible a la vista y
-                                 suficiente para que la tarjeta se lea como una
-                                 pieza apoyada encima en vez de un rectángulo
-                                 dibujado. Es lo que hace que no haga falta
-                                 marco.
+   Consecuencia que no se negocia: NADA comunica sólo por color. Un estado lleva
+   icono y rótulo. Una serie lleva trazo distinto y su nombre pegado al extremo.
+   Si se tapa la pantalla con un filtro de grises y algo deja de entenderse, ese
+   algo está mal construido.
 
-     el filete casi no está      1 px a un 6 % de tinta. Un borde gris de
-                                 verdad es lo que separa una interfaz correcta
-                                 de una cara: se ve el borde en vez de la caja.
+   LAS TRES SERIES, MEDIDAS
 
-     la sombra es ancha y pobre  dos capas — una de contacto, cortísima, y una
-                                 ambiental muy abierta y muy tenue. Nunca una
-                                 sombra media, que es la que parece plantilla.
+     oscuro sobre #121212    #FFFFFF 18,73:1 · #B8B8B8 9,44:1 · #7A7A7A 4,36:1
+     claro  sobre #FFFFFF    #0A0A0A 19,80:1 · #5E5E5E 6,48:1 · #8A8A8A 3,45:1
 
-     el aire hace el lujo        márgenes grandes, mucho blanco entre bloques y
-                                 poca cosa por pantalla. Lo caro es lo que
-                                 puede permitirse estar vacío.
+   Las tres pasan 3:1 contra su superficie. Pero la separación ENTRE series se
+   queda en 1,88–2,16:1 — muy por debajo de lo que hace falta para distinguirlas
+   de un vistazo. Por eso el trazo distinto y el rótulo directo no son adorno:
+   son la codificación. Tres canales para tres series. Es lo correcto en
+   monocromo y de paso resuelve daltonismo, impresión y forced-colors de una vez.
 
-     el peso lo lleva la cifra   epígrafes diminutos y muy espaciados, números
-                                 grandes y muy juntos. El contraste de escala
-                                 es el que hace la jerarquía, no el color.
+   LA PROFUNDIDAD CAMBIA CON EL TEMA
 
-   Nada de esto se escapa a la tienda: todo cuelga de .pxapp. Las dos últimas
-   reglas —la puerta de la barra— son la única excepción, y por definición.
+   En oscuro no hay sombra: sobre negro una sombra no existe, y ponerla sólo
+   ensucia. La elevación se dibuja subiendo un plano de superficie y encendiendo
+   el filete. En claro sí hay sombra, y siempre en dos capas — una de contacto
+   cortísima y una ambiental muy abierta. Nunca la sombra media, que es la que
+   parece plantilla.
 
-   LOS COLORES DE DATO NO SON DECORACIÓN
-
-   Las tres series están validadas contra la superficie real de las tarjetas
-   (#ffffff) y contra la de la página (#fafbfc), con todos los pares en juego:
-
-       azul #2a78d6 · naranja #eb6834 · verde #1aa574
-       CVD ΔE 10.0 (suelo 8) · visión normal ΔE 22.5 (suelo 15) · contraste ≥3:1
-
-   El verde original de la paleta de referencia (#1baf7a) se quedaba en 2.82:1
-   sobre blanco — un trazo de 2 px casi no se veía. Se bajó un escalón hasta
-   que pasó el contraste sin perder separación: acabó mejorándola.
-
-   Tres series y no más. Con la cuarta, el amarillo se sienta al lado del
-   naranja y ese par se cae por debajo del suelo; el cuarto compuesto pasa a
-   gris y lo dice.
-
-   Los cuatro colores de estado están reservados, no se reutilizan como serie, y
-   no van solos jamás: siempre con su rótulo.
+   Todo cuelga de .pxapp. Las dos últimas reglas —la puerta de la barra de la
+   tienda— son la única excepción, y por definición.
    ============================================================================ */
 
+/* ---------- 1 · TOKENS ------------------------------------------------------ */
+
 .pxapp{
-  /* superficies */
-  --bg:#fbfbfc;          /* el papel de la página */
-  --card:#ffffff;        /* el papel de la pieza */
-  --card2:#f6f7f9;       /* el hueco dentro de la pieza: campos, casillas */
-  --hair:rgba(10,20,60,.065);   /* el filete que casi no está */
-  --hair2:rgba(10,20,60,.13);   /* el que sí se ve, sólo cuando hace falta */
+  /* superficies — cinco planos; un objeto nunca se apoya sobre su mismo nivel */
+  --bg:#000000;
+  --s1:#0A0A0A;
+  --s2:#121212;
+  --s3:#1C1C1C;
+  --s4:#2A2A2A;
 
-  /* tinta — el texto nunca lleva el color de una serie */
-  --tx:#0a143c;          /* el azul-negro de la marca, no negro puro */
-  --tx2:#5a6274;
-  --tx3:#8b93a5;
+  /* tinta */
+  --t1:#FFFFFF;
+  --t2:#A1A1A1;
+  --t3:#6E6E6E;
+  --line:rgba(255,255,255,.07);
+  --line2:rgba(255,255,255,.16);
 
-  /* dato */
-  --s1:#2a78d6;
-  --s2:#eb6834;
-  --s3:#1aa574;
-  --sx:#c2c7d2;          /* la serie que no tiene datos */
+  /* dato — luminosidad; el trazo y el rótulo hacen el resto */
+  --d1:#FFFFFF;
+  --d2:#B8B8B8;
+  --d3:#7A7A7A;
+  --dx:#3A3A3A;            /* la serie sin datos */
 
-  /* estado — reservados */
-  --ok:#0ca30c;
-  --warn:#b07800;        /* el amarillo de estado sobre blanco no se lee; se
-                            baja a ámbar oscuro sólo para texto y filetes */
-  --warnface:#fab219;    /* y se conserva el vivo para las caras, que son
-                            manchas grandes y ahí sí funciona */
-  --serious:#c9622f;
-  --crit:#c0392f;
+  /* inversión: el botón sólido y lo que va encima */
+  --inv:#FFFFFF;
+  --oninv:#000000;
 
-  /* las dos sombras */
-  --sh:0 1px 2px rgba(10,20,60,.035), 0 10px 30px -16px rgba(10,20,60,.16);
-  --sh2:0 1px 2px rgba(10,20,60,.05), 0 22px 50px -24px rgba(10,20,60,.22);
+  /* profundidad — en oscuro no hay */
+  --sh:none;
+  --sh2:none;
 
-  background:var(--bg);
-  color:var(--tx);
+  /* movimiento */
+  --e:cubic-bezier(.22,1,.36,1);
+
+  color-scheme:dark;
+  background:var(--s1);
+  color:var(--t1);
   min-height:100vh;
-  padding:0 0 calc(104px + env(safe-area-inset-bottom));
+  padding:0 0 calc(108px + env(safe-area-inset-bottom));
   -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
 }
 
-/* LA TIENDA SE APAGA DENTRO DE LA APP
+/* El tema claro. Se escribe una vez, sobre el mismo contenedor: el resto de la
+   hoja no vuelve a mencionar un tema en su vida. */
+.pxapp[data-theme="light"]{
+  --bg:#FFFFFF;
+  --s1:#FAFAFA;
+  --s2:#FFFFFF;
+  --s3:#F2F2F2;
+  --s4:#E6E6E6;
 
-   La barra del sitio es fija y se montaba encima de la aplicación. Se retira
-   entera, junto con el fondo 3D — que además dejaba de costar batería en un
-   sitio donde se entra todos los días. */
+  --t1:#0A0A0A;
+  --t2:#5E5E5E;
+  --t3:#8A8A8A;
+  --line:rgba(0,0,0,.07);
+  --line2:rgba(0,0,0,.13);
+
+  --d1:#0A0A0A;
+  --d2:#5E5E5E;
+  --d3:#8A8A8A;
+  --dx:#D0D0D0;
+
+  --inv:#0A0A0A;
+  --oninv:#FFFFFF;
+
+  --sh:0 1px 2px rgba(0,0,0,.04), 0 12px 32px -18px rgba(0,0,0,.18);
+  --sh2:0 1px 2px rgba(0,0,0,.06), 0 26px 56px -28px rgba(0,0,0,.26);
+
+  color-scheme:light;
+}
+
+/* La tienda se apaga dentro de la app: su barra es fija y se montaba encima. */
 html.px-app header,
 html.px-app #nav,
 html.px-app #bgfx{display:none !important;}
-html.px-app, html.px-app body{background:#fbfbfc;}
 html.px-app body{overflow-x:hidden;}
+html.px-app{background:#000;}
+html.px-app.px-light{background:#FAFAFA;}
+
+/* ---------- 2 · EL CORTAFUEGOS ----------------------------------------------
+
+   La tienda y la aplicación comparten fichero, así que comparten hoja de
+   estilos. Y la tienda ya tiene .stat, .card, .row, .tag, .btn, .meta, .go,
+   .open, .grid, .note… Mis reglas son `.pxapp .x` (0,2,0) y le ganan a `.x`
+   (0,1,0) en todo lo que YO declaro — pero lo que no declaro se cuela. Así
+   apareció una fila de tres cifras dentro de cápsulas con borde y desenfoque
+   que yo nunca escribí: la .stat de la tienda traía border, background,
+   backdrop-filter y border-radius.
+
+   Renombrar la clase que falla arregla esa clase y deja las otras ciento
+   cincuenta esperando. Esto lo arregla de raíz, y la aritmética de
+   especificidad es lo que lo hace posible:
+
+       .stat        (0,1,0)   ← la tienda
+       .pxapp div   (0,1,1)   ← esto: misma clase, un elemento más → gana
+       .pxapp .card (0,2,0)   ← lo mío: una clase más → gana a las dos
+
+   Es decir: un reset sobre selectores de ELEMENTO se cuela por debajo de mis
+   clases y por encima de las suyas. Apaga toda filtración de caja sin tocar ni
+   una regla propia.
+   -------------------------------------------------------------------------- */
+.pxapp div,   .pxapp span, .pxapp section, .pxapp p,  .pxapp ul, .pxapp li,
+.pxapp button,.pxapp a,    .pxapp b,       .pxapp i,  .pxapp em, .pxapp u,
+.pxapp h1,    .pxapp h2,   .pxapp h3,      .pxapp svg,.pxapp small{
+  background:none; border:0; border-radius:0;
+  box-shadow:none; backdrop-filter:none; text-shadow:none;
+}
+.pxapp *, .pxapp *::before, .pxapp *::after{box-sizing:border-box;}
+
+/* ---------- 3 · REJILLA ----------------------------------------------------- */
 
 .pxapp .wrap{max-width:900px; margin:0 auto; padding:0 20px;}
+.pxapp .sp{height:40px;}                /* el respiro entre bloques */
 
-/* ---------- la cabecera ---------------------------------------------------- */
-.pxapp .abar{
-  border-bottom:1px solid var(--hair);
-  background:rgba(255,255,255,.82);
-  backdrop-filter:blur(20px) saturate(1.6);
-  position:sticky; top:0; z-index:50;
+/* ---------- 3 · TIPOGRAFÍA -------------------------------------------------- */
+
+.pxapp .eyebrow{
+  font-size:9.5px; font-weight:600; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--t3);
 }
-.pxapp .abar .in{display:flex; align-items:center; justify-content:space-between;
-  padding:17px 20px; max-width:900px; margin:0 auto;}
-.pxapp .brandx b{font-size:19px; font-weight:600; letter-spacing:-.035em;}
-.pxapp .brandx i{font-style:normal; font-size:9px; letter-spacing:.22em;
-  color:var(--tx3); margin-left:10px; text-transform:uppercase;}
-.pxapp .back{font-size:10.5px; letter-spacing:.18em; text-transform:uppercase;
-  color:var(--tx3); text-decoration:none; transition:color .25s;}
-.pxapp .back:hover{color:var(--tx);}
-.pxapp .tierchip{font-size:9px; letter-spacing:.18em; font-weight:600;
-  border:1px solid var(--hair2); color:var(--tx2);
-  border-radius:999px; padding:6px 12px;}
-.pxapp .tierchip.pro{background:var(--tx); color:#fff; border-color:var(--tx);}
+.pxapp .display{
+  font-size:clamp(38px,8vw,64px); font-weight:600;
+  letter-spacing:-.05em; line-height:.96; margin:0;
+}
+.pxapp h2.title{
+  font-size:clamp(28px,6vw,40px); font-weight:600;
+  letter-spacing:-.045em; line-height:1.02; margin:12px 0 0;
+}
+.pxapp h3.sec{font-size:18px; font-weight:600; letter-spacing:-.03em; margin:0;}
+.pxapp .body{font-size:14px; line-height:1.7; color:var(--t2); letter-spacing:-.005em;}
+.pxapp .meta{font-size:12px; color:var(--t3); line-height:1.6;}
+.pxapp .num{font-variant-numeric:tabular-nums; letter-spacing:-.04em; font-weight:600;}
 
-/* ---------- el encabezado de cada pantalla ---------------------------------
-   Epígrafe diminuto y muy espaciado, titular grande y muy junto. Es todo el
-   truco de la jerarquía, y no gasta ni un color. */
-.pxapp .phead{padding:38px 0 22px;}
-.pxapp .phead .k{font-size:9.5px; letter-spacing:.26em; color:var(--tx3);
-  text-transform:uppercase;}
-.pxapp .phead h2{font-size:clamp(32px,6.4vw,46px); font-weight:600;
-  letter-spacing:-.045em; margin:12px 0 0; line-height:1;}
-.pxapp .phead p{margin:16px 0 0; color:var(--tx2); font-size:14.5px;
-  line-height:1.68; max-width:540px;}
+.pxapp .phead{padding:36px 0 24px;}
+.pxapp .phead p{margin:16px 0 0; max-width:560px;
+  font-size:14px; line-height:1.7; color:var(--t2);}
 
-/* ---------- tarjetas -------------------------------------------------------
-   Sin marco: el papel y la sombra hacen el borde. El filete está sólo para que
-   la pieza no se disuelva del todo cuando el fondo y ella casi coinciden. */
+/* ---------- 4 · SUPERFICIES ------------------------------------------------- */
+
 .pxapp .card{
-  background:var(--card); border:1px solid var(--hair);
-  border-radius:22px; padding:22px; margin-top:16px;
+  background:var(--s2); border:1px solid var(--line);
+  border-radius:20px; padding:22px; margin-top:12px;
   box-shadow:var(--sh);
 }
-.pxapp .card.pad0{padding:0; overflow:hidden;}
-.pxapp .ctitle{font-size:9.5px; letter-spacing:.22em; text-transform:uppercase;
-  color:var(--tx3); margin-bottom:17px; display:flex; align-items:center;
-  justify-content:space-between; gap:12px;}
-.pxapp .ctitle span{letter-spacing:.02em; text-transform:none; font-size:12px;}
-.pxapp .csub{font-size:12.5px; color:var(--tx3); line-height:1.65; margin:-9px 0 17px;}
-.pxapp .empty{text-align:center; padding:40px 14px;}
-.pxapp .empty b{display:block; font-size:15px; font-weight:600; color:var(--tx2);}
-.pxapp .empty span{display:block; margin-top:8px; font-size:13px; color:var(--tx3);
-  line-height:1.65; max-width:330px; margin-left:auto; margin-right:auto;}
-
-/* ---------- LAS FICHAS REDONDAS DE ARRIBA ----------------------------------
-   Seis o siete números que se leen sin entrar en ningún sitio. Se desplazan a
-   lo ancho porque en un teléfono no caben, y caben mal repartidos en dos filas:
-   una fila que se desliza dice «hay más» mejor que una rejilla apretada.
-
-   Van sin tarjeta debajo: sobre el papel de la página, como piezas sueltas. */
-.pxapp .dials{
-  display:flex; gap:13px; overflow-x:auto; padding:6px 20px 12px;
-  margin:0 -20px;                     /* que el desplazamiento llegue al borde */
-  scroll-snap-type:x proximity; scrollbar-width:none;
-  /* El imán de scroll alinea el primer elemento con el borde del PUERTO de
-     desplazamiento, y el puerto no sabe nada del padding: al pintar, el
-     navegador desplazaba 20 px él solo y la primera ficha salía cortada contra
-     el canto de la pantalla. scroll-padding es la forma de decírselo. */
-  scroll-padding-left:20px; scroll-padding-right:20px;
-  -webkit-overflow-scrolling:touch;
+.pxapp .card.flush{padding:0; overflow:hidden;}
+.pxapp .card.tight{padding:18px;}
+.pxapp .ctitle{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  font-size:9.5px; font-weight:600; letter-spacing:.24em; text-transform:uppercase;
+  color:var(--t3); margin-bottom:18px;
 }
-.pxapp .dials::-webkit-scrollbar{display:none;}
-.pxapp .dial{flex:0 0 auto; width:80px; text-align:center; scroll-snap-align:start;
-  background:none; border:0; padding:0; font-family:inherit; cursor:pointer;}
-.pxapp .dial .ring{
-  width:80px; height:80px; border-radius:50%;
-  border:1px solid var(--hair); background:var(--card);
-  box-shadow:var(--sh);
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:4px; transition:box-shadow .3s cubic-bezier(.22,1,.36,1), transform .3s cubic-bezier(.22,1,.36,1);
+.pxapp .ctitle .v{letter-spacing:-.01em; text-transform:none; font-size:12.5px;
+  color:var(--t2); font-weight:400;}
+.pxapp .csub{font-size:12.5px; line-height:1.65; color:var(--t3); margin:-10px 0 18px;}
+
+/* ---------- 5 · ESTADOS ------------------------------------------------------
+   Vacío, cargando y error. Los tres se escriben aquí una vez y se usan igual en
+   todas las pantallas: una pantalla que improvisa su vacío se nota. */
+.pxapp .empty{text-align:center; padding:44px 16px;}
+.pxapp .empty .ico{
+  width:44px; height:44px; margin:0 auto 16px; border-radius:50%;
+  border:1px solid var(--line2); display:flex; align-items:center; justify-content:center;
 }
-.pxapp .dial:hover .ring{box-shadow:var(--sh2); transform:translateY(-2px);}
-.pxapp .dial .ring svg{width:16px; height:16px; stroke:var(--tx3); fill:none;
+.pxapp .empty .ico svg{width:19px; height:19px; stroke:var(--t3); fill:none;
+  stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;}
+.pxapp .empty b{display:block; font-size:15px; font-weight:600; letter-spacing:-.02em;}
+.pxapp .empty span{display:block; margin-top:8px; font-size:13px; color:var(--t3);
+  line-height:1.65; max-width:320px; margin-left:auto; margin-right:auto;}
+.pxapp .empty .acts{justify-content:center;}
+
+/* el esqueleto: la forma del contenido real, no un disco girando */
+.pxapp .skel{background:var(--s3); border-radius:8px; height:12px;
+  animation:pxpulse 1.6s ease-in-out infinite;}
+.pxapp .skel.w60{width:60%} .pxapp .skel.w40{width:40%} .pxapp .skel.w80{width:80%}
+.pxapp .skel + .skel{margin-top:10px;}
+@keyframes pxpulse{0%,100%{opacity:.5} 50%{opacity:1}}
+
+/* ---------- 6 · LA CABECERA -------------------------------------------------- */
+
+.pxapp .abar{
+  position:sticky; top:0; z-index:60;
+  border-bottom:1px solid var(--line);
+  background:color-mix(in srgb, var(--s1) 82%, transparent);
+  backdrop-filter:blur(24px) saturate(1.4);
+}
+.pxapp .abar .in{
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  max-width:900px; margin:0 auto; padding:16px 20px;
+}
+.pxapp .mark{display:flex; align-items:baseline; gap:11px; min-width:0;}
+.pxapp .mark b{font-size:19px; font-weight:600; letter-spacing:-.04em;}
+.pxapp .mark i{font-style:normal; font-size:8.5px; letter-spacing:.26em;
+  text-transform:uppercase; color:var(--t3); white-space:nowrap;}
+.pxapp .hact{display:flex; align-items:center; gap:8px; flex:0 0 auto;}
+
+/* el botón circular de la cabecera: tema, cuenta, atrás */
+.pxapp .ibtn{
+  width:36px; height:36px; flex:0 0 auto; border-radius:50%;
+  background:transparent; border:1px solid var(--line2); color:var(--t2);
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  font-family:inherit; padding:0;
+  transition:background .18s var(--e), color .18s var(--e), border-color .18s var(--e);
+}
+.pxapp .ibtn svg{width:17px; height:17px; stroke:currentColor; fill:none;
   stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;}
-.pxapp .dial .ring b{font-size:18px; font-weight:600; letter-spacing:-.035em;}
-.pxapp .dial.none .ring b{color:var(--tx3); font-weight:400;}
-.pxapp .dial > span{display:block; margin-top:10px; font-size:10px;
-  color:var(--tx3); letter-spacing:.05em;}
+.pxapp .ibtn:hover{color:var(--t1); border-color:var(--t3);}
+.pxapp .ibtn.solid{background:var(--inv); border-color:var(--inv); color:var(--oninv);}
 
-/* ---------- LA SEMANA DE ÁNIMO ---------------------------------------------
-   Siete caras. El color lo lleva la cara, nunca el texto de debajo. Y el punto
-   dice «ese día hubo registro», que es un dato distinto del ánimo y por eso se
-   dibuja aparte en vez de teñir la misma cosa dos veces. */
-.pxapp .mood{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
-.pxapp .mday{background:none; border:0; padding:7px 0; font-family:inherit;
-  cursor:pointer; text-align:center;}
-.pxapp .mday .f{
-  width:40px; height:40px; margin:0 auto; border-radius:50%;
-  border:1.4px solid var(--hair2);
+/* el avatar: iniciales, sin foto, sin color */
+.pxapp .avatar{
+  width:36px; height:36px; flex:0 0 auto; border-radius:50%;
+  background:var(--s3); border:1px solid var(--line2); color:var(--t1);
   display:flex; align-items:center; justify-content:center;
-  transition:transform .22s cubic-bezier(.22,1,.36,1), border-color .25s;
+  font-size:12.5px; font-weight:600; letter-spacing:.02em; cursor:pointer;
+  font-family:inherit; padding:0;
+  transition:border-color .18s var(--e);
 }
-.pxapp .mday:hover .f{transform:scale(1.08);}
-.pxapp .mday .f svg{width:22px; height:22px; fill:none; stroke-width:1.5;
-  stroke-linecap:round; stroke:var(--tx3);}
-.pxapp .mday.v5 .f{border-color:var(--ok);}        .pxapp .mday.v5 .f svg{stroke:var(--ok);}
-.pxapp .mday.v4 .f{border-color:var(--ok);}        .pxapp .mday.v4 .f svg{stroke:var(--ok);}
-.pxapp .mday.v3 .f{border-color:var(--warnface);}  .pxapp .mday.v3 .f svg{stroke:var(--warnface);}
-.pxapp .mday.v2 .f{border-color:var(--serious);}   .pxapp .mday.v2 .f svg{stroke:var(--serious);}
-.pxapp .mday.v1 .f{border-color:var(--crit);}      .pxapp .mday.v1 .f svg{stroke:var(--crit);}
-.pxapp .mday.hoy .f{box-shadow:0 0 0 2px var(--card), 0 0 0 3.6px var(--tx);}
-.pxapp .mday em{display:block; font-style:normal; font-size:9.5px; color:var(--tx3);
-  margin-top:9px; letter-spacing:.04em;}
-.pxapp .mday i{display:block; font-style:normal; font-size:13px; color:var(--tx2);
-  margin-top:3px; font-variant-numeric:tabular-nums;}
-.pxapp .mday u{display:block; width:5px; height:5px; border-radius:50%;
-  margin:6px auto 0; background:var(--hair2);}
-.pxapp .mday.log u{background:var(--s1);}
+.pxapp .avatar:hover{border-color:var(--t3);}
+.pxapp .avatar.lg{width:56px; height:56px; font-size:17px;}
 
-/* ---------- LAS DOSIS DE HOY ----------------------------------------------- */
-.pxapp .dose{
-  display:flex; align-items:center; gap:15px;
-  padding:17px 22px; border-bottom:1px solid var(--hair);
+/* ---------- 7 · LA BARRA INFERIOR --------------------------------------------- */
+
+.pxapp .tabbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:55;
+  display:flex;
+  border-top:1px solid var(--line);
+  background:color-mix(in srgb, var(--s1) 88%, transparent);
+  backdrop-filter:blur(24px) saturate(1.4);
+  padding:10px 0 calc(10px + env(safe-area-inset-bottom));
 }
-.pxapp .dose:last-child{border-bottom:0;}
-.pxapp .dose .tm{
-  flex:0 0 auto; width:52px;
-  border-left:2px solid var(--s1); padding-left:11px;
+.pxapp .tabbar button{
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
+  background:none; border:0; padding:6px 2px; cursor:pointer;
+  font-family:inherit; color:var(--t3);
+  transition:color .18s var(--e);
 }
-.pxapp .dose .tm b{display:block; font-size:13px; font-weight:600;
-  font-variant-numeric:tabular-nums;}
-.pxapp .dose .tm span{display:block; font-size:9.5px; color:var(--tx3);
-  letter-spacing:.06em; margin-top:1px;}
-.pxapp .dose.done .tm{border-left-color:var(--ok);}
-.pxapp .dose .bd{min-width:0; flex:1;}
-.pxapp .dose .nm{font-size:15px; font-weight:600; letter-spacing:-.015em;
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.pxapp .dose .mt{font-size:12.5px; color:var(--tx3); margin-top:3px;}
-.pxapp .dose .rt{margin-left:auto; text-align:right; flex:0 0 auto;}
-.pxapp .dose .rt b{display:block; font-size:14px; font-weight:600;}
-.pxapp .dose .rt span{display:block; font-size:10px; color:var(--tx3); margin-top:2px;}
-
-/* el botón de registrar, y la marca de que ya está */
-.pxapp .lg{
-  flex:0 0 auto; border:1px solid var(--hair2); background:var(--card);
-  color:var(--tx); font-family:inherit; font-size:12.5px; font-weight:600;
-  border-radius:999px; padding:10px 19px; cursor:pointer;
-  transition:background .25s, border-color .25s, color .25s;
+.pxapp .tabbar button svg{width:20px; height:20px; stroke:currentColor; fill:none;
+  stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;}
+.pxapp .tabbar button span{
+  font-size:9px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
 }
-.pxapp .lg:hover{background:var(--tx); border-color:var(--tx); color:#fff;}
-.pxapp .lg.on{
-  background:var(--ok); border-color:var(--ok);
-  width:34px; height:34px; padding:0;
-  display:flex; align-items:center; justify-content:center;
+.pxapp .tabbar button.on{color:var(--t1);}
+/* La pestaña activa se marca con una barra fina arriba, no con un fondo: un
+   fondo dentro de una barra translúcida se lee como suciedad. */
+.pxapp .tabbar button.on::before{
+  content:''; position:absolute; top:0; width:22px; height:1.5px;
+  background:var(--t1);
 }
-.pxapp .lg.on svg{width:15px; height:15px; stroke:#fff; fill:none; stroke-width:2.8;
-  stroke-linecap:round; stroke-linejoin:round;}
+.pxapp .tabbar button{position:relative;}
 
-/* ---------- LA FICHA DE UNA CONSTANTE --------------------------------------
-   Título, qué es, la gráfica, tres números y una nota. En ese orden, porque es
-   el orden en que se mira: qué estoy viendo, cómo va, cuánto exactamente. */
-.pxapp .mrep .hd{display:flex; align-items:flex-start; justify-content:space-between;
-  gap:16px; margin-bottom:5px;}
-.pxapp .mrep .hd h3{font-size:17px; font-weight:600; letter-spacing:-.025em; margin:0;}
-.pxapp .mrep .hd .avg{font-size:11.5px; color:var(--tx3); white-space:nowrap;
-  font-variant-numeric:tabular-nums; padding-top:4px;}
-.pxapp .mrep .de{font-size:12.5px; color:var(--tx3); line-height:1.6; margin:0 0 18px;}
-.pxapp .mrep .stats{
-  display:flex; align-items:center; gap:26px;
-  border-top:1px solid var(--hair); margin-top:16px; padding-top:16px;
-}
-.pxapp .mrep .stats .s b{display:block; font-size:21px; font-weight:600;
-  letter-spacing:-.035em;}
-.pxapp .mrep .stats .s span{display:block; font-size:10px; color:var(--tx3);
-  margin-top:3px; letter-spacing:.05em;}
-
-/* EL DISTINTIVO DE TENDENCIA NO OPINA
-
-   La primera versión pintaba «bajando» en verde y «subiendo» en naranja. En
-   frecuencia en reposo o en peso eso parece razonable; en pasos y en horas de
-   sueño dice justo lo contrario de lo que quiere decir — y decidir cuál de las
-   dos cosas es «mejor» para una persona concreta es exactamente el juicio que
-   esta aplicación no hace.
-
-   Así que es neutro: la flecha y la palabra llevan la dirección, el color no
-   lleva nada. Quien tenga que decidir si eso es bueno lo decidirá con más
-   información de la que hay aquí dentro. */
-.pxapp .trend{
-  margin-left:auto; display:inline-flex; align-items:center; gap:7px;
-  font-size:11.5px; font-weight:600; border-radius:999px; padding:7px 14px;
-  color:var(--tx2); background:var(--card2);
-  border:1px solid var(--hair); white-space:nowrap;
-}
-.pxapp .trend svg{width:11px; height:11px; stroke:currentColor; fill:none;
-  stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round;}
-.pxapp .trend.fl{color:var(--tx3);}
-
-/* ---------- LAS GRÁFICAS ----------------------------------------------------
-   Marcas finas, rejilla que se retira, y ni un número encima de cada punto: el
-   valor va en el extremo y en los tres estadísticos de abajo. Una cifra sobre
-   cada barra es ruido que nadie lee. */
-.pxapp svg.bars,
-.pxapp svg.spark,
-.pxapp svg.hlc{width:100%; display:block;}
-.pxapp svg.bars{height:140px;}
-.pxapp svg.spark{height:56px;}
-.pxapp svg.hlc{height:220px;}
-.pxapp svg .bar{fill:var(--s1);}
-.pxapp svg .rule{stroke:var(--hair2); stroke-width:1;}
-.pxapp svg .axt{fill:var(--tx3); font-size:9.5px;}
-.pxapp svg .ln{fill:none; stroke-width:2; stroke-linejoin:round; stroke-linecap:round;}
-.pxapp svg .proj{stroke-dasharray:3 4; opacity:.8;}
-.pxapp svg .now{stroke:var(--hair2); stroke-width:1;}
-.pxapp svg .dot{stroke:var(--card); stroke-width:2.5;}
-.pxapp svg.spark .ln{stroke:var(--s1);}
-.pxapp svg.spark .dot{fill:var(--s1);}
-
-/* la leyenda: siempre que haya dos series o más */
-.pxapp .leg{display:flex; flex-wrap:wrap; gap:16px; margin-top:13px;}
-.pxapp .leg span{display:inline-flex; align-items:center; gap:8px;
-  font-size:11.5px; color:var(--tx2);}
-.pxapp .leg i{width:8px; height:8px; border-radius:50%; flex:0 0 auto;}
-
-/* ---------- DOC.PEPS -------------------------------------------------------
-   El agente. Va con su nombre y con su chispa, para que no se confunda nunca
-   con un dato medido: lo que hay dentro es una lectura del REGISTRO, no una
-   lectura del cuerpo. Es una raya de producto, y se dibuja como tal. */
-.pxapp .dp{
-  display:flex; gap:13px; align-items:flex-start;
-  border-top:1px solid var(--hair); margin-top:16px; padding-top:16px;
-}
-.pxapp .dp .sp{flex:0 0 auto; width:15px; height:15px; margin-top:3px;}
-.pxapp .dp .sp svg{width:15px; height:15px; fill:var(--s1);}
-.pxapp .dp .bd{min-width:0;}
-.pxapp .dp .who{font-size:9px; letter-spacing:.24em; text-transform:uppercase;
-  color:var(--tx3); margin-bottom:7px;}
-.pxapp .dp p{margin:0; font-size:13.5px; line-height:1.68; color:var(--tx2);}
-.pxapp .dp p + p{margin-top:9px;}
-.pxapp .dp b{color:var(--tx); font-weight:600;}
-
-/* el bloque grande, el que abre la pantalla de Datos */
-.pxapp .dpbig{
-  background:var(--card); border:1px solid var(--hair);
-  border-radius:22px; padding:24px; margin-top:16px;
-  box-shadow:var(--sh);
-}
-.pxapp .dpbig .dp{border-top:0; margin-top:0; padding-top:0;}
-.pxapp .dpbig .foot{
-  margin-top:18px; padding-top:15px; border-top:1px solid var(--hair);
-  font-size:11px; color:var(--tx3); line-height:1.68;
+@media (min-width:861px){
+  .pxapp .tabbar{
+    position:sticky; top:0; bottom:auto;
+    max-width:900px; margin:0 auto; padding:10px 20px;
+    border-top:0; border-bottom:1px solid var(--line);
+    background:transparent; backdrop-filter:none;
+  }
+  .pxapp .tabbar button{
+    flex:0 0 auto; flex-direction:row; gap:9px; padding:9px 16px; border-radius:999px;
+  }
+  .pxapp .tabbar button span{font-size:11px; letter-spacing:.08em;}
+  .pxapp .tabbar button.on{background:var(--s3);}
+  .pxapp .tabbar button.on::before{display:none;}
+  .pxapp{padding-bottom:72px;}
 }
 
-/* ---------- LOS AVISOS ------------------------------------------------------ */
-.pxapp .tips{margin-top:16px; display:flex; flex-direction:column; gap:11px;}
-.pxapp .tip{background:var(--card); border:1px solid var(--hair);
-  border-left:2px solid var(--hair2); border-radius:16px; padding:17px 20px;
-  box-shadow:var(--sh);}
-.pxapp .tip.w{border-left-color:var(--warn);}
-.pxapp .tip.b{border-left-color:var(--crit);}
-.pxapp .tip .tt{font-size:14px; font-weight:600; letter-spacing:-.01em;}
-.pxapp .tip .td{font-size:12.5px; color:var(--tx3); margin-top:5px; line-height:1.6;}
+/* ---------- 8 · BOTONES -------------------------------------------------------- */
 
-/* ---------- LA RACHA --------------------------------------------------------
-   Monocroma a propósito: relleno de tinta si el día se cumplió, contorno si se
-   falló, nada si no tocaba. Verde y rojo en una rejilla de 56 casillas es un
-   semáforo, y un semáforo no es una racha. */
-/* Cincuenta y seis casillas en veintiocho columnas son dos filas. Estiradas a
-   los 900 px de la tarjeta salen dos bandas de cuadrados enormes; con un tope
-   de ancho vuelven a ser lo que son: un bloque pequeño que se abarca de un
-   vistazo. En el teléfono no llega al tope y ocupa el ancho, que es lo suyo. */
-.pxapp .streak{display:grid; grid-template-columns:repeat(28,1fr); gap:4px;
-  max-width:520px;}
-.pxapp .streak i{aspect-ratio:1; border-radius:3px; background:var(--card2);
-  border:1px solid transparent;}
-.pxapp .streak i.on{background:var(--tx); border-color:var(--tx);}
-.pxapp .streak i.miss{background:transparent; border-color:var(--hair2);}
+.pxapp .btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:9px;
+  background:var(--inv); color:var(--oninv); border:1px solid var(--inv);
+  border-radius:999px; padding:14px 26px;
+  font-family:inherit; font-size:13.5px; font-weight:600; letter-spacing:-.005em;
+  cursor:pointer; text-decoration:none; white-space:nowrap;
+  transition:opacity .18s var(--e), transform .18s var(--e),
+             background .18s var(--e), border-color .18s var(--e), color .18s var(--e);
+}
+.pxapp .btn:hover{opacity:.86;}
+.pxapp .btn:active{transform:scale(.985);}
+.pxapp .btn.ghost{background:transparent; color:var(--t1); border-color:var(--line2);}
+.pxapp .btn.ghost:hover{border-color:var(--t1); opacity:1;}
+.pxapp .btn.quiet{background:transparent; color:var(--t2); border-color:transparent;}
+.pxapp .btn.quiet:hover{color:var(--t1);}
+.pxapp .btn.sm{padding:9px 16px; font-size:12px;}
+.pxapp .btn.wide{width:100%;}
+.pxapp .btn svg{width:15px; height:15px; stroke:currentColor; fill:none;
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+.pxapp .acts{display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;}
 
-/* ---------- FORMULARIOS -----------------------------------------------------
-   Los campos son huecos en el papel, no cajas encima: fondo un punto más
-   oscuro que la tarjeta y sin borde hasta que se enfocan. */
-.pxapp label{display:block; font-size:9.5px; letter-spacing:.2em;
-  text-transform:uppercase; color:var(--tx3); margin:18px 0 8px;}
-/* 16 px y ni uno menos: por debajo de esa cifra, Safari en iPhone amplía la
-   página entera al enfocar un campo y luego no la devuelve. No es un gusto
-   tipográfico, es el umbral del navegador. */
-.pxapp input, .pxapp select, .pxapp textarea{
-  width:100%; min-width:0; background:var(--card2); color:var(--tx);
-  border:1px solid transparent; border-radius:13px;
-  padding:14px 15px; font-family:inherit; font-size:16px;
-  -webkit-appearance:none; appearance:none;
-  transition:background .22s, border-color .22s, box-shadow .22s;
-}
-.pxapp select{
-  background-image:linear-gradient(45deg,transparent 50%,var(--tx3) 50%),
-                   linear-gradient(135deg,var(--tx3) 50%,transparent 50%);
-  background-position:calc(100% - 20px) 50%, calc(100% - 15px) 50%;
-  background-size:5px 5px, 5px 5px; background-repeat:no-repeat; padding-right:40px;
-}
-.pxapp textarea{min-height:82px; resize:vertical; line-height:1.6;}
-.pxapp input:focus, .pxapp select:focus, .pxapp textarea:focus{
-  outline:none; background:var(--card); border-color:var(--hair2);
-  box-shadow:0 0 0 4px rgba(42,120,214,.09);
-}
-.pxapp input::placeholder, .pxapp textarea::placeholder{color:var(--tx3);}
-.pxapp .row2{display:grid; grid-template-columns:1fr 1fr; gap:13px;}
-.pxapp .row3{display:grid; grid-template-columns:repeat(3,1fr); gap:13px;}
-/* Un hijo de rejilla nace con min-width:auto, que quiere decir «no me encojas
-   por debajo de mi contenido». Con dos campos de fecha nativos dentro, eso
-   empuja la fila 25 px fuera de su tarjeta en un teléfono de 390. */
-.pxapp .row2 > *, .pxapp .row3 > *{min-width:0;}
-
-.pxapp .abtn{
-  display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  background:var(--tx); color:#fff; border:1px solid var(--tx);
-  border-radius:999px; padding:14px 28px;
-  font-family:inherit; font-size:13.5px; font-weight:600; letter-spacing:.01em;
-  cursor:pointer; text-decoration:none;
-  box-shadow:0 1px 2px rgba(10,20,60,.14), 0 10px 24px -14px rgba(10,20,60,.5);
-  transition:transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s;
-}
-.pxapp .abtn:hover{transform:translateY(-1px);
-  box-shadow:0 2px 4px rgba(10,20,60,.16), 0 16px 32px -16px rgba(10,20,60,.55);}
-.pxapp .abtn.ghost{background:transparent; color:var(--tx);
-  border-color:var(--hair2); box-shadow:none;}
-.pxapp .abtn.ghost:hover{border-color:var(--tx); transform:none;}
-.pxapp .abtn.sm{padding:9px 17px; font-size:12px;}
-.pxapp .abtn.wide{width:100%;}
-.pxapp .acts2{display:flex; gap:11px; flex-wrap:wrap; margin-top:20px;}
 .pxapp .x{
-  flex:0 0 auto; background:none; border:0; color:var(--tx3);
-  font-size:16px; line-height:1; cursor:pointer; padding:8px;
-  font-family:inherit; transition:color .22s;
+  background:none; border:0; color:var(--t3); cursor:pointer; font-family:inherit;
+  padding:8px; line-height:1; flex:0 0 auto;
+  transition:color .18s var(--e);
 }
-.pxapp .x:hover{color:var(--crit);}
+.pxapp .x svg{width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.7;
+  stroke-linecap:round;}
+.pxapp .x:hover{color:var(--t1);}
 
-/* selector de días de la semana */
-.pxapp .dowsel{display:grid; grid-template-columns:repeat(7,1fr); gap:7px;}
-.pxapp .dowsel button{
-  background:var(--card2); border:1px solid transparent; color:var(--tx2);
-  border-radius:12px; padding:13px 0; font-family:inherit; font-size:12.5px;
-  font-weight:600; cursor:pointer; transition:background .2s, color .2s, border-color .2s;
-}
-.pxapp .dowsel button.on{background:var(--tx); border-color:var(--tx); color:#fff;}
+/* ---------- 9 · SEGMENTOS Y CHIPS ------------------------------------------------ */
 
-/* ---------- SEGMENTOS (pestañas dentro de una pantalla) ---------------------
-   La pastilla activa es blanca sobre el hueco gris, con su sombra: el mismo
-   gesto del conmutador de un sistema operativo, que es donde el ojo ya sabe
-   leerlo sin que nadie se lo explique. */
 .pxapp .seg{
-  display:flex; gap:4px; background:var(--card2); border:1px solid var(--hair);
-  border-radius:999px; padding:4px; margin-top:16px;
+  display:flex; gap:3px; padding:3px; margin-top:16px;
+  background:var(--s3); border:1px solid var(--line); border-radius:999px;
 }
 .pxapp .seg button{
-  flex:1; background:none; border:0; color:var(--tx3); font-family:inherit;
-  font-size:12.5px; font-weight:600; padding:10px 6px; border-radius:999px;
-  cursor:pointer; transition:background .25s, color .25s, box-shadow .25s;
+  flex:1; background:none; border:0; cursor:pointer; font-family:inherit;
+  color:var(--t3); font-size:12.5px; font-weight:600; letter-spacing:-.005em;
+  padding:10px 8px; border-radius:999px;
+  transition:background .22s var(--e), color .22s var(--e);
 }
-.pxapp .seg button.on{background:var(--card); color:var(--tx);
-  box-shadow:0 1px 2px rgba(10,20,60,.07), 0 4px 10px -6px rgba(10,20,60,.2);}
+.pxapp .seg button.on{background:var(--s4); color:var(--t1);}
+.pxapp[data-theme="light"] .seg button.on{background:var(--s2); box-shadow:var(--sh);}
 
-/* ---------- LA CALCULADORA -------------------------------------------------
-   Aritmética sobre números que pone el usuario. No propone una dosis: convierte
-   la que él ya escribió a las marcas de su jeringa, que es una regla de tres
-   que a las once de la noche sale mal. */
-.pxapp .step{display:flex; gap:14px; align-items:flex-start; margin-top:26px;}
-.pxapp .step:first-of-type{margin-top:8px;}
-.pxapp .step .n{
-  flex:0 0 auto; width:24px; height:24px; border-radius:50%;
-  background:var(--card2); color:var(--tx2);
-  font-size:11px; font-weight:600;
-  display:flex; align-items:center; justify-content:center; margin-top:0;
+.pxapp .chiprow{
+  display:flex; gap:8px; overflow-x:auto; scrollbar-width:none;
+  margin:16px -22px 0; padding:2px 22px 6px;
+  scroll-padding-left:22px; scroll-padding-right:22px;
 }
-.pxapp .step .q{font-size:15px; font-weight:600; letter-spacing:-.02em;}
-.pxapp .step .bd{flex:1; min-width:0;}
-
-/* la fila de tamaños */
-.pxapp .pick{display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-top:8px;}
-.pxapp .pick button{
-  background:var(--card2); border:1px solid transparent; color:var(--tx2);
-  border-radius:13px; padding:15px 0; font-family:inherit; font-size:13px;
-  font-weight:600; cursor:pointer; transition:background .2s, color .2s, border-color .2s;
+.pxapp .chiprow::-webkit-scrollbar{display:none;}
+.pxapp .chip{
+  flex:0 0 auto; display:inline-flex; align-items:center; gap:8px;
+  background:transparent; border:1px solid var(--line2); color:var(--t2);
+  border-radius:999px; padding:9px 15px; cursor:pointer; font-family:inherit;
+  font-size:12.5px; font-weight:600; letter-spacing:-.005em; white-space:nowrap;
+  transition:background .2s var(--e), color .2s var(--e), border-color .2s var(--e);
 }
-.pxapp .pick button.on{background:var(--tx); border-color:var(--tx); color:#fff;}
-.pxapp .pick.p3{grid-template-columns:repeat(3,1fr);}
+.pxapp .chip i{font-style:normal; font-size:10.5px; color:var(--t3);
+  font-variant-numeric:tabular-nums;}
+.pxapp .chip.on{background:var(--inv); border-color:var(--inv); color:var(--oninv);}
+.pxapp .chip.on i{color:var(--oninv); opacity:.5;}
 
-/* la unidad, pegada a su campo */
-.pxapp .withu{position:relative;}
-.pxapp .withu input{padding-right:108px;}
-.pxapp .uu{
-  position:absolute; right:6px; top:50%; transform:translateY(-50%);
-  display:flex; gap:2px; background:var(--card); border-radius:999px; padding:3px;
-  box-shadow:0 1px 2px rgba(10,20,60,.06);
+/* el distintivo pequeño: metadatos, nunca estado por sí solo */
+.pxapp .tag{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:10px; font-weight:600; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--t3); border:1px solid var(--line2); border-radius:999px;
+  padding:5px 10px; white-space:nowrap;
 }
-.pxapp .uu button{
-  background:none; border:0; color:var(--tx3); font-family:inherit;
-  font-size:11.5px; font-weight:600; padding:7px 13px; border-radius:999px;
-  cursor:pointer; transition:background .2s, color .2s;
-}
-.pxapp .uu button.on{background:var(--tx); color:#fff;}
+.pxapp .tag.solid{background:var(--s3); border-color:transparent; color:var(--t2);}
+.pxapp .tags{display:flex; flex-wrap:wrap; gap:7px;}
 
-/* el resultado — la única pieza oscura de toda la aplicación.
+/* ---------- 10 · FILAS ------------------------------------------------------------ */
 
-   Es deliberado y es una sola: el número que se ha venido a buscar. Invertir
-   una pieza es el recurso más caro que tiene una interfaz clara, y por eso se
-   gasta una vez. */
-.pxapp .out{
-  background:var(--tx); color:#fff;
-  border-radius:22px; padding:26px; margin-top:26px;
-  box-shadow:0 2px 6px rgba(10,20,60,.14), 0 26px 56px -28px rgba(10,20,60,.5);
-}
-.pxapp .out .hero{text-align:center; padding:8px 0 22px;
-  border-bottom:1px solid rgba(255,255,255,.12);}
-.pxapp .out .hero b{display:block; font-size:60px; font-weight:600;
-  letter-spacing:-.05em; line-height:1;}
-/* El interletrado negativo de la cifra grande se lo come al rótulo: hay que
-   devolvérselo, o sale «5units» pegado. */
-.pxapp .out .hero b small{font-size:19px; font-weight:400; letter-spacing:0;
-  color:rgba(255,255,255,.6); margin-left:11px;}
-.pxapp .out .hero span{display:block; margin-top:12px; font-size:11.5px;
-  color:rgba(255,255,255,.5); letter-spacing:.04em;}
-.pxapp .out .grid{display:grid; grid-template-columns:1fr 1fr; gap:1px;
-  background:rgba(255,255,255,.1); border-radius:14px; overflow:hidden; margin-top:20px;}
-.pxapp .out .g{background:var(--tx); padding:16px;}
-.pxapp .out .g b{display:block; font-size:18px; font-weight:600; letter-spacing:-.03em;}
-.pxapp .out .g span{display:block; font-size:10px; color:rgba(255,255,255,.5);
-  margin-top:4px; letter-spacing:.05em;}
-.pxapp .out .empty b{color:rgba(255,255,255,.85);}
-.pxapp .out .empty span{color:rgba(255,255,255,.5);}
-.pxapp .out .warnline{
-  margin-top:18px; font-size:11.5px; line-height:1.65; color:var(--warnface);
-  display:flex; gap:9px; align-items:flex-start;
-}
-.pxapp .out .warnline svg{flex:0 0 auto; width:14px; height:14px; margin-top:2px;
-  stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round;}
-
-/* la jeringa dibujada — la regla, no el instrumento */
-.pxapp .syr{margin-top:20px;}
-.pxapp .syr svg{width:100%; height:76px; display:block;}
-.pxapp .syr .barrel{fill:none; stroke:rgba(255,255,255,.28); stroke-width:1.2;}
-.pxapp .syr .fill{fill:#fff; opacity:.16;}
-.pxapp .syr .plunge{stroke:#fff; stroke-width:2.2; stroke-linecap:round;}
-.pxapp .syr .tickm{stroke:rgba(255,255,255,.2); stroke-width:1;}
-.pxapp .syr .tickl{stroke:rgba(255,255,255,.42); stroke-width:1;}
-.pxapp .syr text{fill:rgba(255,255,255,.45); font-size:8.5px;}
-.pxapp .syr .big{fill:#fff; font-size:12px; font-weight:600;}
-
-/* ---------- LA VIDA MEDIA --------------------------------------------------
-   Las filas son <span> por dentro para no meter <div> en sitios raros, así que
-   el apilado hay que pedirlo: si no, el nombre y su detalle salen pegados en
-   una sola línea — «BPC-157vida media 4 h». */
-.pxapp .hlrow{
+.pxapp .row{
   display:flex; align-items:center; gap:14px;
-  padding:15px 0; border-top:1px solid var(--hair);
+  padding:17px 22px; border-bottom:1px solid var(--line);
 }
-.pxapp .hlrow .sw{flex:0 0 auto; width:10px; height:10px; border-radius:50%;}
-.pxapp .hlrow .bd{flex:1; min-width:0; display:flex; flex-direction:column;}
-.pxapp .hlrow .nm{font-size:14px; font-weight:600; letter-spacing:-.01em;}
-.pxapp .hlrow .mt{font-size:11.5px; color:var(--tx3); margin-top:3px;}
-.pxapp .hlrow .vv{text-align:right; font-size:17px; font-weight:600;
-  letter-spacing:-.03em; font-variant-numeric:tabular-nums; white-space:nowrap;}
-.pxapp .hlrow .vv small{font-size:11px; color:var(--tx3); font-weight:400; margin-left:4px;}
-.pxapp .hlrow.nodata .nm, .pxapp .hlrow.nodata .vv{color:var(--tx3);}
+.pxapp .row:last-child{border-bottom:0;}
+.pxapp .row .bd{flex:1; min-width:0;}
+.pxapp .row .nm{font-size:14.5px; font-weight:600; letter-spacing:-.02em;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.pxapp .row .mt{font-size:12px; color:var(--t3); margin-top:4px; line-height:1.5;}
+.pxapp .row .rt{margin-left:auto; text-align:right; flex:0 0 auto;}
+.pxapp .row .rt b{display:block; font-size:14px; font-weight:600; letter-spacing:-.02em;}
+.pxapp .row .rt span{display:block; font-size:10px; color:var(--t3); margin-top:3px;
+  letter-spacing:.06em; text-transform:uppercase;}
+/* la fila que lleva a algún sitio lo dice con una flecha, no con un color */
+.pxapp .row.go{cursor:pointer; transition:background .18s var(--e);}
+.pxapp .row.go:hover{background:var(--s3);}
+.pxapp .row .cv{
+  flex:0 0 auto; width:7px; height:7px; margin-left:4px;
+  border-right:1.5px solid var(--t3); border-top:1.5px solid var(--t3);
+  transform:rotate(45deg);
+}
 
-/* ---------- EL MAPA DE ZONAS ------------------------------------------------ */
-.pxapp .bodywrap{display:flex; gap:26px; align-items:center; margin-top:10px;}
+/* la clave dato / valor */
+.pxapp .kv{display:flex; align-items:baseline; gap:18px; padding:12px 0;
+  border-bottom:1px solid var(--line);}
+.pxapp .kv:last-child{border-bottom:0;}
+.pxapp .kv span{flex:0 0 42%; font-size:9.5px; font-weight:600; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--t3);}
+.pxapp .kv b{flex:1; min-width:0; font-size:13.5px; font-weight:600; letter-spacing:-.015em;}
+
+/* ---------- 11 · MÉTRICAS ---------------------------------------------------------- */
+
+/* la cifra sola, con su epígrafe. Es la unidad más repetida de la app. */
+.pxapp .stat{padding:2px 0;}
+.pxapp .stat b{display:block; font-size:34px; font-weight:600; letter-spacing:-.05em;
+  line-height:1; font-variant-numeric:tabular-nums;}
+.pxapp .stat b small{font-size:15px; font-weight:500; color:var(--t3);
+  letter-spacing:-.01em; margin-left:4px;}
+.pxapp .stat span{display:block; margin-top:9px; font-size:9.5px; font-weight:600;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--t3);}
+.pxapp .statrow{display:grid; grid-template-columns:repeat(3,1fr); gap:0;}
+.pxapp .statrow > *{padding-left:20px; border-left:1px solid var(--line);}
+.pxapp .statrow > *:first-child{padding-left:0; border-left:0;}
+
+/* el arco de adherencia: un anillo, sin relleno de color */
+.pxapp .ring{position:relative; width:132px; height:132px; flex:0 0 auto;}
+.pxapp .ring svg{width:132px; height:132px; transform:rotate(-90deg);}
+.pxapp .ring .trk{fill:none; stroke:var(--line2); stroke-width:2;}
+.pxapp .ring .val{fill:none; stroke:var(--t1); stroke-width:2; stroke-linecap:round;
+  transition:stroke-dashoffset .8s var(--e);}
+.pxapp .ring .mid{
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:5px;
+}
+.pxapp .ring .mid b{font-size:31px; font-weight:600; letter-spacing:-.05em; line-height:1;
+  font-variant-numeric:tabular-nums;}
+.pxapp .ring .mid span{font-size:8.5px; font-weight:600; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--t3);}
+
+.pxapp .heroblock{display:flex; align-items:center; gap:28px; flex-wrap:wrap;}
+.pxapp .heroblock .side{flex:1; min-width:190px;}
+
+/* la rejilla de la racha */
+.pxapp .grid56{display:grid; grid-template-columns:repeat(28,1fr); gap:4px;
+  max-width:520px;}
+.pxapp .grid56 i{aspect-ratio:1; border-radius:2px; background:var(--s3);}
+.pxapp .grid56 i.on{background:var(--t1);}
+.pxapp .grid56 i.miss{background:transparent; box-shadow:inset 0 0 0 1px var(--line2);}
+
+/* ---------- 12 · ACCIONES RÁPIDAS --------------------------------------------------- */
+
+.pxapp .quick{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;}
+.pxapp .qa{
+  display:flex; flex-direction:column; align-items:flex-start; gap:26px;
+  background:var(--s2); border:1px solid var(--line); border-radius:20px;
+  padding:20px; cursor:pointer; font-family:inherit; text-align:left;
+  color:var(--t1); box-shadow:var(--sh);
+  transition:border-color .22s var(--e), transform .22s var(--e), background .22s var(--e);
+}
+.pxapp .qa:hover{border-color:var(--line2); transform:translateY(-2px);}
+.pxapp .qa svg{width:20px; height:20px; stroke:var(--t2); fill:none; stroke-width:1.5;
+  stroke-linecap:round; stroke-linejoin:round;}
+.pxapp .qa b{font-size:13.5px; font-weight:600; letter-spacing:-.02em;}
+.pxapp .qa em{display:block; font-style:normal; font-size:11px; color:var(--t3);
+  margin-top:4px; letter-spacing:0;}
+
+/* ---------- 13 · GRÁFICAS ------------------------------------------------------------
+   Marcas finas, rejilla que se retira, ni un número encima de cada punto. El
+   trazo distingue la serie; el rótulo del extremo la nombra. */
+.pxapp svg.chart{width:100%; display:block;}
+.pxapp svg.chart.bars{height:140px;}
+.pxapp svg.chart.spark{height:56px;}
+.pxapp svg.chart.decay{height:220px;}
+.pxapp svg .bar{fill:var(--d1);}
+.pxapp svg .rule{stroke:var(--line2); stroke-width:1;}
+.pxapp svg .axt{fill:var(--t3); font-size:9.5px;}
+.pxapp svg .ln{fill:none; stroke-width:1.8; stroke-linejoin:round; stroke-linecap:round;}
+.pxapp svg .s1{stroke:var(--d1);}
+.pxapp svg .s2{stroke:var(--d2); stroke-dasharray:7 4;}
+.pxapp svg .s3{stroke:var(--d3); stroke-dasharray:2 3;}
+.pxapp svg .f1{fill:var(--d1)} .pxapp svg .f2{fill:var(--d2)} .pxapp svg .f3{fill:var(--d3)}
+.pxapp svg .proj{opacity:.55;}
+.pxapp svg .now{stroke:var(--line2); stroke-width:1;}
+.pxapp svg .dot{stroke:var(--s2); stroke-width:2.5;}
+.pxapp svg .lbl{fill:var(--t2); font-size:9.5px; font-weight:600;}
+
+.pxapp .legend{display:flex; flex-wrap:wrap; gap:18px; margin-top:14px;}
+.pxapp .legend span{display:inline-flex; align-items:center; gap:9px;
+  font-size:11.5px; color:var(--t2);}
+.pxapp .legend i{width:16px; height:0; flex:0 0 auto; border-top-width:2px;
+  border-top-style:solid;}
+.pxapp .legend i.k1{border-color:var(--d1); border-top-style:solid;}
+.pxapp .legend i.k2{border-color:var(--d2); border-top-style:dashed;}
+.pxapp .legend i.k3{border-color:var(--d3); border-top-style:dotted;}
+
+/* la tendencia: flecha Y palabra, nunca color. El sistema no tiene con qué. */
+.pxapp .trend{
+  margin-left:auto; display:inline-flex; align-items:center; gap:7px;
+  font-size:11.5px; font-weight:600; color:var(--t2);
+  border:1px solid var(--line2); border-radius:999px; padding:7px 13px;
+  white-space:nowrap;
+}
+.pxapp .trend svg{width:11px; height:11px; stroke:currentColor; fill:none;
+  stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;}
+
+/* ---------- 14 · DOC.PEPS ------------------------------------------------------------
+   Lleva su marca y su chispa para que no se confunda nunca con un dato medido:
+   dentro hay una lectura del REGISTRO, no una lectura del cuerpo. */
+.pxapp .dp{
+  display:flex; gap:13px; align-items:flex-start;
+  border-top:1px solid var(--line); margin-top:18px; padding-top:18px;
+}
+.pxapp .dp .mk{flex:0 0 auto; width:15px; height:15px; margin-top:3px;}
+.pxapp .dp .mk svg{width:15px; height:15px; fill:var(--t2);}
+.pxapp .dp .bd{min-width:0;}
+.pxapp .dp .who{font-size:8.5px; font-weight:600; letter-spacing:.26em;
+  text-transform:uppercase; color:var(--t3); margin-bottom:8px;}
+.pxapp .dp p{margin:0; font-size:13.5px; line-height:1.7; color:var(--t2);}
+.pxapp .dp p + p{margin-top:9px;}
+.pxapp .dp b{color:var(--t1); font-weight:600;}
+.pxapp .dpbig{background:var(--s2); border:1px solid var(--line);
+  border-radius:20px; padding:24px; margin-top:12px; box-shadow:var(--sh);}
+.pxapp .dpbig .dp{border-top:0; margin-top:0; padding-top:0;}
+.pxapp .dpbig .foot{margin-top:18px; padding-top:15px; border-top:1px solid var(--line);
+  font-size:11px; line-height:1.7; color:var(--t3);}
+
+/* ---------- 15 · AVISOS ---------------------------------------------------------------
+   El nivel lo lleva el grosor del filete más el icono más la palabra. Sin color,
+   porque el sistema no tiene con qué y porque el color solo nunca bastó. */
+.pxapp .notes{display:flex; flex-direction:column; gap:10px; margin-top:12px;}
+.pxapp .note{
+  display:flex; gap:14px; align-items:flex-start;
+  background:var(--s2); border:1px solid var(--line);
+  border-left:1px solid var(--line2);
+  border-radius:16px; padding:17px 20px; box-shadow:var(--sh);
+}
+.pxapp .note.w{border-left:2px solid var(--t2);}
+.pxapp .note.b{border-left:2px solid var(--t1);}
+.pxapp .note .ic{flex:0 0 auto; width:15px; height:15px; margin-top:2px;}
+.pxapp .note .ic svg{width:15px; height:15px; stroke:var(--t3); fill:none;
+  stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;}
+.pxapp .note.b .ic svg{stroke:var(--t1);}
+.pxapp .note .tt{font-size:13.5px; font-weight:600; letter-spacing:-.02em;}
+.pxapp .note .td{font-size:12.5px; color:var(--t3); margin-top:5px; line-height:1.6;}
+
+/* ---------- 16 · FORMULARIOS -------------------------------------------------------- */
+
+.pxapp label{
+  display:block; margin:20px 0 9px;
+  font-size:9.5px; font-weight:600; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--t3);
+}
+/* 16 px y ni uno menos: por debajo, Safari en iPhone amplía la página entera al
+   enfocar un campo y luego no la devuelve. Es el umbral del navegador. */
+.pxapp input, .pxapp select, .pxapp textarea{
+  width:100%; min-width:0;
+  background:var(--s3); color:var(--t1);
+  border:1px solid transparent; border-radius:13px;
+  padding:15px 16px; font-family:inherit; font-size:16px; letter-spacing:-.01em;
+  -webkit-appearance:none; appearance:none;
+  transition:background .2s var(--e), border-color .2s var(--e);
+}
+.pxapp select{
+  background-image:linear-gradient(45deg,transparent 50%,var(--t3) 50%),
+                   linear-gradient(135deg,var(--t3) 50%,transparent 50%);
+  background-position:calc(100% - 21px) 50%, calc(100% - 16px) 50%;
+  background-size:5px 5px, 5px 5px; background-repeat:no-repeat; padding-right:42px;
+}
+.pxapp textarea{min-height:88px; resize:vertical; line-height:1.65;}
+.pxapp input:focus, .pxapp select:focus, .pxapp textarea:focus{
+  outline:none; border-color:var(--line2); background:var(--s2);
+}
+.pxapp input::placeholder, .pxapp textarea::placeholder{color:var(--t3);}
+.pxapp .r2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.pxapp .r3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+/* Un hijo de rejilla nace con min-width:auto — «no me encojas por debajo de mi
+   contenido» — y dos campos de fecha nativos sacan la fila de su tarjeta. */
+.pxapp .r2 > *, .pxapp .r3 > *{min-width:0;}
+
+/* el buscador, con su lupa */
+.pxapp .search{position:relative;}
+.pxapp .search input{padding-left:46px;}
+.pxapp .search svg{
+  position:absolute; left:17px; top:50%; transform:translateY(-50%);
+  width:16px; height:16px; stroke:var(--t3); fill:none; stroke-width:1.7;
+  stroke-linecap:round; pointer-events:none;
+}
+
+/* la rejilla de opciones */
+.pxapp .pick{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:9px;}
+.pxapp .pick.p2{grid-template-columns:repeat(2,1fr);}
+.pxapp .pick.p3{grid-template-columns:repeat(3,1fr);}
+.pxapp .pick.p7{grid-template-columns:repeat(7,1fr); gap:6px;}
+.pxapp .pick button{
+  background:var(--s3); border:1px solid transparent; color:var(--t2);
+  border-radius:13px; padding:14px 0; cursor:pointer; font-family:inherit;
+  font-size:12.5px; font-weight:600; letter-spacing:-.005em;
+  transition:background .2s var(--e), color .2s var(--e);
+}
+.pxapp .pick button.on{background:var(--inv); color:var(--oninv);}
+
+/* la unidad pegada a su campo */
+.pxapp .withu{position:relative;}
+.pxapp .withu input{padding-right:112px;}
+.pxapp .uu{position:absolute; right:6px; top:50%; transform:translateY(-50%);
+  display:flex; gap:2px; background:var(--s2); border-radius:999px; padding:3px;}
+.pxapp .uu button{
+  background:none; border:0; color:var(--t3); cursor:pointer; font-family:inherit;
+  font-size:11.5px; font-weight:600; padding:7px 13px; border-radius:999px;
+  transition:background .2s var(--e), color .2s var(--e);
+}
+.pxapp .uu button.on{background:var(--inv); color:var(--oninv);}
+
+/* ---------- 17 · EL RESULTADO INVERTIDO -----------------------------------------------
+   Una sola pieza invertida en toda la aplicación, y a propósito: el número que
+   se ha venido a buscar. Invertir es el recurso más caro que tiene una interfaz
+   monocroma — se gasta una vez. */
+.pxapp .out{
+  background:var(--inv); color:var(--oninv);
+  border-radius:20px; padding:26px; margin-top:24px;
+}
+.pxapp .out .hero{text-align:center; padding:6px 0 22px;
+  border-bottom:1px solid color-mix(in srgb, var(--oninv) 14%, transparent);}
+.pxapp .out .hero b{display:block; font-size:clamp(46px,12vw,62px); font-weight:600;
+  letter-spacing:-.055em; line-height:1; font-variant-numeric:tabular-nums;}
+.pxapp .out .hero b small{font-size:18px; font-weight:400; letter-spacing:0;
+  margin-left:11px; opacity:.55;}
+.pxapp .out .hero span{display:block; margin-top:13px; font-size:11px;
+  letter-spacing:.1em; text-transform:uppercase; opacity:.5;}
+.pxapp .out .grid{display:grid; grid-template-columns:1fr 1fr; gap:1px; margin-top:22px;
+  background:color-mix(in srgb, var(--oninv) 12%, transparent);
+  border-radius:14px; overflow:hidden;}
+.pxapp .out .g{background:var(--inv); padding:17px;}
+.pxapp .out .g b{display:block; font-size:17px; font-weight:600; letter-spacing:-.03em;}
+.pxapp .out .g span{display:block; margin-top:5px; font-size:9.5px;
+  letter-spacing:.14em; text-transform:uppercase; opacity:.5;}
+.pxapp .out .warnline{display:flex; gap:10px; align-items:flex-start;
+  margin-top:20px; font-size:11.5px; line-height:1.65; opacity:.72;}
+.pxapp .out .warnline svg{flex:0 0 auto; width:14px; height:14px; margin-top:2px;
+  stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round;}
+.pxapp .out .empty b{color:var(--oninv);}
+.pxapp .out .empty span{color:var(--oninv); opacity:.55;}
+.pxapp .out .empty .ico{border-color:color-mix(in srgb, var(--oninv) 22%, transparent);}
+.pxapp .out .empty .ico svg{stroke:var(--oninv); opacity:.55;}
+
+/* la jeringa: la regla graduada, no el instrumento */
+.pxapp .syringe{margin-top:22px;}
+.pxapp .syringe svg{width:100%; height:78px; display:block;}
+.pxapp .syringe .barrel{fill:none; stroke:currentColor; stroke-width:1.1; opacity:.3;}
+.pxapp .syringe .fill{fill:currentColor; opacity:.16;}
+.pxapp .syringe .plunger{stroke:currentColor; stroke-width:2; stroke-linecap:round;}
+.pxapp .syringe .tk{stroke:currentColor; stroke-width:1; opacity:.24;}
+.pxapp .syringe .tkb{stroke:currentColor; stroke-width:1; opacity:.5;}
+.pxapp .syringe text{fill:currentColor; font-size:8.5px; opacity:.5;}
+.pxapp .syringe .big{fill:currentColor; font-size:12px; font-weight:600; opacity:1;}
+
+/* ---------- 18 · LA CITA -----------------------------------------------------------
+   Todo lo que viene del criterio del operador vive aquí dentro, con su marco,
+   su procedencia arriba y su nota al pie. Nunca suelto entre los datos de
+   producto: quien lo lee tiene que ver la costura. */
+.pxapp .quote{
+  margin-top:22px; padding:20px 22px;
+  background:var(--s3); border-left:2px solid var(--t3);
+  border-radius:0 16px 16px 0;
+}
+.pxapp .quote .qh{font-size:8.5px; font-weight:600; letter-spacing:.26em;
+  text-transform:uppercase; color:var(--t3); margin-bottom:14px;}
+.pxapp .quote .qf{margin-top:16px; padding-top:14px; border-top:1px solid var(--line2);
+  font-size:10.5px; line-height:1.7; color:var(--t3);}
+
+/* ---------- 19 · LA FICHA DE COMPUESTO ------------------------------------------------ */
+
+.pxapp .cpd{cursor:pointer;
+  transition:border-color .22s var(--e), transform .22s var(--e);}
+.pxapp .cpd:hover{border-color:var(--line2); transform:translateY(-2px);}
+.pxapp .cpd.open{border-color:var(--line2); transform:none;}
+.pxapp .cpdhd{display:flex; align-items:flex-start; gap:18px;}
+/* El «retrato» del compuesto: un vial dibujado con la clave dentro. Sin foto no
+   se inventa una foto — se dibuja el objeto y se le pone su código. */
+.pxapp .vialart{
+  flex:0 0 auto; width:52px; height:64px; border-radius:9px;
+  background:var(--s3); border:1px solid var(--line);
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+  padding-bottom:8px; position:relative; overflow:hidden;
+}
+.pxapp .vialart::before{
+  content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:22px; height:9px; background:var(--s4); border-radius:0 0 3px 3px;
+}
+.pxapp .vialart em{
+  font-style:normal; font-size:8px; font-weight:700; letter-spacing:.06em;
+  color:var(--t2); text-align:center; line-height:1.25; padding:0 3px;
+  word-break:break-all;
+}
+.pxapp .cpdhd .bd{flex:1; min-width:0;}
+.pxapp .cpdhd .cv{flex:0 0 auto; width:8px; height:8px; margin-top:9px;
+  border-right:1.5px solid var(--t3); border-bottom:1.5px solid var(--t3);
+  transform:rotate(45deg); transition:transform .32s var(--e);}
+.pxapp .cpd.open .cpdhd .cv{transform:rotate(-135deg);}
+.pxapp .cpd .desc{margin:15px 0 0; font-size:13px; line-height:1.65; color:var(--t2);}
+.pxapp .cpdbody{margin-top:20px; padding-top:20px; border-top:1px solid var(--line);}
+
+/* ---------- 20 · EL CALENDARIO --------------------------------------------------------- */
+
+/* El calendario se acota y se centra. Estirado a los 900 px de la tarjeta, con
+   siete columnas y celdas cuadradas, cada día mide 118 px: eso son azulejos, no
+   un calendario. A 420 px la celda cae a 56 y vuelve a leerse como un mes. */
+.pxapp .cal, .pxapp .caldow, .pxapp .calgrid, .pxapp .calhd{
+  max-width:420px; margin-left:auto; margin-right:auto;
+}
+.pxapp .calhd{display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin-bottom:18px;}
+.pxapp .calhd b{font-size:15px; font-weight:600; letter-spacing:-.025em;}
+.pxapp .caldow{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;
+  margin-bottom:8px;}
+.pxapp .caldow span{text-align:center; font-size:9px; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--t3);}
+.pxapp .calgrid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
+.pxapp .cell{
+  aspect-ratio:1; border-radius:11px; background:transparent; border:1px solid transparent;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  cursor:pointer; font-family:inherit; color:var(--t2); padding:0;
+  transition:background .18s var(--e), border-color .18s var(--e);
+}
+.pxapp .cell:hover{background:var(--s3);}
+.pxapp .cell.void{pointer-events:none; opacity:0;}
+.pxapp .cell b{font-size:13px; font-weight:500; letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums;}
+.pxapp .cell u{display:block; width:4px; height:4px; border-radius:50%;
+  background:transparent;}
+.pxapp .cell.due u{background:var(--t3);}
+.pxapp .cell.done u{background:var(--t1);}
+.pxapp .cell.today{border-color:var(--line2);}
+.pxapp .cell.sel{background:var(--inv); border-color:var(--inv); color:var(--oninv);}
+.pxapp .cell.sel u{background:var(--oninv);}
+
+/* ---------- 21 · EL MAPA DE ZONAS ------------------------------------------------------ */
+
+.pxapp .bodywrap{display:flex; gap:28px; align-items:center; margin-top:12px;}
 .pxapp .bodywrap .fig{flex:0 0 auto; width:180px;}
 .pxapp .bodywrap svg{width:180px; height:auto; display:block;}
 .pxapp .bodywrap .zlist{flex:1; min-width:0;}
-.pxapp svg .silo{fill:var(--card2); stroke:none;}
-.pxapp svg .zone{fill:#e3e6ec; stroke:none; cursor:pointer;
-  transition:fill .25s, opacity .25s;}
-.pxapp svg .zone:hover{fill:#ccd2dd;}
-.pxapp svg .zone.used{fill:var(--s1); opacity:.34;}
-.pxapp svg .zone.recent{fill:var(--s1); opacity:1;}
-.pxapp .zrow{display:flex; align-items:baseline; gap:10px; padding:11px 0;
-  border-bottom:1px solid var(--hair); font-size:12.5px;}
-.pxapp .zrow:last-child{border-bottom:0;}
-.pxapp .zrow b{font-weight:600; font-size:13px; letter-spacing:-.01em;}
-.pxapp .zrow em{font-style:normal; color:var(--tx3); font-size:11.5px;}
-.pxapp .zrow span{color:var(--tx3); margin-left:auto; font-size:11.5px; white-space:nowrap;}
+.pxapp svg .silo{fill:var(--s3); stroke:none;}
+.pxapp svg .zone{fill:var(--s4); stroke:none; cursor:pointer;
+  transition:fill .2s var(--e);}
+.pxapp svg .zone:hover{fill:var(--t3);}
+.pxapp svg .zone.used{fill:var(--t3);}
+.pxapp svg .zone.recent{fill:var(--t1);}
 
-/* ---------- PAUTAS ----------------------------------------------------------- */
-.pxapp .plan{display:flex; align-items:center; gap:14px; padding:18px 22px;
-  border-bottom:1px solid var(--hair);}
-.pxapp .plan:last-child{border-bottom:0;}
-.pxapp .plan.off{opacity:.45;}
-.pxapp .plan .bd{flex:1; min-width:0;}
-.pxapp .plan .nm{font-size:15px; font-weight:600; letter-spacing:-.015em;}
-.pxapp .plan .mt{font-size:12.5px; color:var(--tx3); margin-top:4px; line-height:1.55;}
+/* ---------- 22 · PLANES ------------------------------------------------------------------ */
 
-/* ---------- PLANES ------------------------------------------------------------ */
-.pxapp .tiers{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:8px;}
-.pxapp .tier{background:var(--card); border:1px solid var(--hair);
-  border-radius:22px; padding:24px; position:relative; box-shadow:var(--sh);}
-.pxapp .tier.on{border-color:var(--hair2);}
-.pxapp .tier .cur{position:absolute; top:19px; right:19px; font-size:8.5px;
-  letter-spacing:.2em; color:var(--tx3);}
-.pxapp .tier .nm{font-size:9.5px; letter-spacing:.24em; text-transform:uppercase;
-  color:var(--tx3);}
-.pxapp .tier .pr{font-size:44px; font-weight:600; letter-spacing:-.05em; margin-top:12px;}
-.pxapp .tier .pr small{font-size:12px; font-weight:400; color:var(--tx3); letter-spacing:0;}
-.pxapp .tier ul{list-style:none; padding:0; margin:20px 0 0;}
-.pxapp .tier li{font-size:12.5px; color:var(--tx2); padding:7px 0 7px 18px;
-  position:relative; line-height:1.55;}
-.pxapp .tier li::before{content:''; position:absolute; left:0; top:14px;
-  width:5px; height:5px; border-radius:50%; background:var(--hair2);}
-
-/* ---------- EL AVISO ----------------------------------------------------------- */
-.pxapp .ruo{
-  margin:44px 0 10px; padding-top:24px; border-top:1px solid var(--hair);
-  font-size:9.5px; letter-spacing:.16em; text-transform:uppercase;
-  color:var(--tx3); text-align:center; line-height:1.9;
-}
-
-/* ---------- LA BARRA DE ABAJO -------------------------------------------------- */
-.pxapp .ptabs{
-  position:fixed; left:0; right:0; bottom:0; z-index:40;
-  background:rgba(255,255,255,.86);
-  backdrop-filter:blur(20px) saturate(1.6);
-  border-top:1px solid var(--hair);
-  padding:9px 0 calc(9px + env(safe-area-inset-bottom));
-  display:flex;
-}
-.pxapp .ptabs button{
-  flex:1; background:none; border:0; cursor:pointer; font-family:inherit;
-  color:var(--tx3); padding:6px 2px; border-radius:0;
-  display:flex; flex-direction:column; align-items:center; gap:6px;
-  transition:color .25s;
-}
-.pxapp .ptabs button svg{width:21px; height:21px; stroke:currentColor; fill:none;
-  stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;}
-.pxapp .ptabs button span{font-size:9.5px; letter-spacing:.04em; font-weight:600;}
-.pxapp .ptabs button.on{color:var(--tx);}
-
-@media (min-width:861px){
-  .pxapp .ptabs{
-    position:sticky; top:0; bottom:auto;
-    max-width:900px; margin:0 auto; padding:12px 20px;
-    background:transparent; border-top:0; border-bottom:1px solid var(--hair);
-    backdrop-filter:none;
-  }
-  .pxapp .ptabs button{flex:0 0 auto; flex-direction:row; gap:9px; padding:9px 18px;
-    border-radius:999px;}
-  .pxapp .ptabs button span{font-size:12.5px; letter-spacing:0;}
-  .pxapp .ptabs button.on{background:var(--card);
-    box-shadow:0 1px 2px rgba(10,20,60,.06), 0 6px 16px -10px rgba(10,20,60,.3);}
-  .pxapp{padding-bottom:70px;}
-  .pxapp .bodywrap{gap:34px;}
-  .pxapp .bodywrap .fig{width:210px;}
-  .pxapp .bodywrap svg{width:210px;}
-}
-
-@media (max-width:520px){
-  /* Tres números caben en 390 px si se les baja el cuerpo. Dos arriba y uno
-     ancho abajo parecía una rejilla rota, no una decisión. */
-  .pxapp .tiers{grid-template-columns:1fr;}
-  .pxapp .row3{grid-template-columns:1fr;}
-  .pxapp .mrep .stats{gap:17px;}
-  .pxapp .mrep .stats .s b{font-size:18px;}
-  .pxapp .trend{padding:6px 11px; font-size:10.5px;}
-  .pxapp .out{padding:20px;}
-  .pxapp .out .hero b{font-size:48px;}
-  .pxapp .card{padding:18px; border-radius:20px;}
-  .pxapp .dose{padding:15px 18px;}
-  .pxapp .plan{padding:16px 18px;}
-  /* El muñeco y su lista uno debajo del otro: a 390 px, lado a lado, la lista
-     sale a 120 px y las fechas se parten en tres líneas. */
-  .pxapp .bodywrap{flex-direction:column; align-items:stretch;}
-  .pxapp .bodywrap .fig{width:100%;}
-  .pxapp .bodywrap svg{width:155px; margin:0 auto;}
-}
-
-@media (prefers-reduced-motion:reduce){
-  .pxapp *, .pxapp *::before{transition:none !important;}
-}
-
-/* ============================================================================
-   LA PUERTA — el enlace de la tienda a la app
-
-   Vive fuera de .pxapp porque vive en la tienda. Va la última de la barra,
-   después de las cuatro secciones, porque no es una sección más — es lo otro
-   que hay aquí.
-   ============================================================================ */
-nav .links a.px-door{
-  display:inline-flex; align-items:center; gap:7px;
-}
-nav .links a.px-door .nw{
-  font-size:8.5px; font-weight:700; letter-spacing:.16em; line-height:1;
-  padding:3px 6px 2px;
-  color:#fff; background:var(--ink);
-  border-radius:999px;
-  /* que no herede el subrayado animado del enlace ni se mueva con él */
-  transform:translateY(-1px);
-}
-@media (max-width:860px){
-  /* En el menú móvil el distintivo sobra: ahí el enlace ya dice «la app». */
-  #mmenu .inner a.px-door{opacity:.9;}
-}
-
-/* ============================================================================
-   LA BIBLIOTECA — 62 FICHAS
-
-   Una lista larga sólo se lee si cada fila cabe de un vistazo y se abre cuando
-   la pides. Cerrada: clase, nombre, clave y los distintivos de conservación.
-   Abierta: la ficha entera y, aparte y con marco, la cita de la hoja de
-   referencia del operador.
-
-   Esa separación es de diseño, no de adorno. Lo que sale de la ficha del
-   producto y lo que sale del criterio de una persona no pueden pintarse igual,
-   porque quien lo lee tiene que saber en todo momento cuál está mirando.
-   ============================================================================ */
-
-/* ---------- el buscador y los filtros --------------------------------------- */
-.pxapp .chipsrow{
-  display:flex; gap:8px; overflow-x:auto; margin:14px -22px -4px; padding:2px 22px 6px;
-  scrollbar-width:none;
-}
-.pxapp .chipsrow::-webkit-scrollbar{display:none;}
-.pxapp .fchip{
-  flex:0 0 auto; display:inline-flex; align-items:center; gap:8px;
-  background:var(--card2); border:1px solid transparent; color:var(--tx2);
-  border-radius:999px; padding:9px 15px; font-family:inherit;
-  font-size:12.5px; font-weight:600; cursor:pointer; white-space:nowrap;
-  transition:background .22s, color .22s, border-color .22s;
-}
-.pxapp .fchip i{font-style:normal; font-size:10.5px; color:var(--tx3);
+.pxapp .tiers{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:12px;}
+.pxapp .tier{background:var(--s2); border:1px solid var(--line); border-radius:20px;
+  padding:24px; position:relative; box-shadow:var(--sh);}
+.pxapp .tier.top{border-color:var(--line2);}
+.pxapp .tier .cur{position:absolute; top:20px; right:20px; font-size:8.5px;
+  font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:var(--t3);}
+.pxapp .tier .nm{font-size:9.5px; font-weight:600; letter-spacing:.24em;
+  text-transform:uppercase; color:var(--t3);}
+.pxapp .tier .pr{font-size:42px; font-weight:600; letter-spacing:-.055em; margin-top:14px;
   font-variant-numeric:tabular-nums;}
-.pxapp .fchip.on{background:var(--tx); border-color:var(--tx); color:#fff;}
-.pxapp .fchip.on i{color:rgba(255,255,255,.55);}
+.pxapp .tier .pr small{font-size:12px; font-weight:400; letter-spacing:0; color:var(--t3);}
+.pxapp .tier .cl{margin-top:14px; font-size:12.5px; line-height:1.55; color:var(--t2);
+  min-height:2.6em;}
+.pxapp .tier ul{list-style:none; padding:0; margin:18px 0 0; padding-top:18px;
+  border-top:1px solid var(--line);}
+.pxapp .tier li{position:relative; padding:7px 0 7px 20px; font-size:12.5px;
+  line-height:1.55; color:var(--t2);}
+.pxapp .tier li::before{content:''; position:absolute; left:0; top:14px;
+  width:7px; height:1px; background:var(--t3);}
 
-/* ---------- la ficha ---------------------------------------------------------
-   La tarjeta entera es el disparador, así que el cursor lo dice y el hover
-   levanta la pieza un pelo. La flecha sólo gira: nada se desplaza. */
-.pxapp .card.lib{cursor:pointer; padding:20px 22px;
-  transition:box-shadow .3s cubic-bezier(.22,1,.36,1), transform .3s cubic-bezier(.22,1,.36,1);}
-.pxapp .card.lib:hover{box-shadow:var(--sh2); transform:translateY(-2px);}
-.pxapp .card.lib.open{box-shadow:var(--sh2); transform:none;}
+/* ---------- 23 · LA PORTADA ---------------------------------------------------------------
+   La primera pantalla. Negro completo, la marca en el centro, y dos caminos.
+   Nada más: si algo puede esperar a la segunda pantalla, espera. */
+.pxapp.splash{
+  padding:0; min-height:100vh; min-height:100svh;
+  display:flex; flex-direction:column; justify-content:space-between;
+  background:var(--bg);
+}
+.pxapp.splash .top{flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center; padding:40px 24px;}
+.pxapp.splash .px{
+  font-size:clamp(72px,22vw,128px); font-weight:600; letter-spacing:-.07em;
+  line-height:.85; margin:0;
+}
+.pxapp.splash .wm{margin-top:26px; font-size:13px; font-weight:600;
+  letter-spacing:.42em; text-transform:uppercase;}
+.pxapp.splash .tag{border:0; padding:0; margin-top:14px; font-size:9px;
+  font-weight:500; letter-spacing:.3em; text-transform:uppercase; color:var(--t3);}
+.pxapp.splash .bottom{padding:0 24px calc(40px + env(safe-area-inset-bottom));
+  display:flex; flex-direction:column; gap:11px; max-width:420px; margin:0 auto; width:100%;}
+.pxapp.splash .fine{margin-top:20px; text-align:center; font-size:9.5px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--t3); line-height:1.9;}
+/* la hilera de tres piezas de producto, dibujada, no fotografiada */
+.pxapp.splash .trio{display:flex; gap:16px; margin-top:56px; align-items:flex-end;}
+.pxapp.splash .trio i{
+  display:block; border-radius:5px 5px 8px 8px;
+  background:linear-gradient(180deg, var(--s4), var(--s2));
+  border:1px solid var(--line2);
+}
+.pxapp.splash .trio i:nth-child(1){width:26px; height:64px;}
+.pxapp.splash .trio i:nth-child(2){width:26px; height:82px;}
+.pxapp.splash .trio i:nth-child(3){width:26px; height:64px;}
 
-.pxapp .lhd{display:flex; align-items:flex-start; gap:16px;}
-.pxapp .lhd .bd{flex:1; min-width:0;}
-.pxapp .lcat{font-size:9px; letter-spacing:.2em; text-transform:uppercase;
-  color:var(--tx3); margin-bottom:7px;}
-.pxapp .lhd h3{font-size:18px; font-weight:600; letter-spacing:-.03em; margin:0;}
-.pxapp .lsku{font-size:11.5px; color:var(--tx3); margin-top:4px;
-  font-variant-numeric:tabular-nums; letter-spacing:.04em;}
-.pxapp .lcv{
-  flex:0 0 auto; width:9px; height:9px; margin-top:8px;
-  border-right:1.6px solid var(--tx3); border-bottom:1.6px solid var(--tx3);
-  transform:rotate(45deg);
-  transition:transform .34s cubic-bezier(.22,1,.36,1);
-}
-.pxapp .card.lib.open .lcv{transform:rotate(-135deg);}
+/* ---------- 24 · EL AVISO ------------------------------------------------------------------ */
 
-.pxapp .lmec{margin:14px 0 0; font-size:13px; line-height:1.62; color:var(--tx2);}
-
-/* los distintivos de conservación: son estado, así que van con palabra */
-.pxapp .tags{display:flex; flex-wrap:wrap; gap:7px; margin-top:13px;}
-.pxapp .tag{
-  font-size:10.5px; font-weight:600; letter-spacing:.03em;
-  background:var(--card2); color:var(--tx2);
-  border:1px solid var(--hair); border-radius:999px; padding:5px 11px;
-}
-.pxapp .tag.cold{
-  color:#1a5fa8; background:rgba(42,120,214,.07); border-color:rgba(42,120,214,.2);
-}
-
-/* ---------- el cuerpo desplegado --------------------------------------------- */
-.pxapp .lbody{margin-top:18px; padding-top:18px; border-top:1px solid var(--hair);}
-.pxapp .lgrid{display:grid; gap:0;}
-.pxapp .lrow{
-  display:flex; align-items:baseline; gap:16px;
-  padding:11px 0; border-bottom:1px solid var(--hair);
-}
-.pxapp .lrow:last-child{border-bottom:0;}
-.pxapp .lrow span{flex:0 0 40%; font-size:11px; letter-spacing:.12em;
-  text-transform:uppercase; color:var(--tx3);}
-.pxapp .lrow b{flex:1; font-size:13.5px; font-weight:600; letter-spacing:-.01em;
-  min-width:0;}
-.pxapp .lnote{margin:15px 0 0; font-size:12.5px; line-height:1.62; color:var(--tx3);}
-
-/* ---------- LA CITA -----------------------------------------------------------
-   Todo lo que viene del criterio del operador vive aquí dentro, con su marco,
-   su rótulo de procedencia arriba y su nota al pie. Nunca suelto entre los
-   datos de producto: quien lo lee tiene que ver la costura. */
-.pxapp .quote{
-  margin-top:20px; padding:18px 20px;
-  background:var(--card2); border:1px solid var(--hair);
-  border-left:2px solid var(--tx3);
-  border-radius:0 16px 16px 0;
-}
-.pxapp .quote .qh{
-  font-size:9px; letter-spacing:.22em; text-transform:uppercase;
-  color:var(--tx3); margin-bottom:12px;
-}
-.pxapp .quote .lrow{border-bottom-color:var(--hair2);}
-.pxapp .quote .qf{
-  margin-top:14px; padding-top:12px; border-top:1px solid var(--hair2);
-  font-size:10.5px; line-height:1.65; color:var(--tx3);
+.pxapp .ruo{
+  margin:44px 0 8px; padding-top:24px; border-top:1px solid var(--line);
+  text-align:center; font-size:9px; font-weight:600; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--t3); line-height:2;
 }
 
-/* ---------- lo que está bajo llave --------------------------------------------
-   Una función de pago se enseña, no se esconde: si no se ve, no se echa de
-   menos. Pero se enseña una vez y al final, no delante de cada ficha. */
-.pxapp .card.lock{border-style:dashed; border-color:var(--hair2); box-shadow:none;}
-
-/* ---------- la calculadora, precargada ----------------------------------------- */
-.pxapp .prefill{display:flex; flex-wrap:wrap; gap:7px; margin-top:12px;}
-.pxapp .pick.p2{grid-template-columns:repeat(2,1fr);}
-
-/* ---------- los tres planes ------------------------------------------------------ */
-.pxapp .tier .cl{
-  margin-top:12px; font-size:12.5px; line-height:1.5; color:var(--tx2);
-  min-height:2.4em;
-}
-.pxapp .tier ul{margin-top:16px; padding-top:16px; border-top:1px solid var(--hair);}
-/* El de arriba se distingue por la tinta, no por una cinta de «más popular»:
-   una cinta es publicidad, y un borde de tinta es jerarquía. */
-.pxapp .tier.top{border-color:var(--tx); box-shadow:var(--sh2);}
-.pxapp .tier.top .nm{color:var(--tx);}
-
-/* el distintivo del plan es un botón: tiene que decirlo al tacto */
-.pxapp button.tierchip{
-  font-family:inherit; cursor:pointer;
-  transition:background .22s, color .22s, border-color .22s;
-}
-.pxapp button.tierchip:hover{border-color:var(--tx3); color:var(--tx);}
-.pxapp button.tierchip.pro:hover{opacity:.86; color:#fff;}
-.pxapp button.tierchip.on{background:var(--tx); color:#fff; border-color:var(--tx);}
-
-/* ============================================================================
-   LA ENTRADA
-
-   Las tarjetas aparecen escalonadas, muy poco y muy rápido: 8 px y 380 ms, con
-   40 ms entre una y la siguiente. Lo justo para que la pantalla se lea como
-   algo que se compone en vez de algo que aparece de golpe.
-
-   Sólo las seis primeras. A partir de ahí la escalera se nota como retraso —
-   y quien llega a la tarjeta veinte ya ha desplazado, así que la animación se
-   habría perdido de todos modos.
-   ============================================================================ */
+/* ---------- 25 · MOVIMIENTO ------------------------------------------------------------------
+   8 px y 380 ms, con 40 ms entre piezas y sólo las seis primeras: a partir de
+   ahí la escalera se nota como retraso, y quien llega a la séptima ya ha
+   desplazado y se la habría perdido igual. */
 @keyframes pxin{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
 .pxapp .wrap > .card,
 .pxapp .wrap > .dpbig,
-.pxapp .wrap > .tips > .tip{
-  animation:pxin .38s cubic-bezier(.22,1,.36,1) both;
-}
+.pxapp .wrap > .quick,
+.pxapp .wrap > .notes > .note{animation:pxin .38s var(--e) both;}
 .pxapp .wrap > .card:nth-of-type(1){animation-delay:.02s}
 .pxapp .wrap > .card:nth-of-type(2){animation-delay:.06s}
 .pxapp .wrap > .card:nth-of-type(3){animation-delay:.10s}
 .pxapp .wrap > .card:nth-of-type(4){animation-delay:.14s}
 .pxapp .wrap > .card:nth-of-type(5){animation-delay:.18s}
 .pxapp .wrap > .card:nth-of-type(6){animation-delay:.22s}
-/* La tarjeta abierta no vuelve a entrar: al repintar, animar la que acabas de
-   tocar es justo la que no debe moverse. */
-.pxapp .card.lib.open{animation:none;}
+/* la tarjeta que acabas de abrir es justo la que no debe volver a entrar */
+.pxapp .cpd.open{animation:none;}
 
 @media (prefers-reduced-motion:reduce){
-  .pxapp .wrap > .card,
-  .pxapp .wrap > .dpbig,
-  .pxapp .wrap > .tips > .tip{animation:none;}
+  .pxapp *, .pxapp *::before, .pxapp *::after{
+    animation-duration:.01ms !important; animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
 }
+
+/* ---------- 26 · ADAPTACIÓN -------------------------------------------------------------- */
 
 @media (max-width:860px){
   .pxapp .tiers{grid-template-columns:1fr;}
   .pxapp .tier .cl{min-height:0;}
-  .pxapp .lrow{flex-direction:column; gap:5px;}
-  .pxapp .lrow span{flex:none;}
-  .pxapp .chipsrow{margin-left:-18px; margin-right:-18px; padding-left:18px; padding-right:18px;}
+  .pxapp .chiprow{margin-left:-20px; margin-right:-20px;
+    padding-left:20px; padding-right:20px;
+    scroll-padding-left:20px; scroll-padding-right:20px;}
+  .pxapp .kv{flex-direction:column; gap:6px;}
+  .pxapp .kv span{flex:none;}
+  .pxapp .bodywrap{flex-direction:column; align-items:stretch;}
+  .pxapp .bodywrap .fig{width:100%;}
+  .pxapp .bodywrap svg{width:158px; margin:0 auto;}
+}
+@media (max-width:520px){
+  .pxapp .card{padding:18px; border-radius:18px;}
+  .pxapp .row{padding:15px 18px;}
+  .pxapp .statrow > *{padding-left:14px;}
+  .pxapp .stat b{font-size:27px;}
+  /* El anillo y las cifras se apilan, y el anillo se centra: dejado a la
+     izquierda queda medio ancho de tarjeta vacío a su derecha, que en una
+     pantalla de 390 se lee como una pieza que no cupo. */
+  .pxapp .heroblock{gap:22px; flex-direction:column; align-items:center;}
+  .pxapp .heroblock .side{width:100%; min-width:0;}
+  .pxapp .ring, .pxapp .ring svg{width:112px; height:112px;}
+  .pxapp .ring .mid b{font-size:26px;}
+  .pxapp .quick{gap:10px;}
+  .pxapp .qa{padding:17px; gap:20px; border-radius:18px;}
+  .pxapp .out{padding:20px;}
+}
+
+/* ---------- 27 · ACCESIBILIDAD ------------------------------------------------------------- */
+
+.pxapp :focus-visible{
+  outline:2px solid var(--t1); outline-offset:3px; border-radius:6px;
+}
+.pxapp .sr{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+
+/* ============================================================================
+   LA PUERTA — el enlace de la tienda a la app.
+
+   Vive fuera de .pxapp porque vive en la tienda, y es la única regla de esta
+   hoja que se pinta sobre el blanco de la marca.
+   ============================================================================ */
+nav .links a.px-door{display:inline-flex; align-items:center; gap:7px;}
+nav .links a.px-door .nw{
+  font-size:8.5px; font-weight:700; letter-spacing:.16em; line-height:1;
+  padding:3px 6px 2px; color:#fff; background:var(--ink);
+  border-radius:999px; transform:translateY(-1px);
+}
+@media (max-width:860px){
+  #mmenu .inner a.px-door{opacity:.9;}
 }
