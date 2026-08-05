@@ -1,3 +1,10 @@
 # Lo produce mk_pens.py a partir de los recortes de web/assets/pens/.
 # Es un artefacto de build, no una fuente.
 assets/pens.json
+
+# El sitio construido que mk_pwa.py copia dentro del paquete instalable.
+# Los iconos, el manifiesto y el trabajador sí se versionan: son pequeños y son
+# la definición de la app. Esto son 5,5 MB de artefacto.
+pepx-pwa/index.html
+PEPTIDEX.html
+index.html

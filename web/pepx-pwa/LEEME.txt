@@ -1,0 +1,129 @@
+PepX en el teléfono — los tres caminos
+======================================
+
+Este directorio es el camino 1, ya hecho. Los otros dos están explicados abajo
+con lo que cuestan de verdad.
+
+
+1 · APLICACIÓN INSTALABLE (PWA) — hecho, gratis, hoy
+----------------------------------------------------
+
+Lo que hay en esta carpeta ya es una aplicación instalable. Se sube tal cual a
+cualquier alojamiento con HTTPS —Netlify, que es donde ya está el sitio, vale—
+y desde el teléfono se añade a la pantalla de inicio.
+
+QUÉ SE SUBE
+
+    index.html                  el sitio entero, con PepX dentro
+    manifest.webmanifest        el nombre, el icono y cómo abre
+    sw.js                       lo que la hace funcionar sin conexión
+    icon-192.png                Android
+    icon-512.png                Android
+    icon-512-maskable.png       Android, con la reserva del recorte
+    apple-touch-icon.png        iPhone y iPad
+    favicon-32.png              la pestaña del navegador
+
+    Los siete ficheros en la MISMA carpeta. En Netlify: arrastra la carpeta a
+    app.netlify.com/drop, o ponla en el repositorio y apunta ahí el despliegue.
+
+CÓMO SE INSTALA
+
+    iPhone / iPad   Safari (tiene que ser Safari, no Chrome) → botón Compartir
+                    → «Añadir a pantalla de inicio». Aparece el icono Px.
+    Android         Chrome enseña solo un aviso de instalar. Si no sale:
+                    menú ⋮ → «Instalar aplicación».
+
+QUÉ SE CONSIGUE
+
+    · icono propio en la pantalla de inicio
+    · abre a pantalla completa, sin barra de direcciones
+    · funciona sin conexión
+    · se actualiza sola cuando hay señal
+    · cero coste, cero revisión, cero espera
+
+QUÉ NO
+
+    · no sale en la App Store ni en Google Play
+    · no hay avisos automáticos («te toca a las 8:00») en iPhone. En Android sí
+      se pueden, en iPhone Apple sólo los permite a apps nativas.
+    · no lee Apple Health ni Google Fit
+
+
+2 · APLICACIÓN NATIVA CON CAPACITOR — de días, con coste
+---------------------------------------------------------
+
+Capacitor envuelve exactamente estos mismos ficheros en un proyecto iOS y otro
+Android de verdad. El código no se reescribe: se empaqueta.
+
+    npm init -y
+    npm i @capacitor/core @capacitor/cli
+    npx cap init PepX com.peptidex.pepx --web-dir=pepx-pwa
+    npm i @capacitor/ios @capacitor/android
+    npx cap add ios
+    npx cap add android
+    npx cap sync
+    npx cap open ios        # abre Xcode   (hace falta un Mac)
+    npx cap open android    # abre Android Studio
+
+LO QUE HACE FALTA DE VERDAD
+
+    · un Mac con Xcode para iOS. No hay forma de saltárselo.
+    · Apple Developer Program — 99 USD al año
+    · Google Play Console — 25 USD una vez, para siempre
+    · Android Studio para Android (vale cualquier ordenador)
+
+CON ESTO SÍ SE CONSIGUE
+
+    · avisos en el teléfono a la hora de la dosis, también en iPhone
+      (@capacitor/local-notifications)
+    · Apple Health y Google Fit, para que el peso y la FCR entren solos
+    · la ficha en las dos tiendas
+
+
+3 · LO QUE HAY QUE RESOLVER ANTES DE MANDARLA A UNA TIENDA
+-----------------------------------------------------------
+
+Esto no es opcional y conviene leerlo antes de pagar los 99 USD.
+
+LA CUENTA TIENE QUE VIVIR EN UN SERVIDOR
+
+    Hoy todo está en el teléfono. Eso está bien para la PWA y es un problema en
+    una tienda: el tope del plan gratuito y la suscripción viven en el
+    navegador del usuario, así que cualquiera que sepa abrir la consola los
+    salta. Cobrar de verdad exige una cuenta en un servidor.
+
+    Y si se cobra dentro de una app de iPhone, Apple obliga a usar SU cobro y
+    se lleva el 15–30 %. La forma habitual de evitarlo es vender la suscripción
+    en la web y que la app sólo inicie sesión.
+
+LA REVISIÓN
+
+    PepPedia está en las dos tiendas, así que se puede. Lo que pasa la revisión
+    es exactamente el encuadre que ya tiene PepX: un REGISTRO personal y una
+    calculadora, no un consejo. Concretamente:
+
+    · nada dentro de la app debe recomendar qué tomar, cuánto ni cada cuándo.
+      Ya es así, y Doc.Peps está escrito para que siga siéndolo.
+    · el aviso RUO tiene que estar visible. Ya está, al pie de cada pantalla.
+    · desde la app de iPhone NO conviene enlazar a la compra de material de
+      investigación. Eso toca dos políticas a la vez —contenido y cobro— y es
+      la forma más rápida de que la rechacen. La versión de tienda debería
+      salir SIN el enlace «← Tienda».
+    · si algún día lee Apple Health, hay que declarar para qué y no usar esos
+      datos para publicidad.
+
+    Cuenta con dos o tres rondas de revisión. Es normal y no significa nada.
+
+
+4 · EL ORDEN QUE YO SEGUIRÍA
+-----------------------------
+
+    1. subir esta carpeta y ponerla en el teléfono hoy — sale gratis y sirve
+       para ver qué se rompe con uso real
+    2. separar PepX en su propio fichero (hoy son 5,5 MB porque lleva la tienda
+       entera dentro; la app sola son unos 300 KB)
+    3. montar la cuenta en un servidor, que es lo que desbloquea cobrar
+    4. y entonces Capacitor y las tiendas
+
+    Los pasos 1 y 2 no dependen de nadie. El 3 es el que cuesta trabajo de
+    verdad, y el 4 es casi mecánico una vez está el 3.

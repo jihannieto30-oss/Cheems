@@ -92,6 +92,41 @@ html = html[:i] + '\n/* ===== PEPTIDEX LABEL + MOTION ===== */\n' + css + '\n' +
 j = html.rindex('</script>')
 html = html[:j] + '\n/* ===== PEPTIDEX LABEL + MOTION ===== */\n' + js + '\n' + html[j:]
 
+# ---- 6 · lo que hace que se pueda instalar en un teléfono ------------------
+# El manifiesto y el trabajador de servicio TIENEN que ser ficheros aparte: un
+# data: URI vale en Chrome para el manifiesto y no vale en Safari, y para el
+# trabajador no vale en ninguno. Los genera mk_pwa.py junto a este HTML; aquí
+# sólo van las etiquetas que apuntan a ellos.
+#
+# Si el HTML se abre suelto (file://, o sin esos ficheros al lado) no pasa
+# nada: el navegador no encuentra el manifiesto, el registro falla en su
+# propio catch, y el sitio sigue exactamente igual.
+PWA = '''
+<link rel="manifest" href="manifest.webmanifest"/>
+<link rel="apple-touch-icon" href="apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="PepX"/>
+<script>
+/* isSecureContext, no location.protocol === 'https:'.
+
+   Los dos parecen lo mismo y no lo son: localhost y 127.0.0.1 son contextos
+   seguros sirviendo por http, y con la comprobación del protocolo el
+   trabajador no se registraba en desarrollo — que es justo donde hace falta
+   verlo funcionar antes de subir nada. En file:// isSecureContext es falso y
+   no se intenta, que era el otro caso que había que cubrir. */
+if('serviceWorker' in navigator && window.isSecureContext){
+  addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
+'''
+k = html.rindex('</head>')
+html = html[:k] + PWA + html[k:]
+
 print('  label system     %.1f KB  (kit %.1f KB)' % (len(label.encode())/1024, len(kit.encode())/1024))
 print('  motion governor  %.1f KB' % (len(rd(os.path.join(SRC, '31_motion.js')).encode())/1024))
 print('  css              %.1f KB' % (len(css.encode())/1024))

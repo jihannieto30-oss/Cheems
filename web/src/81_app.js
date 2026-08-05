@@ -1356,6 +1356,68 @@ const TIERS = [
       ['Full history and export','Histórico completo y exportación']]}
 ];
 
+/* --------------------------------------------------------------------------
+   PONERLA EN LA PANTALLA DE INICIO
+
+   Los dos sistemas hacen esto de formas distintas y sólo uno se puede
+   automatizar, así que la tarjeta pregunta primero dónde está:
+
+     ya instalada   el navegador lo dice con display-mode:standalone. Entonces
+                    no se enseña nada: un botón de instalar dentro de la app
+                    instalada es ruido.
+     Android        Chrome avisa con beforeinstallprompt y deja lanzar el
+                    diálogo desde un botón de verdad.
+     iPhone         Apple no da ese evento a nadie más que a Safari. Lo único
+                    honesto es enseñar los dos toques exactos, y decir que
+                    tiene que ser Safari — desde Chrome en iPhone la opción no
+                    existe y el usuario se queda dando vueltas.
+   -------------------------------------------------------------------------- */
+let deferredInstall = null;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e;
+  try{ if(S.tab === 'cta' && document.querySelector('.pxapp')) paint(); }catch(err){} });
+addEventListener('appinstalled', () => { deferredInstall = null;
+  try{ if(document.querySelector('.pxapp')) paint(); }catch(err){} });
+
+function installed(){
+  try{
+    return matchMedia('(display-mode: standalone)').matches ||
+           matchMedia('(display-mode: fullscreen)').matches ||
+           navigator.standalone === true;
+  }catch(e){ return false; }
+}
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+function installCard(){
+  if(installed())
+    return '<div class="card"><div class="ctitle">' + t('On your phone','En tu teléfono') + '</div>' +
+      '<div class="csub" style="margin-bottom:0">' +
+      t('PepX is installed on this device. It opens without the browser bar and works with no connection.',
+        'PepX está instalada en este aparato. Abre sin barra de navegador y funciona sin conexión.') +
+      '</div></div>';
+
+  const pasos = isIOS()
+    ? [t('Open this page in <b>Safari</b> — from Chrome on iPhone the option does not exist.',
+         'Abre esta página en <b>Safari</b> — desde Chrome en iPhone la opción no existe.'),
+       t('Tap <b>Share</b>, the square with the arrow going up.',
+         'Toca <b>Compartir</b>, el cuadrado con la flecha hacia arriba.'),
+       t('Scroll down and choose <b>Add to Home Screen</b>.',
+         'Baja y elige <b>Añadir a pantalla de inicio</b>.')]
+    : [t('Tap the button below. If nothing happens, use the browser menu <b>⋮</b> and choose <b>Install app</b>.',
+         'Toca el botón de abajo. Si no pasa nada, entra en el menú <b>⋮</b> del navegador y elige <b>Instalar aplicación</b>.')];
+
+  return '<div class="card"><div class="ctitle">' + t('Put it on your phone','Ponla en tu teléfono') + '</div>' +
+    '<div class="csub">' +
+      t('PepX installs to the home screen with its own icon, opens full screen and keeps working with no connection. It is not from a store: nothing to pay and nothing to wait for.',
+        'PepX se instala en la pantalla de inicio con su propio icono, abre a pantalla completa y sigue funcionando sin conexión. No viene de ninguna tienda: no hay que pagar nada ni esperar a nadie.') +
+    '</div>' +
+    pasos.map((p, i) => '<div class="zrow"><em>' + (i+1) + '</em><span style="margin-left:0;color:var(--tx2);text-align:left;white-space:normal">' +
+      p + '</span></div>').join('') +
+    (deferredInstall ? '<div class="acts2"><button class="abtn" id="pxInstall">' +
+      t('Install PepX','Instalar PepX') + '</button></div>' : '') +
+  '</div>';
+}
+
 function vCta(){
   return '<div class="wrap">' +
     '<div class="phead"><div class="k">' + t('ACCOUNT','CUENTA') + '</div>' +
@@ -1376,6 +1438,8 @@ function vCta(){
 
     dpBlock([t('I read what you write down, and only that. I do not read your body: I will not tell you that a number moved because of a compound, and I will not tell you what to take, how much or how often. That line is not a setting.',
                'Leo lo que apuntas, y sólo eso. No leo tu cuerpo: no te voy a decir que un número se movió por un compuesto, ni te voy a decir qué tomar, cuánto ni cada cuándo. Esa raya no es un ajuste.')], true) +
+
+    installCard() +
 
     '<div class="card"><div class="ctitle">' + t('Your data','Tus datos') + '</div>' +
       '<div class="acts2">' +
@@ -1553,6 +1617,15 @@ function wire(){
     S.vials = S.vials.filter(v => v.id !== this.dataset.delvial); save(); paint(); });
 
   /* ---- datos ---- */
+  const inst = document.getElementById('pxInstall');
+  if(inst) inst.addEventListener('click', () => {
+    if(!deferredInstall) return;
+    const ev = deferredInstall;
+    deferredInstall = null;      /* el evento sólo se puede usar una vez */
+    ev.prompt();
+    ev.userChoice.then(() => paint()).catch(() => paint());
+  });
+
   const exp = document.getElementById('pxExp');
   if(exp) exp.addEventListener('click', () => {
     const b = new Blob([JSON.stringify(S, null, 2)], {type:'application/json'});
