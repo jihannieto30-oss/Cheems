@@ -595,7 +595,7 @@ html.px-app body{overflow-x:hidden;}
 .pxapp .plan .mt{font-size:12.5px; color:var(--tx3); margin-top:4px; line-height:1.55;}
 
 /* ---------- PLANES ------------------------------------------------------------ */
-.pxapp .tiers{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:8px;}
+.pxapp .tiers{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:8px;}
 .pxapp .tier{background:var(--card); border:1px solid var(--hair);
   border-radius:22px; padding:24px; position:relative; box-shadow:var(--sh);}
 .pxapp .tier.on{border-color:var(--hair2);}
@@ -701,4 +701,175 @@ nav .links a.px-door .nw{
 @media (max-width:860px){
   /* En el menú móvil el distintivo sobra: ahí el enlace ya dice «la app». */
   #mmenu .inner a.px-door{opacity:.9;}
+}
+
+/* ============================================================================
+   LA BIBLIOTECA — 62 FICHAS
+
+   Una lista larga sólo se lee si cada fila cabe de un vistazo y se abre cuando
+   la pides. Cerrada: clase, nombre, clave y los distintivos de conservación.
+   Abierta: la ficha entera y, aparte y con marco, la cita de la hoja de
+   referencia del operador.
+
+   Esa separación es de diseño, no de adorno. Lo que sale de la ficha del
+   producto y lo que sale del criterio de una persona no pueden pintarse igual,
+   porque quien lo lee tiene que saber en todo momento cuál está mirando.
+   ============================================================================ */
+
+/* ---------- el buscador y los filtros --------------------------------------- */
+.pxapp .chipsrow{
+  display:flex; gap:8px; overflow-x:auto; margin:14px -22px -4px; padding:2px 22px 6px;
+  scrollbar-width:none;
+}
+.pxapp .chipsrow::-webkit-scrollbar{display:none;}
+.pxapp .fchip{
+  flex:0 0 auto; display:inline-flex; align-items:center; gap:8px;
+  background:var(--card2); border:1px solid transparent; color:var(--tx2);
+  border-radius:999px; padding:9px 15px; font-family:inherit;
+  font-size:12.5px; font-weight:600; cursor:pointer; white-space:nowrap;
+  transition:background .22s, color .22s, border-color .22s;
+}
+.pxapp .fchip i{font-style:normal; font-size:10.5px; color:var(--tx3);
+  font-variant-numeric:tabular-nums;}
+.pxapp .fchip.on{background:var(--tx); border-color:var(--tx); color:#fff;}
+.pxapp .fchip.on i{color:rgba(255,255,255,.55);}
+
+/* ---------- la ficha ---------------------------------------------------------
+   La tarjeta entera es el disparador, así que el cursor lo dice y el hover
+   levanta la pieza un pelo. La flecha sólo gira: nada se desplaza. */
+.pxapp .card.lib{cursor:pointer; padding:20px 22px;
+  transition:box-shadow .3s cubic-bezier(.22,1,.36,1), transform .3s cubic-bezier(.22,1,.36,1);}
+.pxapp .card.lib:hover{box-shadow:var(--sh2); transform:translateY(-2px);}
+.pxapp .card.lib.open{box-shadow:var(--sh2); transform:none;}
+
+.pxapp .lhd{display:flex; align-items:flex-start; gap:16px;}
+.pxapp .lhd .bd{flex:1; min-width:0;}
+.pxapp .lcat{font-size:9px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--tx3); margin-bottom:7px;}
+.pxapp .lhd h3{font-size:18px; font-weight:600; letter-spacing:-.03em; margin:0;}
+.pxapp .lsku{font-size:11.5px; color:var(--tx3); margin-top:4px;
+  font-variant-numeric:tabular-nums; letter-spacing:.04em;}
+.pxapp .lcv{
+  flex:0 0 auto; width:9px; height:9px; margin-top:8px;
+  border-right:1.6px solid var(--tx3); border-bottom:1.6px solid var(--tx3);
+  transform:rotate(45deg);
+  transition:transform .34s cubic-bezier(.22,1,.36,1);
+}
+.pxapp .card.lib.open .lcv{transform:rotate(-135deg);}
+
+.pxapp .lmec{margin:14px 0 0; font-size:13px; line-height:1.62; color:var(--tx2);}
+
+/* los distintivos de conservación: son estado, así que van con palabra */
+.pxapp .tags{display:flex; flex-wrap:wrap; gap:7px; margin-top:13px;}
+.pxapp .tag{
+  font-size:10.5px; font-weight:600; letter-spacing:.03em;
+  background:var(--card2); color:var(--tx2);
+  border:1px solid var(--hair); border-radius:999px; padding:5px 11px;
+}
+.pxapp .tag.cold{
+  color:#1a5fa8; background:rgba(42,120,214,.07); border-color:rgba(42,120,214,.2);
+}
+
+/* ---------- el cuerpo desplegado --------------------------------------------- */
+.pxapp .lbody{margin-top:18px; padding-top:18px; border-top:1px solid var(--hair);}
+.pxapp .lgrid{display:grid; gap:0;}
+.pxapp .lrow{
+  display:flex; align-items:baseline; gap:16px;
+  padding:11px 0; border-bottom:1px solid var(--hair);
+}
+.pxapp .lrow:last-child{border-bottom:0;}
+.pxapp .lrow span{flex:0 0 40%; font-size:11px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--tx3);}
+.pxapp .lrow b{flex:1; font-size:13.5px; font-weight:600; letter-spacing:-.01em;
+  min-width:0;}
+.pxapp .lnote{margin:15px 0 0; font-size:12.5px; line-height:1.62; color:var(--tx3);}
+
+/* ---------- LA CITA -----------------------------------------------------------
+   Todo lo que viene del criterio del operador vive aquí dentro, con su marco,
+   su rótulo de procedencia arriba y su nota al pie. Nunca suelto entre los
+   datos de producto: quien lo lee tiene que ver la costura. */
+.pxapp .quote{
+  margin-top:20px; padding:18px 20px;
+  background:var(--card2); border:1px solid var(--hair);
+  border-left:2px solid var(--tx3);
+  border-radius:0 16px 16px 0;
+}
+.pxapp .quote .qh{
+  font-size:9px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--tx3); margin-bottom:12px;
+}
+.pxapp .quote .lrow{border-bottom-color:var(--hair2);}
+.pxapp .quote .qf{
+  margin-top:14px; padding-top:12px; border-top:1px solid var(--hair2);
+  font-size:10.5px; line-height:1.65; color:var(--tx3);
+}
+
+/* ---------- lo que está bajo llave --------------------------------------------
+   Una función de pago se enseña, no se esconde: si no se ve, no se echa de
+   menos. Pero se enseña una vez y al final, no delante de cada ficha. */
+.pxapp .card.lock{border-style:dashed; border-color:var(--hair2); box-shadow:none;}
+
+/* ---------- la calculadora, precargada ----------------------------------------- */
+.pxapp .prefill{display:flex; flex-wrap:wrap; gap:7px; margin-top:12px;}
+.pxapp .pick.p2{grid-template-columns:repeat(2,1fr);}
+
+/* ---------- los tres planes ------------------------------------------------------ */
+.pxapp .tier .cl{
+  margin-top:12px; font-size:12.5px; line-height:1.5; color:var(--tx2);
+  min-height:2.4em;
+}
+.pxapp .tier ul{margin-top:16px; padding-top:16px; border-top:1px solid var(--hair);}
+/* El de arriba se distingue por la tinta, no por una cinta de «más popular»:
+   una cinta es publicidad, y un borde de tinta es jerarquía. */
+.pxapp .tier.top{border-color:var(--tx); box-shadow:var(--sh2);}
+.pxapp .tier.top .nm{color:var(--tx);}
+
+/* el distintivo del plan es un botón: tiene que decirlo al tacto */
+.pxapp button.tierchip{
+  font-family:inherit; cursor:pointer;
+  transition:background .22s, color .22s, border-color .22s;
+}
+.pxapp button.tierchip:hover{border-color:var(--tx3); color:var(--tx);}
+.pxapp button.tierchip.pro:hover{opacity:.86; color:#fff;}
+.pxapp button.tierchip.on{background:var(--tx); color:#fff; border-color:var(--tx);}
+
+/* ============================================================================
+   LA ENTRADA
+
+   Las tarjetas aparecen escalonadas, muy poco y muy rápido: 8 px y 380 ms, con
+   40 ms entre una y la siguiente. Lo justo para que la pantalla se lea como
+   algo que se compone en vez de algo que aparece de golpe.
+
+   Sólo las seis primeras. A partir de ahí la escalera se nota como retraso —
+   y quien llega a la tarjeta veinte ya ha desplazado, así que la animación se
+   habría perdido de todos modos.
+   ============================================================================ */
+@keyframes pxin{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+.pxapp .wrap > .card,
+.pxapp .wrap > .dpbig,
+.pxapp .wrap > .tips > .tip{
+  animation:pxin .38s cubic-bezier(.22,1,.36,1) both;
+}
+.pxapp .wrap > .card:nth-of-type(1){animation-delay:.02s}
+.pxapp .wrap > .card:nth-of-type(2){animation-delay:.06s}
+.pxapp .wrap > .card:nth-of-type(3){animation-delay:.10s}
+.pxapp .wrap > .card:nth-of-type(4){animation-delay:.14s}
+.pxapp .wrap > .card:nth-of-type(5){animation-delay:.18s}
+.pxapp .wrap > .card:nth-of-type(6){animation-delay:.22s}
+/* La tarjeta abierta no vuelve a entrar: al repintar, animar la que acabas de
+   tocar es justo la que no debe moverse. */
+.pxapp .card.lib.open{animation:none;}
+
+@media (prefers-reduced-motion:reduce){
+  .pxapp .wrap > .card,
+  .pxapp .wrap > .dpbig,
+  .pxapp .wrap > .tips > .tip{animation:none;}
+}
+
+@media (max-width:860px){
+  .pxapp .tiers{grid-template-columns:1fr;}
+  .pxapp .tier .cl{min-height:0;}
+  .pxapp .lrow{flex-direction:column; gap:5px;}
+  .pxapp .lrow span{flex:none;}
+  .pxapp .chipsrow{margin-left:-18px; margin-right:-18px; padding-left:18px; padding-right:18px;}
 }

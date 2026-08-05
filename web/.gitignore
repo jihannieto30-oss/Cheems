@@ -8,3 +8,6 @@ assets/pens.json
 pepx-pwa/index.html
 PEPTIDEX.html
 index.html
+
+# Caché de Python, no fuente.
+__pycache__/

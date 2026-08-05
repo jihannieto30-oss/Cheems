@@ -407,16 +407,19 @@ function dpReport(win){
 function tips(){
   const out = [], hoy = today();
 
-  if(!S.plan.length){
+  /* Sin pautas se dice, pero NO se corta aquí: los avisos de vial —lo que
+     queda, los días desde la reconstitución, la caducidad y la cadena de frío—
+     no dependen de que haya una pauta escrita. Cortar arriba los escondía a
+     quien tiene viales en la nevera y todavía no ha montado su plan, que es
+     justo el primer día de uso. */
+  if(!S.plan.length)
     out.push(['', t('Nothing scheduled yet','Todavía no hay nada programado'),
       t('Add your first protocol in Plan. You enter the compound, the dose and how often — PepX only remembers it for you.',
         'Añade tu primera pauta en Plan. El compuesto, la dosis y la frecuencia los pones tú — PepX sólo se acuerda por ti.')]);
-    return out;
-  }
 
   /* días seguidos sin registrar nada que tocaba */
   let gap = 0;
-  for(let i = 1; i <= 30; i++){
+  for(let i = 1; S.plan.length && i <= 30; i++){
     const k = shift(hoy, -i), due = dueList(k);
     if(!due.length) continue;
     if(due.some(p => taken(k, p.id))) break;
@@ -466,6 +469,24 @@ function tips(){
         t('%s: expiry %e','%s: caducidad %e').replace('%s', v.c).replace('%e', human(v.exp)),
         t('Past the date it does not go in the log — it goes in the bin.',
           'Pasada la fecha no va al registro: va a la basura.')]);
+  });
+
+  /* CONSERVACIÓN, DESDE LA FICHA DEL PROPIO LIBRO
+
+     Esto no opina de ninguna pauta: dice lo que la columna de cadena de frío
+     del libro dice de ese compuesto, para el que el usuario tiene en la mano.
+     Es el mismo tipo de aviso que «lleva 31 días reconstituido» — conservación,
+     que es de lo que esta aplicación sí habla. */
+  const vistos = {};
+  S.vials.forEach(v => {
+    const e = libFind(v.c);
+    if(!e || vistos[e.n]) return;
+    vistos[e.n] = 1;
+    const cons = conserva(e);
+    if(cons.length)
+      out.push(['', esc2(v.c) + ' · ' + cons.join(' · '),
+        (e.alm ? esc2(e.alm) : '') +
+        (e.ins ? (e.alm ? ' — ' : '') + esc2(e.ins) : '')]);
   });
 
   /* rotación de zonas: repetir la misma es un hecho contable, no un consejo */
@@ -649,8 +670,12 @@ const TABS = [
    ic:'<path d="M4 18l5-6 4 4 7-9"/>'},
   {id:'lab',  en:'Lab',   es:'Lab',
    ic:'<path d="M9 3v6.5L4.2 18A2 2 0 0 0 6 21h12a2 2 0 0 0 1.8-3L15 9.5V3"/><path d="M8 3h8"/>'},
-  {id:'cta',  en:'Account', es:'Cuenta',
-   ic:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/>'}
+  /* La biblioteca sube a la barra y Cuenta baja a la cabecera: el distintivo
+     del plan ES el botón de la cuenta. Seis pestañas abajo no caben en un
+     teléfono, y de las seis la que se abre todos los días es ésta. */
+  {id:'lib',  en:'Library', es:'Biblioteca',
+   ic:'<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H5.5A1.5 1.5 0 0 1 4 15.5z"/>' +
+      '<path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H14a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h4.5a1.5 1.5 0 0 0 1.5-1.5z"/>'}
 ];
 
 function tabsHTML(){
@@ -661,13 +686,17 @@ function tabsHTML(){
 }
 
 function headHTML(){
-  const pro = S.sub.tier !== 'free';
+  const tier = TIERS.filter(x => x.id === S.sub.tier)[0] || TIERS[0];
+  const pago = S.sub.tier !== 'free';
+  /* El distintivo del plan es el botón de la cuenta: un botón que dice «cuenta»
+     al lado de otro que dice el plan son dos cosas para el mismo sitio. */
   return '<div class="abar"><div class="in">' +
     '<span class="brandx"><b>PepX</b><i>' + t('by PEPTIDEX','de PEPTIDEX') + '</i></span>' +
     '<span style="display:flex;align-items:center;gap:16px">' +
       '<a class="back" href="#/" data-nav data-href="#/">← ' + t('Store','Tienda') + '</a>' +
-      '<span class="tierchip' + (pro ? ' pro' : '') + '">' +
-        (pro ? esc2(S.sub.tier).toUpperCase() : t('FREE','GRATIS')) + '</span>' +
+      '<button class="tierchip' + (pago ? ' pro' : '') + (S.tab === 'cta' ? ' on' : '') +
+        '" data-tab="cta" aria-label="' + t('Account','Cuenta') + '">' +
+        t(tier.en, tier.es).toUpperCase() + '</button>' +
     '</span>' +
   '</div></div>';
 }
@@ -931,6 +960,187 @@ function sel(id){
     [1,2,3,4,5].map(n => '<option>' + n + '</option>').join('') + '</select>';
 }
 
+/* --------------------------------------------------------------------------
+   LA BIBLIOTECA
+
+   Sesenta y dos compuestos, sacados del libro de operación del propio negocio.
+   La produce mk_library.py cruzando las hojas del Excel y el build la inyecta
+   en PX_LIB.
+
+   Cada ficha tiene dos mitades y NO se pintan igual:
+
+     LA FICHA DE PRODUCTO   clase, clave, mecanismo, presentación del vial,
+                            volumen de BAC, solvente, cadena de frío, estatus
+                            regulatorio. Es la documentación del producto.
+
+     LA REFERENCIA          dosis inicial, mantenimiento, frecuencia, horario y
+                            factor mcg/kg. Va en su propio bloque, con el
+                            rótulo de dónde sale, porque es una CITA del
+                            documento del operador y no una salida de la
+                            aplicación. PepX no coge un peso, lo multiplica por
+                            el factor y devuelve «tu dosis»: quien lee decide, y
+                            escribe el número que decida. Esa transferencia
+                            deliberada es exactamente el punto.
+   -------------------------------------------------------------------------- */
+const LIB = (typeof PX_LIB !== 'undefined' && PX_LIB) || [];
+const libKey = n => String(n||'').toUpperCase().replace(/\([^)]*\)/g,'')
+  .normalize('NFKD').replace(/[^A-Z0-9]/g,'');
+/* busca por nombre o por clave de producto — «BC5» encuentra BPC 157 */
+function libFind(nombre){
+  const k = libKey(nombre);
+  if(!k) return null;
+  return LIB.filter(e => libKey(e.n) === k)[0] ||
+         LIB.filter(e => e.sku && libKey(e.sku).split('').length &&
+                    String(e.sku).toUpperCase().split(/[\s/]+/).indexOf(String(nombre).toUpperCase()) >= 0)[0] ||
+         LIB.filter(e => libKey(e.n).indexOf(k) === 0 && k.length >= 4)[0] || null;
+}
+
+/* Lo que la ficha sabe sobre conservación, en frases cortas y comprobables.
+   Sale de la columna de cadena de frío del propio libro, no de ningún sitio
+   más — así que si el libro cambia, esto cambia con él. */
+function conserva(e){
+  const out = [], a = (e.alm || '') + ' ' + (e.ins || '');
+  if(/luz/i.test(a))            out.push(t('Protect from light','Proteger de la luz'));
+  if(/-\s*20|−\s*20/.test(a))   out.push(t('Powder at −20 °C','Polvo a −20 °C'));
+  if(/2\s*°?C?\s*a\s*8/i.test(a)) out.push(t('2–8 °C cold chain','Cadena de frío 2–8 °C'));
+  if(/congel/i.test(a) && !out.length) out.push(t('Freeze','Congelar'));
+  return out;
+}
+
+/* El rótulo corto de una categoría para el chip del filtro.
+
+   «Metabolismo / Pérdida de Grasa» y «Metabolismo / Lipólisis / Incretinas»
+   cortadas por la primera barra dan dos chips que ponen «Metabolismo» — dos
+   botones idénticos que llevan a sitios distintos. Cuando el primer tramo se
+   repite, se usa el segundo, que es justo el que los separa. */
+function catLabel(c, cats){
+  const p = String(c).split('/').map(s => s.trim());
+  const choca = cats.filter(x => String(x).split('/')[0].trim() === p[0]).length > 1;
+  return (choca && p[1]) ? p[1] : p[0];
+}
+
+function vLib(){
+  const q = (S.lq || '').trim().toLowerCase();
+  const cat = S.lcat || '';
+  const cats = [];
+  LIB.forEach(e => { if(e.cat && cats.indexOf(e.cat) < 0) cats.push(e.cat); });
+  cats.sort();
+
+  let list = LIB.filter(e =>
+    (!cat || e.cat === cat) &&
+    (!q || (e.n + ' ' + (e.sku||'') + ' ' + (e.cat||'') + ' ' + (e.mec||'')).toLowerCase().indexOf(q) >= 0));
+
+  const full = can('ult');
+
+  return '<div class="wrap">' +
+    '<div class="phead"><div class="k">' + t('LIBRARY','BIBLIOTECA') + '</div>' +
+      '<h2>' + t('The compounds.','Los compuestos.') + '</h2>' +
+      '<p>' + t('Sixty-two entries from your own operations book: class, mechanism, vial spec, solvent and cold chain. The dosing column is quoted as what it is — your reference sheet, not a calculation by this app.',
+                'Sesenta y dos fichas de tu propio libro de operación: clase, mecanismo, presentación, solvente y cadena de frío. La columna de dosis se cita como lo que es — tu hoja de referencia, no un cálculo de esta app.') + '</p></div>' +
+
+    (LIB.length ? '' : '<div class="card"><div class="empty"><b>' +
+      t('The library is not built','La biblioteca no está construida') + '</b><span>' +
+      t('Run mk_library.py against the operations workbook.','Corre mk_library.py sobre el libro de operación.') +
+      '</span></div></div>') +
+
+    (LIB.length ? '<div class="card"><input id="lq" placeholder="' +
+      t('Search name, code or mechanism','Buscar nombre, clave o mecanismo') + '" value="' + esc2(S.lq||'') + '"/>' +
+      '<div class="chipsrow">' +
+        '<button class="fchip' + (cat ? '' : ' on') + '" data-lcat="">' + t('All','Todo') +
+          '<i>' + LIB.length + '</i></button>' +
+        cats.map(c => '<button class="fchip' + (cat === c ? ' on' : '') + '" data-lcat="' + esc2(c) + '">' +
+          esc2(catLabel(c, cats)) + '<i>' + LIB.filter(e => e.cat === c).length + '</i></button>').join('') +
+      '</div></div>' : '') +
+
+    (LIB.length && !list.length ? '<div class="card"><div class="empty"><b>' +
+      t('Nothing matches','Nada coincide') + '</b><span>' + esc2(S.lq||'') + '</span></div></div>' : '') +
+
+    list.map(e => libCard(e, full)).join('') +
+
+    (LIB.length && !full ? '<div class="card lock"><div class="ctitle">' +
+      t('Ultimate','Ultimate') + '</div><div class="empty"><b>' +
+      t('Mechanism, vial spec and cold chain','Mecanismo, presentación y cadena de frío') + '</b><span>' +
+      t('The full sheet for all 62 compounds — and the calculator pre-filled from it.',
+        'La ficha completa de los 62 compuestos — y la calculadora precargada con ella.') +
+      '</span><div class="acts2" style="justify-content:center"><button class="abtn" data-goto="cta">' +
+      t('See plans','Ver planes') + '</button></div></div></div>' : '') +
+
+    ruo() + '</div>';
+}
+
+function libCard(e, full){
+  const cons = conserva(e);
+  const abre = S.lopen === e.n;
+  return '<div class="card lib' + (abre ? ' open' : '') + '" data-lib="' + esc2(e.n) + '">' +
+    '<div class="lhd">' +
+      '<div class="bd">' +
+        (e.cat ? '<div class="lcat">' + esc2(e.cat) + '</div>' : '') +
+        '<h3>' + esc2(e.n) + '</h3>' +
+        (e.sku ? '<div class="lsku">' + esc2(e.sku) + '</div>' : '') +
+      '</div>' +
+      '<span class="lcv" aria-hidden="true"></span>' +
+    '</div>' +
+
+    (full && e.mec ? '<p class="lmec">' + esc2(e.mec) + '</p>' : '') +
+
+    (cons.length ? '<div class="tags">' + cons.map(c =>
+      '<span class="tag cold">' + esc2(c) + '</span>').join('') + '</div>' : '') +
+
+    (abre ? libBody(e, full) : '') +
+  '</div>';
+}
+
+function libBody(e, full){
+  if(!full)
+    return '<div class="lbody"><div class="empty" style="padding:22px 8px"><b>' +
+      t('Full sheet is Ultimate','La ficha completa es de Ultimate') + '</b><span>' +
+      t('Mechanism, vial presentation, solvent, cold chain and your reference sheet.',
+        'Mecanismo, presentación, solvente, cadena de frío y tu hoja de referencia.') +
+      '</span></div></div>';
+
+  const fila = (k, v) => v ? '<div class="lrow"><span>' + k + '</span><b>' + esc2(v) + '</b></div>' : '';
+  const r = e.ref || {};
+  const hayRef = r.ini || r.mant || r.frec || r.hora || r.factor;
+
+  /* Unas pocas entradas están en la guía de dosis y no en la matriz, así que no
+     traen ficha de producto. Pintar una rejilla vacía deja la tarjeta abierta
+     con nada dentro y parece rota; decirlo en una línea es la verdad. */
+  const ficha = fila(t('Vial presentation','Presentación'), e.esp) +
+    fila(t('BAC volume','Volumen BAC'), e.bac ? e.bac + ' mL' : '') +
+    fila(t('Resulting concentration','Concentración'), e.conc) +
+    fila(t('Solvent','Solvente'), e.sol) +
+    fila(t('Storage','Almacenamiento'), e.alm) +
+    fila(t('Regulatory status','Estatus regulatorio'), e.reg);
+
+  return '<div class="lbody">' +
+    (ficha ? '<div class="lgrid">' + ficha + '</div>'
+           : '<p class="lnote">' + t('This entry is in the dosing guide but not in the compound matrix, so it carries no vial spec or cold chain.',
+                                     'Esta entrada está en la guía de dosis pero no en la matriz de compuestos, así que no trae presentación ni cadena de frío.') + '</p>') +
+
+    (e.ins ? '<p class="lnote">' + esc2(e.ins) + '</p>' : '') +
+
+    (e.mg && e.mg.length ? '<div class="acts2">' +
+      '<button class="abtn ghost sm" data-calc="' + esc2(e.n) + '">' +
+      t('Open in calculator','Abrir en la calculadora') + '</button></div>' : '') +
+
+    /* LA CITA. Lleva su marco y su procedencia porque no es una salida de la
+       aplicación: es el documento del operador, tal cual lo escribió. */
+    (hayRef ? '<div class="quote">' +
+      '<div class="qh">' + t('From your reference sheet','De tu hoja de referencia') + '</div>' +
+      '<div class="lgrid">' +
+        fila(t('Initial','Inicial'), r.ini) +
+        fila(t('Maintenance','Mantenimiento'), r.mant) +
+        fila(t('Frequency','Frecuencia'), r.frec) +
+        fila(t('Timing','Horario'), r.hora) +
+        fila(t('Factor mcg/kg','Factor mcg/kg'), r.factor) +
+      '</div>' +
+      (r.nota ? '<p class="lnote">' + esc2(r.nota) + '</p>' : '') +
+      '<div class="qf">' + t('Quoted from the operations workbook you supplied. PepX does not apply these numbers on its own — you read them and enter what you decide.',
+                             'Citado del libro de operación que tú entregaste. PepX no aplica estos números por su cuenta — los lees tú y escribes lo que decidas.') + '</div>' +
+    '</div>' : '') +
+  '</div>';
+}
+
 /* ---------- LAB: calculadora, vida media, zonas, inventario ---------------- */
 function vLab(){
   const sub = S.lab || 'calc';
@@ -981,6 +1191,13 @@ function labCalc(){
     avisos.push(t('Below 2 units the graduation itself is the limit of what can be read on a U-100 syringe.',
                   'Por debajo de 2 unidades, la propia graduación es el límite de lo que se puede leer en una jeringa U-100.'));
 
+  /* La ficha del compuesto elegido, si lo hay: presentaciones reales del vial,
+     volumen de BAC del libro y su cadena de frío. Es lo que convierte la
+     calculadora en algo que ya sabe de qué le estás hablando. */
+  const e = c.comp ? libFind(c.comp) : null;
+  const viales = (e && e.mg && e.mg.length) ? e.mg : [];
+  const cons = e ? conserva(e) : [];
+
   return '<div class="card">' +
     '<div class="ctitle">' + t('Reconstitution','Reconstitución') + '</div>' +
     '<div class="csub">' + t('You give it the vial, the solvent and your dose. It gives you the mark on the syringe. It does not decide the dose — that is not its job and never will be.',
@@ -988,8 +1205,21 @@ function labCalc(){
 
     '<div class="step"><span class="n">1</span><div class="bd">' +
       '<div class="q">' + t('What is in your vial?','¿Qué hay en tu vial?') + '</div>' +
+      (LIB.length ? '<label>' + t('Compound (optional)','Compuesto (opcional)') + '</label>' +
+        '<select id="caComp"><option value="">' + t('— pick to pre-fill —','— elige y se rellena —') + '</option>' +
+        LIB.map(x => '<option' + (c.comp === x.n ? ' selected' : '') + '>' + esc2(x.n) + '</option>').join('') +
+        '</select>' : '') +
+      (e ? '<div class="prefill">' +
+        (e.sku ? '<span class="tag">' + esc2(e.sku) + '</span>' : '') +
+        (e.sol ? '<span class="tag">' + esc2(e.sol) + '</span>' : '') +
+        cons.map(x => '<span class="tag cold">' + esc2(x) + '</span>').join('') +
+      '</div>' : '') +
       '<label>' + t('Peptide amount (mg)','Cantidad de péptido (mg)') + '</label>' +
-      '<input id="caMg" inputmode="decimal" placeholder="10" value="' + esc2(c.mg||'') + '"/>' +
+      (viales.length ? '<div class="pick' + (viales.length === 3 ? ' p3' : viales.length <= 2 ? ' p2' : '') + '">' +
+        viales.map(v => '<button data-vmg="' + v + '"' + (+c.mg === v ? ' class="on"' : '') + '>' +
+          nf(v,1) + ' mg</button>').join('') + '</div>' : '') +
+      '<input id="caMg" inputmode="decimal" placeholder="10" value="' + esc2(c.mg||'') + '"' +
+        (viales.length ? ' style="margin-top:8px"' : '') + '/>' +
       '<label>' + t('Solvent added (mL)','Disolvente añadido (mL)') + '</label>' +
       '<div class="pick">' + [1,2,3,5].map(v =>
         '<button data-ml="' + v + '"' + (+c.ml === v ? ' class="on"' : '') + '>' + v + ' mL</button>').join('') + '</div>' +
@@ -1341,20 +1571,54 @@ function labInv(){
   '</div>';
 }
 
-/* ---------- CUENTA -------------------------------------------------------- */
+/* ---------- CUENTA --------------------------------------------------------
+   TRES PLANES, Y CADA UNO CON UNA FRONTERA QUE SE PUEDE EXPLICAR
+
+   El error clásico de tres columnas es que la de en medio no sabe qué es. Aquí
+   cada salto responde a una pregunta distinta:
+
+     Gratis     ¿me acuerdo de lo que hago?      registro, racha, calculadora
+     Pro        ¿qué está pasando con el tiempo? constantes, curvas, inventario
+     Ultimate   ¿qué es exactamente lo que hay?  la ficha completa de cada
+                                                 compuesto, la cadena de frío y
+                                                 el informe
+
+   Y ninguna frontera está en el sitio fácil: no se cobra por «más días de
+   histórico» ni por quitar un tope artificial de tres a cinco, que es lo que
+   hace todo el mundo y lo que hace que la gente se sienta estafada. Se cobra
+   por capacidades que cuestan trabajo de verdad. -------------------------- */
 const TIERS = [
   {id:'free', pr:'0', en:'Free', es:'Gratis',
+   cl:{en:'Remember what you do', es:'Acuérdate de lo que haces'},
    f:[['Up to 2 protocols','Hasta 2 pautas'],
-      ['Daily log, streak and sites','Registro diario, racha y zonas'],
-      ['30 days of history','30 días de histórico'],
-      ['Reconstitution calculator','Calculadora de reconstitución']]},
+      ['Daily log and streak','Registro diario y racha'],
+      ['Reconstitution calculator','Calculadora de reconstitución'],
+      ['Compound index — name and class','Índice de compuestos — nombre y clase'],
+      ['90 days of history','90 días de histórico']]},
   {id:'pro', pr:'9', en:'Pro', es:'Pro',
+   cl:{en:'See what changes over time', es:'Mira qué cambia con el tiempo'},
    f:[['Unlimited protocols','Pautas ilimitadas'],
+      ['All seven measures with charts','Las siete constantes con sus gráficas'],
       ['Doc.Peps on every measure','Doc.Peps en cada constante'],
       ['Half-life curves','Curvas de vida media'],
       ['Inventory with batch and expiry','Inventario con lote y caducidad'],
-      ['Full history and export','Histórico completo y exportación']]}
+      ['Injection site map','Mapa de zonas'],
+      ['Full history, export and import','Histórico completo, exportar e importar']]},
+  {id:'ult', pr:'19', en:'Ultimate', es:'Ultimate',
+   cl:{en:'Know exactly what you are holding', es:'Sabe exactamente qué tienes en la mano'},
+   f:[['Everything in Pro','Todo lo de Pro'],
+      ['Full compound library — 62 entries','Biblioteca completa — 62 fichas'],
+      ['Mechanism, vial spec and solvent','Mecanismo, presentación y solvente'],
+      ['Cold chain and light-protection alerts','Avisos de cadena de frío y luz'],
+      ['Calculator pre-filled per compound','Calculadora precargada por compuesto'],
+      ['Your own reference sheet, in the app','Tu propia hoja de referencia, dentro'],
+      ['Printable batch report','Informe de lote imprimible']]}
 ];
+const TIER_RANK = {free:0, pro:1, ult:2};
+/* Una puerta, no una caja fuerte: vive en el navegador del usuario y quien
+   sepa abrir la consola la salta. Está para comunicar el producto, no para
+   proteger nada — cobrar de verdad exige que la cuenta viva en un servidor. */
+const can = lvl => (TIER_RANK[S.sub.tier] || 0) >= TIER_RANK[lvl];
 
 /* --------------------------------------------------------------------------
    PONERLA EN LA PANTALLA DE INICIO
@@ -1426,13 +1690,15 @@ function vCta(){
                 'Todo lo que metes se queda en este aparato. No lo ve nadie más — nosotros tampoco. Lo que también quiere decir que si borras este navegador, se borra: la exportación es la copia de seguridad.') + '</p></div>' +
 
     '<div class="tiers">' + TIERS.map(x =>
-      '<div class="tier' + (S.sub.tier === x.id ? ' on' : '') + '">' +
+      '<div class="tier' + (S.sub.tier === x.id ? ' on' : '') + (x.id === 'ult' ? ' top' : '') + '">' +
         (S.sub.tier === x.id ? '<span class="cur">' + t('CURRENT','ACTUAL') + '</span>' : '') +
         '<div class="nm">' + t(x.en, x.es) + '</div>' +
         '<div class="pr">$' + x.pr + '<small> ' + t('/ month','/ mes') + '</small></div>' +
+        '<div class="cl">' + t(x.cl.en, x.cl.es) + '</div>' +
         '<ul>' + x.f.map(f => '<li>' + t(f[0], f[1]) + '</li>').join('') + '</ul>' +
         (S.sub.tier === x.id ? '' :
-          '<div class="acts2"><a class="abtn wide" href="mailto:' + MAIL + '?subject=' +
+          '<div class="acts2"><a class="abtn wide' + (x.id === 'ult' ? '' : ' ghost') +
+          '" href="mailto:' + MAIL + '?subject=' +
           encodeURIComponent('PepX ' + t(x.en, x.es)) + '">' + t('Enquire','Consultar') + '</a></div>') +
       '</div>').join('') + '</div>' +
 
@@ -1458,7 +1724,7 @@ function vCta(){
 
 function ruo(){
   return '<div class="ruo">' +
-    t('Research use only — not for human or veterinary use.','Solo uso en investigación — no para uso humano ni veterinario.') +
+    t('Research use only.','Solo uso en investigación.') +
     '<br>' + t('PepX records what you enter. It does not recommend compounds, doses or schedules.',
                'PepX registra lo que tú introduces. No recomienda compuestos, dosis ni pautas.') +
   '</div>';
@@ -1469,7 +1735,8 @@ function ruo(){
    -------------------------------------------------------------------------- */
 function appHTML(){
   const v = S.tab === 'plan' ? vPlan() : S.tab === 'dat' ? vDat()
-          : S.tab === 'lab'  ? vLab()  : S.tab === 'cta' ? vCta() : vHoy();
+          : S.tab === 'lab'  ? vLab()  : S.tab === 'lib' ? vLib()
+          : S.tab === 'cta'  ? vCta()  : vHoy();
   return '<section class="pxapp">' + headHTML() + tabsHTML() + v + '</section>';
 }
 
@@ -1575,8 +1842,50 @@ function wire(){
   on('[data-delv]', 'click', function(){
     S.vitals = S.vitals.filter(v => v.d !== this.dataset.delv); save(); paint(); });
 
+  /* ---- biblioteca ---- */
+  const lq = document.getElementById('lq');
+  if(lq){
+    let tmr = null;
+    lq.addEventListener('input', () => {
+      /* no se repinta en cada tecla: eso saca el foco del campo a media
+         palabra. Se espera a que la mano pare. */
+      clearTimeout(tmr);
+      tmr = setTimeout(() => {
+        S.lq = lq.value; save();
+        const pos = lq.selectionStart; paint();
+        const n = document.getElementById('lq');
+        if(n){ n.focus(); try{ n.setSelectionRange(pos, pos); }catch(e){} }
+      }, 260);
+    });
+  }
+  on('[data-lcat]', 'click', function(){ S.lcat = this.dataset.lcat; save(); paint(); });
+  on('[data-lib]', 'click', function(e){
+    if(e.target.closest('[data-calc]')) return;      /* ese botón tiene lo suyo */
+    S.lopen = (S.lopen === this.dataset.lib) ? null : this.dataset.lib;
+    save(); paint();
+  });
+  on('[data-calc]', 'click', function(e){
+    e.stopPropagation();
+    const n = this.dataset.calc, x = libFind(n);
+    S.calc = S.calc || {};
+    S.calc.comp = n;
+    if(x && x.mg && x.mg.length) S.calc.mg = String(x.mg[0]);
+    if(x && x.bac) S.calc.ml = x.bac;
+    S.tab = 'lab'; S.lab = 'calc'; save(); paint(); top0();
+  });
+  on('[data-goto]', 'click', function(){ S.tab = this.dataset.goto; save(); paint(); top0(); });
+
   /* ---- calculadora ---- */
   const C = () => (S.calc = S.calc || {});
+  const cc = document.getElementById('caComp');
+  if(cc) cc.addEventListener('change', () => {
+    const x = libFind(cc.value);
+    C().comp = cc.value;
+    if(x && x.mg && x.mg.length) C().mg = String(x.mg[0]);
+    if(x && x.bac) C().ml = x.bac;
+    save(); paint();
+  });
+  on('[data-vmg]', 'click', function(){ C().mg = this.dataset.vmg; save(); paint(); });
   on('[data-ml]', 'click', function(){ C().ml = +this.dataset.ml; save(); paint(); });
   on('[data-du]', 'click', function(){ C().du = this.dataset.du; save(); paint(); });
   on('[data-pw]', 'click', function(){ C().pw = +this.dataset.pw; save(); paint(); });

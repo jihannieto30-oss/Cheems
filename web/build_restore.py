@@ -70,8 +70,16 @@ PENS = os.path.join(HERE, 'assets', 'pens.json')
 pens = rd(PENS) if os.path.exists(PENS) else '{}'
 print('  plumas           %d de 3' % len([k for k in json.loads(pens) if not k.startswith('_')]))
 
+# ---- 4c · la biblioteca de compuestos ------------------------------------
+# La produce mk_library.py del libro de operación. Si no está, la pestaña de
+# Biblioteca sale vacía diciendo que falta, y nada más se rompe.
+LIB = os.path.join(HERE, 'assets', 'library.json')
+lib = rd(LIB) if os.path.exists(LIB) else '[]'
+print('  biblioteca       %d compuestos  (%.1f KB)' % (len(json.loads(lib)), len(lib.encode())/1024))
+
 js    = ('window.__pxBakedLines = true;\n' +
          'const PX_PENS_ART = ' + pens + ';\n' +
+         'const PX_LIB = ' + lib + ';\n' +
          'const PX_MASTER_LOGO = ' + repr(master).replace("'", '"', 2) + ';\n' +
          'const PX_WATER = ' + json.dumps(
              {k: {'tint': v['tint'], 'depth': v['depth']}
