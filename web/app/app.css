@@ -108,6 +108,11 @@ body{
   min-height:100vh;
 }
 button,input,select,textarea{font:inherit; color:inherit;}
+/* EN UN iPHONE, TOCAR UN BOTÓN LO PINTA DE GRIS AZULADO durante un instante.
+   Es el destello del navegador, no del diseño, y en una interfaz que no gasta
+   un color deliberadamente es lo primero que se ve. Se apaga; el estado :active
+   ya da la respuesta al tacto, con escala. */
+button,a,.row,[data-go],[data-comp]{-webkit-tap-highlight-color:transparent;}
 button{background:none; border:0; padding:0; cursor:pointer;}
 a{color:inherit; text-decoration:none;}
 svg{display:block;}
@@ -517,8 +522,20 @@ input::placeholder,textarea::placeholder{color:var(--tx3);}
   position:sticky; top:0; z-index:40;
   display:flex; align-items:center; gap:18px;
   padding:14px 28px; border-bottom:1px solid var(--line);
+  /* DOS DECLARACIONES, Y LAS DOS HACEN FALTA EN UN iPHONE.
+
+     color-mix() es de Safari 16.2 (diciembre de 2022). En un iOS anterior la
+     declaración entera es inválida y el navegador la TIRA — la barra se queda
+     sin fondo y el contenido se ve pasar por detrás mientras se hace scroll.
+     El opaco va primero: si el de abajo no se entiende, queda éste.
+
+     Y el desenfoque necesita el prefijo -webkit- en Safari. Sin él no
+     desenfoca nada, y una barra translúcida sin desenfoque es sólo una barra
+     que deja ver el desorden. */
+  background:var(--bg);
   background:color-mix(in srgb, var(--bg) 86%, transparent);
-  backdrop-filter:blur(22px) saturate(1.4);
+  -webkit-backdrop-filter:blur(22px) saturate(1.4);
+          backdrop-filter:blur(22px) saturate(1.4);
 }
 .topbar .search{flex:1; max-width:440px; margin:0 auto;}
 .topbar .search input{padding-top:10px; padding-bottom:10px; font-size:14px;}
@@ -566,8 +583,10 @@ input::placeholder,textarea::placeholder{color:var(--tx3);}
   display:none;
   position:fixed; left:0; right:0; bottom:0; z-index:50;
   border-top:1px solid var(--line);
+  background:var(--bg);                                   /* iOS < 16.2 */
   background:color-mix(in srgb, var(--bg) 92%, transparent);
-  backdrop-filter:blur(22px) saturate(1.4);
+  -webkit-backdrop-filter:blur(22px) saturate(1.4);
+          backdrop-filter:blur(22px) saturate(1.4);
   padding:8px 0 calc(8px + env(safe-area-inset-bottom));
 }
 .tabbar button{
@@ -759,7 +778,8 @@ svg .zone.recent{fill:var(--tx);}
 .out{background:var(--btn); color:var(--onbtn); border-radius:var(--r-card);
   padding:24px; margin-top:22px;}
 .out .hero{text-align:center; padding:4px 0 20px;
-  border-bottom:1px solid color-mix(in srgb, var(--onbtn) 16%, transparent);}
+  border-bottom:1px solid var(--line2);
+  border-bottom-color:color-mix(in srgb, var(--onbtn) 16%, transparent);}
 .out .hero b{display:block; font-size:clamp(44px,11vw,58px); font-weight:600;
   letter-spacing:-.055em; line-height:1; font-variant-numeric:tabular-nums;}
 .out .hero b small{font-size:17px; font-weight:400; letter-spacing:0; margin-left:10px;
@@ -767,6 +787,7 @@ svg .zone.recent{fill:var(--tx);}
 .out .hero span{display:block; margin-top:12px; font-size:11px; letter-spacing:.08em;
   text-transform:uppercase; opacity:.5;}
 .out .grid{display:grid; grid-template-columns:1fr 1fr; gap:1px; margin-top:20px;
+  background:var(--tx3);
   background:color-mix(in srgb, var(--onbtn) 14%, transparent);
   border-radius:12px; overflow:hidden;}
 .out .g{background:var(--btn); padding:15px;}
@@ -779,7 +800,8 @@ svg .zone.recent{fill:var(--tx);}
   stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round;}
 .out .empty b, .out .empty span{color:var(--onbtn);}
 .out .empty span{opacity:.55;}
-.out .empty .ico{border-color:color-mix(in srgb, var(--onbtn) 24%, transparent);}
+.out .empty .ico{border-color:var(--tx3);
+  border-color:color-mix(in srgb, var(--onbtn) 24%, transparent);}
 .out .empty .ico svg{stroke:var(--onbtn); opacity:.55;}
 
 .syringe svg{width:100%; height:74px; display:block; margin-top:18px;}
