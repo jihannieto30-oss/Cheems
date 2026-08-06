@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>PepX — PEPTIDEX</title>
+<meta name="description" content="PEPTIDEX · PepX. Protocolos, compuestos, inyecciones y progreso. Solo uso en investigación."/>
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)"/>
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="PepX"/>
+<link rel="manifest" href="manifest.webmanifest"/>
+<link rel="apple-touch-icon" href="apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"/>
+<script>
+/* EL TEMA SE APLICA ANTES DE PINTAR NADA.
+
+   Si esto se dejara al script del final, la página nace en claro y salta a
+   oscuro en cuanto arranca — el destello blanco que delata a las aplicaciones
+   que no se lo pensaron. Va aquí, síncrono, en el <head>, antes de que exista
+   un solo píxel.
+
+   Tres modos: light, dark y system. El de fábrica es light, como se pidió. */
+(function(){
+  var m = 'light';
+  try{ m = JSON.parse(localStorage.getItem('pepx-app-v3')||'{}').theme || 'light'; }catch(e){}
+  var dark = m === 'dark' ||
+    (m === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.documentElement.dataset.mode = m;
+})();
+</script>
+<style>/*__CSS__*/</style>
+</head>
+<body>
+<div id="root" aria-live="polite"></div>
+<script>/*__LIB__*/</script>
+<script>/*__JS__*/</script>
+<script>
+if('serviceWorker' in navigator && window.isSecureContext){
+  addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+}
+</script>
+</body>
+</html>

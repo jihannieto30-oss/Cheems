@@ -2,10 +2,11 @@
 # Es un artefacto de build, no una fuente.
 assets/pens.json
 
-# El sitio construido que mk_pwa.py copia dentro del paquete instalable.
-# Los iconos, el manifiesto y el trabajador sí se versionan: son pequeños y son
-# la definición de la app. Esto son 5,5 MB de artefacto.
-pepx-pwa/index.html
+# La app ensamblada, que produce build_app.py. Los iconos, el manifiesto y el
+# trabajador sí se versionan: son pequeños y son la definición de la app.
+pepx/index.html
+
+# La tienda construida, que produce build_restore.py. 5,3 MB de artefacto.
 PEPTIDEX.html
 index.html
 

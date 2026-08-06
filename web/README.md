@@ -1,8 +1,33 @@
 # PEPTIDEX — web build
 
-## What ships today
+## Two products, two builders
 
-`build_restore.py` produces the shipped file:
+The store and the app are separate documents. They were one until the app
+outgrew it: PepX inside `PEPTIDEX.html` meant 5.5 MB of catalogue, pens, vials
+and a Three.js stage downloading before anyone could look at when their next
+dose is, a specificity firewall written only so the app's classes would not
+collide with the store's, and no way to wrap the app in Capacitor without
+shipping the shop inside the App Store bundle.
+
+| | source | builder | output | size |
+|---|---|---|---|---|
+| store | `src/` | `build_restore.py` | `index.html` | 5.3 MB |
+| app | `app/` | `build_app.py` | `pepx/index.html` | ~197 KB |
+
+The store links to the app and holds nothing of it (`src/82_door.js`). That
+file is also the migration: it bounces old `#/app` bookmarks to `pepx/`, and
+retires the root-scope service worker that used to serve the whole site — left
+alone it would answer the app's offline requests with the store's index.
+
+The app is the installable one. `pepx/` carries its own manifest, service
+worker (scope `pepx/`, so the two never overlap) and icons; see
+`pepx/LEEME.txt` for what to upload and what a store submission still needs.
+
+```
+python3 build_app.py        # app/ + assets/library.json → pepx/
+```
+
+## The store
 
 ```
 python3 mk_labelkit.py      # supplied panels      → assets/labelkit.json
@@ -106,6 +131,36 @@ The sandbox cannot reach the CDN, so GSAP, Lenis and Three.js are unavailable.
 - `mk_testbuild.py` swaps the CDN libraries for stubs so the whole page boots.
   Motion behaviour under stubs is **not** evidence about the real thing; two
   regressions reached the user that way.
+
+## The app
+
+`app/shell.html` + `app/app.css` + `app/app.js` + `assets/library.json`, built
+into one file. Two supplied PDFs are the reference and they are not
+interchangeable: the mobile one drives the bottom-nav composition, the web one
+the sidebar. `app.js` routes; each view decides its own layout, so the phone is
+not the desktop shrunk.
+
+Three CSS traps this layout walked into, all of them invisible when reading the
+file top to bottom:
+
+- **Media queries add no specificity.** `@media (min-width:1024px){.tabbar
+  {display:none}}` followed by `.tabbar{display:flex}` loses on source order,
+  and the five-tab bar floated over the desktop sidebar. Anything that toggles
+  by breakpoint is declared **off** and switched on inside its block —
+  `.tabbar`, `.w-only`, `.m-only`.
+- **`overflow` does not apply to non-replaced inline boxes.** `.bd` and its
+  `.nm`/`.mt` were spans, so `overflow:hidden` clipped nothing, `nowrap` pushed
+  rows 75 px past their slot, and `margin-top` did nothing — «Alex MorganMi
+  Perfil» on one line. One `.bd{display:flex;flex-direction:column}` rule now
+  covers every appearance; it broke twice because it was written twice.
+- **Flex and grid children do not shrink below their content.** `min-width:0`
+  on anything that shares a row with text.
+
+Theme is applied **synchronously in `<head>`**, before the first pixel. Left to
+the script at the end of the body, the page is born light and jumps to dark on
+boot — the white flash that gives away applications that did not think about
+it. Light is the factory default; `light | dark | system` persist in
+`localStorage`, and `system` follows `prefers-color-scheme` live.
 
 ## The platform layer — parked, not deleted
 

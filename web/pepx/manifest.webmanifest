@@ -1,14 +1,14 @@
 {
   "name": "PepX — by PEPTIDEX",
   "short_name": "PepX",
-  "description": "Tu registro de pautas, medidas, viales y zonas. Todo se queda en tu teléfono.",
-  "id": "/?pepx",
-  "start_url": "./index.html#/app",
+  "description": "Protocolos, compuestos, inyecciones y progreso. Todo se queda en tu teléfono. Solo uso en investigación.",
+  "id": "/pepx/",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#fbfbfc",
-  "theme_color": "#ffffff",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
   "lang": "es",
   "dir": "ltr",
   "categories": [
@@ -38,8 +38,9 @@
   ],
   "shortcuts": [
     {
-      "name": "Hoy",
-      "url": "./index.html#/app",
+      "name": "Registrar inyección",
+      "short_name": "Registrar",
+      "url": "./?go=inj",
       "icons": [
         {
           "src": "icon-192.png",
@@ -49,7 +50,8 @@
     },
     {
       "name": "Calculadora",
-      "url": "./index.html#/app",
+      "short_name": "Calcular",
+      "url": "./?go=lib",
       "icons": [
         {
           "src": "icon-192.png",

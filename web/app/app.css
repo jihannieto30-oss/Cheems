@@ -1,0 +1,854 @@
+/* ============================================================================
+   PEPTIDEX · PepX — SISTEMA DE DISEÑO
+
+   Construido sobre las dos referencias entregadas:
+
+     PEPTIDEX_App_Light_Dark_Mode_UI_Design.pdf   → el móvil
+     PEPTIDEX_Web_App_UI_UX_Design.pdf            → el escritorio
+
+   Un solo lenguaje visual, dos composiciones. No es la misma pantalla
+   encogida: en escritorio manda la barra lateral y una rejilla de cuatro
+   métricas + próxima inyección + tres paneles; en móvil manda la barra
+   inferior y una pila de tarjetas con el titular grande arriba. Los tokens,
+   la tipografía, los radios, los iconos y los componentes son los mismos.
+
+   CLARO ES EL MODO DE FÁBRICA. Hay tres: light, dark y system. El tema se
+   aplica en el <head>, antes del primer píxel — dejarlo al final produce el
+   destello blanco que delata a las aplicaciones que no se lo pensaron.
+
+   ---------------------------------------------------------------------------
+   ESTA APLICACIÓN YA NO VIVE DENTRO DE LA TIENDA
+   ---------------------------------------------------------------------------
+
+   Antes compartía fichero y hoja de estilos con PEPTIDEX.html, y por eso hubo
+   que escribir un cortafuegos de especificidad: .stat, .chips y .tabs de la
+   tienda se colaban dentro de la app. Aquí no hay nada de quien defenderse —
+   este fichero es el único que se aplica. El cortafuegos se ha ido con el
+   problema que resolvía.
+   ============================================================================ */
+
+/* ---------- 1 · TOKENS ------------------------------------------------------- */
+
+:root{
+  /* claro — los valores del brief, literales */
+  --bg:#FFFFFF;
+  --s1:#FFFFFF;          /* la tarjeta */
+  --s2:#F7F7F7;          /* la superficie suave: campos, casillas */
+  --s3:#EFEFEF;          /* lo elevado sobre la tarjeta */
+  --tx:#111111;
+  --tx2:#6B6B6B;
+  --tx3:#9A9A9A;
+  --line:#E5E5E5;
+  --line2:#D6D6D6;
+  --btn:#000000;
+  --onbtn:#FFFFFF;
+
+  /* dato — en claro, del negro al gris */
+  --d1:#111111;
+  --d2:#6B6B6B;
+  --d3:#A8A8A8;
+  --dx:#D6D6D6;
+
+  /* acentos de línea de producto. Muy sujetos: distintivos, miniaturas,
+     puntos de categoría. Nunca fondo de pantalla ni color de interfaz. */
+  --fitness:#1B2A4A;     /* grafito con un punto de zafiro */
+  --beauty:#B08D77;      /* champán / oro rosa apagado */
+  --longevity:#8C9196;   /* plata / titanio */
+
+  /* profundidad — en claro sí hay, y en dos capas */
+  --sh:0 1px 2px rgba(17,17,17,.04), 0 12px 28px -18px rgba(17,17,17,.16);
+  --sh2:0 1px 2px rgba(17,17,17,.06), 0 24px 48px -26px rgba(17,17,17,.24);
+
+  --e:cubic-bezier(.22,1,.36,1);
+  --r-field:12px; --r-pill:999px; --r-card:16px;
+  color-scheme:light;
+}
+
+[data-theme="dark"]{
+  --bg:#000000;
+  --s1:#0A0A0A;
+  --s2:#121212;
+  --s3:#1A1A1A;
+  --tx:#FFFFFF;
+  --tx2:#A0A0A0;
+  --tx3:#707070;
+  --line:#292929;
+  --line2:#3A3A3A;
+  --btn:#FFFFFF;
+  --onbtn:#000000;
+
+  --d1:#FFFFFF;
+  --d2:#A0A0A0;
+  --d3:#5E5E5E;
+  --dx:#292929;
+
+  --fitness:#7C8CAB;     /* los acentos suben de luminosidad sobre negro o
+                            desaparecen: un azul de 27 % sobre #000 no existe */
+  --beauty:#C9A992;
+  --longevity:#A9AEB4;
+
+  /* Sobre negro una sombra no existe. La elevación se dibuja subiendo un plano
+     de superficie y encendiendo el filete. */
+  --sh:none;
+  --sh2:none;
+  color-scheme:dark;
+}
+
+/* ---------- 2 · BASE --------------------------------------------------------- */
+
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0; padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  background:var(--bg); color:var(--tx);
+  font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI",
+              Inter, Helvetica, Arial, sans-serif;
+  font-size:15px; line-height:1.5; letter-spacing:-.011em;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  min-height:100vh;
+}
+button,input,select,textarea{font:inherit; color:inherit;}
+button{background:none; border:0; padding:0; cursor:pointer;}
+a{color:inherit; text-decoration:none;}
+svg{display:block;}
+:focus-visible{outline:2px solid var(--tx); outline-offset:3px; border-radius:6px;}
+.sr{position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;}
+
+/* ---------- 3 · TIPOGRAFÍA ---------------------------------------------------
+   El sistema se sostiene en el contraste de escala: epígrafe diminuto y muy
+   abierto contra cifra grande y muy cerrada. No gasta ni un color. */
+
+.eyebrow{font-size:10px; font-weight:600; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--tx3);}
+.h1{font-size:clamp(26px,4.4vw,32px); font-weight:600; letter-spacing:-.03em;
+  line-height:1.14; margin:0;}
+.h2{font-size:19px; font-weight:600; letter-spacing:-.025em; margin:0;}
+.h3{font-size:15px; font-weight:600; letter-spacing:-.02em; margin:0;}
+.body{font-size:14px; line-height:1.62; color:var(--tx2);}
+.meta{font-size:12.5px; color:var(--tx3); line-height:1.5;}
+.num{font-variant-numeric:tabular-nums; letter-spacing:-.035em; font-weight:600;}
+
+/* la marca: Px + PEPTIDEX, con el interletrado del lockup real */
+.mark{display:flex; align-items:center; gap:10px;}
+.mark .px{font-size:22px; font-weight:600; letter-spacing:-.06em; line-height:1;}
+.mark .wm{font-size:10.5px; font-weight:500; letter-spacing:.3em;
+  text-transform:uppercase; color:var(--tx2);}
+
+/* ---------- 4 · COMPONENTES: TARJETA ------------------------------------------ */
+
+.card{
+  background:var(--s1); border:1px solid var(--line);
+  border-radius:var(--r-card); box-shadow:var(--sh);
+}
+.card.pad{padding:20px;}
+.card.pad-lg{padding:24px;}
+.chead{display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:18px 20px 0;}
+.chead + .cbody{padding-top:14px;}
+.cbody{padding:0 20px 20px;}
+.card .sect{padding:18px 20px; border-bottom:1px solid var(--line);}
+.card .sect:last-child{border-bottom:0;}
+
+/* ---------- 5 · BOTONES -------------------------------------------------------- */
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  background:var(--btn); color:var(--onbtn); border:1px solid var(--btn);
+  border-radius:var(--r-pill); padding:13px 24px;
+  font-size:13.5px; font-weight:600; letter-spacing:-.01em; white-space:nowrap;
+  transition:opacity .18s var(--e), transform .18s var(--e),
+             background .18s var(--e), border-color .18s var(--e), color .18s var(--e);
+}
+.btn:hover{opacity:.85;}
+.btn:active{transform:scale(.985);}
+.btn.ghost{background:transparent; color:var(--tx); border-color:var(--line2);}
+.btn.ghost:hover{border-color:var(--tx); opacity:1;}
+.btn.quiet{background:transparent; color:var(--tx2); border-color:transparent;}
+.btn.quiet:hover{color:var(--tx);}
+.btn.sm{padding:9px 16px; font-size:12.5px;}
+.btn.wide{width:100%;}
+.btn.sq{border-radius:var(--r-field);}
+.btn svg{width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;}
+.acts{display:flex; gap:10px; flex-wrap:wrap;}
+
+/* el botón circular: tema, avisos, atrás, cerrar */
+.ibtn{
+  width:38px; height:38px; flex:0 0 auto; border-radius:50%;
+  border:1px solid transparent; color:var(--tx2);
+  display:flex; align-items:center; justify-content:center;
+  transition:background .18s var(--e), color .18s var(--e), border-color .18s var(--e);
+}
+.ibtn svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.6;
+  stroke-linecap:round; stroke-linejoin:round;}
+.ibtn:hover{background:var(--s2); color:var(--tx);}
+.ibtn.bord{border-color:var(--line);}
+
+.avatar{
+  width:36px; height:36px; flex:0 0 auto; border-radius:50%;
+  background:var(--s2); border:1px solid var(--line); color:var(--tx);
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:600; letter-spacing:.01em;
+  transition:border-color .18s var(--e);
+}
+.avatar:hover{border-color:var(--line2);}
+.avatar.lg{width:52px; height:52px; font-size:16px;}
+
+/* ---------- 6 · PASTILLAS, DISTINTIVOS, SEGMENTOS -------------------------------- */
+
+.pills{display:flex; gap:8px; overflow-x:auto; scrollbar-width:none;
+  scroll-padding:0 20px;}
+.pills::-webkit-scrollbar{display:none;}
+.pill{
+  flex:0 0 auto; display:inline-flex; align-items:center; gap:7px;
+  border:1px solid var(--line); color:var(--tx2); background:transparent;
+  border-radius:var(--r-pill); padding:9px 16px;
+  font-size:12.5px; font-weight:500; letter-spacing:-.01em; white-space:nowrap;
+  transition:background .2s var(--e), color .2s var(--e), border-color .2s var(--e);
+}
+.pill i{font-style:normal; font-size:10.5px; color:var(--tx3);
+  font-variant-numeric:tabular-nums;}
+.pill:hover{border-color:var(--line2); color:var(--tx);}
+/* Dos estados seleccionados, y son distintos a propósito: el filtro que manda
+   sobre una lista se rellena (Todos), y la pestaña que cambia de vista se
+   perfila (Activos). Es la diferencia que hace la referencia. */
+.pill.on{background:var(--btn); border-color:var(--btn); color:var(--onbtn); font-weight:600;}
+.pill.on i{color:var(--onbtn); opacity:.55;}
+.pill.sel{border-color:var(--tx); color:var(--tx); font-weight:600;}
+
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:9.5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--tx2); border:1px solid var(--line); border-radius:var(--r-pill);
+  padding:4px 9px; white-space:nowrap;
+}
+.badge.solid{background:var(--s2); border-color:transparent;}
+.tags{display:flex; flex-wrap:wrap; gap:6px;}
+
+/* ---------- 7 · LA MINIATURA DE VIAL --------------------------------------------
+   El elemento firma de la referencia: cada compuesto, cada protocolo y cada
+   registro llevan su vial. Se dibuja —tapa, cuello, cuerpo, etiqueta con la
+   clave— en vez de usar una foto que no existe para los sesenta. El acento de
+   línea vive aquí y sólo aquí. */
+.vial{
+  flex:0 0 auto; position:relative;
+  width:34px; height:46px; border-radius:5px 5px 7px 7px;
+  background:linear-gradient(150deg, var(--s2) 0%, var(--s3) 52%, var(--s2) 100%);
+  border:1px solid var(--line);
+  display:flex; align-items:flex-end; justify-content:center;
+  overflow:hidden;
+}
+.vial::before{                            /* la cápsula del tapón */
+  content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:16px; height:8px; background:var(--tx3); opacity:.5;
+  border-radius:0 0 3px 3px;
+}
+.vial em{
+  font-style:normal; font-size:6.5px; font-weight:700; letter-spacing:.02em;
+  line-height:1.15; text-align:center; color:var(--tx2);
+  background:var(--s1); border-top:1px solid var(--line);
+  width:100%; padding:3px 2px; word-break:break-all;
+}
+.vial.lg{width:52px; height:70px;}
+.vial.lg em{font-size:8px; padding:4px 3px;}
+.vial.xl{width:78px; height:104px; border-radius:7px 7px 10px 10px;}
+.vial.xl::before{width:34px; height:16px;}
+.vial.xl em{font-size:10px; padding:6px 4px;}
+/* el acento de línea: una banda de 2 px, y nada más */
+.vial.f-fitness  {border-bottom:2px solid var(--fitness);}
+.vial.f-beauty   {border-bottom:2px solid var(--beauty);}
+.vial.f-longevity{border-bottom:2px solid var(--longevity);}
+.dot{width:6px; height:6px; border-radius:50%; flex:0 0 auto; background:var(--tx3);}
+.dot.f-fitness{background:var(--fitness);}
+.dot.f-beauty{background:var(--beauty);}
+.dot.f-longevity{background:var(--longevity);}
+
+/* la hilera de viales de un protocolo, con su nombre debajo */
+.vrow{display:flex; gap:14px; margin-top:14px;}
+.vrow .v{display:flex; flex-direction:column; align-items:center; gap:7px; min-width:0;}
+.vrow .v span{font-size:9.5px; color:var(--tx3); text-align:center;
+  max-width:56px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.vrow .more{display:flex; align-items:center; justify-content:center;
+  width:34px; height:46px; border:1px dashed var(--line2); border-radius:6px;
+  font-size:10px; color:var(--tx3);}
+
+/* ---------- 8 · FILAS ------------------------------------------------------------ */
+
+.row{display:flex; align-items:center; gap:14px; padding:15px 20px;
+  border-bottom:1px solid var(--line); width:100%; text-align:left;}
+.row:last-child{border-bottom:0;}
+/* .bd APILA, Y SUS HIJOS SON BLOQUES. Esto no es cosmética.
+
+   .bd es siempre lo mismo —nombre arriba, detalle debajo— y estaba escrito
+   como <span> con hijos <span>. Sobre una caja en línea no reemplazada
+   `overflow` no se aplica; lo dice la especificación. Así que el
+   `overflow:hidden` de .nm no recortaba nada, el `white-space:nowrap` empujaba
+   la fila a 322 px dentro de un hueco de 247, y el desbordamiento subía por
+   .row, .card y .view hasta .shell. De paso, el `margin-top` de .mt tampoco
+   hacía nada sobre una caja en línea: nombre y detalle salían pegados en el
+   mismo renglón — «Alex MorganMi Perfil».
+
+   Una sola regla para todas las apariciones de .bd. La tenían .row y la ficha
+   del perfil de la lateral por separado, y por separado se rompieron las dos.
+   Lo que cambia entre sitios es el tamaño, y eso sí va abajo. */
+.bd{display:flex; flex-direction:column; min-width:0;}
+.bd > .nm{display:block; max-width:100%;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.bd > .mt{display:block; max-width:100%; overflow-wrap:anywhere;}
+
+.row .bd{flex:1;}
+.row .nm{font-size:14.5px; font-weight:600; letter-spacing:-.02em;}
+.row .mt{font-size:12.5px; color:var(--tx3); margin-top:3px; line-height:1.45;}
+.row .rt{margin-left:auto; text-align:right; flex:0 0 auto;}
+.row.go{transition:background .16s var(--e);}
+.row.go:hover{background:var(--s2);}
+.cv{flex:0 0 auto; width:7px; height:7px; border-right:1.5px solid var(--tx3);
+  border-top:1.5px solid var(--tx3); transform:rotate(45deg);}
+
+.kv{display:flex; align-items:baseline; gap:16px; padding:11px 0;
+  border-bottom:1px solid var(--line);}
+.kv:last-child{border-bottom:0;}
+.kv span{flex:0 0 42%; font-size:10px; font-weight:600; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--tx3);}
+.kv b{flex:1; min-width:0; font-size:13.5px; font-weight:600; letter-spacing:-.015em;}
+
+/* ---------- 9 · MÉTRICAS ---------------------------------------------------------
+   Cuatro tarjetas en la web, tres en una sola tarjeta en el móvil. Es el mismo
+   componente con dos disposiciones — no dos componentes. */
+.metric b{display:block; font-size:30px; font-weight:600; letter-spacing:-.045em;
+  line-height:1; font-variant-numeric:tabular-nums;}
+.metric span{display:block; margin-top:8px; font-size:11.5px; color:var(--tx3);
+  line-height:1.35;}
+.metrics4{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
+/* Las cuatro fichas cierran a la misma línea que PRÓXIMA INYECCIÓN, que es más
+   alta. Estiradas y con el dato arriba quedaba un socavón bajo cada número; el
+   dato va centrado y la altura extra se reparte. */
+.metrics4 > .card{padding:20px; display:flex; flex-direction:column;
+  justify-content:center;}
+.metrics3{display:grid; grid-template-columns:repeat(3,1fr);}
+.metrics3 > *{padding-left:18px; border-left:1px solid var(--line);}
+.metrics3 > *:first-child{padding-left:0; border-left:0;}
+
+/* la barra de progreso: sin color, sin gradiente, sin rayas */
+.bar{height:4px; border-radius:2px; background:var(--s3); overflow:hidden;}
+.bar i{display:block; height:100%; background:var(--tx); border-radius:2px;
+  transition:width .7s var(--e);}
+
+/* ---------- 10 · GRÁFICAS ---------------------------------------------------------
+   Rejilla mínima, marcas finas, eje elegante — como pide el brief. En monocromo
+   la serie la distingue el trazo (continua / discontinua / punteada) y la nombra
+   el rótulo del extremo, no el color. */
+svg.chart{width:100%; display:block; overflow:visible;}
+svg.chart .grid{stroke:var(--line); stroke-width:1;}
+svg.chart .axt{fill:var(--tx3); font-size:10px;}
+svg.chart .ln{fill:none; stroke-width:1.8; stroke-linejoin:round; stroke-linecap:round;}
+svg.chart .s1{stroke:var(--d1);}
+svg.chart .s2{stroke:var(--d2); stroke-dasharray:7 4;}
+svg.chart .s3{stroke:var(--d3); stroke-dasharray:2 3;}
+svg.chart .f1{fill:var(--d1)} svg.chart .f2{fill:var(--d2)} svg.chart .f3{fill:var(--d3)}
+svg.chart .bar{fill:var(--d1);}
+svg.chart .dot{stroke:var(--s1); stroke-width:2;}
+svg.chart .lbl{fill:var(--tx2); font-size:9.5px; font-weight:600;}
+svg.chart .proj{opacity:.5;}
+.legend{display:flex; flex-wrap:wrap; gap:16px; margin-top:12px;}
+.legend span{display:inline-flex; align-items:center; gap:8px; font-size:11.5px;
+  color:var(--tx2);}
+.legend i{width:16px; border-top-width:2px; border-top-style:solid; flex:0 0 auto;}
+.legend i.k1{border-color:var(--d1);}
+.legend i.k2{border-color:var(--d2); border-top-style:dashed;}
+.legend i.k3{border-color:var(--d3); border-top-style:dotted;}
+
+/* la rejilla de racha */
+.streak{display:grid; grid-template-columns:repeat(28,1fr); gap:3px; max-width:480px;}
+.streak i{aspect-ratio:1; border-radius:2px; background:var(--s3);}
+.streak i.on{background:var(--tx);}
+.streak i.miss{background:transparent; box-shadow:inset 0 0 0 1px var(--line2);}
+
+/* ---------- 11 · FORMULARIOS ------------------------------------------------------ */
+
+label{display:block; margin:18px 0 8px; font-size:10px; font-weight:600;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--tx3);}
+input,select,textarea{
+  width:100%; min-width:0; background:var(--s2); color:var(--tx);
+  border:1px solid transparent; border-radius:var(--r-field);
+  padding:13px 15px; font-size:16px; letter-spacing:-.01em;
+  -webkit-appearance:none; appearance:none;
+  transition:background .18s var(--e), border-color .18s var(--e);
+}
+/* 16 px y ni uno menos: por debajo, Safari en iPhone amplía la página al
+   enfocar un campo y luego no la devuelve. Es el umbral del navegador. */
+select{background-image:linear-gradient(45deg,transparent 50%,var(--tx3) 50%),
+  linear-gradient(135deg,var(--tx3) 50%,transparent 50%);
+  background-position:calc(100% - 20px) 50%, calc(100% - 15px) 50%;
+  background-size:5px 5px,5px 5px; background-repeat:no-repeat; padding-right:42px;}
+textarea{min-height:86px; resize:vertical; line-height:1.6;}
+input:focus,select:focus,textarea:focus{outline:none; background:var(--s1);
+  border-color:var(--line2);}
+input::placeholder,textarea::placeholder{color:var(--tx3);}
+.r2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.r3{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+/* min-width:auto es el reparto de fábrica de una rejilla y saca dos campos de
+   fecha nativos fuera de su tarjeta en un teléfono de 390 */
+.r2 > *,.r3 > *{min-width:0;}
+
+.search{position:relative;}
+.search input{padding-left:44px; border-radius:var(--r-pill); background:var(--s2);}
+.search svg{position:absolute; left:16px; top:50%; transform:translateY(-50%);
+  width:16px; height:16px; stroke:var(--tx3); fill:none; stroke-width:1.7;
+  stroke-linecap:round; pointer-events:none;}
+
+.pick{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:8px;}
+.pick.p2{grid-template-columns:repeat(2,1fr);}
+.pick.p3{grid-template-columns:repeat(3,1fr);}
+.pick.p7{grid-template-columns:repeat(7,1fr); gap:6px;}
+.pick button{background:var(--s2); border:1px solid transparent; color:var(--tx2);
+  border-radius:var(--r-field); padding:13px 0; font-size:12.5px; font-weight:600;
+  transition:background .18s var(--e), color .18s var(--e);}
+.pick button.on{background:var(--btn); color:var(--onbtn);}
+
+.withu{position:relative;}
+.withu input{padding-right:110px;}
+.uu{position:absolute; right:5px; top:50%; transform:translateY(-50%);
+  display:flex; gap:2px; background:var(--s1); border-radius:var(--r-pill); padding:3px;}
+.uu button{color:var(--tx3); font-size:11.5px; font-weight:600; padding:7px 13px;
+  border-radius:var(--r-pill); transition:background .18s var(--e), color .18s var(--e);}
+.uu button.on{background:var(--btn); color:var(--onbtn);}
+
+/* ---------- 12 · ESTADOS ----------------------------------------------------------
+   Vacío, cargando y error escritos una vez y usados igual en todas las
+   pantallas. Una pantalla que improvisa su vacío se nota. */
+.empty{text-align:center; padding:44px 20px;}
+.empty .ico{width:44px; height:44px; margin:0 auto 16px; border-radius:50%;
+  border:1px solid var(--line); display:flex; align-items:center; justify-content:center;}
+.empty .ico svg{width:19px; height:19px; stroke:var(--tx3); fill:none; stroke-width:1.5;
+  stroke-linecap:round; stroke-linejoin:round;}
+.empty b{display:block; font-size:15px; font-weight:600; letter-spacing:-.02em;}
+.empty span{display:block; margin-top:8px; font-size:13px; color:var(--tx3);
+  line-height:1.6; max-width:320px; margin-left:auto; margin-right:auto;}
+.empty .acts{justify-content:center; margin-top:20px;}
+.skel{background:var(--s2); border-radius:6px; height:12px;
+  animation:pulse 1.6s ease-in-out infinite;}
+.skel + .skel{margin-top:10px;}
+@keyframes pulse{0%,100%{opacity:.55} 50%{opacity:1}}
+
+/* ---------- 13 · DOC.PEPS ---------------------------------------------------------- */
+
+.dp{display:flex; gap:12px; align-items:flex-start;}
+.dp .mk{flex:0 0 auto; width:15px; height:15px; margin-top:3px;}
+.dp .mk svg{width:15px; height:15px; fill:var(--tx2);}
+.dp .who{font-size:9px; font-weight:600; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--tx3); margin-bottom:7px;}
+.dp p{margin:0; font-size:13.5px; line-height:1.68; color:var(--tx2);}
+.dp p + p{margin-top:8px;}
+.dp b{color:var(--tx); font-weight:600;}
+.dp .foot{margin-top:16px; padding-top:14px; border-top:1px solid var(--line);
+  font-size:11px; line-height:1.65; color:var(--tx3);}
+
+/* la cita del documento del operador: marco, procedencia arriba, nota al pie */
+.quote{margin-top:20px; padding:18px 20px; background:var(--s2);
+  border-left:2px solid var(--tx3); border-radius:0 var(--r-card) var(--r-card) 0;}
+.quote .qh{font-size:9px; font-weight:600; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--tx3); margin-bottom:12px;}
+.quote .qf{margin-top:14px; padding-top:12px; border-top:1px solid var(--line);
+  font-size:10.5px; line-height:1.65; color:var(--tx3);}
+
+/* ---------- 14 · AVISOS -------------------------------------------------------------
+   El nivel lo llevan el grosor del filete izquierdo, el icono y la palabra. Sin
+   color: el sistema es monocromo y el color solo nunca bastó. */
+.notes{display:flex; flex-direction:column; gap:10px;}
+.note{display:flex; gap:13px; align-items:flex-start; padding:16px 18px;
+  background:var(--s1); border:1px solid var(--line);
+  border-left:1px solid var(--line2); border-radius:var(--r-card); box-shadow:var(--sh);}
+.note.w{border-left:2px solid var(--tx2);}
+.note.b{border-left:2px solid var(--tx);}
+.note .ic{flex:0 0 auto; width:15px; height:15px; margin-top:2px;}
+.note .ic svg{width:15px; height:15px; stroke:var(--tx3); fill:none; stroke-width:1.7;
+  stroke-linecap:round; stroke-linejoin:round;}
+.note.b .ic svg{stroke:var(--tx);}
+.note .tt{font-size:13.5px; font-weight:600; letter-spacing:-.02em;}
+.note .td{font-size:12.5px; color:var(--tx3); margin-top:4px; line-height:1.55;}
+
+/* ============================================================================
+   15 · EL ARMAZÓN DE ESCRITORIO — barra lateral
+
+   La referencia web manda: lateral estrecha a la izquierda con la marca arriba,
+   nueve destinos, el perfil abajo en su caja; barra superior con el buscador
+   centrado y tres controles a la derecha.
+   ============================================================================ */
+
+.shell{display:flex; min-height:100vh;}
+
+.side{
+  flex:0 0 232px; width:232px; position:sticky; top:0; height:100vh;
+  display:flex; flex-direction:column; gap:6px;
+  padding:22px 14px 16px; background:var(--s1); border-right:1px solid var(--line);
+}
+.side .brand{padding:4px 10px 22px;}
+.side nav{display:flex; flex-direction:column; gap:2px; flex:1; overflow-y:auto;}
+.side nav button{
+  display:flex; align-items:center; gap:12px; width:100%;
+  padding:10px 12px; border-radius:10px; color:var(--tx2);
+  font-size:13.5px; letter-spacing:-.015em;
+  transition:background .16s var(--e), color .16s var(--e);
+}
+.side nav button svg{width:17px; height:17px; flex:0 0 auto; stroke:currentColor;
+  fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;}
+.side nav button:hover{background:var(--s2); color:var(--tx);}
+.side nav button.on{background:var(--s2); color:var(--tx); font-weight:600;}
+[data-theme="dark"] .side nav button.on{background:var(--s3);}
+.side .me{
+  display:flex; align-items:center; gap:11px; width:100%; text-align:left;
+  padding:10px; border:1px solid var(--line); border-radius:12px;
+  transition:border-color .16s var(--e);
+}
+.side .me:hover{border-color:var(--line2);}
+.side .me .bd{flex:1;}
+.side .me .nm{font-size:13px; font-weight:600; letter-spacing:-.02em;}
+.side .me .mt{font-size:11px; color:var(--tx3); margin-top:1px;}
+
+.main{flex:1; min-width:0; display:flex; flex-direction:column;}
+.topbar{
+  position:sticky; top:0; z-index:40;
+  display:flex; align-items:center; gap:18px;
+  padding:14px 28px; border-bottom:1px solid var(--line);
+  background:color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter:blur(22px) saturate(1.4);
+}
+.topbar .search{flex:1; max-width:440px; margin:0 auto;}
+.topbar .search input{padding-top:10px; padding-bottom:10px; font-size:14px;}
+.topbar .right{display:flex; align-items:center; gap:6px; flex:0 0 auto;}
+.view{flex:1; padding:28px; max-width:1320px; width:100%; margin:0 auto;}
+
+/* ============================================================================
+   16 · EL ARMAZÓN MÓVIL — barra inferior
+
+   La referencia móvil manda otra cosa, y no es la de escritorio encogida: el
+   nombre de la marca centrado arriba con la campana a la derecha, el titular
+   grande dentro del contenido, y cinco destinos abajo. La lateral desaparece
+   entera; no se colapsa en un cajón.
+   ============================================================================ */
+
+@media (max-width:1023px){
+  .side{display:none;}
+  .shell{display:block;}
+  .topbar{
+    padding:14px 18px; gap:12px;
+    justify-content:space-between;
+  }
+  .topbar .search{display:none;}
+  .topbar .mob-mark{display:flex;}
+  .view{padding:0 18px calc(96px + env(safe-area-inset-bottom));
+    max-width:640px;}
+  .tabbar{display:flex;}
+}
+@media (min-width:1024px){
+  .topbar .mob-mark{display:none;}
+}
+.topbar .mob-mark{flex:1; justify-content:center;}
+.topbar .mob-mark .wm{font-size:11px; letter-spacing:.34em; color:var(--tx);}
+
+/* La barra inferior nace OCULTA y el bloque de móvil la enciende.
+
+   Al revés no funciona, y el error es de los que no se ven leyendo: la regla
+   estaba en `@media (min-width:1024px){.tabbar{display:none}}` y debajo venía
+   `.tabbar{display:flex}`. Las consultas de medios no añaden especificidad —
+   las dos reglas valen (0,1,0)— así que ganaba la última por orden y la barra
+   de cinco pestañas salía flotando sobre el escritorio, encima de la ficha del
+   perfil de la lateral. Ocultar por defecto y encender en el bloque estrecho
+   no depende del orden. */
+.tabbar{
+  display:none;
+  position:fixed; left:0; right:0; bottom:0; z-index:50;
+  border-top:1px solid var(--line);
+  background:color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter:blur(22px) saturate(1.4);
+  padding:8px 0 calc(8px + env(safe-area-inset-bottom));
+}
+.tabbar button{
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;
+  padding:6px 2px; color:var(--tx3); transition:color .16s var(--e);
+}
+.tabbar button svg{width:21px; height:21px; stroke:currentColor; fill:none;
+  stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;}
+.tabbar button span{font-size:9px; font-weight:600; letter-spacing:.06em;
+  text-transform:uppercase;}
+.tabbar button.on{color:var(--tx);}
+/* El icono activo se rellena, como en la referencia — no cambia de color. */
+.tabbar button.on svg{fill:currentColor; stroke:none;}
+
+/* ---------- 17 · LA CABECERA DE PANTALLA ------------------------------------------- */
+
+.phead{padding:26px 0 20px;}
+.phead .h1{margin-top:6px;}
+.phead p{margin:10px 0 0; max-width:560px; font-size:14px; line-height:1.62;
+  color:var(--tx2);}
+/* El saludo a la izquierda y el selector de periodo a la derecha. En una fila
+   de 354 px el saludo mide 119 y las tres píldoras 280: no caben, y ninguno de
+   los dos cedía porque un hijo de flex no baja de su contenido por defecto.
+
+   En estrecho se apilan — que es lo que hace el PDF de móvil, donde el titular
+   grande va dentro del contenido y no compite con nada. Las píldoras siguen
+   deslizándose en su propio carril si el idioma las alarga. */
+.phead .top{display:flex; align-items:flex-start; justify-content:space-between; gap:16px;}
+.phead .top > *{min-width:0;}
+@media (max-width:600px){
+  .phead .top{flex-direction:column; align-items:stretch; gap:14px;}
+  .phead .top > .pills{align-self:flex-start; max-width:100%;}
+}
+.sect-h{display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin:28px 0 12px;}
+
+/* ---------- 18 · LA REJILLA DEL PANEL ----------------------------------------------
+   Escritorio: cuatro métricas y la próxima inyección arriba; tres paneles
+   debajo. Móvil: todo apilado, y el orden cambia — primero el progreso, luego
+   los protocolos, luego las acciones. */
+/* `align-items:start` dejaba un hueco muerto: la ficha de PRÓXIMA INYECCIÓN es
+   más alta que la fila de métricas, así que las cuatro métricas se quedaban
+   arriba y debajo sobraban cien píxeles de nada. Y los tres paneles de abajo
+   terminaban a alturas distintas, con el borde inferior en escalera. En la
+   referencia de web todo cierra a la misma línea, que es de donde sale la
+   sensación de rejilla. Estirados. */
+.dash-top{display:grid; grid-template-columns:1.9fr 1fr; gap:12px;}
+.dash-mid{display:grid; grid-template-columns:1.5fr 1.15fr .85fr; gap:12px;
+  margin-top:12px;}
+@media (max-width:1279px){
+  .dash-mid{grid-template-columns:1fr 1fr;}
+  .dash-mid > *:last-child{grid-column:1 / -1;}
+}
+@media (max-width:1023px){
+  .dash-top{grid-template-columns:1fr;}
+  .dash-mid{grid-template-columns:1fr; margin-top:12px;}
+  .metrics4{grid-template-columns:1fr 1fr;}
+}
+
+/* El interruptor de composición: .w-only es del PDF de web, .m-only del de
+   móvil. Se cruza en 1024, el mismo punto donde la lateral cede a la barra
+   inferior, para que no haya un tramo intermedio con las dos formas o con
+   ninguna. Se declaran ocultas y cada bloque enciende la suya — por lo mismo
+   que la barra de pestañas: las consultas de medios no dan especificidad. */
+.w-only, .m-only{display:none;}
+@media (min-width:1024px){ .w-only{display:block;} }
+@media (max-width:1023px){ .m-only{display:block;} }
+
+/* ---------- 19 · ACCIONES RÁPIDAS ---------------------------------------------------
+   En escritorio son filas con chevron dentro de un panel; en móvil son cuatro
+   iconos en rejilla. Mismo dato, dos formas — que es lo que pedía el brief. */
+.qa-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
+.qa-grid button{
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+  padding:18px 8px; background:var(--s1); border:1px solid var(--line);
+  border-radius:var(--r-card); color:var(--tx); box-shadow:var(--sh);
+  transition:border-color .18s var(--e), transform .18s var(--e);
+}
+.qa-grid button:hover{border-color:var(--line2); transform:translateY(-2px);}
+.qa-grid button svg{width:20px; height:20px; stroke:var(--tx2); fill:none;
+  stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;}
+.qa-grid button span{font-size:11px; line-height:1.3; text-align:center; color:var(--tx2);}
+
+/* ---------- 20 · CALENDARIO ----------------------------------------------------------- */
+
+.cal{max-width:460px; margin:0 auto;}
+.calhd{display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin-bottom:16px;}
+.calhd b{font-size:14px; font-weight:600; letter-spacing:.02em; text-transform:uppercase;}
+.caldow{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:6px;}
+.caldow span{text-align:center; font-size:9.5px; font-weight:600; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--tx3);}
+.calgrid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
+.cell{aspect-ratio:1; border-radius:11px; border:1px solid transparent; color:var(--tx2);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  transition:background .16s var(--e), border-color .16s var(--e);}
+.cell:hover{background:var(--s2);}
+.cell.void{pointer-events:none; opacity:0;}
+.cell b{font-size:13px; font-weight:500; font-variant-numeric:tabular-nums;}
+.cell u{display:block; width:4px; height:4px; border-radius:50%; background:transparent;}
+.cell.due u{background:var(--tx3);}
+.cell.done u{background:var(--tx);}
+.cell.today{border-color:var(--line2);}
+.cell.sel{background:var(--btn); border-color:var(--btn); color:var(--onbtn);}
+.cell.sel u{background:var(--onbtn);}
+
+/* la tira de semana del móvil, como en la referencia */
+.weekstrip{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:14px;}
+.weekstrip button{display:flex; flex-direction:column; align-items:center; gap:8px;
+  padding:8px 0; border-radius:12px; color:var(--tx2);}
+.weekstrip button em{font-style:normal; font-size:9px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--tx3);}
+.weekstrip button b{width:30px; height:30px; border-radius:50%; display:flex;
+  align-items:center; justify-content:center; font-size:13px; font-weight:500;
+  font-variant-numeric:tabular-nums;}
+.weekstrip button.on b{background:var(--btn); color:var(--onbtn);}
+
+/* ---------- 21 · EL MAPA DE ZONAS ------------------------------------------------------ */
+
+.bodywrap{display:flex; gap:26px; align-items:center;}
+.bodywrap .fig{flex:0 0 auto; width:176px;}
+.bodywrap svg{width:176px; height:auto;}
+.bodywrap .zlist{flex:1; min-width:0;}
+svg .silo{fill:var(--s2); stroke:none;}
+svg .zone{fill:var(--s3); stroke:none; cursor:pointer; transition:fill .2s var(--e);}
+svg .zone:hover{fill:var(--tx3);}
+svg .zone.used{fill:var(--tx3);}
+svg .zone.recent{fill:var(--tx);}
+@media (max-width:640px){
+  .bodywrap{flex-direction:column; align-items:stretch;}
+  .bodywrap .fig{width:100%;}
+  .bodywrap svg{width:152px; margin:0 auto;}
+}
+
+/* ---------- 22 · EDUCACIÓN ----------------------------------------------------------
+   Tarjetas editoriales. La imagen no existe todavía, así que en su lugar hay un
+   campo dibujado —una retícula de puntos que se desvanece— con el titular
+   encima. Es honesto y es lo que hace la referencia con su fotografía de
+   laboratorio: la imagen es fondo, el texto manda. */
+.edu{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px;}
+.educard{
+  position:relative; overflow:hidden; min-height:172px;
+  display:flex; flex-direction:column; justify-content:flex-end;
+  padding:20px; border-radius:var(--r-card);
+  border:1px solid var(--line); background:var(--s2); box-shadow:var(--sh);
+  transition:border-color .2s var(--e), transform .2s var(--e);
+}
+.educard:hover{border-color:var(--line2); transform:translateY(-2px);}
+.educard::before{
+  content:''; position:absolute; inset:0;
+  background-image:radial-gradient(circle at 1px 1px, var(--tx3) 1px, transparent 0);
+  background-size:14px 14px; opacity:.16;
+  -webkit-mask-image:linear-gradient(160deg,#000,transparent 72%);
+  mask-image:linear-gradient(160deg,#000,transparent 72%);
+}
+.educard > *{position:relative;}
+.educard .h3{margin-top:10px; font-size:16px; line-height:1.3;}
+.educard .meta{margin-top:10px;}
+.educard .play{position:absolute; right:20px; bottom:20px; width:36px; height:36px;
+  border-radius:50%; border:1px solid var(--line2); display:flex;
+  align-items:center; justify-content:center;}
+.educard .play svg{width:13px; height:13px; fill:var(--tx); stroke:none;}
+
+/* ---------- 23 · PLANES ------------------------------------------------------------- */
+
+.tiers{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+.tier{padding:24px; background:var(--s1); border:1px solid var(--line);
+  border-radius:var(--r-card); position:relative; box-shadow:var(--sh);}
+.tier.top{border-color:var(--tx);}
+.tier .cur{position:absolute; top:20px; right:20px; font-size:9px; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--tx3);}
+.tier .nm{font-size:10px; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--tx3);}
+.tier .pr{font-size:38px; font-weight:600; letter-spacing:-.05em; margin-top:12px;
+  font-variant-numeric:tabular-nums;}
+.tier .pr small{font-size:12px; font-weight:400; letter-spacing:0; color:var(--tx3);}
+.tier .cl{margin-top:12px; font-size:12.5px; line-height:1.5; color:var(--tx2);
+  min-height:2.6em;}
+.tier ul{list-style:none; padding:16px 0 0; margin:16px 0 0; border-top:1px solid var(--line);}
+.tier li{position:relative; padding:6px 0 6px 18px; font-size:12.5px; line-height:1.5;
+  color:var(--tx2);}
+.tier li::before{content:''; position:absolute; left:0; top:13px; width:7px; height:1px;
+  background:var(--tx3);}
+@media (max-width:860px){ .tiers{grid-template-columns:1fr;} }
+
+/* ---------- 24 · EL RESULTADO INVERTIDO -------------------------------------------------
+   Una sola pieza invertida en toda la aplicación, y a propósito: el número que
+   se ha venido a buscar. */
+.out{background:var(--btn); color:var(--onbtn); border-radius:var(--r-card);
+  padding:24px; margin-top:22px;}
+.out .hero{text-align:center; padding:4px 0 20px;
+  border-bottom:1px solid color-mix(in srgb, var(--onbtn) 16%, transparent);}
+.out .hero b{display:block; font-size:clamp(44px,11vw,58px); font-weight:600;
+  letter-spacing:-.055em; line-height:1; font-variant-numeric:tabular-nums;}
+.out .hero b small{font-size:17px; font-weight:400; letter-spacing:0; margin-left:10px;
+  opacity:.55;}
+.out .hero span{display:block; margin-top:12px; font-size:11px; letter-spacing:.08em;
+  text-transform:uppercase; opacity:.5;}
+.out .grid{display:grid; grid-template-columns:1fr 1fr; gap:1px; margin-top:20px;
+  background:color-mix(in srgb, var(--onbtn) 14%, transparent);
+  border-radius:12px; overflow:hidden;}
+.out .g{background:var(--btn); padding:15px;}
+.out .g b{display:block; font-size:16px; font-weight:600; letter-spacing:-.03em;}
+.out .g span{display:block; margin-top:4px; font-size:9.5px; letter-spacing:.12em;
+  text-transform:uppercase; opacity:.5;}
+.out .warnline{display:flex; gap:9px; align-items:flex-start; margin-top:18px;
+  font-size:11.5px; line-height:1.6; opacity:.72;}
+.out .warnline svg{flex:0 0 auto; width:14px; height:14px; margin-top:2px;
+  stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round;}
+.out .empty b, .out .empty span{color:var(--onbtn);}
+.out .empty span{opacity:.55;}
+.out .empty .ico{border-color:color-mix(in srgb, var(--onbtn) 24%, transparent);}
+.out .empty .ico svg{stroke:var(--onbtn); opacity:.55;}
+
+.syringe svg{width:100%; height:74px; display:block; margin-top:18px;}
+.syringe .barrel{fill:none; stroke:currentColor; stroke-width:1.1; opacity:.3;}
+.syringe .fill{fill:currentColor; opacity:.16;}
+.syringe .plunger{stroke:currentColor; stroke-width:2; stroke-linecap:round;}
+.syringe .tk{stroke:currentColor; stroke-width:1; opacity:.24;}
+.syringe .tkb{stroke:currentColor; stroke-width:1; opacity:.5;}
+.syringe text{fill:currentColor; font-size:8.5px; opacity:.5;}
+.syringe .big{fill:currentColor; font-size:12px; font-weight:600; opacity:1;}
+
+/* ============================================================================
+   25 · LA PORTADA
+
+   Negro o blanco entero, la marca en el centro, dos caminos.
+
+   SIN LAS PLUMAS. La referencia las lleva; se piden fuera a propósito, y es la
+   decisión correcta: la portada es el primer segundo de la marca y ese segundo
+   debe ser el monograma solo. Un producto en la portada convierte la entrada en
+   un escaparate.
+   ============================================================================ */
+
+.splash{min-height:100vh; min-height:100svh; display:flex; flex-direction:column;
+  justify-content:space-between; background:var(--bg); padding:0;}
+.splash .top{flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; text-align:center; padding:48px 24px;}
+.splash .px{font-size:clamp(76px,24vw,132px); font-weight:600; letter-spacing:-.075em;
+  line-height:.84; margin:0;}
+.splash .wm{margin-top:22px; font-size:13px; font-weight:500; letter-spacing:.44em;
+  text-transform:uppercase;}
+.splash .tagline{margin-top:14px; font-size:8.5px; font-weight:500; letter-spacing:.3em;
+  text-transform:uppercase; color:var(--tx3);}
+.splash .bottom{padding:0 24px calc(40px + env(safe-area-inset-bottom));
+  display:flex; flex-direction:column; gap:10px; width:100%; max-width:420px;
+  margin:0 auto;}
+.splash .fine{margin-top:22px; text-align:center; font-size:9px; font-weight:600;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--tx3); line-height:2;}
+.splash .btn{border-radius:var(--r-field); padding:16px 24px;}
+
+/* ---------- 26 · EL AVISO --------------------------------------------------------- */
+
+.ruo{margin:40px 0 8px; padding-top:22px; border-top:1px solid var(--line);
+  text-align:center; font-size:9px; font-weight:600; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--tx3); line-height:2;}
+
+/* ---------- 27 · MOVIMIENTO --------------------------------------------------------
+   Suave, premium, calmado, rápido — y poco. 8 px y 340 ms, 36 ms entre piezas,
+   sólo las seis primeras: a partir de ahí la escalera se nota como retraso. */
+@keyframes rise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+.view > *{animation:rise .34s var(--e) both;}
+.view > *:nth-child(1){animation-delay:.01s}
+.view > *:nth-child(2){animation-delay:.05s}
+.view > *:nth-child(3){animation-delay:.09s}
+.view > *:nth-child(4){animation-delay:.13s}
+.view > *:nth-child(5){animation-delay:.17s}
+.view > *:nth-child(6){animation-delay:.21s}
+.view > *:nth-child(n+7){animation-delay:.23s}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;
+    animation-iteration-count:1 !important; transition-duration:.01ms !important;}
+}
+
+/* ---------- 28 · AJUSTES FINOS DE MÓVIL ---------------------------------------------- */
+
+@media (max-width:520px){
+  .card.pad, .card.pad-lg{padding:18px;}
+  .chead{padding:16px 18px 0;}
+  .cbody{padding:0 18px 18px;}
+  .row{padding:14px 18px;}
+  .metric b{font-size:26px;}
+  .qa-grid{grid-template-columns:repeat(4,1fr); gap:8px;}
+  .qa-grid button{padding:14px 4px; gap:10px;}
+  .qa-grid button span{font-size:10px;}
+  .out{padding:20px;}
+  .vrow{gap:10px;}
+}

@@ -1,0 +1,19 @@
+/* ============================================================================
+   LA PUERTA — lo único que queda de PepX dentro de la tienda.
+
+   Antes la aplicación entera vivía en este fichero: 165 KB de código y hojas
+   que se descargaban aunque nadie abriera la app, más un cortafuegos de
+   especificidad para que las clases de la app no chocaran con las de la
+   tienda. Ya no. La app es /pepx/ y esto es un enlace.
+
+   Cuarenta líneas en vez de cuarenta y dos mil caracteres.
+   ============================================================================ */
+nav .links a.px-door{display:inline-flex; align-items:center; gap:7px;}
+nav .links a.px-door .nw{
+  font-size:8.5px; font-weight:700; letter-spacing:.16em; line-height:1;
+  padding:3px 6px 2px; color:#fff; background:var(--ink);
+  border-radius:999px; transform:translateY(-1px);
+}
+@media (max-width:860px){
+  #mmenu .inner a.px-door{opacity:.9;}
+}

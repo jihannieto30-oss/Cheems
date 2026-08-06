@@ -62,7 +62,7 @@ css   = '\n'.join(rd(os.path.join(SRC, f)) for f in
                   ('41_label.css', '51_profile.css', '52_card.css', '62_dive.css', '64_logos.css',
                    '71_search.css', '72_nav.css', '30_motion.css',
                    '65_mobile.css', '67_catalog.css', '70_names.css',
-                   '71_pens.css', '80_app.css'))
+                   '71_pens.css', '82_door.css'))
 # ---- 4b · el arte de las plumas, si ya existe ----------------------------
 # Lo produce mk_pens.py a partir de los recortes. Si no está, el escenario del
 # sitio dibuja tres contornos en su lugar y no se rompe nada.
@@ -71,15 +71,12 @@ pens = rd(PENS) if os.path.exists(PENS) else '{}'
 print('  plumas           %d de 3' % len([k for k in json.loads(pens) if not k.startswith('_')]))
 
 # ---- 4c · la biblioteca de compuestos ------------------------------------
-# La produce mk_library.py del libro de operación. Si no está, la pestaña de
-# Biblioteca sale vacía diciendo que falta, y nada más se rompe.
-LIB = os.path.join(HERE, 'assets', 'library.json')
-lib = rd(LIB) if os.path.exists(LIB) else '[]'
-print('  biblioteca       %d compuestos  (%.1f KB)' % (len(json.loads(lib)), len(lib.encode())/1024))
+# Ya no va aquí. La consume PepX, y PepX es otro producto: la ensambla
+# build_app.py dentro de pepx/index.html. Dejarla en la tienda serían 35 KB
+# que nadie lee.
 
 js    = ('window.__pxBakedLines = true;\n' +
          'const PX_PENS_ART = ' + pens + ';\n' +
-         'const PX_LIB = ' + lib + ';\n' +
          'const PX_MASTER_LOGO = ' + repr(master).replace("'", '"', 2) + ';\n' +
          'const PX_WATER = ' + json.dumps(
              {k: {'tint': v['tint'], 'depth': v['depth']}
@@ -93,47 +90,26 @@ js    = ('window.__pxBakedLines = true;\n' +
          rd(os.path.join(SRC, '66_mobile.js')) + '\n' +
          rd(os.path.join(SRC, '68_catalog.js')) + '\n' +
          rd(os.path.join(SRC, '69_names.js')) + '\n' +
-         rd(os.path.join(SRC, '81_app.js')))
+         rd(os.path.join(SRC, '82_door.js')))
 
 i = html.rindex('</style>')
 html = html[:i] + '\n/* ===== PEPTIDEX LABEL + MOTION ===== */\n' + css + '\n' + html[i:]
 j = html.rindex('</script>')
 html = html[:j] + '\n/* ===== PEPTIDEX LABEL + MOTION ===== */\n' + js + '\n' + html[j:]
 
-# ---- 6 · lo que hace que se pueda instalar en un teléfono ------------------
-# El manifiesto y el trabajador de servicio TIENEN que ser ficheros aparte: un
-# data: URI vale en Chrome para el manifiesto y no vale en Safari, y para el
-# trabajador no vale en ninguno. Los genera mk_pwa.py junto a este HTML; aquí
-# sólo van las etiquetas que apuntan a ellos.
-#
-# Si el HTML se abre suelto (file://, o sin esos ficheros al lado) no pasa
-# nada: el navegador no encuentra el manifiesto, el registro falla en su
-# propio catch, y el sitio sigue exactamente igual.
-PWA = '''
-<link rel="manifest" href="manifest.webmanifest"/>
-<link rel="apple-touch-icon" href="apple-touch-icon.png"/>
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-<meta name="apple-mobile-web-app-title" content="PepX"/>
-<script>
-/* isSecureContext, no location.protocol === 'https:'.
-
-   Los dos parecen lo mismo y no lo son: localhost y 127.0.0.1 son contextos
-   seguros sirviendo por http, y con la comprobación del protocolo el
-   trabajador no se registraba en desarrollo — que es justo donde hace falta
-   verlo funcionar antes de subir nada. En file:// isSecureContext es falso y
-   no se intenta, que era el otro caso que había que cubrir. */
-if('serviceWorker' in navigator && window.isSecureContext){
-  addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js').catch(function(){});
-  });
-}
-</script>
+# ---- 6 · la marca en la pestaña ------------------------------------------
+# La tienda ya NO es la aplicación instalable. Lo es pepx/, que tiene su propio
+# manifiesto, su propio trabajador y su propio alcance. Aquí queda sólo el
+# icono de la pestaña, apuntando a los ficheros que produce build_app.py — y
+# nada de manifiesto ni de trabajador, para que el de la raíz no se quede con
+# alcance sobre /pepx/ y le sirva a la app el índice de la tienda cuando no
+# haya red. Los que ya lo tengan registrado se lo quitan en src/82_door.js.
+HEAD = '''
+<link rel="apple-touch-icon" href="pepx/apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="pepx/favicon-32.png"/>
 '''
 k = html.rindex('</head>')
-html = html[:k] + PWA + html[k:]
+html = html[:k] + HEAD + html[k:]
 
 print('  label system     %.1f KB  (kit %.1f KB)' % (len(label.encode())/1024, len(kit.encode())/1024))
 print('  motion governor  %.1f KB' % (len(rd(os.path.join(SRC, '31_motion.js')).encode())/1024))
