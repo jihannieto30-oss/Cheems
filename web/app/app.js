@@ -43,7 +43,7 @@ const STORE = 'https://peptidex.netlify.app/';
    1 · ESTADO
    ========================================================================== */
 const BLANK = {
-  plan:[], log:{}, vitals:[], vials:[], sites:[], hl:{}, calc:{},
+  plan:[], log:{}, extra:{}, vitals:[], vials:[], sites:[], hl:{}, calc:{},
   me:{nombre:'', correo:''},
   theme:'light',              /* light | dark | system — claro de fábrica */
   win:14, sub:{tier:'free', since:null},
@@ -75,6 +75,19 @@ function fill(raw){
   o.me   = Object.assign({}, BLANK.me,  raw.me  || {});
   o.sub  = Object.assign({}, BLANK.sub, raw.sub || {});
   o.sub1 = Object.assign({}, raw.sub1 || {});
+  o.plan = (raw.plan || []).map(migraPlan);
+  return o;
+}
+/* UN PROTOCOLO ES UNA PILA CON NOMBRE.
+   Antes era un compuesto suelto con su dosis; la referencia enseña otra cosa —
+   FAT LOSS PROTOCOL con cinco viales dentro— y esa es la unidad con la que la
+   gente piensa. Lo que ya estuviera guardado entra como pila de un elemento y
+   se llama como su compuesto: nadie pierde nada por el cambio. */
+function migraPlan(p){
+  if(p && p.items) return p;
+  const o = Object.assign({}, p);
+  o.name  = o.name || o.c || '';
+  o.items = o.c ? [{c:o.c, d:o.dose, u:o.unit}] : [];
   return o;
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
@@ -194,7 +207,47 @@ function dueOn(p, k){
   return false;
 }
 const dueList = k => S.plan.filter(p => dueOn(p, k));
-const taken   = (k, id) => !!(S.log[k] && S.log[k][id]);
+
+/* ---- la pila y sus piezas ------------------------------------------------
+   Un protocolo lleva N compuestos y cada uno se marca por separado, como en
+   la referencia: tres filas con su palomita, no una casilla para las tres. El
+   registro antiguo guardaba `true` para el protocolo entero; eso sigue
+   valiendo y significa «todas hechas». */
+const pItems = p => (p && p.items && p.items.length) ? p.items
+                  : (p && p.c ? [{c:p.c, d:p.dose, u:p.unit}] : []);
+const pName  = p => (p && p.name) || (pItems(p)[0] || {}).c || t('Protocol','Protocolo');
+const pComps = p => pItems(p).map(x => x.c).filter(Boolean);
+const doseTxt = it => [it.d, it.u].filter(Boolean).join(' ');
+
+function takenItem(k, id, i){
+  const d = S.log[k]; if(!d) return false;
+  return d[id] === true || !!d[id + '#' + i] ||
+         (d[id] && typeof d[id] === 'object' && d[id].all === true);
+}
+function taken(k, id){
+  const d = S.log[k]; if(!d) return false;
+  if(d[id] === true) return true;
+  const p = S.plan.filter(x => x.id === id)[0];
+  const n = p ? pItems(p).length : 0;
+  if(!n) return !!d[id];
+  for(let i = 0; i < n; i++) if(!takenItem(k, id, i)) return false;
+  return true;
+}
+/* cuántas piezas de la pila están marcadas ese día */
+function takenCount(k, p){
+  const n = pItems(p).length;
+  let c = 0;
+  for(let i = 0; i < n; i++) if(takenItem(k, p.id, i)) c++;
+  return c;
+}
+/* el apunte de una pieza: hora y zona, si las hay */
+function itemMeta(k, id, i){
+  const d = S.log[k]; if(!d) return null;
+  const v = d[id + '#' + i];
+  if(v && typeof v === 'object') return v;
+  const w = d[id];
+  return (w && typeof w === 'object') ? w : null;
+}
 function freqText(p){
   switch(p.freq){
     case 'd':   return t('Every day','Todos los días');
@@ -209,7 +262,7 @@ function freqText(p){
    ningún sitio, así que no puede quedarse desincronizado. */
 function planState(p){
   const hoy = today();
-  if(!p.c || !p.freq) return 'draft';
+  if(!pItems(p).length || !p.freq) return 'draft';
   if(!p.active)       return (p.end && p.end < hoy) ? 'done' : 'draft';
   if(p.end && p.end < hoy) return 'done';
   return 'active';
@@ -237,15 +290,10 @@ function nextDue(p){
   }
   return null;
 }
-/* los compuestos de un protocolo: el propio más los que compartan su ventana */
-function planCompounds(p){
-  const out = [p.c];
-  S.plan.forEach(x => {
-    if(x.id === p.id || !x.c || out.indexOf(x.c) >= 0) return;
-    if(planState(x) === planState(p)) out.push(x.c);
-  });
-  return out;
-}
+/* Los compuestos de un protocolo son los suyos y nada más. Antes se
+   «adivinaban» juntando los de otros protocolos con el mismo estado, porque un
+   protocolo sólo podía tener uno. Ahora los lleva dentro. */
+const planCompounds = p => pComps(p);
 
 /* ==========================================================================
    6 · CONSTANTES
@@ -322,6 +370,12 @@ const I = {
   close:'<path d="M6 6l12 12M18 6 6 18"/>',
   left:'<path d="M15 5l-7 7 7 7"/>',
   right:'<path d="M9 5l7 7-7 7"/>',
+  cdown:'<path d="M6 9l6 6 6-6"/>',
+  filter:'<path d="M3 6h18M7 12h10M11 18h2"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/>',
+  doc:'<path d="M13.5 3.5H7A2 2 0 0 0 5 5.5v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13.5 3.5V9H19"/>',
+  drop:'<path d="M12 3.5s5.5 6.1 5.5 9.6a5.5 5.5 0 0 1-11 0C6.5 9.6 12 3.5 12 3.5z"/>',
+  snow:'<path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/>',
   warn:'<path d="M12 9v5M12 17.5v.01"/><path d="M10.3 3.9 2.6 17.6a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
   info:'<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.01"/>',
   bag:'<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
@@ -434,16 +488,26 @@ function lineaDe(nombre){
 function vial(nombre, size){
   const e = libFind(nombre);
   const linea = (e && LINEA[family(e)]) || 'fitness';
-  const cod = (e && e.sku ? String(e.sku).split('/')[0] : String(nombre||'')).trim().slice(0,7);
-  if(!hayArte){
-    return '<span class="vial' + (size ? ' ' + size : '') + (e ? famClass(e) : '') + '">' +
-      '<em>' + E(cod) + '</em></span>';
-  }
-  const grande = size === 'lg' || size === 'xl' || size === 'hero';
+  const cod = (e && e.sku ? String(e.sku).split('/')[0] : String(nombre||'')).trim().slice(0,6);
+  const cls = 'vialt ' + (size || 'md');
+  if(!hayArte)
+    return '<span class="' + cls + '"><span class="vfall">' + E(cod) + '</span></span>';
+  /* Dos resoluciones del mismo recorte: la pequeña pesa 4 KB y sale en listas
+     de sesenta filas; la grande sólo donde el producto es el protagonista. */
+  const grande = size === 'lg' || size === 'hero' || size === 'giant';
   const src = ART[(grande ? 'vial_' : 'vialt_') + linea];
-  return '<span class="pv' + (size ? ' ' + size : '') + ' l-' + linea + '">' +
+  return '<span class="' + cls + '">' +
     '<img src="' + src + '" alt="' + E(t('PEPTIDEX vial','Vial PEPTIDEX')) + ' ' +
       linea.toUpperCase() + '" loading="lazy" decoding="async"/></span>';
+}
+/* Las tres plumas recargables entregadas, para la portada. Es la única imagen
+   de la pantalla de entrada en la referencia y no se sustituye por nada. */
+function pens(){
+  const ps = ['fitness','beauty','longevity'].map(k => ART['pen_' + k]).filter(Boolean);
+  if(ps.length < 3) return '';
+  /* El orden de la referencia: negro, oro rosa, plata. */
+  return '<div class="splash-pens" aria-hidden="true">' + ps.map(s =>
+    '<img src="' + s + '" alt=""/>').join('') + '</div>';
 }
 
 /* El bloque de línea entregado — Px con su símbolo, PEPTIDEX y el nombre de la
@@ -577,7 +641,7 @@ function tips(){
           'Con una vez por semana basta. Una vez al mes y la curva deja de decir nada.')]);
   }
   S.vials.forEach(v => {
-    const p = S.plan.filter(x => x.active && x.c === v.c)[0];
+    const p = S.plan.filter(x => x.active && pComps(x).indexOf(v.c) >= 0)[0];
     if(v.quedan != null && v.quedan !== '' && +v.quedan <= 3){
       let when = '';
       if(p){
@@ -764,11 +828,17 @@ function trendChip(pts, m){
 /* ==========================================================================
    13 · MÉTRICAS DE CABECERA
    ========================================================================== */
+/* Se cuenta POR INYECCIÓN, no por protocolo. Una pila de cinco compuestos con
+   tres marcados no es «un protocolo a medias»: son tres inyecciones puestas y
+   dos que faltan, y eso es lo que dice la cifra de la referencia. */
 function adherence(n){
   const hoy = today(); let tocaba = 0, hecho = 0;
   for(let i = 0; i < n; i++){
     const k = shift(hoy, -i);
-    dueList(k).forEach(p => { tocaba++; if(taken(k, p.id)) hecho++; });
+    dueList(k).forEach(p => {
+      tocaba += pItems(p).length;
+      hecho  += takenCount(k, p);
+    });
   }
   return {pct: tocaba ? hecho/tocaba : 0, tocaba:tocaba, hecho:hecho};
 }
@@ -801,6 +871,21 @@ const NAV = [
   {id:'set',  ic:'set',  en:'Settings',   es:'Configuración'}
 ];
 const MOBNAV = NAV.filter(n => n.mob).concat([{id:'more', ic:'more', mob:{en:'More', es:'Más'}}]);
+/* Destinos que existen pero no salen en ninguna barra: se llega a ellos desde
+   «Más», desde el buscador o desde otra pantalla. Están aquí para que el
+   enrutador y el título de la cabecera los conozcan igual que a los demás. */
+const EXTRA = [
+  {id:'find',  ic:'search', en:'Search',  es:'Buscar'},
+  {id:'legal', ic:'shield', en:'Privacy & Terms', es:'Privacidad y términos'}
+];
+const ALLNAV = NAV.concat(EXTRA);
+const navOf  = id => ALLNAV.filter(n => n.id === id)[0] || null;
+/* Cada pantalla sabe de dónde viene. Sin esto la flecha de volver es un
+   adorno: en un teléfono es el gesto que más se usa después de tocar. */
+const BACKTO = {
+  cal:'more', prog:'more', lib:'more', edu:'more', set:'more',
+  legal:'set', find:'dash', prot:'dash', comp:'dash', inj:'dash'
+};
 const initials = () => {
   const n = (S.me.nombre || '').trim();
   return n ? n.split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase() : 'PX';
@@ -822,6 +907,9 @@ function sidebar(){
       '<span class="cv"></span></button>' +
   '</aside>';
 }
+/* En el teléfono la barra de arriba lleva la marca centrada y dos botones; en
+   escritorio se convierte en la barra de la referencia web, con el buscador
+   ancho en medio. Es la misma barra en los dos sitios. */
 function topbar(){
   return '<header class="topbar">' +
     '<span class="mob-mark">' + mark('px', 'mob-px') +
@@ -832,30 +920,56 @@ function topbar(){
       t('Search compounds, protocols…','Buscar compuestos, protocolos…') +
       '" value="' + E(S.gq||'') + '"/></div>' +
     '<div class="right">' +
-      '<button class="ibtn" data-go="inj" aria-label="' + t('Notifications','Avisos') + '">' +
-        svg('bell') + '</button>' +
+      '<button class="ibtn m-only" data-go="find" aria-label="' + t('Search','Buscar') + '">' +
+        svg('search') + '</button>' +
       '<button class="ibtn" data-theme aria-label="' + t('Theme','Tema') + '">' +
         svg(THEMEICON()) + '</button>' +
       '<button class="avatar" data-go="set" aria-label="' + t('Profile','Perfil') + '">' +
         E(initials()) + '</button>' +
     '</div></header>';
 }
+/* Qué pestaña se enciende cuando estás en una pantalla que no es pestaña. */
+const TABOF = {
+  cal:'more', prog:'more', lib:'more', edu:'more', set:'more', legal:'more',
+  more:'more', find:'comp'
+};
 function tabbar(){
-  return '<nav class="tabbar" role="tablist">' + MOBNAV.map(n => {
-    const act = n.id === 'more'
-      ? ['cal','prog','lib','edu','set','more'].indexOf(S.route) >= 0
-      : S.route === n.id;
-    return '<button data-go="' + n.id + '" role="tab"' + (act ? ' class="on" aria-selected="true"' : '') +
-      '>' + svg(n.ic) + '<span>' + t(n.mob.en, n.mob.es) + '</span></button>';
-  }).join('') + '</nav>';
+  const act = TABOF[S.route] || S.route;
+  return '<nav class="tabbar" role="tablist">' + MOBNAV.map(n =>
+    '<button data-go="' + n.id + '" role="tab"' +
+      (act === n.id ? ' class="on" aria-selected="true"' : '') + '>' +
+      svg(n.ic) + '<span>' + t(n.mob.en, n.mob.es) + '</span></button>').join('') +
+  '</nav>';
 }
 
-const phead = (k, h, p, right) =>
-  '<div class="phead"><div class="top"><div>' +
-    (k ? '<div class="eyebrow">' + k + '</div>' : '') +
-    '<h1 class="h1">' + h + '</h1>' +
-    (p ? '<p>' + p + '</p>' : '') +
-  '</div>' + (right || '') + '</div></div>';
+/* LA CABECERA DE PANTALLA, COMO EN LA REFERENCIA.
+
+   Flecha de volver · título centrado en versalitas abiertas · acción. No un
+   titular editorial: en el PDF las cinco pantallas llevan exactamente esta
+   barra, y esa repetición es lo que hace que se lea como navegación. En
+   escritorio se descentra y crece, porque allí la lateral ya dice dónde estás.
+
+     back   id de la pantalla a la que vuelve la flecha, o '' para no ponerla
+     titulo el rótulo, que se escribe en versalitas
+     right  el botón de acción, si lo hay
+     sub    una línea de contexto por debajo */
+function navh(back, titulo, right, sub){
+  return '<div class="nav-h">' +
+    (back ? '<button class="nb" data-go="' + back + '" aria-label="' +
+      t('Back','Volver') + '">' + svg('left') + '</button>' : '<span class="nb"></span>') +
+    '<h1>' + titulo + '</h1>' +
+    (right || '<span class="na"></span>') +
+  '</div>' + (sub ? '<p class="nav-sub">' + sub + '</p>' : '');
+}
+/* el botón de acción de la cabecera: un icono, nunca un rótulo */
+const navAct = (ic, go, label) => '<button class="na" data-go="' + go + '" aria-label="' +
+  E(label) + '">' + svg(ic) + '</button>';
+const navActRaw = (ic, attr, label) => '<button class="na" ' + attr + ' aria-label="' +
+  E(label) + '">' + svg(ic) + '</button>';
+
+/* Rótulo de sección: va FUERA de la tarjeta, con su enlace a la derecha. */
+const sectH = (label, lk, go) => '<div class="sect-h"><span class="eyebrow">' + label + '</span>' +
+  (lk ? '<button class="lk" data-go="' + go + '">' + lk + '</button>' : '') + '</div>';
 
 const empty = (ic, b, s, act) => '<div class="empty"><div class="ico">' + svg(ic) + '</div>' +
   '<b>' + b + '</b><span>' + s + '</span>' +
@@ -866,17 +980,18 @@ const ruo = () => '<div class="ruo">' + t('Research use only.','Solo uso en inve
              'PepX registra lo que tú introduces. No recomienda compuestos, dosis ni pautas.') + '</div>';
 
 /* ==========================================================================
-   15 · PORTADA — sin las plumas, sólo el Px
+   15 · PORTADA
    ========================================================================== */
-/* La portada lleva el BLOQUE ENTREGADO, no un «Px» compuesto con la tipografía
-   del sistema. Componer las letras era, literalmente, rehacer el logotipo: la
-   P con el corte diagonal y la X con su remate no son dos caracteres de una
-   fuente. Ahora es el fichero, recortado, en las dos polaridades.
+/* Exactamente lo que enseña la referencia, en su orden: el bloque de marca
+   entregado, las tres plumas recargables entregadas, los dos botones y el
+   lema. Ni una cosa más.
 
-   Y sólo el Px, sin las plumas, como se pidió. */
+   El bloque es el FICHERO recortado, no un «Px» compuesto con la tipografía
+   del sistema: la P con el corte diagonal y la X con su remate no son dos
+   caracteres de una fuente, y componerlas sería rehacer el logotipo. */
 function vSplash(){
   return '<div class="splash">' +
-    '<div class="top">' + mark('lock', 'splash-lock') + '</div>' +
+    '<div class="top">' + mark('lock', 'splash-lock') + pens() + '</div>' +
     '<div class="bottom">' +
       '<button class="btn wide" data-enter="in">' + t('Sign in','Iniciar sesión') + '</button>' +
       '<button class="btn ghost wide" data-enter="new">' + t('Create account','Crear cuenta') + '</button>' +
@@ -888,6 +1003,17 @@ function vSplash(){
 /* ==========================================================================
    16 · DASHBOARD
    ========================================================================== */
+/* LA PORTADA, EN EL ORDEN DE LA REFERENCIA
+
+     saludo + avatar
+     TU PROGRESO      tarjeta · selector de ventana · tres cifras · barra · frase
+     PRÓXIMA INYECCIÓN  (la referencia web la pone aquí, y es lo que más se mira)
+     MIS PROTOCOLOS   rótulo + «Ver todo» · las tarjetas de pila
+     ACCIONES RÁPIDAS cuatro casillas
+     avisos
+
+   Cada bloque empieza con su rótulo fuera de la tarjeta. Ese ritmo —rótulo,
+   contenido, aire— es lo que hace que la pantalla se recorra sin leerla. */
 function vDash(){
   const hoy = today();
   const w = +sub1('win', 7);
@@ -895,121 +1021,106 @@ function vDash(){
   const activos = S.plan.filter(p => planState(p) === 'active');
   const prox = activos.map(p => ({p:p, k:nextDue(p)})).filter(x => x.k)
     .sort((a,b) => a.k < b.k ? -1 : 1)[0];
+  const wl = (WINDOWS.filter(x => x[0] === w)[0] || WINDOWS[0])[1];
 
-  const sel = '<div class="pills" style="flex:0 0 auto">' + WINDOWS.map(x =>
-    '<button class="pill' + (w === x[0] ? ' sel' : '') + '" data-sub="win:' + x[0] + '">' +
-    x[1] + '</button>').join('') + '</div>';
+  /* La frase de debajo de la barra cambia con la cifra. No es un adorno: es la
+     única línea de la pantalla que reconoce que detrás del porcentaje hay
+     alguien. Y no felicita cuando no toca. */
+  const animo = !ad.tocaba
+    ? t('Nothing was scheduled. Write a protocol and this starts counting.',
+        'No tocaba nada. Escribe un protocolo y esto empieza a contar.')
+    : ad.pct >= 1   ? t('Everything you scheduled, logged.','Todo lo que programaste, registrado.')
+    : ad.pct >= .8  ? t('Keep going. Consistency is the whole thing.','Sigue así. La consistencia lo es todo.')
+    : ad.pct >= .5  ? t('%h of %t logged so far.','%h de %t registradas por ahora.')
+                        .replace('%h', ad.hecho).replace('%t', ad.tocaba)
+                    : t('There is ground to make up — %n still open.','Hay terreno que recuperar — faltan %n.')
+                        .replace('%n', ad.tocaba - ad.hecho);
 
-  /* EL PROTOCOLO DOMINANTE. Uno, el que toca antes. No una lista de fichas:
-     una composición partida con el producto real a un lado y el estado al
-     otro. Es lo primero que el usuario quiere saber y ocupa el sitio que eso
-     merece. */
-  const act = prox ? prox.p : activos[0];
-  const ph  = act ? phase(act) : null;
-  const pg  = act ? planProgress(act) : 0;
+  return '<div class="dash">' +
+    /* --- el saludo, con el avatar a la derecha como en la referencia --- */
+    '<div class="hello"><div>' +
+      '<h1>' + greet() +
+        (S.me.nombre ? ',<br>' + E(S.me.nombre.split(/\s+/)[0]) + '.' : '.') + '</h1>' +
+      '<p>' + t('Here is your progress.','Aquí tienes tu progreso.') + '</p>' +
+    '</div><button class="avatar" data-go="set" aria-label="' + t('Profile','Perfil') + '">' +
+      E(initials()) + '</button></div>' +
 
-  return '' +
-    /* --- HÉROE: sólo tipografía y aire. Ni tarjeta ni borde. --- */
-    '<section class="phero">' +
-      '<h1 class="display">' + greet() +
-        (S.me.nombre ? ',<br>' + E(S.me.nombre.split(/\s+/)[0]) : '') + '.</h1>' +
-      '<p class="lede">' + t('Your PEPTIDEX overview.','Tu resumen PEPTIDEX.') + '</p>' +
-      sel +
-    '</section>' +
+    /* --- TU PROGRESO --- */
+    '<section class="d-prog"><div class="card pad">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">' +
+        '<span class="eyebrow">' + t('Your progress','Tu progreso') + '</span>' +
+        '<button class="winsel" data-win-cycle>' + wl + svg('cdown') + '</button>' +
+      '</div>' +
+      '<div class="dstats" style="margin-top:18px">' +
+        stat(ad.hecho, t('Injections','Inyecciones'), t('completed','completadas')) +
+        stat(Math.round(ad.pct*100) + '%', t('Adherence','Adherencia'), t('to protocol','al protocolo')) +
+        stat(st, t('Days','Días'), t('streak','de racha')) +
+        /* la cuarta cifra sólo en escritorio: es la rejilla de la referencia
+           web, y en un teléfono de 390 px cuatro cifras en fila no se leen */
+        '<div class="w-only">' + stat(activos.length, t('Protocols','Protocolos'),
+          t('active','activos')) + '</div>' +
+      '</div>' +
+      '<div class="pbar" style="margin-top:20px"><i style="width:' +
+        Math.round(ad.pct*100) + '%"></i></div>' +
+      '<p class="meta" style="margin:12px 0 0">' + animo + '</p>' +
+    '</div></section>' +
 
-    /* --- LA CIFRA: cuatro datos en una tira, separados por filetes.
-           Cuatro tarjetas para cuatro números era el reflejo de tablero que
-           había que quitar. Un número no necesita una caja. --- */
-    '<section class="strip">' +
-      stat(ad.hecho,                   t('Injections','Inyecciones'),  t('completed','completadas')) +
-      stat(Math.round(ad.pct*100)+'%', t('Adherence','Adherencia'),    t('to protocol','al protocolo')) +
-      stat(st,                         t('Day streak','Días seguidos'),t('unbroken','sin fallar')) +
-      stat(activos.length,             t('Protocols','Protocolos'),    t('active','activos')) +
-    '</section>' +
-
-    (act ? '<section class="feature' + (act ? ' l-' + lineaDe(act.c) : '') + '">' +
-      '<div class="feature-art">' + vial(act.c, 'hero') + '</div>' +
-      '<div class="feature-bd">' +
-        '<span class="eyebrow">' + t('Active protocol','Protocolo activo') + '</span>' +
-        '<h2 class="h-lg">' + E(act.c) + '</h2>' +
-        '<p class="lede sm">' + E(act.dose) + ' ' + E(act.unit) + ' · ' + E(freqText(act)) + '</p>' +
-        (ph && ph.total
-          ? '<div class="journey">' +
-              '<div class="journey-hd"><span>' + t('Phase ','Fase ') + ph.f + '</span>' +
-                '<span>' + t('Week ','Semana ') + ph.w + t(' of ',' de ') + ph.total + '</span></div>' +
-              '<div class="bar"><i style="width:' + Math.round(pg*100) + '%"></i></div>' +
-            '</div>' : '') +
-        (prox ? '<div class="nextact">' +
-            '<span class="eyebrow">' + t('Next','Siguiente') + '</span>' +
-            '<div class="nextact-when">' + fullDate(prox.k) +
-              (prox.p.time ? '<b>' + E(prox.p.time) + '</b>' : '') + '</div>' +
-          '</div>' : '') +
-        '<div class="feature-act">' +
-          '<button class="btn" data-open-prot="' + act.id + '">' +
-            t('View Details','Ver Detalles') + '</button>' +
-          '<button class="btn ghost" data-new-inj>' + t('Log injection','Registrar inyección') + '</button>' +
+    /* --- PRÓXIMA INYECCIÓN --- */
+    (prox ? (function(){
+      const it = pItems(prox.p)[0] || {};
+      return '<section class="d-next">' +
+      '<div class="m-only">' + sectH(t('Next injection','Próxima inyección')) + '</div>' +
+      '<div class="card pad">' +
+        '<div class="eyebrow w-only" style="margin-bottom:14px">' +
+          t('Next injection','Próxima inyección') + '</div>' +
+        '<div class="row" style="padding:0">' + vial(it.c, 'md') +
+          '<span class="bd"><span class="nm">' + E(it.c || pName(prox.p)) + '</span>' +
+            '<span class="mt">' + E(doseTxt(it)) + '</span>' +
+            '<span class="mt dim">' + fullDate(prox.k).toUpperCase() +
+              (prox.p.time ? ' · ' + E(prox.p.time) : '') + '</span></span>' +
         '</div>' +
-      '</div>' +
-      famLock(lineaDe(act.c)) +
-    '</section>'
-    : '<section class="feature empty-feature">' +
-        empty('prot', t('No active protocol','Ningún protocolo activo'),
-          t('A protocol is a compound, a dose and a frequency — all three yours.',
-            'Un protocolo es un compuesto, una dosis y una frecuencia — los tres tuyos.'),
-          '<button class="btn" data-new-prot>' + t('Create one','Crear uno') + '</button>') +
-      '</section>') +
+        '<button class="btn wide sq" data-open-prot="' + prox.p.id + '" style="margin-top:16px">' +
+          t('View details','Ver detalles') + '</button>' +
+      '</div></section>';
+    })() : '<section class="d-next"></section>') +
 
-    /* --- LOS OTROS PROTOCOLOS, si los hay: una lista sobria y sin marco --- */
-    (activos.length > 1 ? '<section class="band">' +
-      '<div class="band-h"><span class="eyebrow">' + t('Also active','También activos') + '</span>' +
-        '<button class="btn quiet sm" data-go="prot">' + t('View all','Ver todos') + '</button></div>' +
-      '<div class="bare">' + activos.filter(p => !act || p.id !== act.id).slice(0,3).map(p => {
-        const q = phase(p);
-        return '<button class="row go" data-open-prot="' + p.id + '">' +
-          vial(p.c) +
-          '<span class="bd"><span class="nm">' + E(p.c) + '</span>' +
-            '<span class="mt">' + (q && q.total
-              ? t('Phase ','Fase ') + q.f + ' · ' + t('Week ','Semana ') + q.w + t(' of ',' de ') + q.total
-              : E(freqText(p))) + '</span></span>' +
-          '<span class="cv"></span></button>';
-      }).join('') + '</div></section>' : '') +
-
-    /* --- UNA lectura principal, no seis gráficas --- */
-    '<section class="band">' +
-      '<div class="band-h"><span class="eyebrow">' + t('This week','Esta semana') + '</span>' +
-        '<button class="btn quiet sm" data-go="prog">' + t('All progress','Todo el progreso') + '</button></div>' +
-      '<div class="insight">' +
-        '<div class="insight-n"><b>' + Math.round(ad.pct*100) + '<i>%</i></b>' +
-          '<span>' + t('of what you scheduled, logged.','de lo que programaste, registrado.') + '</span></div>' +
-        '<div class="insight-c">' + weekChart() + '</div>' +
-      '</div>' +
+    /* --- MIS PROTOCOLOS --- */
+    '<section class="d-prot">' +
+    sectH(t('My protocols','Mis protocolos'), activos.length ? t('View all','Ver todo') : '', 'prot') +
+    (activos.length
+      ? activos.slice(0,2).map(p => protCard(p, true)).join('')
+      : '<div class="card">' + empty('prot', t('No active protocol','Ningún protocolo activo'),
+          t('A protocol is a name, the compounds inside it and how often you put them.',
+            'Un protocolo es un nombre, los compuestos que lleva dentro y cada cuándo te los pones.'),
+          '<button class="btn" data-new-prot>' + t('Create one','Crear uno') + '</button>') + '</div>') +
     '</section>' +
 
-    /* --- ACCIONES: texto y filete. Sin cajas, sin iconos decorativos. --- */
-    '<section class="band">' +
-      '<div class="band-h"><span class="eyebrow">' + t('Quick actions','Acciones rápidas') + '</span></div>' +
-      '<div class="actlist">' +
-        qaRow('inj',   t('Log Injection','Registrar Inyección'), 'inj') +
-        qaRow('comp',  t('My Compounds','Mis Compuestos'),       'comp') +
-        qaRow('bag',   t('Order History','Historial de Pedidos'),'store') +
-        qaRow('edu',   t('Education','Educación'),               'edu') +
-      '</div>' +
-    '</section>' +
+    /* --- la lectura de la semana --- */
+    '<section class="d-week">' +
+    sectH(t('This week','Esta semana'), t('All progress','Todo el progreso'), 'prog') +
+    '<div class="card pad">' + weekChart() + '</div></section>' +
 
-    '<section class="band">' + dp(dpToday(), true) + '</section>' +
+    /* --- ACCIONES RÁPIDAS --- */
+    '<section class="d-quick">' + sectH(t('Quick actions','Acciones rápidas')) +
+    '<div class="tiles">' +
+      tile('inj',  t('Log injection','Registrar inyección'),   'data-new-inj') +
+      tile('comp', t('My compounds','Mis compuestos'),         'data-go="comp"') +
+      tile('bag',  t('Order history','Historial de pedidos'),  'data-go="store"') +
+      tile('edu',  t('Education','Educación'),                 'data-go="edu"') +
+    '</div></section>' +
 
-    (notesHTML() ? '<section class="band">' +
-      '<div class="band-h"><span class="eyebrow">' + t('Alerts','Avisos') + '</span></div>' +
-      notesHTML() + '</section>' : '') + ruo();
+    '<section class="d-rest">' +
+    (notesHTML() ? sectH(t('Alerts','Avisos')) +
+      '<div class="card pad">' + notesHTML() + '</div>' : '') +
+    sectH('Doc.Peps') + dp(dpToday(), true) + ruo() + '</section>' +
+  '</div>';
 }
-/* El dato desnudo: cifra grande, dos renglones de rótulo y un filete a la
-   izquierda. Sin fondo, sin borde, sin sombra. */
+/* La cifra: número grande, rótulo de dos renglones debajo. */
 const stat = (v, l1, l2) => '<div class="stat"><b>' + v + '</b>' +
   '<span>' + l1 + '<i>' + l2 + '</i></span></div>';
-const qaRow = (ic, label, go) => '<button class="row go" data-go="' + go + '">' +
-  '<span style="flex:0 0 auto;width:17px;height:17px;color:var(--tx2)">' + svg(ic) + '</span>' +
-  '<span class="bd"><span class="nm" style="font-weight:500;font-size:13.5px">' + label + '</span></span>' +
-  '<span class="cv"></span></button>';
+/* La casilla de acceso rápido: icono lineal arriba, rótulo abajo. */
+const tile = (ic, label, attr) => '<button class="tile" ' + attr + '>' +
+  svg(ic) + '<span>' + label + '</span></button>';
 
 /* ==========================================================================
    17 · PROTOCOLOS
@@ -1020,136 +1131,192 @@ function vProt(){
   S.plan.forEach(p => g[planState(p)].push(p));
   const list = g[w] || [];
   return '' +
-    phead(t('PROTOCOLS','PROTOCOLOS'), t('My Protocols.','Mis Protocolos.'),
-      t('You write them. PepX does not propose, adjust or suggest a protocol — it remembers the one you entered and shows it back to you.',
-        'Los escribes tú. PepX no propone, no ajusta y no sugiere ninguna pauta — se acuerda de la que metiste y te la enseña.'),
-      '<button class="btn sm" data-new-prot>' + svg('plus') + t('New','Nuevo') + '</button>') +
-    '<div class="pills">' + [['active', t('Active','Activos')], ['done', t('Completed','Completados')],
+    navh(BACKTO.prot, t('My protocols','Mis protocolos'),
+      navActRaw('plus', 'data-new-prot', t('New protocol','Nuevo protocolo'))) +
+    '<div class="seg">' + [['active', t('Active','Activos')], ['done', t('Completed','Completados')],
       ['draft', t('Drafts','Borradores')]].map(x =>
-      '<button class="pill' + (w === x[0] ? ' sel' : '') + '" data-sub="prot:' + x[0] + '">' +
+      '<button class="' + (w === x[0] ? 'on' : '') + '" data-sub="prot:' + x[0] + '">' +
       x[1] + (g[x[0]].length ? '<i>' + g[x[0]].length + '</i>' : '') + '</button>').join('') + '</div>' +
     (S.newProt ? protForm() : '') +
-    '<div class="protlist">' +
-      (list.length ? list.map(p => protCard(p)).join('')
-        : '<div class="card">' + empty('prot',
-            w === 'active' ? t('No active protocol','Ningún protocolo activo')
-            : w === 'done' ? t('Nothing completed yet','Nada completado todavía')
-                           : t('No drafts','Sin borradores'),
-            t('A protocol is a compound, a dose and a frequency — all three yours.',
-              'Un protocolo es un compuesto, una dosis y una frecuencia — los tres tuyos.'),
-            '<button class="btn" data-new-prot>' + t('New protocol','Nuevo protocolo') + '</button>') + '</div>') +
-    '</div>' + ruo();
+    (list.length ? list.map(p => protCard(p)).join('')
+      : '<div class="card">' + empty('prot',
+          w === 'active' ? t('No active protocol','Ningún protocolo activo')
+          : w === 'done' ? t('Nothing completed yet','Nada completado todavía')
+                         : t('No drafts','Sin borradores'),
+          t('A protocol is a name, the compounds inside it and how often you put them.',
+            'Un protocolo es un nombre, los compuestos que lleva dentro y cada cuándo te los pones.'),
+          '<button class="btn" data-new-prot>' + t('New protocol','Nuevo protocolo') + '</button>') + '</div>') +
+    ruo();
 }
-/* UN PROTOCOLO ES UN RECORRIDO, NO UNA FILA.
+/* LA TARJETA DE PROTOCOLO, EXACTAMENTE COMO LA REFERENCIA
 
-   El usuario quiere saber cuatro cosas de un vistazo: dónde empezó, dónde está
-   ahora, cuánto le queda y qué toca después. Antes eso era una tarjeta con una
-   barra dentro; ahora es una composición con el producto real a un lado y el
-   recorrido —hitos, no porcentaje suelto— al otro. */
-function protCard(p){
-  const ph = phase(p), pr = planProgress(p), nx = nextDue(p);
-  const st = planState(p), abierto = S.open === p.id;
-  const comps = planCompounds(p);
-  const linea = lineaDe(p.c);
+     FAT LOSS PROTOCOL                              (ACTIVO)
+     Fase 2 · Semana 3 de 8
+     [vial] [vial] [vial] [vial]
+     CJC-1295  Ipamorelin  BPC-157   +2 más
+     ─────────────────────────────────────────────
+     Próxima inyección
+     Hoy, 8:00 PM                                        ›
+
+   Cuatro cosas y en ese orden: qué es, dónde va, qué lleva dentro y cuándo
+   toca. La fila de viales es la que hace que el protocolo se reconozca sin
+   leer el nombre, y por eso lleva el producto de verdad y no un icono.
+
+   `corto` la usa la portada: allí la tarjeta no se despliega, sólo enseña. */
+function protCard(p, corto){
+  const ph = phase(p), nx = nextDue(p);
+  const st = planState(p), abierto = !corto && S.open === p.id;
+  const items = pItems(p);
   const hoy = today();
 
-  /* Los hitos: inicio, la fase de ahora, el final. Con fechas de verdad, no
-     con un tanto por ciento que no dice cuándo. */
-  const hitos = [];
-  if(p.start) hitos.push({k:p.start, l:t('Started','Empezó'), on:true});
-  if(ph && ph.total) hitos.push({k:null,
-    l:t('Phase ','Fase ') + ph.f + ' · ' + t('week ','semana ') + ph.w + t(' of ',' de ') + ph.total,
-    on:true, now:true});
-  if(nx) hitos.push({k:nx, l:t('Next injection','Próxima inyección'), next:true});
-  if(p.end) hitos.push({k:p.end, l:t('Ends','Termina'), on:false});
+  /* Cuatro huecos, como en la referencia: tres viales y el «+N más». Si caben
+     cuatro sin resto, se ponen los cuatro. */
+  const cabe = items.length <= 4 ? items.length : 3;
+  const resto = items.length - cabe;
 
-  return '<article class="prot l-' + linea + (abierto ? ' open' : '') + '">' +
-    '<div class="prot-art">' + vial(p.c, 'lg') + '</div>' +
-    '<div class="prot-bd">' +
-      '<div class="prot-hd">' +
-        '<div><h3 class="h2">' + E(p.c) + '</h3>' +
-          '<div class="meta" style="margin-top:5px">' + E(p.dose) + ' ' + E(p.unit) +
-            ' · ' + E(freqText(p)) + '</div></div>' +
-        '<span class="badge' + (st === 'active' ? ' solid' : '') + '">' +
-          (st === 'active' ? t('ACTIVE','ACTIVO')
-            : st === 'done' ? t('DONE','COMPLETADO') : t('DRAFT','BORRADOR')) + '</span>' +
-      '</div>' +
+  const fase = ph
+    ? (ph.total ? t('Phase ','Fase ') + ph.f + ' · ' + t('Week ','Semana ') + ph.w +
+                  t(' of ',' de ') + ph.total
+                : t('Maintenance · Ongoing','Mantenimiento · Continuo'))
+    : freqText(p);
 
-      (pr != null ? '<div class="bar" style="margin-top:16px"><i style="width:' +
-        (pr*100).toFixed(0) + '%"></i></div>' : '') +
-
-      (hitos.length ? '<ol class="miles">' + hitos.map(h =>
-        '<li' + (h.now ? ' class="now"' : h.next ? ' class="next"' : '') + '>' +
-          '<span class="ml">' + h.l + '</span>' +
-          (h.k ? '<span class="mk">' + human(h.k) +
-            (h.next && p.time ? ', ' + E(p.time) : '') + '</span>' : '') +
-        '</li>').join('') + '</ol>' : '') +
-
-      (comps.length > 1 ? '<div class="prot-comps">' + comps.slice(0,5).map(c =>
-        '<span class="pc">' + vial(c, 'sm') + '<span>' + E(c) + '</span></span>').join('') +
-        (comps.length > 5 ? '<span class="more">+' + (comps.length-5) + '</span>' : '') +
-        '</div>' : '') +
-
-      '<div class="acts" style="margin-top:18px">' +
-        '<button class="btn ghost sm" data-open-prot="' + p.id + '">' +
-          (abierto ? t('Hide details','Ocultar detalles') : t('View details','Ver detalles')) + '</button>' +
-      '</div>' +
-
-      (abierto ? '<div class="prot-more">' + protBody(p) + '</div>' : '') +
+  return '<article class="prot">' +
+    '<div class="prot-hd">' +
+      '<h3 class="prot-nm">' + E(pName(p)) + '</h3>' +
+      '<span class="badge' + (st === 'active' ? ' ink' : '') + '">' +
+        (st === 'active' ? t('ACTIVE','ACTIVO')
+          : st === 'done' ? t('DONE','COMPLETADO') : t('DRAFT','BORRADOR')) + '</span>' +
     '</div>' +
+    '<p class="prot-ph">' + E(fase) + '</p>' +
+
+    (items.length ? '<div class="prot-vials">' +
+      items.slice(0, cabe).map(it => '<span class="pv">' + vial(it.c, 'sm') +
+        '<span>' + E(it.c) + '</span></span>').join('') +
+      (resto > 0 ? '<span class="pv more"><b>+' + resto + t(' more',' más') + '</b></span>' : '') +
+    '</div>' : '') +
+
+    '<button class="prot-next" data-open-prot="' + p.id + '">' +
+      '<span class="bd">' +
+        (nx ? '<span class="lb">' + t('Next injection','Próxima inyección') + '</span>' +
+              '<span class="vl">' + human(nx) + (p.time ? ', ' + E(p.time) : '') + '</span>'
+            : '<span class="lb">' + t('Schedule','Pauta') + '</span>' +
+              '<span class="vl">' + E(freqText(p) || t('Not set','Sin definir')) + '</span>') +
+      '</span><span class="cv"></span></button>' +
+
+    (abierto ? '<div class="prot-more">' + protBody(p) + '</div>' : '') +
   '</article>';
 }
+/* El detalle: la línea de tiempo de dos semanas, los compuestos con su dosis y
+   su palomita de hoy, la ficha de la pauta y las acciones. */
 function protBody(p){
   const kv = (k, v) => v ? '<div class="kv"><span>' + k + '</span><b>' + E(v) + '</b></div>' : '';
-  const e = libFind(p.c);
   const hoy = today();
+  const items = pItems(p);
+  /* Un día futuro que toca NO es un día fallado. Marcarlo en rojo punteado
+     acusaba al usuario de no haberse puesto todavía una dosis de la semana que
+     viene. Sólo se cuenta como fallo lo que ya pasó. */
   let tl = '';
   for(let i = -6; i <= 7; i++){
     const k = shift(hoy, i), d = dueOn(p, k);
-    tl += '<i class="' + (!d ? '' : taken(k, p.id) ? 'on' : 'miss') + '"></i>';
+    tl += '<i class="' + (!d ? '' : taken(k, p.id) ? 'on' : (k > hoy ? 'pend' : 'miss')) +
+      '"></i>';
   }
-  return '<div class="eyebrow" style="margin-bottom:8px">' + t('Timeline','Línea de tiempo') + '</div>' +
-    '<div class="streak" style="grid-template-columns:repeat(14,1fr);max-width:280px">' + tl + '</div>' +
-    '<div style="margin-top:18px">' +
-      kv(t('Compound','Compuesto'), p.c) +
-      kv(t('Dose','Dosis'), p.dose + ' ' + p.unit) +
+  const hoyToca = dueOn(p, hoy);
+
+  return '<div class="eyebrow" style="margin-bottom:8px">' + t('Last two weeks','Las dos últimas semanas') + '</div>' +
+    '<div class="streak" style="grid-template-columns:repeat(14,1fr);max-width:300px">' + tl + '</div>' +
+
+    '<div class="eyebrow" style="margin:20px 0 2px">' + t('Compounds','Compuestos') +
+      (hoyToca ? ' · ' + t('today','hoy') : '') + '</div>' +
+    '<div class="bare">' + items.map((it, i) => {
+      const on = takenItem(hoy, p.id, i);
+      return '<div class="row">' + vial(it.c, 'sm') +
+        '<span class="bd"><span class="nm">' + E(it.c) + '</span>' +
+          '<span class="mt">' + E(doseTxt(it)) + '</span></span>' +
+        (hoyToca ? '<button class="tick' + (on ? ' on' : '') + '" data-tick="' + p.id + '#' + i +
+          '|' + hoy + '" aria-label="' + (on ? t('Logged','Registrado') : t('Log','Registrar')) +
+          '">' + svg('check') + '</button>'
+        : '<button class="ibtn" data-comp="' + E(it.c) + '" aria-label="' +
+          t('View compound','Ver compuesto') + '">' + svg('right') + '</button>') +
+      '</div>';
+    }).join('') + '</div>' +
+
+    '<div style="margin-top:20px">' +
       kv(t('Frequency','Frecuencia'), freqText(p)) +
       kv(t('Time','Hora'), p.time) +
       kv(t('Start','Inicio'), p.start ? human(p.start) : '') +
       kv(t('End','Fin'), p.end ? human(p.end) : t('open','abierto')) +
-      (e ? kv(t('Product','Producto'), (e.sku || '') + (e.esp ? ' · ' + e.esp : '')) : '') +
+      kv(t('Injections per dose day','Inyecciones por día de pauta'), String(items.length)) +
     '</div>' +
     (p.notes ? '<p class="body" style="margin-top:14px">' + E(p.notes) + '</p>' : '') +
     '<div class="acts" style="margin-top:18px">' +
+      '<button class="btn ghost sm" data-edit-prot="' + p.id + '">' + t('Edit','Editar') + '</button>' +
       '<button class="btn ghost sm" data-toggle="' + p.id + '">' +
         (p.active ? t('Pause','Pausar') : t('Resume','Reanudar')) + '</button>' +
-      (e ? '<button class="btn ghost sm" data-comp="' + E(e.n) + '">' +
-        t('View compound','Ver compuesto') + '</button>' : '') +
       '<button class="btn quiet sm" data-del="' + p.id + '">' + t('Delete','Borrar') + '</button>' +
     '</div>';
 }
+/* EL FORMULARIO DE PILA
+
+   Un protocolo lleva N compuestos, así que la parte de arriba del formulario
+   es una lista a la que se añade, no un par de campos sueltos. El resto —cada
+   cuándo, desde cuándo, a qué hora— es de la pila entera, porque es lo que
+   comparten: nadie escribe «BPC a las ocho los lunes y TB a las nueve los
+   martes» dentro del MISMO protocolo; eso son dos protocolos. */
+const NEWP = {items:[], edit:null};
+
 function protForm(){
-  return '<div class="card pad" style="margin-top:14px">' +
+  const ed = NEWP.edit ? S.plan.filter(p => p.id === NEWP.edit)[0] : null;
+  return '<div class="card pad" style="margin-bottom:14px">' +
     '<div style="display:flex;justify-content:space-between;align-items:center">' +
-      '<span class="eyebrow">' + t('New protocol','Nuevo protocolo') + '</span>' +
-      '<button class="ibtn" data-close-prot aria-label="' + t('Close','Cerrar') + '">' + svg('close') + '</button></div>' +
+      '<span class="eyebrow">' + (ed ? t('Edit protocol','Editar protocolo')
+                                     : t('New protocol','Nuevo protocolo')) + '</span>' +
+      '<button class="ibtn" data-close-prot aria-label="' + t('Close','Cerrar') + '">' +
+        svg('close') + '</button></div>' +
+
+    '<label>' + t('Protocol name','Nombre del protocolo') + '</label>' +
+    '<input id="pxName" placeholder="' + t('Fat Loss Protocol','Protocolo de definición') +
+      '" value="' + E(ed ? pName(ed) : '') + '"/>' +
+
+    '<label>' + t('Compounds in this protocol','Compuestos de este protocolo') + '</label>' +
+    '<div class="items" id="pxItems">' + itemsHTML() + '</div>' +
+    '<div class="r3" style="margin-top:10px">' +
+      '<input id="pxC" list="pxCL" placeholder="' + t('Compound','Compuesto') + '"/>' +
+      '<input id="pxD" inputmode="decimal" placeholder="' + t('Dose','Dosis') + '"/>' +
+      '<select id="pxU"><option>mcg</option><option>mg</option><option>iu</option>' +
+        '<option>ml</option></select>' +
+    '</div>' + datalist() +
+    '<div class="acts" style="margin-top:10px">' +
+      '<button class="btn ghost sm" id="pxAddIt">' + svg('plus') +
+        t('Add compound','Añadir compuesto') + '</button></div>' +
+
     '<div class="r2">' +
-      '<div><label>' + t('Compound','Compuesto') + '</label>' +
-        '<input id="pxC" list="pxCL" placeholder="BPC 157"/>' + datalist() + '</div>' +
-      '<div><label>' + t('Time','Hora') + '</label><input id="pxT" type="time"/></div></div>' +
-    '<div class="r2">' +
-      '<div><label>' + t('Dose','Dosis') + '</label><input id="pxD" inputmode="decimal" placeholder="250"/></div>' +
-      '<div><label>' + t('Unit','Unidad') + '</label>' +
-        '<select id="pxU"><option>mcg</option><option>mg</option><option>iu</option><option>ml</option></select></div></div>' +
-    '<label>' + t('How often','Cada cuándo') + '</label>' +
-    '<select id="pxF">' + FREQ.map(f => '<option value="' + f.v + '">' + t(f.en, f.es) + '</option>').join('') + '</select>' +
+      '<div><label>' + t('How often','Cada cuándo') + '</label>' +
+        '<select id="pxF">' + FREQ.map(f => '<option value="' + f.v + '"' +
+          (ed && ed.freq === f.v ? ' selected' : '') + '>' + t(f.en, f.es) +
+          '</option>').join('') + '</select></div>' +
+      '<div><label>' + t('Time','Hora') + '</label>' +
+        '<input id="pxT" type="time" value="' + E(ed ? (ed.time||'') : '') + '"/></div></div>' +
     '<div id="pxFX"></div>' +
     '<div class="r2">' +
-      '<div><label>' + t('Start','Inicio') + '</label><input id="pxS" type="date" value="' + today() + '"/></div>' +
-      '<div><label>' + t('End (optional)','Fin (opcional)') + '</label><input id="pxE" type="date"/></div></div>' +
-    '<label>' + t('Notes','Notas') + '</label><textarea id="pxN"></textarea>' +
+      '<div><label>' + t('Start','Inicio') + '</label>' +
+        '<input id="pxS" type="date" value="' + (ed && ed.start ? ed.start : today()) + '"/></div>' +
+      '<div><label>' + t('End (optional)','Fin (opcional)') + '</label>' +
+        '<input id="pxE" type="date" value="' + E(ed && ed.end ? ed.end : '') + '"/></div></div>' +
+    '<label>' + t('Notes','Notas') + '</label>' +
+    '<textarea id="pxN">' + E(ed ? (ed.notes||'') : '') + '</textarea>' +
     '<div class="acts" style="margin-top:18px"><button class="btn" id="pxAdd">' +
-      t('Save protocol','Guardar protocolo') + '</button></div></div>';
+      (ed ? t('Save changes','Guardar cambios') : t('Save protocol','Guardar protocolo')) +
+      '</button></div></div>';
+}
+function itemsHTML(){
+  if(!NEWP.items.length)
+    return '<div class="empty-it">' +
+      t('No compounds yet. Add at least one.','Todavía ninguno. Añade al menos uno.') + '</div>';
+  return NEWP.items.map((it, i) => '<div class="it">' + vial(it.c, 'xs') +
+    '<span class="bd"><b>' + E(it.c) + '</b><span>' + E(doseTxt(it)) + '</span></span>' +
+    '<button class="ibtn" data-rm-it="' + i + '" aria-label="' + t('Remove','Quitar') + '">' +
+      svg('close') + '</button></div>').join('');
 }
 function datalist(){
   return '<datalist id="pxCL">' + LIB.map(e => '<option value="' + E(e.n) + '">').join('') + '</datalist>';
@@ -1186,18 +1353,21 @@ function vComp(){
   if(abierto) return compDetail(abierto, full);
 
   return '' +
-    phead(t('COMPOUNDS','COMPUESTOS'), t('The library.','La biblioteca.'),
-      t('%n entries from the PEPTIDEX operations record. Research and education only — no therapeutic claims.',
-        '%n fichas del registro de operación de PEPTIDEX. Sólo investigación y formación — sin afirmaciones terapéuticas.')
-      .replace('%n', LIB.length)) +
-    '<div class="search" style="margin-bottom:14px">' + svg('search') +
-      '<input id="lq" placeholder="' + t('Search compounds','Buscar compuestos') + '" value="' + E(S.lq||'') + '"/></div>' +
-    '<div class="pills">' +
-      '<button class="pill' + (fam ? '' : ' on') + '" data-sub="comp:">' + t('All','Todos') +
+    navh(BACKTO.comp, t('Compounds','Compuestos')) +
+    /* El buscador va LO PRIMERO, como en la referencia: sesenta fichas se
+       recorren buscando, no hojeando, y el gesto tiene que estar donde cae el
+       pulgar al abrir. */
+    '<div class="field">' + svg('search') +
+      '<input id="lq" placeholder="' + t('Search compounds','Buscar compuestos') +
+      '" value="' + E(S.lq||'') + '"/>' +
+      (S.lq ? '<button class="x" data-clear-q aria-label="' + t('Clear','Limpiar') + '">' +
+        svg('close') + '</button>' : '') + '</div>' +
+    '<div class="chips">' +
+      '<button class="' + (fam ? '' : 'on') + '" data-sub="comp:">' + t('All','Todos') +
         '<i>' + LIB.length + '</i></button>' +
       FAM.map(f => {
         const n = LIB.filter(e => family(e) === f.id).length;
-        return n ? '<button class="pill' + (fam === f.id ? ' on' : '') + '" data-sub="comp:' + f.id + '">' +
+        return n ? '<button class="' + (fam === f.id ? 'on' : '') + '" data-sub="comp:' + f.id + '">' +
           t(f.en, f.es) + '<i>' + n + '</i></button>' : '';
       }).join('') + '</div>' +
     /* SECCIONADA, NO UN MURO DE SESENTA FILAS.
@@ -1228,7 +1398,7 @@ function vComp(){
               '<div class="bare complist">' + sueltos.map(compRow).join('') + '</div>' +
             '</section>' : '';
           })())
-      : '<div class="band">' + empty('search', t('Nothing matches','Nada coincide'),
+      : '<div class="card">' + empty('search', t('Nothing matches','Nada coincide'),
           E(S.lq || ''), '<button class="btn ghost" data-clear-q>' + t('Clear','Limpiar') + '</button>') + '</div>') +
     (!full && LIB.length ? '<div class="card" style="margin-top:12px">' + empty('lock',
       t('Full sheet is Ultimate','La ficha completa es de Ultimate'),
@@ -1239,12 +1409,19 @@ function vComp(){
 }
 
 
-/* Una fila de compuesto. Una sola definición: la usan la lista plana (con
-   filtro o búsqueda) y la seccionada por familia. Duplicarla era la manera
-   segura de que las dos se separaran en el siguiente cambio. */
+/* LA FILA DE COMPUESTO, COMO LA REFERENCIA
+
+     [vial]  BPC-157
+             Compuesto de Protección Corporal
+             Solo para uso de investigación                    ›
+
+   Tres renglones exactos: nombre, qué es, y el aviso. El tercero no es
+   relleno legal metido con calzador — en una app de material de investigación
+   es parte de la identidad de la ficha, y por eso va en la fila y no sólo al
+   pie de la pantalla. */
 function compRow(e){
   const full = can('ult');
-  return '<button class="row go" data-comp="' + E(e.n) + '">' + vial(e.n) +
+  return '<button class="row go" data-comp="' + E(e.n) + '">' + vial(e.n, 'md') +
     '<span class="bd"><span class="nm">' + E(e.n) + '</span>' +
       '<span class="mt">' + E(full && e.mec ? e.mec.slice(0,72) : (e.cat||'')) + '</span>' +
       '<span class="mt dim">' + E(research(e)) + '</span></span>' +
@@ -1270,16 +1447,17 @@ function compDetail(e, full){
   const linea = LINEA[family(e)] || 'fitness';
 
   return '' +
-    '<div class="acts" style="margin:6px 0 0"><button class="btn quiet sm" data-back-comp>' +
-      svg('left') + t('Compounds','Compuestos') + '</button></div>' +
+    navh('comp', t('Compound','Compuesto'),
+      navActRaw('plus', 'data-add-to-prot="' + E(e.n) + '"',
+                t('Add to a protocol','Añadir a un protocolo'))) +
 
-    /* HÉROE — el producto a tamaño de producto y el nombre a tamaño de
-       portada. Sin tarjeta: lo que enmarca es el aire y un filete al pie. */
-    '<section class="phero-prod l-' + linea + '">' +
+    /* El producto a tamaño de producto y el nombre a tamaño de portada. Sin
+       tarjeta alrededor: lo que enmarca es el aire. */
+    '<section class="phero-prod">' +
       '<div class="pp-art">' + vial(e.n, 'hero') + famLock(linea) + '</div>' +
       '<div class="pp-bd">' +
         (f ? '<span class="eyebrow">' + t(f.en, f.es) + '</span>' : '') +
-        '<h1 class="display sm">' + E(e.n) + '</h1>' +
+        '<h1>' + E(e.n) + '</h1>' +
         (e.sku ? '<div class="pp-sku">' + E(e.sku) + '</div>' : '') +
         (e.esp ? '<p class="lede sm">' + E(e.esp) + '</p>' : '') +
         '<div class="tags" style="margin-top:18px">' +
@@ -1291,28 +1469,25 @@ function compDetail(e, full){
       '</div>' +
     '</section>' +
 
-    (!full ? '<section class="band">' + empty('lock',
+    (!full ? '<div class="card">' + empty('lock',
       t('Full sheet is Ultimate','La ficha completa es de Ultimate'),
       t('Mechanism, vial presentation, solvent, cold chain and your reference sheet.',
         'Mecanismo, presentación, solvente, cadena de frío y tu hoja de referencia.'),
-      '<button class="btn" data-go="set">' + t('See plans','Ver planes') + '</button>') + '</section>'
+      '<button class="btn" data-go="set">' + t('See plans','Ver planes') + '</button>') + '</div>'
     :
-    /* RESUMEN — a ancho de lectura, tipografía grande, sin caja */
-    (e.mec ? '<section class="band">' +
-      '<div class="band-h"><span class="eyebrow">' + t('Overview','Resumen') + '</span></div>' +
+    /* RESUMEN — a ancho de lectura, sin caja */
+    (e.mec ? sectH(t('Overview','Resumen')) +
       '<p class="read">' + E(e.mec) + '</p>' +
-      (e.ins ? '<p class="read dim">' + E(e.ins) + '</p>' : '') + '</section>' : '') +
+      (e.ins ? '<p class="read dim">' + E(e.ins) + '</p>' : '') : '') +
 
-    /* ESPECIFICACIONES — hoja técnica: dos columnas de filete, como Leica */
-    (ficha ? '<section class="band">' +
-      '<div class="band-h"><span class="eyebrow">' + t('Specifications','Especificaciones') + '</span></div>' +
-      '<div class="spec">' + ficha + '</div></section>' : '') +
+    /* ESPECIFICACIONES — hoja técnica en dos columnas de filete */
+    (ficha ? sectH(t('Specifications','Especificaciones')) +
+      '<div class="spec">' + ficha + '</div>' : '') +
 
     /* INVESTIGACIÓN — la cita, con su marco y su procedencia. Ésta SÍ lleva
        contenedor, y a propósito: es material citado, no dicho por PepX, y el
        marco es lo que lo dice sin tener que escribirlo. */
-    (hayRef ? '<section class="band">' +
-      '<div class="band-h"><span class="eyebrow">' + t('Research','Investigación') + '</span></div>' +
+    (hayRef ? sectH(t('Research','Investigación')) +
       '<div class="quote">' +
         '<div class="qh">' + t('From your reference sheet','De tu hoja de referencia') + '</div>' +
         kv(t('Initial','Inicial'), r.ini) + kv(t('Maintenance','Mantenimiento'), r.mant) +
@@ -1321,17 +1496,16 @@ function compDetail(e, full){
         (r.nota ? '<p class="meta" style="margin-top:12px">' + E(r.nota) + '</p>' : '') +
         '<div class="qf">' + t('Quoted from the operations record. PepX does not apply these numbers on its own — you read them and enter what you decide.',
                                'Citado del registro de operación. PepX no aplica estos números por su cuenta — los lees tú y escribes lo que decidas.') + '</div>' +
-      '</div></section>' : '')) +
+      '</div>' : '')) +
 
     /* RELACIONADOS — rejilla de producto, no lista de filas */
-    (rel.length ? '<section class="band">' +
-      '<div class="band-h"><span class="eyebrow">' + t('Related compounds','Compuestos relacionados') + '</span></div>' +
+    (rel.length ? sectH(t('Related compounds','Compuestos relacionados')) +
       '<div class="relgrid">' + rel.map(x =>
         '<button class="relcard" data-comp="' + E(x.n) + '">' +
-          '<span class="relart">' + vial(x.n, 'lg') + '</span>' +
+          vial(x.n, 'lg') +
           '<span class="relnm">' + E(x.n) + '</span>' +
           '<span class="relsku">' + E(x.sku || (x.cat || '')) + '</span>' +
-        '</button>').join('') + '</div></section>' : '') +
+        '</button>').join('') + '</div>' : '') +
     ruo();
 }
 
@@ -1341,64 +1515,85 @@ function compDetail(e, full){
 function vInj(){
   const sel = S.jsel || today();
   const hoy = today();
-  /* la tira de semana de la referencia: siete días alrededor del elegido */
+  /* LA TIRA DE SEMANA DE LA REFERENCIA: DOM…SÁB con la cifra debajo y el día
+     elegido en círculo sólido. El punto bajo la cifra marca que ese día hay
+     algo apuntado, para que la semana se lea sin tocarla. */
   const base = shift(sel, -((parse(sel).getDay()+7) % 7));
   let strip = '';
   for(let i = 0; i < 7; i++){
     const k = shift(base, i), d = parse(k);
-    strip += '<button class="' + (k === sel ? 'on' : '') + '" data-day="' + k + '">' +
-      '<em>' + DOW3()[(d.getDay()+6)%7] + '</em><b>' + d.getDate() + '</b></button>';
+    const algo = !!(S.log[k] && Object.keys(S.log[k]).length);
+    strip += '<button class="' + (k === sel ? 'on ' : '') + (algo ? 'has' : '') +
+      '" data-day="' + k + '"><em>' + DOW3()[(d.getDay()+6)%7] + '</em>' +
+      '<b>' + d.getDate() + '</b></button>';
   }
-  const delDia = dueList(sel), reg = S.log[sel] || {};
+
+  /* Cada compuesto de cada protocolo que toque ese día es UNA fila con su
+     palomita, como en la referencia. Antes una pila de cinco compuestos era
+     una sola casilla, y marcarla decía que te habías puesto cinco. */
+  const filas = [];
+  dueList(sel).forEach(p => pItems(p).forEach((it, i) => filas.push({p:p, it:it, i:i})));
+  const hechas = filas.filter(f => takenItem(sel, f.p.id, f.i)).length;
+  const sueltas = (S.extra && S.extra[sel]) || [];
   const hist = Object.keys(S.log).sort().reverse().slice(0, 20);
 
   return '' +
-    phead(t('INJECTIONS','INYECCIONES'), t('Injection log.','Registro de inyecciones.'),
-      t('Every dose you logged, when you logged it and where it went.',
-        'Cada dosis que registraste, cuándo la registraste y dónde fue.'),
-      '<button class="btn sm" data-new-inj>' + svg('plus') + t('Log','Registrar') + '</button>') +
+    navh(BACKTO.inj, t('Injection log','Registro de inyecciones'),
+      navActRaw('plus', 'data-new-inj', t('Log injection','Registrar inyección'))) +
 
-    '<div class="card pad">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between">' +
-        '<b style="font-size:14px;letter-spacing:.02em;text-transform:uppercase">' +
-          MONL()[parse(sel).getMonth()] + ' ' + parse(sel).getFullYear() + '</b>' +
-        '<button class="ibtn" data-go="cal" aria-label="' + t('Calendar','Calendario') + '">' +
-          svg('right') + '</button></div>' +
-      '<div class="weekstrip">' + strip + '</div>' +
-    '</div>' +
+    '<div class="monthbar">' +
+      '<b>' + MONL()[parse(sel).getMonth()].toUpperCase() + ' ' + parse(sel).getFullYear() + '</b>' +
+      '<button class="ibtn" data-go="cal" aria-label="' + t('Calendar','Calendario') + '">' +
+        svg('right') + '</button></div>' +
+    '<div class="week">' + strip + '</div>' +
 
     (S.jnew ? injForm(sel) : '') +
 
-    '<div class="sect-h"><span class="eyebrow">' + longDate(sel) + '</span>' +
-      '<span class="meta">' + Object.keys(reg).length + '/' + delDia.length + '</span></div>' +
-    '<div class="card">' +
-      (delDia.length ? delDia.map(p => {
-        const on = taken(sel, p.id);
-        return '<div class="row">' + vial(p.c) +
-          '<span class="bd"><span class="nm">' + E(p.c) + '</span>' +
-            '<span class="mt">' + E(p.dose) + ' ' + E(p.unit) +
-              (on && reg[p.id] && reg[p.id].z ? ' · ' + E(zName(reg[p.id].z)) : '') + '</span></span>' +
-          '<span class="rt meta">' + (on && reg[p.id] && reg[p.id].t ? E(reg[p.id].t) : E(p.time || '')) + '</span>' +
-          '<button class="ibtn' + (on ? '' : ' bord') + '" data-tick="' + p.id + '|' + sel +
-            '" aria-label="' + (on ? t('Logged','Registrado') : t('Log','Registrar')) + '">' +
-            svg(on ? 'check' : 'plus') + '</button></div>';
-      }).join('')
-      : empty('inj', t('Nothing scheduled','Nada programado'),
-          t('Your protocols decide this.','Esto lo deciden tus pautas.'))) +
-    '</div>' +
+    sectH(longDate(sel) + (filas.length ? ' · ' + hechas + '/' + filas.length : '')) +
+    ((filas.length || sueltas.length) ? '<div class="card">' +
+      filas.map(f => {
+        const on = takenItem(sel, f.p.id, f.i);
+        const m = itemMeta(sel, f.p.id, f.i);
+        return '<div class="row">' + vial(f.it.c, 'sm') +
+          '<span class="bd"><span class="nm">' + E(f.it.c) + '</span>' +
+            '<span class="mt">' + E(doseTxt(f.it)) +
+              (m && m.z ? ' · ' + E(zName(m.z)) : '') + '</span></span>' +
+          '<span class="rt">' + E((m && m.t) || f.p.time || '') + '</span>' +
+          '<button class="tick' + (on ? ' on' : '') + '" data-tick="' + f.p.id + '#' + f.i +
+            '|' + sel + '" aria-label="' + (on ? t('Logged','Registrado') : t('Log','Registrar')) +
+            '">' + svg('check') + '</button></div>';
+      }).join('') +
+      sueltas.map((x, i) => '<div class="row">' + vial(x.c, 'sm') +
+        '<span class="bd"><span class="nm">' + E(x.c) + '</span>' +
+          '<span class="mt">' + E([x.d, x.u].filter(Boolean).join(' ')) +
+            (x.z ? ' · ' + E(zName(x.z)) : '') + ' · ' + t('off protocol','fuera de pauta') +
+          '</span></span>' +
+        '<span class="rt">' + E(x.t || '') + '</span>' +
+        '<button class="ibtn" data-rm-extra="' + sel + '|' + i + '" aria-label="' +
+          t('Remove','Quitar') + '">' + svg('close') + '</button></div>').join('') +
+    '</div>'
+    : '<div class="card">' + empty('inj', t('Nothing scheduled','Nada programado'),
+        t('Your protocols decide this. You can still log something off protocol.',
+          'Esto lo deciden tus pautas. Aun así puedes registrar algo fuera de pauta.')) + '</div>') +
 
     '<div class="acts" style="margin-top:12px"><button class="btn ghost wide sq" data-new-inj>' +
       svg('plus') + t('Log new injection','Registrar nueva inyección') + '</button></div>' +
 
-    '<div class="sect-h"><span class="eyebrow">' + t('History','Historial') + '</span></div>' +
-    (hist.length ? '<div class="card">' + hist.map(k =>
-      '<button class="row go" data-day="' + k + '">' +
+    sectH(t('History','Historial')) +
+    (hist.length ? '<div class="card">' + hist.map(k => {
+      const n = Object.keys(S.log[k]).filter(x => S.log[k][x]).length;
+      const nombres = {};
+      Object.keys(S.log[k]).forEach(id => {
+        const pid = String(id).split('#')[0];
+        const p = S.plan.filter(x => x.id === pid)[0];
+        if(p) nombres[pName(p)] = 1;
+      });
+      return '<button class="row go" data-day="' + k + '">' +
         '<span class="bd"><span class="nm">' + longDate(k) + '</span>' +
-        '<span class="mt">' + Object.keys(S.log[k]).map(id => {
-          const p = S.plan.filter(x => x.id === id)[0]; return p ? E(p.c) : '';
-        }).filter(Boolean).join(' · ') + '</span></span>' +
-        '<span class="rt"><b class="num" style="font-size:15px">' + Object.keys(S.log[k]).length + '</b></span>' +
-      '</button>').join('') + '</div>'
+        '<span class="mt">' + E(Object.keys(nombres).join(' · ')) + '</span></span>' +
+        '<span class="rt"><b class="num" style="font-size:15px">' + n + '</b></span>' +
+      '</button>';
+    }).join('') + '</div>'
     : '<div class="card">' + empty('inj', t('No history yet','Sin historial'),
         t('Every dose you tick appears here.','Cada dosis que marques aparece aquí.')) + '</div>') +
     ruo();
@@ -1412,10 +1607,23 @@ function injForm(sel){
       '<div><label>' + t('Date','Fecha') + '</label><input id="jD" type="date" value="' + sel + '"/></div>' +
       '<div><label>' + t('Time','Hora') + '</label><input id="jT" type="time" value="' +
         new Date().toTimeString().slice(0,5) + '"/></div></div>' +
-    '<label>' + t('Protocol','Protocolo') + '</label>' +
-    '<select id="jP">' + (S.plan.length
-      ? S.plan.map(p => '<option value="' + p.id + '">' + E(p.c) + ' · ' + E(p.dose) + ' ' + E(p.unit) + '</option>').join('')
-      : '<option value="">' + t('No protocols yet','Todavía no hay protocolos') + '</option>') + '</select>' +
+    /* Se elige el COMPUESTO, no el protocolo: quien registra sabe qué se
+       acaba de poner, no en qué pila lo tenía escrito. La última opción deja
+       apuntar algo que no está en ninguna pauta, porque eso pasa. */
+    '<label>' + t('What you put','Qué te pusiste') + '</label>' +
+    '<select id="jP">' +
+      S.plan.map(p => pItems(p).map((it, i) =>
+        '<option value="' + p.id + '#' + i + '">' + E(it.c) +
+        (doseTxt(it) ? ' · ' + E(doseTxt(it)) : '') + ' — ' + E(pName(p)) + '</option>').join('')
+      ).join('') +
+      '<option value="__otro">' + t('Something else…','Otra cosa…') + '</option>' +
+    '</select>' +
+    '<div id="jOtro" class="sr">' +
+      '<div class="r3" style="margin-top:12px">' +
+        '<input id="jC" list="pxCL" placeholder="' + t('Compound','Compuesto') + '"/>' +
+        '<input id="jDose" inputmode="decimal" placeholder="' + t('Dose','Dosis') + '"/>' +
+        '<select id="jU"><option>mcg</option><option>mg</option><option>iu</option>' +
+          '<option>ml</option></select></div>' + datalist() + '</div>' +
     '<label>' + t('Site (optional)','Zona (opcional)') + '</label>' +
     '<select id="jZ"><option value="">—</option>' +
       ZONES.map(z => '<option value="' + z.id + '">' + E(zName(z.id)) + '</option>').join('') + '</select>' +
@@ -1441,11 +1649,10 @@ function vCal(){
       (algo ? ' done' : due.length ? ' due' : '') + '" data-day="' + k + '">' +
       '<b>' + d + '</b><u></u></button>';
   }
-  const delDia = dueList(sel), reg = S.log[sel] || {};
+  const filas = [];
+  dueList(sel).forEach(p => pItems(p).forEach((it, i) => filas.push({p:p, it:it, i:i})));
   return '' +
-    phead(t('CALENDAR','CALENDARIO'), t('The month.','El mes.'),
-      t('Filled dot: something was logged. Hollow: something was scheduled.',
-        'Punto lleno: se registró algo. Hueco: había algo programado.')) +
+    navh(BACKTO.cal, t('Calendar','Calendario')) +
     '<div class="card pad-lg"><div class="cal">' +
       '<div class="calhd">' +
         '<button class="ibtn" data-mon="-1" aria-label="' + t('Previous','Anterior') + '">' + svg('left') + '</button>' +
@@ -1453,15 +1660,19 @@ function vCal(){
         '<button class="ibtn" data-mon="1" aria-label="' + t('Next','Siguiente') + '">' + svg('right') + '</button></div>' +
       '<div class="caldow">' + DOW().map(d => '<span>' + d + '</span>').join('') + '</div>' +
       '<div class="calgrid">' + cells + '</div>' +
-    '</div></div>' +
-    '<div class="sect-h"><span class="eyebrow">' + longDate(sel) + '</span></div>' +
-    '<div class="card">' + (delDia.length ? delDia.map(p => {
-      const on = taken(sel, p.id);
-      return '<div class="row">' + vial(p.c) +
-        '<span class="bd"><span class="nm">' + E(p.c) + '</span>' +
-        '<span class="mt">' + E(p.dose) + ' ' + E(p.unit) + '</span></span>' +
-        '<button class="ibtn' + (on ? '' : ' bord') + '" data-tick="' + p.id + '|' + sel + '">' +
-          svg(on ? 'check' : 'plus') + '</button></div>';
+    '</div>' +
+    '<p class="meta" style="margin:16px 0 0">' +
+      t('Filled dot: something was logged. Hollow: something was scheduled.',
+        'Punto lleno: se registró algo. Hueco: había algo programado.') + '</p></div>' +
+    sectH(longDate(sel)) +
+    '<div class="card">' + (filas.length ? filas.map(f => {
+      const on = takenItem(sel, f.p.id, f.i);
+      return '<div class="row">' + vial(f.it.c, 'sm') +
+        '<span class="bd"><span class="nm">' + E(f.it.c) + '</span>' +
+        '<span class="mt">' + E(doseTxt(f.it)) + ' · ' + E(pName(f.p)) + '</span></span>' +
+        '<button class="tick' + (on ? ' on' : '') + '" data-tick="' + f.p.id + '#' + f.i +
+          '|' + sel + '" aria-label="' + (on ? t('Logged','Registrado') : t('Log','Registrar')) +
+          '">' + svg('check') + '</button></div>';
     }).join('') : empty('cal', t('Nothing scheduled','Nada programado'),
         t('Your protocols decide this.','Esto lo deciden tus pautas.'))) + '</div>' + ruo();
 }
@@ -1498,23 +1709,20 @@ function vProg(){
   const ad = adherence(win);
 
   return '' +
-    phead(t('PROGRESS','PROGRESO'), t('What changed.','Qué cambió.'),
-      t('Numbers you measure yourself. Weekly is enough; monthly and the curve stops meaning anything.',
-        'Números que mides tú. Con una vez por semana basta; una vez al mes y la curva deja de decir nada.')) +
-    '<div class="pills">' + WINS.map(w => '<button class="pill' + (w === win ? ' sel' : '') +
+    navh(BACKTO.prog, t('Progress','Progreso')) +
+    '<div class="chips">' + WINS.map(w => '<button class="' + (w === win ? 'on' : '') +
       '" data-win="' + w + '">' + w + ' ' + t('days','días') + '</button>').join('') + '</div>' +
 
-    '<section class="band lead-insight">' +
-      '<div class="insight">' +
-        '<div class="insight-n"><b>' + Math.round(ad.pct*100) + '<i>%</i></b>' +
-          '<span>' + t('of the %n doses scheduled in these %d days, logged.',
-                       'de las %n dosis programadas en estos %d días, registradas.')
-            .replace('%n', ad.tocaba).replace('%d', win) + '</span></div>' +
-        '<div class="insight-c">' + weekChart() + '</div>' +
+    '<div class="card pad">' +
+      '<div class="stat3">' +
+        stat(Math.round(ad.pct*100) + '%', t('Adherence','Adherencia'), t('logged','registrado')) +
+        stat(ad.hecho, t('Injections','Inyecciones'), t('completed','completadas')) +
+        stat(ad.tocaba - ad.hecho, t('Missed','Sin poner'), t('in window','en la ventana')) +
       '</div>' +
-    '</section>' +
+      '<div style="margin-top:20px">' + weekChart() + '</div>' +
+    '</div>' +
 
-    '<section class="band">' + dp(dpReport(win), true) + '</section>' +
+    sectH('Doc.Peps') + dp(dpReport(win), true) +
     (cards.length ? cards.join('')
       : '<div class="card" style="margin-top:12px">' + empty('prog',
           t('Nothing measured in this window','Nada medido en esta ventana'),
@@ -1552,13 +1760,11 @@ function vLib(){
   const w = sub1('lib', 'calc');
   const body = w === 'hl' ? toolHL() : w === 'zon' ? toolZones() : w === 'inv' ? toolVials() : toolCalc();
   return '' +
-    phead(t('LIBRARY','BIBLIOTECA'), t('The bench.','La mesa.'),
-      t('Arithmetic and records. Every number here is one you entered — nothing on this screen proposes a dose.',
-        'Aritmética y registros. Todos los números de aquí los metiste tú — nada de esta pantalla propone una dosis.')) +
-    '<div class="pills">' + [['calc', t('Calculator','Calculadora')], ['hl', t('Half-life','Vida media')],
+    navh(BACKTO.lib, t('Library','Biblioteca')) +
+    '<div class="chips">' + [['calc', t('Calculator','Calculadora')], ['hl', t('Half-life','Vida media')],
       ['zon', t('Sites','Zonas')], ['inv', t('Vials','Viales')]].map(x =>
-      '<button class="pill' + (w === x[0] ? ' sel' : '') + '" data-sub="lib:' + x[0] + '">' + x[1] + '</button>').join('') +
-    '</div><div style="margin-top:14px">' + body + '</div>' + ruo();
+      '<button class="' + (w === x[0] ? 'on' : '') + '" data-sub="lib:' + x[0] + '">' + x[1] +
+      '</button>').join('') + '</div>' + body + ruo();
 }
 function toolCalc(){
   const c = S.calc || {};
@@ -1649,17 +1855,30 @@ function syringe(units){
   return '<div class="syringe"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' +
     t('Syringe scale','Escala de la jeringa') + '">' + g + '</svg></div>';
 }
+/* Las dosis registradas, por compuesto y en mg. Una entrada del registro es
+   `protocolo#pieza`, así que hay que abrir la pila para saber QUÉ compuesto y
+   QUÉ dosis se apuntó — la vida media es de la molécula, no de la pila. */
 function levels(){
   const byC = {};
-  Object.keys(S.log).forEach(k => Object.keys(S.log[k]).forEach(id => {
-    const p = S.plan.filter(x => x.id === id)[0];
-    if(!p) return;
+  const mete = (k, c, d, u) => {
     let mg = null;
-    if(p.unit === 'mg')  mg = +p.dose;
-    if(p.unit === 'mcg') mg = +p.dose / 1000;
+    if(u === 'mg')  mg = +d;
+    if(u === 'mcg') mg = +d / 1000;
     if(mg == null || isNaN(mg)) return;
-    (byC[p.c] = byC[p.c] || []).push({d:k, mg:mg});
+    (byC[c] = byC[c] || []).push({d:k, mg:mg});
+  };
+  Object.keys(S.log).forEach(k => Object.keys(S.log[k]).forEach(id => {
+    const [pid, ix] = String(id).split('#');
+    const p = S.plan.filter(x => x.id === pid)[0];
+    if(!p) return;
+    const items = pItems(p);
+    /* sin sufijo el apunte es del protocolo entero: cuentan todas sus piezas */
+    (ix == null ? items : [items[+ix]]).forEach(it => {
+      if(it) mete(k, it.c, it.d, it.u);
+    });
   }));
+  Object.keys(S.extra || {}).forEach(k =>
+    (S.extra[k] || []).forEach(x => mete(k, x.c, x.d, x.u)));
   return byC;
 }
 function levelAt(doses, hlH, k){
@@ -1858,138 +2077,384 @@ function toolVials(){
    vez de rellenarlo con material inventado sobre compuestos.
    ========================================================================== */
 const ARTS = [
-  {k:'art', t:{en:'Reading a reconstitution', es:'Leer una reconstitución'},
-   d:{en:'Why mg in the vial and mL of solvent give you a mark on the syringe, and why that mark is arithmetic and not advice.',
-      es:'Por qué los mg del vial y los mL de disolvente dan una marca en la jeringa, y por qué esa marca es aritmética y no un consejo.'},
-   m:{en:'4 min read', es:'4 min de lectura'}, go:'lib'},
-  {k:'art', t:{en:'Cold chain and light', es:'Cadena de frío y luz'},
-   d:{en:'What the storage column of each compound sheet means, and why the reconstitution date matters more than the expiry.',
+  {id:'recon', k:'art', linea:'fitness',
+   t:{en:'Reading a reconstitution', es:'Leer una reconstitución'},
+   m:{en:'4 min read', es:'4 min de lectura'},
+   d:{en:'Why mg in the vial and mL of solvent give you a mark on the syringe.',
+      es:'Por qué los mg del vial y los mL de disolvente dan una marca en la jeringa.'},
+   b:{es:[
+     'Un vial liofilizado trae una cantidad de polvo — 5 mg, 10 mg — y nada más. La concentración no existe hasta que le echas disolvente, y la eliges tú al elegir cuánto echar.',
+     'La cuenta es una división. 5 mg de polvo en 1 mL de agua bacteriostática son 5 mg/mL. Si tu dosis son 250 mcg, eso es 0,25 mg: 0,25 dividido entre 5 da 0,05 mL. En una jeringa de insulina de 100 unidades por mililitro, 0,05 mL son 5 unidades.',
+     'De ahí sale la regla práctica: con el mismo vial, el DOBLE de disolvente da la MITAD de concentración y por tanto el doble de marcas para la misma dosis. Más disolvente no es más ni menos producto — es sólo una regla más larga, más fácil de leer.',
+     'Y por eso conviene elegir el volumen pensando en la marca que vas a tener que ver a las seis de la mañana. Una dosis que cae en 2 unidades se lee mal; la misma dosis reconstituida al doble cae en 4 y se lee bien.',
+     'La calculadora de la Biblioteca hace exactamente esta división y nada más. Los tres números —mg, mL y dosis— los pones tú.'],
+     en:[
+     'A lyophilised vial arrives with an amount of powder — 5 mg, 10 mg — and nothing else. Concentration does not exist until you add solvent, and you choose it when you choose how much to add.',
+     'The sum is a division. 5 mg of powder in 1 mL of bacteriostatic water is 5 mg/mL. If your dose is 250 mcg, that is 0.25 mg: 0.25 divided by 5 gives 0.05 mL. On a 100-unit insulin syringe, 0.05 mL is 5 units.',
+     'Hence the practical rule: with the same vial, TWICE the solvent gives HALF the concentration and therefore twice the marks for the same dose. More solvent is not more or less product — it is just a longer ruler, easier to read.',
+     'Which is why it pays to choose the volume thinking about the mark you will have to read at six in the morning. A dose landing on 2 units reads badly; the same dose reconstituted at double lands on 4 and reads well.',
+     'The Library calculator does exactly this division and nothing more. The three numbers — mg, mL and dose — are yours.']},
+   go:'lib'},
+
+  {id:'frio', k:'art', linea:'longevity',
+   t:{en:'Cold chain and light', es:'Cadena de frío y luz'},
+   m:{en:'5 min read', es:'5 min de lectura'},
+   d:{en:'What the storage column of each sheet means, and why the reconstitution date matters more than the expiry.',
       es:'Qué significa la columna de almacenamiento de cada ficha, y por qué la fecha de reconstitución importa más que la caducidad.'},
-   m:{en:'5 min read', es:'5 min de lectura'}, go:'comp'},
-  {k:'art', t:{en:'Why PepX never proposes a dose', es:'Por qué PepX nunca propone una dosis'},
-   d:{en:'Where the line sits between a record and a recommendation, and why the reference sheet is quoted rather than applied.',
-      es:'Dónde está la raya entre un registro y una recomendación, y por qué la hoja de referencia se cita en vez de aplicarse.'},
-   m:{en:'3 min read', es:'3 min de lectura'}, go:'set'},
-  {k:'pro', t:{en:'What a protocol is here', es:'Qué es un protocolo aquí'},
-   d:{en:'Four facts you write down: a compound, a dose, a frequency and a start. The app remembers them, counts them and warns you when the vial runs out.',
-      es:'Cuatro datos que escribes tú: un compuesto, una dosis, una frecuencia y un inicio. La app se acuerda, los cuenta y te avisa cuando se acaba el vial.'},
-   m:{en:'4 min read', es:'4 min de lectura'}, go:'prot'},
-  {k:'pro', t:{en:'Rotating sites', es:'Rotar zonas'},
+   b:{es:[
+     'Cada ficha de la biblioteca trae una columna de almacenamiento con dos estados, y no dicen lo mismo. El polvo liofilizado aguanta congelado; el líquido reconstituido vive en refrigeración.',
+     'La caducidad impresa en el vial es la del POLVO. En cuanto entra el disolvente empieza otro reloj, y ése no está impreso en ninguna parte: lo apuntas tú. Por eso la pantalla de Viales pide la fecha de reconstitución y no la caducidad.',
+     'La luz cuenta. Un péptido en solución expuesto a luz directa se degrada más rápido que uno guardado en su caja, aunque los dos estén a la misma temperatura. La caja del vial no es embalaje: es parte de la conservación.',
+     'Los ciclos de temperatura importan más que la temperatura media. Sacar y meter un vial cuatro veces al día es peor que dejarlo dos horas fuera una vez. Si trabajas con alícuotas, prepararlas una vez y congelarlas te ahorra ese vaivén.',
+     'Nada de esto es una recomendación clínica: es logística de material. Lo que dice cada ficha viene del registro de operación de PEPTIDEX, y está citado como tal.'],
+     en:[
+     'Every library sheet carries a storage column with two states, and they do not say the same thing. Lyophilised powder keeps frozen; reconstituted liquid lives refrigerated.',
+     'The expiry printed on the vial is the POWDER expiry. The moment solvent goes in, another clock starts, and that one is printed nowhere: you write it down. Which is why the Vials screen asks for the reconstitution date and not the expiry.',
+     'Light counts. A peptide in solution left in direct light degrades faster than one kept in its box, even at the same temperature. The vial box is not packaging: it is part of storage.',
+     'Temperature cycles matter more than average temperature. Taking a vial out and back four times a day is worse than leaving it out once for two hours. If you work with aliquots, preparing them once and freezing them saves that back and forth.',
+     'None of this is clinical advice: it is material logistics. What each sheet says comes from the PEPTIDEX operations record, and it is quoted as such.']},
+   go:'comp'},
+
+  {id:'raya', k:'art', linea:'fitness',
+   t:{en:'Why PepX never proposes a dose', es:'Por qué PepX nunca propone una dosis'},
+   m:{en:'3 min read', es:'3 min de lectura'},
+   d:{en:'Where the line sits between a record and a recommendation.',
+      es:'Dónde está la raya entre un registro y una recomendación.'},
+   b:{es:[
+     'PepX apunta lo que tú decides y te lo devuelve ordenado. No decide por ti, y esa diferencia no es una precaución legal: es lo que la aplicación es.',
+     'La biblioteca trae una columna de referencia con cifras de inicio y mantenimiento. Está CITADA, con marco y con su procedencia, porque es el documento del operador — no una pauta que la app te aplique. La lees tú y decides tú.',
+     'La consecuencia práctica es que PepCheems te contesta «cuánto llevas» y no «cuánto deberías». Puede hacerte la división de una reconstitución con tus tres números, y no puede elegirte ninguno de los tres.',
+     'Si alguna vez una pantalla de esta aplicación te sugiere qué tomar, es un fallo. Escríbenos.'],
+     en:[
+     'PepX writes down what you decide and gives it back to you in order. It does not decide for you, and that difference is not a legal precaution: it is what the app is.',
+     'The library carries a reference column with starting and maintenance figures. It is QUOTED, framed and sourced, because it is the operator document — not a schedule the app applies to you. You read it and you decide.',
+     'The practical consequence is that PepCheems answers "how far along are you" and not "how much should you". It can do the division of a reconstitution with your three numbers, and it cannot choose any of the three for you.',
+     'If a screen of this application ever suggests what to take, that is a bug. Write to us.']},
+   go:'legal'},
+
+  {id:'pila', k:'pro', linea:'fitness',
+   t:{en:'What a protocol is here', es:'Qué es un protocolo aquí'},
+   m:{en:'4 min read', es:'4 min de lectura'},
+   d:{en:'A name, the compounds inside it, and how often you put them.',
+      es:'Un nombre, los compuestos que lleva dentro y cada cuándo te los pones.'},
+   b:{es:[
+     'Un protocolo en PepX es una pila con nombre. Dentro van los compuestos con su dosis, y fuera va lo que comparten: cada cuándo, desde cuándo y a qué hora.',
+     'Eso es a propósito. Si dos compuestos van a horas distintas o con frecuencias distintas, no son un protocolo con dos cosas dentro: son dos protocolos. Separarlos hace que la adherencia signifique algo.',
+     'La adherencia se cuenta por INYECCIÓN, no por protocolo. Una pila de cinco compuestos con tres marcados son tres puestas y dos que faltan, no «un protocolo a medias».',
+     'La fase y la semana salen solas del tramo: si pones un inicio y un fin, la app calcula «Fase 2 · Semana 3 de 8». Si no pones fin, el protocolo es de mantenimiento y lo dice así.',
+     'Pausar no borra. Un protocolo pausado deja de pedirte dosis y conserva todo el histórico.'],
+     en:[
+     'A protocol in PepX is a named stack. Inside go the compounds with their doses; outside goes what they share: how often, since when and at what time.',
+     'That is deliberate. If two compounds go at different times or different frequencies, they are not one protocol with two things inside: they are two protocols. Splitting them is what makes adherence mean something.',
+     'Adherence counts per INJECTION, not per protocol. A five-compound stack with three ticked is three put and two outstanding, not "half a protocol".',
+     'Phase and week come out of the span on their own: give it a start and an end and the app works out "Phase 2 · Week 3 of 8". With no end, the protocol is maintenance and says so.',
+     'Pausing does not delete. A paused protocol stops asking you for doses and keeps its whole history.']},
+   go:'prot'},
+
+  {id:'zonas', k:'pro', linea:'beauty',
+   t:{en:'Rotating sites', es:'Rotar zonas'},
+   m:{en:'2 min read', es:'2 min de lectura'},
    d:{en:'What the app records about placement, and what it deliberately does not explain.',
       es:'Qué apunta la aplicación sobre la colocación, y qué no explica a propósito.'},
-   m:{en:'2 min read', es:'2 min de lectura'}, go:'lib'}
+   b:{es:[
+     'Al registrar una inyección puedes apuntar la zona. La app guarda esa zona y te enseña el mapa con las que más has usado, en escala de gris: cuanto más oscura, más veces.',
+     'Eso es todo lo que hace, y es todo lo que debe hacer. El mapa te enseña TU patrón; no te dice dónde ponerte la siguiente.',
+     'Si el mapa sale muy oscuro en un sitio y muy claro en el resto, eso es información sobre tu costumbre. Qué hacer con ella no es una decisión de una aplicación.'],
+     en:[
+     'When you log an injection you can note the site. The app stores it and shows you the map with the ones you used most, in greyscale: the darker, the more often.',
+     'That is all it does, and all it should do. The map shows YOUR pattern; it does not tell you where to put the next one.',
+     'If the map comes out very dark in one place and very light everywhere else, that is information about your habit. What to do with it is not an application’s decision.']},
+   go:'lib'}
 ];
+const artOf = id => ARTS.filter(a => a.id === id)[0] || null;
+
 function vEdu(){
+  const abierto = S.open ? artOf(S.open) : null;
+  if(abierto) return eduLee(abierto);
   const w = sub1('edu', 'all');
   const list = ARTS.filter(a => w === 'all' || a.k === w);
   return '' +
-    phead(t('EDUCATION','EDUCACIÓN'), t('Read first.','Leer primero.'),
-      t('Research and education only. Nothing here is a therapeutic claim, a protocol or a recommendation.',
-        'Sólo investigación y formación. Nada de aquí es una afirmación terapéutica, un protocolo ni una recomendación.')) +
-    '<div class="pills">' + [['all', t('All','Todos')], ['art', t('Articles','Artículos')],
+    navh(BACKTO.edu, t('Education','Educación')) +
+    '<div class="chips">' + [['all', t('All','Todos')], ['art', t('Articles','Artículos')],
       ['vid', t('Videos','Vídeos')], ['pro', t('Protocols','Protocolos')]].map(x =>
-      '<button class="pill' + (w === x[0] ? ' on' : '') + '" data-sub="edu:' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
+      '<button class="' + (w === x[0] ? 'on' : '') + '" data-sub="edu:' + x[0] + '">' + x[1] +
+      '</button>').join('') + '</div>' +
     (w === 'vid'
-      ? '<div class="card" style="margin-top:14px">' + empty('play', t('No videos yet','Todavía no hay vídeos'),
-          t('This shelf is empty on purpose. It will hold PEPTIDEX material when there is PEPTIDEX material — not stock footage about compounds.',
-            'Este estante está vacío a propósito. Llevará material de PEPTIDEX cuando haya material de PEPTIDEX — no vídeo de archivo sobre compuestos.')) + '</div>'
-      : (list.length ? eduPortada(list[0]) + eduResto(list.slice(1)) : '')) +
+      ? '<div class="card">' + empty('play', t('No videos yet','Todavía no hay vídeos'),
+          t('This shelf is empty on purpose. It will hold PEPTIDEX material when there is PEPTIDEX material.',
+            'Este estante está vacío a propósito. Llevará material de PEPTIDEX cuando lo haya.')) + '</div>'
+      : '<div class="edugrid">' + list.map(eduCard).join('') + '</div>') +
 
     /* LAS TRES LÍNEAS — descubrimiento por familia, con el producto y el
-       bloque entregados. Es lo más cerca de una portada de catálogo que puede
+       bloque entregados. Lo más cerca de una portada de catálogo que puede
        estar esto sin inventar fotografía que no existe. */
-    '<section class="band">' +
-      '<div class="band-h"><span class="eyebrow">' + t('The three lines','Las tres líneas') + '</span></div>' +
-      '<div class="lines">' + [
-        ['fitness',   t('Performance, recovery and engineering.','Rendimiento, recuperación e ingeniería.'), 'perf'],
-        ['beauty',    t('Refinement and cosmetic science.','Refinamiento y ciencia cosmética.'), 'beau'],
-        ['longevity', t('Time, calm and advanced science.','Tiempo, calma y ciencia avanzada.'), 'long']
-      ].map(x => '<button class="linecard l-' + x[0] + '" data-sub="comp:' + x[2] + '" data-go="comp">' +
-        '<span class="lc-art">' + (ART['vial_' + x[0]]
-          ? '<img src="' + ART['vial_' + x[0]] + '" alt="PEPTIDEX ' + x[0].toUpperCase() +
-            '" loading="lazy" decoding="async"/>' : '') + '</span>' +
-        '<span class="lc-bd">' + famLock(x[0]) +
-          '<span class="lc-tx">' + x[1] + '</span></span>' +
-      '</button>').join('') + '</div>' +
-    '</section>' +
-    ruo();
+    sectH(t('The three lines','Las tres líneas')) +
+    '<div class="lines">' + [
+      ['fitness',   t('Performance, recovery and engineering.','Rendimiento, recuperación e ingeniería.'), 'perf'],
+      ['beauty',    t('Refinement and cosmetic science.','Refinamiento y ciencia cosmética.'), 'beau'],
+      ['longevity', t('Time, calm and advanced science.','Tiempo, calma y ciencia avanzada.'), 'long']
+    ].map(x => '<button class="linecard" data-sub="comp:' + x[2] + '" data-go="comp">' +
+      '<span class="lc-art">' + (ART['vial_' + x[0]]
+        ? '<img src="' + ART['vial_' + x[0]] + '" alt="PEPTIDEX ' + x[0].toUpperCase() +
+          '" loading="lazy" decoding="async"/>' : '') + '</span>' +
+      '<span class="lc-bd">' + famLock(x[0]) +
+        '<span class="lc-tx">' + x[1] + '</span></span>' +
+    '</button>').join('') + '</div>' + ruo();
 }
-/* La portada editorial: UN artículo grande, no doce iguales. Que algo sea lo
-   primero es una decisión, y una rejilla de tarjetas idénticas se niega a
-   tomarla. */
-function eduPortada(a){
-  return '<button class="edu-lead" data-go="' + a.go + '">' +
-    '<span class="edu-lead-bd">' +
-      '<span class="eyebrow">' + (a.k === 'pro' ? t('PROTOCOL','PROTOCOLO') : t('ARTICLE','ARTÍCULO')) + '</span>' +
-      '<span class="h-lg">' + t(a.t.en, a.t.es) + '</span>' +
-      '<span class="lede sm">' + t(a.m.en, a.m.es) + '</span>' +
-      '<span class="edu-go">' + t('Read','Leer') + ' →</span>' +
-    '</span></button>';
+/* LA TARJETA DE LA REFERENCIA: imagen grande, epígrafe, título y duración.
+
+   La imagen es el producto entregado sobre placa oscura — el único material
+   propio que existe. Nada de banco de imágenes: ni ADN girando, ni moléculas
+   azules, ni laboratorios de archivo. */
+function eduCard(a){
+  const src = ART['vial_' + (a.linea || 'fitness')];
+  return '<button class="educard" data-art="' + a.id + '">' +
+    '<span class="art">' + (src ? '<img src="' + src + '" alt="" loading="lazy" decoding="async"/>' : '') +
+      '</span>' +
+    '<span class="bd">' +
+      '<span class="kick">' + (a.k === 'pro' ? t('PROTOCOL','PROTOCOLO')
+        : a.k === 'vid' ? t('VIDEO','VÍDEO') : t('ARTICLE','ARTÍCULO')) + '</span>' +
+      '<span class="ti">' + t(a.t.en, a.t.es) + '</span>' +
+      '<span class="mi">' + t(a.m.en, a.m.es) + '</span>' +
+    '</span>' +
+    (a.k === 'vid' ? '<span class="play">' + svg('play') + '</span>' : '') +
+  '</button>';
 }
-function eduResto(list){
-  if(!list.length) return '';
-  return '<div class="edu-rest">' + list.map(a =>
-    '<button class="edu-item" data-go="' + a.go + '">' +
-      '<span class="eyebrow">' + (a.k === 'pro' ? t('PROTOCOL','PROTOCOLO') : t('ARTICLE','ARTÍCULO')) + '</span>' +
-      '<span class="ei-t">' + t(a.t.en, a.t.es) + '</span>' +
-      '<span class="ei-m">' + t(a.m.en, a.m.es) + '</span></button>').join('') + '</div>';
+/* El lector. Ancho de lectura, no ancho de ventana. */
+function eduLee(a){
+  const cuerpo = ES ? a.b.es : a.b.en;
+  return '' +
+    navh('edu', a.k === 'pro' ? t('Protocol','Protocolo') : t('Article','Artículo')) +
+    '<span class="eyebrow">' + t(a.m.en, a.m.es) + '</span>' +
+    '<h2 class="h1" style="margin:8px 0 18px;max-width:20ch">' + t(a.t.en, a.t.es) + '</h2>' +
+    cuerpo.map(x => '<p class="read">' + x + '</p>').join('') +
+    '<div class="acts" style="margin-top:22px">' +
+      '<button class="btn ghost" data-go="' + a.go + '">' +
+        t('Go to the screen','Ir a la pantalla') + '</button>' +
+      '<button class="btn quiet" data-go="edu">' + t('More reading','Más lecturas') + '</button>' +
+    '</div>' + ruo();
 }
 
 /* ==========================================================================
-   24 · MÁS (sólo móvil)
-   ========================================================================== */
-/* «Más» era una caja con seis filas sin orden. Aquí no cabe todo el menú, así
-   que lo que cabe tiene que estar agrupado por PARA QUÉ SIRVE — que es lo que
-   el usuario tiene en la cabeza cuando abre esta pestaña. */
-function vMore(){
-  const GRUPOS = [
-    {t:t('Your record','Tu registro'),   ids:['cal','prog']},
-    {t:t('Reference','Referencia'),      ids:['lib','edu']},
-    {t:t('Account','Cuenta'),            ids:['set']}
-  ];
-  const fila = n => '<button class="row go" data-go="' + n.id + '">' +
-    '<span class="rico">' + svg(n.ic) + '</span>' +
-    '<span class="bd"><span class="nm">' + t(n.en, n.es) + '</span>' +
-      '<span class="mt">' + t(MOREDESC[n.id].en, MOREDESC[n.id].es) + '</span></span>' +
-    '<span class="cv"></span></button>';
-  return '' +
-    phead('', t('More.','Más.')) +
+   24 · MÁS — el mapa entero de la aplicación
 
-    '<section class="band mtop0">' +
-      '<button class="row go pchrow" data-pch>' +
-        '<span class="rico">' + MK + '</span>' +
-        '<span class="bd"><span class="nm">PepCheems</span>' +
-          '<span class="mt">' + t('Ask about your log or a compound. Offline.',
-                                  'Pregunta por tu registro o un compuesto. Sin conexión.') + '</span></span>' +
-        '<span class="cv"></span></button>' +
-    '</section>' +
+   ÉSTA ERA LA PANTALLA QUE ROMPÍA EL TELÉFONO.
+
+   Con cinco pestañas abajo, todo lo que no cabe en cinco tiene que llegar por
+   aquí, y antes «Más» sólo enseñaba cinco de los nueve destinos. Media
+   aplicación no se podía alcanzar desde un teléfono.
+
+   Ahora están TODOS, agrupados por para qué sirven —que es como el usuario los
+   busca— y con las herramientas de la Biblioteca abiertas una por una, para
+   que llegar a la calculadora sean dos toques y no cuatro.
+   ========================================================================== */
+function vMore(){
+  const fila = (ic, nm, mt, attr) => '<button class="row go" ' + attr + '>' +
+    '<span class="rico">' + svg(ic) + '</span>' +
+    '<span class="bd"><span class="nm">' + nm + '</span>' +
+      (mt ? '<span class="mt">' + mt + '</span>' : '') + '</span>' +
+    '<span class="cv"></span></button>';
+  const nav = id => {
+    const n = navOf(id), d = MOREDESC[id] || {};
+    return fila(n.ic, t(n.en, n.es), t(d.en||'', d.es||''), 'data-go="' + id + '"');
+  };
+  const GRUPOS = [
+    {t:t('Your record','Tu registro'), rows:[nav('cal'), nav('prog'), nav('inj')]},
+    {t:t('The bench','La mesa'), rows:[
+      fila('flask', t('Reconstitution calculator','Calculadora de reconstitución'),
+           t('mg, mL and the mark on the syringe','mg, mL y la marca en la jeringa'),
+           'data-tool="calc"'),
+      fila('prog', t('Half-life','Vida media'),
+           t('What is left in you, over time','Lo que te queda dentro, en el tiempo'),
+           'data-tool="hl"'),
+      fila('user', t('Injection sites','Zonas de inyección'),
+           t('Your own map','Tu propio mapa'), 'data-tool="zon"'),
+      fila('box', t('My vials','Mis viales'),
+           t('Batch, reconstitution and what is left','Lote, reconstitución y lo que queda'),
+           'data-tool="inv"')]},
+    {t:t('Reference','Referencia'), rows:[nav('comp'), nav('edu')]},
+    {t:t('Account','Cuenta'), rows:[nav('set'),
+      fila('shield', t('Privacy & Terms','Privacidad y términos'),
+           t('What we store and what we do not','Qué se guarda y qué no'),
+           'data-go="legal"')]},
+    {t:'PEPTIDEX', rows:[
+      '<a class="row go" href="' + STORE + '" target="_blank" rel="noopener">' +
+        '<span class="rico">' + svg('bag') + '</span>' +
+        '<span class="bd"><span class="nm">' + t('Store','Tienda') + '</span>' +
+        '<span class="mt">' + t('Catalogue and orders','Catálogo y pedidos') +
+        '</span></span><span class="cv"></span></a>',
+      '<a class="row go" href="mailto:' + MAIL + '">' +
+        '<span class="rico">' + svg('help') + '</span>' +
+        '<span class="bd"><span class="nm">' + t('Support','Soporte') + '</span>' +
+        '<span class="mt">' + MAIL + '</span></span><span class="cv"></span></a>']}
+  ];
+  return '' +
+    navh('', t('More','Más'), navAct('search', 'find', t('Search','Buscar'))) +
+
+    '<button class="row go" data-pch style="border:1px solid var(--line);' +
+      'border-radius:var(--r-card);padding:16px 18px;margin-bottom:6px">' +
+      '<span class="rico">' + MK + '</span>' +
+      '<span class="bd"><span class="nm">PepCheems</span>' +
+        '<span class="mt">' + t('Ask about your log, your protocols or any compound.',
+                                'Pregúntale por tu registro, tus protocolos o cualquier compuesto.') +
+      '</span></span><span class="cv"></span></button>' +
 
     GRUPOS.map(g => '<section class="csec">' +
       '<h2 class="csec-h"><span>' + g.t + '</span></h2>' +
-      '<div class="bare">' + g.ids.map(id => fila(NAV.filter(n => n.id === id)[0])).join('') + '</div>' +
-    '</section>').join('') +
-
-    '<section class="csec">' +
-      '<h2 class="csec-h"><span>' + t('PEPTIDEX','PEPTIDEX') + '</span></h2>' +
-      '<div class="bare">' +
-        '<a class="row go" href="' + STORE + '" target="_blank" rel="noopener">' +
-          '<span class="rico">' + svg('bag') + '</span>' +
-          '<span class="bd"><span class="nm">' + t('Store','Tienda') + '</span>' +
-          '<span class="mt">peptidex.netlify.app</span></span><span class="cv"></span></a>' +
-        '<a class="row go" href="mailto:' + MAIL + '">' +
-          '<span class="rico">' + svg('help') + '</span>' +
-          '<span class="bd"><span class="nm">' + t('Support','Soporte') + '</span>' +
-          '<span class="mt">' + MAIL + '</span></span><span class="cv"></span></a>' +
-      '</div>' +
-    '</section>' + ruo();
+      '<div class="bare">' + g.rows.join('') + '</div>' +
+    '</section>').join('') + ruo();
 }
 const MOREDESC = {
-  cal:  {en:'Your month, day by day',       es:'Tu mes, día por día'},
-  prog: {en:'What you measured, over time', es:'Lo que mediste, en el tiempo'},
-  lib:  {en:'Vials, calculator, half-life', es:'Viales, calculadora, vida media'},
-  edu:  {en:'Read before, not after',       es:'Leer antes, no después'},
-  set:  {en:'Profile, theme, plan, data',   es:'Perfil, tema, plan, datos'}
+  cal:  {en:'Your month, day by day',        es:'Tu mes, día por día'},
+  prog: {en:'What you measured, over time',  es:'Lo que mediste, en el tiempo'},
+  inj:  {en:'Every dose you logged',         es:'Cada dosis que registraste'},
+  comp: {en:'The %n compound sheets',        es:'Las %n fichas de compuesto'},
+  edu:  {en:'Read before, not after',        es:'Leer antes, no después'},
+  set:  {en:'Profile, theme, plan, data',    es:'Perfil, tema, plan, datos'}
 };
+
+/* ==========================================================================
+   24b · BUSCAR — una sola caja para toda la aplicación
+
+   La referencia web pide «Buscar compuestos, protocolos…» arriba del todo. En
+   el teléfono no cabe un campo permanente en la barra, así que la lupa abre
+   ESTA pantalla, que busca en las cinco cosas que existen y agrupa por dónde
+   vive cada una.
+
+   Vacía no está vacía: enseña los destinos y las herramientas. Es el mapa de
+   la aplicación, y por eso el buscador es también la forma más rápida de
+   llegar a cualquier sitio sin saber en qué pestaña estaba.
+   ========================================================================== */
+function vFind(){
+  const q = String(S.fq || '').trim();
+  const n = q.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const hit = txt => !n || String(txt||'').toLowerCase().normalize('NFD')
+    .replace(/[̀-ͯ]/g,'').indexOf(n) >= 0;
+
+  const comps = !n ? [] : LIB.filter(e => hit(e.n) || hit(e.cat) || hit(e.sku) || hit(e.mec));
+  const prots = !n ? S.plan.slice(0,3)
+                   : S.plan.filter(p => hit(pName(p)) || pComps(p).some(hit));
+  const arts  = !n ? ARTS.slice(0,2)
+                   : ARTS.filter(a => hit(t(a.t.en,a.t.es)) || hit(t(a.d.en,a.d.es)));
+  const dests = (!n ? ALLNAV : ALLNAV.filter(x => hit(t(x.en, x.es))))
+    .filter(x => x.id !== 'find');
+
+  const grupo = (titulo, filas, mas) => filas.length
+    ? '<section class="findgrp"><h2>' + titulo + '</h2>' +
+      '<div class="card">' + filas.join('') + (mas || '') + '</div></section>' : '';
+
+  const VER = 8;
+  return '' +
+    navh('', t('Search','Buscar')) +
+    '<div class="field">' + svg('search') +
+      '<input id="fq" placeholder="' +
+      t('Compounds, protocols, screens…','Compuestos, protocolos, pantallas…') +
+      '" value="' + E(q) + '"/>' +
+      (q ? '<button class="x" data-clear-fq aria-label="' + t('Clear','Limpiar') + '">' +
+        svg('close') + '</button>' : '') + '</div>' +
+
+    grupo(t('Compounds','Compuestos'), comps.slice(0, VER).map(compRow),
+      comps.length > VER ? '<button class="findmore" data-go="comp">' +
+        t('See all %n','Ver los %n').replace('%n', comps.length) + '</button>' : '') +
+
+    grupo(t('Protocols','Protocolos'), prots.map(p =>
+      '<button class="row go" data-open-prot="' + p.id + '">' +
+        vial(pComps(p)[0], 'sm') +
+        '<span class="bd"><span class="nm">' + E(pName(p)) + '</span>' +
+          '<span class="mt">' + E(pComps(p).join(' · ')) + '</span></span>' +
+      '<span class="cv"></span></button>')) +
+
+    grupo(t('Reading','Lecturas'), arts.map(a =>
+      '<button class="row go" data-art="' + a.id + '">' +
+        '<span class="rico">' + svg('doc') + '</span>' +
+        '<span class="bd"><span class="nm">' + t(a.t.en, a.t.es) + '</span>' +
+          '<span class="mt">' + t(a.m.en, a.m.es) + '</span></span>' +
+      '<span class="cv"></span></button>')) +
+
+    grupo(t('Screens','Pantallas'), dests.map(x =>
+      '<button class="row go" data-go="' + x.id + '">' +
+        '<span class="rico">' + svg(x.ic) + '</span>' +
+        '<span class="bd"><span class="nm">' + t(x.en, x.es) + '</span></span>' +
+      '<span class="cv"></span></button>')) +
+
+    (n && !comps.length && !prots.length && !arts.length && !dests.length
+      ? '<div class="card">' + empty('search', t('Nothing matches','Nada coincide'), E(q),
+          '<button class="btn ghost" data-clear-fq>' + t('Clear','Limpiar') + '</button>') + '</div>'
+      : '') + ruo();
+}
+
+/* ==========================================================================
+   24c · PRIVACIDAD Y TÉRMINOS
+
+   Escrito para leerse, no para cubrirse. Dos pestañas, frases cortas, y sin
+   una sola línea de jerga técnica: al usuario no le importa qué API no se
+   llama — le importa quién puede ver lo que escribe y qué pasa si cambia de
+   teléfono. Eso es lo que se contesta.
+   ========================================================================== */
+const LEGAL = {
+  priv:{
+    en:[['What we store', [
+        'Your protocols, your log, your measurements and your vials. Nothing else.',
+        'It stays on the device you are using. We do not hold a copy and neither does anyone else.',
+        'There is no advertising, no tracking and no profiling. Nothing you write here is used to sell you anything.']],
+      ['Your name and email', [
+        'Optional. They are used to greet you and to fill in your profile — nothing is sent anywhere.']],
+      ['Backups and moving device', [
+        'Settings → Your data → Export writes a file with everything. Import reads it back.',
+        'Clearing your browser data erases PepX. Export first, or it is gone.']],
+      ['Deleting everything', [
+        'Settings → Your data → Erase everything removes it in one step, with no way back.']]],
+    es:[['Qué se guarda', [
+        'Tus protocolos, tu registro, tus medidas y tus viales. Nada más.',
+        'Se queda en el aparato que estés usando. No tenemos una copia, y nadie más tampoco.',
+        'No hay publicidad, ni rastreo, ni perfilado. Nada de lo que escribes aquí sirve para venderte nada.']],
+      ['Tu nombre y tu correo', [
+        'Opcionales. Sirven para saludarte y para rellenar tu perfil — no se mandan a ningún sitio.']],
+      ['Copias y cambiar de aparato', [
+        'Configuración → Tus datos → Exportar escribe un fichero con todo. Importar lo devuelve.',
+        'Si borras los datos del navegador, PepX se borra. Exporta antes, o se ha ido.']],
+      ['Borrarlo todo', [
+        'Configuración → Tus datos → Borrar todo lo quita de una vez, sin vuelta atrás.']]]
+  },
+  term:{
+    en:[['Research use only', [
+        'PEPTIDEX material is supplied for research and educational use. It is not a medicine and it is not for human or veterinary consumption.']],
+      ['PepX is a record, not a recommendation', [
+        'The app writes down what you decide and gives it back in order. It does not propose compounds, doses or schedules, and it never will.',
+        'The reference figures in the compound library are quoted from the PEPTIDEX operations record, with their source attached. They are the operator document — not a schedule the app applies to you.']],
+      ['PepCheems', [
+        'PepCheems answers from your own log and from that same operations record. It does not give clinical advice, and when a question asks for one it says so.']],
+      ['No medical advice', [
+        'Nothing in this application replaces a qualified professional. Decisions about your health are yours and theirs, not the app’s.']],
+      ['Contact', ['Write to ' + MAIL + ' for anything at all.']]],
+    es:[['Solo uso en investigación', [
+        'El material de PEPTIDEX se suministra para uso de investigación y formación. No es un medicamento y no es para consumo humano ni veterinario.']],
+      ['PepX es un registro, no una recomendación', [
+        'La aplicación apunta lo que tú decides y te lo devuelve ordenado. No propone compuestos, ni dosis, ni pautas, y no lo va a hacer.',
+        'Las cifras de referencia de la biblioteca están citadas del registro de operación de PEPTIDEX, con su procedencia. Son el documento del operador — no una pauta que la app te aplique.']],
+      ['PepCheems', [
+        'PepCheems contesta desde tu propio registro y desde ese mismo registro de operación. No da consejo clínico, y cuando una pregunta se lo pide, lo dice.']],
+      ['Nada de consejo médico', [
+        'Nada de esta aplicación sustituye a un profesional cualificado. Las decisiones sobre tu salud son tuyas y suyas, no de la app.']],
+      ['Contacto', ['Escribe a ' + MAIL + ' para lo que sea.']]]
+  }
+};
+function vLegal(){
+  const w = sub1('legal', 'priv');
+  const secs = LEGAL[w][ES ? 'es' : 'en'];
+  return '' +
+    navh(BACKTO.legal, t('Privacy & Terms','Privacidad y términos')) +
+    '<div class="seg">' +
+      '<button class="' + (w === 'priv' ? 'on' : '') + '" data-sub="legal:priv">' +
+        t('Privacy','Privacidad') + '</button>' +
+      '<button class="' + (w === 'term' ? 'on' : '') + '" data-sub="legal:term">' +
+        t('Terms','Términos') + '</button>' +
+    '</div>' +
+    secs.map(sec => sectH(sec[0]) +
+      sec[1].map(p => '<p class="read">' + E(p) + '</p>').join('')).join('') +
+    '<p class="meta" style="margin-top:24px">' +
+      t('Last updated ','Actualizado el ') + '06 · 2026' + '</p>' + ruo();
+}
 
 /* ==========================================================================
    25 · CONFIGURACIÓN
@@ -2025,7 +2490,7 @@ function vSet(){
   const THEMES = [['light', t('Light','Claro'), 'sun'], ['dark', t('Dark','Oscuro'), 'moon'],
                   ['system', t('System','Sistema'), 'auto']];
   return '' +
-    phead(t('SETTINGS','CONFIGURACIÓN'), S.me.nombre ? E(S.me.nombre) : t('Your account.','Tu cuenta.')) +
+    navh(BACKTO.set, t('Settings','Configuración')) +
 
     '<div class="card pad">' +
       '<div style="display:flex;align-items:center;gap:18px">' +
@@ -2033,7 +2498,7 @@ function vSet(){
         '<div style="flex:1;min-width:0">' +
           '<div class="h3">' + (S.me.nombre ? E(S.me.nombre) : t('No name set','Sin nombre')) + '</div>' +
           '<div class="meta" style="margin-top:3px">' +
-            (S.me.correo ? E(S.me.correo) : t('Local profile · no server','Perfil local · sin servidor')) + '</div></div></div>' +
+            (S.me.correo ? E(S.me.correo) : t('Add your email below','Añade tu correo abajo')) + '</div></div></div>' +
       '<label>' + t('Name','Nombre') + '</label><input id="meN" value="' + E(S.me.nombre) + '" placeholder="—"/>' +
       '<label>' + t('Email','Correo') + '</label><input id="meE" type="email" value="' + E(S.me.correo) + '" placeholder="—"/>' +
       '<div class="acts" style="margin-top:18px"><button class="btn" id="meSave">' + t('Save','Guardar') + '</button></div></div>' +
@@ -2046,21 +2511,24 @@ function vSet(){
         '<button data-th="' + x[0] + '"' + (S.theme === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>').join('') + '</div></div>' +
 
     '<div class="card" style="margin-top:12px">' +
-      setRow('bell', t('Notifications','Avisos'),
-        t('Installed as a web app, iPhone does not allow scheduled reminders — only a native build can. Android can.',
-          'Instalada como app web, el iPhone no permite recordatorios programados — sólo una compilación nativa puede. Android sí.')) +
-      setRow('lock', t('Security','Seguridad'),
-        t('There is no account server yet, so there is no password to steal. Your device lock is the lock.',
-          'Todavía no hay servidor de cuentas, así que no hay contraseña que robar. El bloqueo de tu aparato es el bloqueo.')) +
-      setRow('shield', t('Privacy','Privacidad'),
-        t('Everything stays in this browser. Nothing is sent anywhere — not to us either.',
-          'Todo se queda en este navegador. No se envía a ningún sitio — a nosotros tampoco.')) +
+      '<button class="row go" data-go="legal">' +
+        '<span class="rico">' + svg('shield') + '</span>' +
+        '<span class="bd"><span class="nm">' + t('Privacy & Terms','Privacidad y términos') + '</span>' +
+        '<span class="mt">' + t('What we store and what we do not',
+                                'Qué se guarda y qué no') + '</span></span>' +
+        '<span class="cv"></span></button>' +
+      '<button class="row go" data-go="edu">' +
+        '<span class="rico">' + svg('edu') + '</span>' +
+        '<span class="bd"><span class="nm">' + t('Education','Educación') + '</span>' +
+        '<span class="mt">' + t('How this app works, in five reads',
+                                'Cómo funciona esta app, en cinco lecturas') + '</span></span>' +
+        '<span class="cv"></span></button>' +
       '<a class="row go" href="mailto:' + MAIL + '">' +
-        '<span style="flex:0 0 auto;width:18px;height:18px;color:var(--tx2)">' + svg('help') + '</span>' +
+        '<span class="rico">' + svg('help') + '</span>' +
         '<span class="bd"><span class="nm">' + t('Support','Soporte') + '</span>' +
         '<span class="mt">' + MAIL + '</span></span><span class="cv"></span></a></div>' +
 
-    '<div class="sect-h"><span class="eyebrow">' + t('Plan','Plan') + '</span></div>' +
+    sectH(t('Plan','Plan')) +
     '<div class="tiers">' + TIERS.map(x =>
       '<div class="tier' + (x.id === 'ult' ? ' top' : '') + '">' +
         (S.sub.tier === x.id ? '<span class="cur">' + t('CURRENT','ACTUAL') + '</span>' : '') +
@@ -2075,8 +2543,8 @@ function vSet(){
 
     '<div class="card pad" style="margin-top:12px">' +
       '<div class="eyebrow">' + t('Your data','Tus datos') + '</div>' +
-      '<p class="meta" style="margin:10px 0 0">' + t('Export is the backup. If you clear this browser without one, it is gone.',
-        'Exportar es la copia de seguridad. Si borras este navegador sin ella, se ha ido.') + '</p>' +
+      '<p class="meta" style="margin:10px 0 0">' + t('Export writes a file with everything — that is your backup, and how you move to another device.',
+        'Exportar escribe un fichero con todo — ésa es tu copia de seguridad, y así te pasas a otro aparato.') + '</p>' +
       '<div class="acts" style="margin-top:18px">' +
         '<button class="btn ghost" id="pxExp">' + t('Export','Exportar') + '</button>' +
         '<button class="btn ghost" id="pxImp">' + t('Import','Importar') + '</button>' +
@@ -2112,8 +2580,8 @@ function installCard(){
   if(installedPWA())
     return '<div class="card pad" style="margin-top:12px"><div class="eyebrow">' +
       t('On your phone','En tu teléfono') + '</div><p class="meta" style="margin:10px 0 0">' +
-      t('PepX is installed on this device. It opens without the browser bar and works with no connection.',
-        'PepX está instalada en este aparato. Abre sin barra de navegador y funciona sin conexión.') + '</p></div>';
+      t('PepX is installed on this device. It opens full screen and is always ready.',
+        'PepX está instalada en este aparato. Abre a pantalla completa y está siempre lista.') + '</p></div>';
   const pasos = isIOS()
     ? [t('Open this page in <b>Safari</b> — from Chrome on iPhone the option does not exist.',
          'Abre esta página en <b>Safari</b> — desde Chrome en iPhone la opción no existe.'),
@@ -2125,8 +2593,8 @@ function installCard(){
          'Toca el botón de abajo. Si no pasa nada, entra en el menú del navegador y elige <b>Instalar aplicación</b>.')];
   return '<div class="card pad" style="margin-top:12px"><div class="eyebrow">' +
     t('Put it on your phone','Ponla en tu teléfono') + '</div>' +
-    '<p class="meta" style="margin:10px 0 4px">' + t('PepX installs to the home screen with its own icon, opens full screen and keeps working with no connection.',
-      'PepX se instala en la pantalla de inicio con su icono, abre a pantalla completa y sigue funcionando sin conexión.') + '</p>' +
+    '<p class="meta" style="margin:10px 0 4px">' + t('PepX installs to the home screen with its own icon and opens full screen, like any other app.',
+      'PepX se instala en la pantalla de inicio con su icono y abre a pantalla completa, como cualquier otra app.') + '</p>' +
     pasos.map((p,i) => '<div class="row" style="padding-left:0;padding-right:0">' +
       '<span class="meta" style="flex:0 0 16px">' + (i+1) + '</span>' +
       '<span class="bd"><span class="mt" style="margin-top:0;color:var(--tx2)">' + p + '</span></span></div>').join('') +
@@ -2138,7 +2606,8 @@ function installCard(){
    26 · PINTAR
    ========================================================================== */
 const VIEWS = {dash:vDash, prot:vProt, comp:vComp, inj:vInj, cal:vCal,
-               prog:vProg, lib:vLib, edu:vEdu, set:vSet, more:vMore};
+               prog:vProg, lib:vLib, edu:vEdu, set:vSet, more:vMore,
+               find:vFind, legal:vLegal};
 function paint(){
   applyTheme();
   const root = document.getElementById('root');
@@ -2173,7 +2642,16 @@ function wire(){
     const g = this.dataset.go;
     if(g === 'store'){ open(STORE, '_blank', 'noopener'); return; }
     e.preventDefault();
-    S.route = g; S.open = null; save(); paint(); top0();
+    S.route = g; S.open = null; S.newProt = false; S.jnew = false; save(); paint(); top0();
+    if(g === 'find') setTimeout(() => { const i = document.getElementById('fq'); if(i) i.focus(); }, 80);
+  });
+  /* Las herramientas de la Biblioteca se abren directas desde «Más»: dos
+     toques hasta la calculadora en vez de cuatro. */
+  on('[data-tool]', 'click', function(){
+    S.route = 'lib'; S.sub1.lib = this.dataset.tool; S.open = null; save(); paint(); top0();
+  });
+  on('[data-art]', 'click', function(){
+    S.route = 'edu'; S.open = this.dataset.art; save(); paint(); top0();
   });
   on('[data-theme]', 'click', () => {
     /* el ciclo del conmutador: claro → oscuro → sistema → claro */
@@ -2187,6 +2665,14 @@ function wire(){
     save(); paint();
   });
   on('[data-win]', 'click', function(){ S.win = +this.dataset.win; save(); paint(); });
+  /* El selector de ventana de la portada gira entre las tres. Un desplegable
+     nativo para tres opciones es más peso del que la decisión merece. */
+  on('[data-win-cycle]', 'click', () => {
+    const w = +sub1('win', 7);
+    const i = WINDOWS.map(x => x[0]).indexOf(w);
+    S.sub1.win = String(WINDOWS[(i + 1) % WINDOWS.length][0]);
+    save(); paint();
+  });
 
   /* buscador global: escribe en la biblioteca y lleva allí */
   const gq = document.getElementById('gq');
@@ -2195,13 +2681,29 @@ function wire(){
     gq.addEventListener('input', () => {
       clearTimeout(tmr);
       tmr = setTimeout(() => {
-        S.gq = gq.value; S.lq = gq.value; S.route = 'comp'; S.open = null; save();
+        S.gq = gq.value; S.fq = gq.value; S.route = 'find'; S.open = null; save();
         const pos = gq.selectionStart; paint();
         const n = document.getElementById('gq');
         if(n){ n.focus(); try{ n.setSelectionRange(pos, pos); }catch(e){} }
       }, 300);
     });
   }
+  /* el campo de la pantalla de buscar */
+  const fq = document.getElementById('fq');
+  if(fq){
+    let tmr = null;
+    fq.addEventListener('input', () => {
+      clearTimeout(tmr);
+      tmr = setTimeout(() => {
+        S.fq = fq.value; save();
+        const pos = fq.selectionStart; paint();
+        const n = document.getElementById('fq');
+        if(n){ n.focus(); try{ n.setSelectionRange(pos, pos); }catch(e){} }
+      }, 240);
+    });
+  }
+  on('[data-clear-fq]', 'click', () => { S.fq = ''; S.gq = ''; save(); paint();
+    setTimeout(() => { const i = document.getElementById('fq'); if(i) i.focus(); }, 60); });
   const lq = document.getElementById('lq');
   if(lq){
     let tmr = null;
@@ -2218,31 +2720,96 @@ function wire(){
   on('[data-clear-q]', 'click', () => { S.lq = ''; S.gq = ''; save(); paint(); });
 
   /* protocolos */
-  on('[data-new-prot]', 'click', () => { S.route = 'prot'; S.newProt = true; save(); paint();
-    setTimeout(() => { const i = document.getElementById('pxC'); if(i) i.focus(); }, 60); });
-  on('[data-close-prot]', 'click', () => { S.newProt = false; save(); paint(); });
+  on('[data-new-prot]', 'click', () => {
+    S.route = 'prot'; S.newProt = true; S.open = null;
+    NEWP.items = []; NEWP.edit = null;
+    save(); paint();
+    setTimeout(() => { const i = document.getElementById('pxName'); if(i) i.focus(); }, 60);
+  });
+  on('[data-edit-prot]', 'click', function(e){
+    e.stopPropagation();
+    const p = S.plan.filter(x => x.id === this.dataset.editProt)[0];
+    if(!p) return;
+    NEWP.edit = p.id;
+    NEWP.items = pItems(p).map(it => ({c:it.c, d:it.d, u:it.u}));
+    S.route = 'prot'; S.newProt = true; S.open = null; save(); paint(); top0();
+  });
+  on('[data-close-prot]', 'click', () => {
+    S.newProt = false; NEWP.items = []; NEWP.edit = null; save(); paint();
+  });
   on('[data-open-prot]', 'click', function(){
-    S.route = 'prot'; S.open = S.open === this.dataset.openProt ? null : this.dataset.openProt;
+    S.route = 'prot'; S.newProt = false;
+    S.open = S.open === this.dataset.openProt ? null : this.dataset.openProt;
     save(); paint();
   });
+  /* Añadir un compuesto a la pila que se está escribiendo. No se guarda nada
+     todavía: la pila vive en NEWP hasta que se pulsa Guardar. */
+  const addIt = document.getElementById('pxAddIt');
+  const meteItem = () => {
+    const c = val('pxC');
+    const box = document.getElementById('pxC');
+    if(!c){ if(box) box.focus(); return; }
+    NEWP.items.push({c:c, d:val('pxD'), u:val('pxU') || 'mcg'});
+    const lista = document.getElementById('pxItems');
+    if(lista) lista.innerHTML = itemsHTML();
+    ['pxC','pxD'].forEach(id => { const i = document.getElementById(id); if(i) i.value = ''; });
+    if(box) box.focus();
+    cableaQuitar();
+  };
+  const cableaQuitar = () => {
+    root.querySelectorAll('[data-rm-it]').forEach(b => b.addEventListener('click', function(){
+      NEWP.items.splice(+this.dataset.rmIt, 1);
+      const lista = document.getElementById('pxItems');
+      if(lista) lista.innerHTML = itemsHTML();
+      cableaQuitar();
+    }));
+  };
+  if(addIt){
+    addIt.addEventListener('click', ev => { ev.preventDefault(); meteItem(); });
+    cableaQuitar();
+    const ci = document.getElementById('pxC');
+    if(ci) ci.addEventListener('keydown', ev => {
+      if(ev.key === 'Enter'){ ev.preventDefault(); meteItem(); }
+    });
+  }
   const f = document.getElementById('pxF');
   if(f){ freqExtra(f.value); f.addEventListener('change', () => freqExtra(f.value)); }
   const add = document.getElementById('pxAdd');
   if(add) add.addEventListener('click', () => {
-    const c = val('pxC');
-    if(!c){ const i = document.getElementById('pxC'); if(i) i.focus(); return; }
+    /* Lo que quedó escrito en la fila de abajo cuenta: pulsar Guardar sin
+       haber pulsado antes «Añadir compuesto» no puede perder lo tecleado. */
+    if(val('pxC')) meteItem();
+    if(!NEWP.items.length){
+      const i = document.getElementById('pxC'); if(i) i.focus(); return;
+    }
     const freq = val('pxF');
-    const p = {id:uid(), c:c, dose:val('pxD'), unit:val('pxU'), freq:freq, time:val('pxT'),
-               start:val('pxS') || today(), end:val('pxE'), notes:val('pxN'), active:true};
+    const nom = val('pxName') || NEWP.items[0].c;
+    const p = {id: NEWP.edit || uid(), name:nom, items:NEWP.items.slice(),
+               freq:freq, time:val('pxT'), start:val('pxS') || today(),
+               end:val('pxE'), notes:val('pxN'), active:true};
     if(freq === 'dow') p.dow = [...root.querySelectorAll('.pick.p7 .on')].map(b => +b.dataset.d);
     if(freq === 'nd')  p.every = val('pxEvery') || 3;
     if(freq === 'cyc'){ p.on = val('pxOn') || 5; p.off = val('pxOff') || 2; }
-    if(!can('pro') && S.plan.length >= 2){
-      alert(t('The free plan holds two protocols. Settings has the rest.',
-              'El plan gratuito guarda dos protocolos. En Configuración está el resto.'));
-      S.route = 'set'; save(); paint(); return;
+
+    if(NEWP.edit){
+      const i = S.plan.findIndex(x => x.id === NEWP.edit);
+      if(i >= 0){ p.active = S.plan[i].active; S.plan[i] = p; }
+    } else {
+      if(!can('pro') && S.plan.length >= 2){
+        alert(t('The free plan holds two protocols. Settings has the rest.',
+                'El plan gratuito guarda dos protocolos. En Configuración está el resto.'));
+        S.route = 'set'; save(); paint(); return;
+      }
+      S.plan.push(p);
     }
-    S.plan.push(p); S.newProt = false; S.sub1.prot = 'active'; save(); paint();
+    S.newProt = false; NEWP.items = []; NEWP.edit = null;
+    S.sub1.prot = 'active'; save(); paint();
+  });
+  /* Un compuesto se puede mandar a un protocolo desde su propia ficha. */
+  on('[data-add-to-prot]', 'click', function(){
+    NEWP.edit = null;
+    NEWP.items = [{c:this.dataset.addToProt, d:'', u:'mcg'}];
+    S.route = 'prot'; S.newProt = true; S.open = null; save(); paint(); top0();
   });
   on('[data-del]', 'click', function(e){ e.stopPropagation();
     S.plan = S.plan.filter(p => p.id !== this.dataset.del); S.open = null; save(); paint(); });
@@ -2270,9 +2837,26 @@ function wire(){
     e.stopPropagation();
     const [id, k] = this.dataset.tick.split('|');
     S.log[k] = S.log[k] || {};
+    /* Un registro antiguo guardaba `true` para el protocolo entero. Al tocar
+       UNA pieza hay que desdoblarlo primero, o quitar una quitaría las cinco. */
+    const pid = String(id).split('#')[0];
+    if(S.log[k][pid] === true || (S.log[k][pid] && S.log[k][pid].all)){
+      const p = S.plan.filter(x => x.id === pid)[0];
+      const hora = (S.log[k][pid] && S.log[k][pid].t) || '';
+      delete S.log[k][pid];
+      if(p) pItems(p).forEach((it, i) => { S.log[k][pid + '#' + i] = {t:hora}; });
+    }
     if(S.log[k][id]) delete S.log[k][id];
     else S.log[k][id] = {t:new Date().toTimeString().slice(0,5)};
     if(!Object.keys(S.log[k]).length) delete S.log[k];
+    save(); paint();
+  });
+  on('[data-rm-extra]', 'click', function(){
+    const [k, i] = this.dataset.rmExtra.split('|');
+    if(S.extra && S.extra[k]){
+      S.extra[k].splice(+i, 1);
+      if(!S.extra[k].length) delete S.extra[k];
+    }
     save(); paint();
   });
   on('[data-day]', 'click', function(){
@@ -2285,15 +2869,39 @@ function wire(){
   });
   on('[data-new-inj]', 'click', () => { S.route = 'inj'; S.jnew = true; save(); paint(); });
   on('[data-close-inj]', 'click', () => { S.jnew = false; save(); paint(); });
+  /* «Otra cosa…» abre los tres campos de compuesto libre */
+  const jP = document.getElementById('jP');
+  const jOtro = document.getElementById('jOtro');
+  const pintaOtro = () => {
+    if(!jP || !jOtro) return;
+    jOtro.className = jP.value === '__otro' ? '' : 'sr';
+  };
+  if(jP){ pintaOtro(); jP.addEventListener('change', pintaOtro); }
+
   const jAdd = document.getElementById('jAdd');
   if(jAdd) jAdd.addEventListener('click', () => {
-    const id = val('jP'); if(!id) return;
+    const id = val('jP');
     const k = val('jD') || today();
-    S.log[k] = S.log[k] || {};
-    S.log[k][id] = {t: val('jT') || new Date().toTimeString().slice(0,5), z: val('jZ')};
-    if(val('jZ')){
-      const p = S.plan.filter(x => x.id === id)[0];
-      S.sites.push({id:uid(), d:k, z:val('jZ'), c:p ? p.c : ''});
+    const hora = val('jT') || new Date().toTimeString().slice(0,5);
+    const z = val('jZ');
+
+    if(id === '__otro' || !id){
+      /* fuera de pauta: se apunta igual, marcado como tal */
+      const c = val('jC');
+      if(!c){ const i = document.getElementById('jC'); if(i) i.focus(); return; }
+      S.extra = S.extra || {};
+      S.extra[k] = S.extra[k] || [];
+      S.extra[k].push({c:c, d:val('jDose'), u:val('jU') || 'mcg', t:hora, z:z});
+      if(z) S.sites.push({id:uid(), d:k, z:z, c:c});
+    } else {
+      S.log[k] = S.log[k] || {};
+      S.log[k][id] = {t:hora, z:z};
+      if(z){
+        const pid = String(id).split('#')[0], ix = +String(id).split('#')[1] || 0;
+        const p = S.plan.filter(x => x.id === pid)[0];
+        const it = p ? pItems(p)[ix] : null;
+        S.sites.push({id:uid(), d:k, z:z, c:it ? it.c : ''});
+      }
     }
     S.jnew = false; S.jsel = k; save(); paint();
   });
@@ -2419,29 +3027,32 @@ function redrawCalc(){
 /* ==========================================================================
    27b · PEPCHEEMS — EL ASISTENTE
 
-   QUÉ ES, Y QUÉ NO ES
+   QUÉ SABE
 
-   No es un modelo de lenguaje. No hay servidor, no hay clave de API y no sale
-   ni una petición de este fichero. Es un intérprete determinista sobre DOS
-   fuentes, y las dos son locales:
+   Tres fuentes, y las tres están dentro de la aplicación:
 
-     1. lo que el usuario escribió — sus protocolos, su registro, sus viales
-     2. el registro de operación de PEPTIDEX — la biblioteca de 60 compuestos
+     1. TU REGISTRO      protocolos, pila por pila, lo marcado y lo que falta,
+                         viales, zonas y las medidas que hayas apuntado
+     2. EL REGISTRO DE OPERACIÓN DE PEPTIDEX
+                         las 60 fichas: clase, mecanismo, presentación,
+                         solvente, conservación y la columna de referencia
+     3. LA ARITMÉTICA    reconstitución, conversión de unidades, cuánto dura un
+                         vial a tu ritmo, cuántas marcas de jeringa
 
-   Decir que es una IA conversacional en el sentido de un LLM sería mentir
-   sobre el producto. Lo que hace de verdad —leer tu registro y contestar de
-   ahí, al instante y sin conexión— es más útil para esto que una llamada a un
-   modelo, y no manda los datos de nadie a ninguna parte.
-
-   LA LÍNEA, QUE NO SE CRUZA
+   LA RAYA, QUE NO SE CRUZA
 
    PepCheems NO dice qué tomar, cuánto ni cada cuándo. Cuando la pregunta pide
-   eso, lo dice y ofrece lo que sí puede hacer. La columna de dosis del libro de
-   operación se CITA, con marco y procedencia, como lo que es: el documento del
-   operador, no un consejo de la app.
+   eso, lo dice y ofrece lo que sí puede hacer. La columna de referencia del
+   registro de operación se CITA, con marco y procedencia, como lo que es: el
+   documento del operador.
 
-   Esto no es prudencia decorativa. Es lo que separa un registro de una
-   prescripción, y es también lo que hace que la app pueda estar en una tienda.
+   Eso no es prudencia decorativa: es lo que separa un registro de una receta.
+
+   LA VOZ
+
+   Corta. Da el dato y se calla. No saluda cada vez, no se disculpa y no
+   adorna. Usa el nombre del usuario cuando lo tiene. Cuando algo no cuadra lo
+   dice sin rodeos, y cuando no entiende, lo dice también en vez de inventar.
    ========================================================================== */
 
 const PCH = {open:false, msgs:[], q:''};
@@ -2457,97 +3068,189 @@ const SRC = {
 function pchDi(txt, src, cita){
   return {q:false, txt:txt, src:src || '', cita:cita || null};
 }
+/* El nombre de pila, cuando lo hay. Es la diferencia entre una consola y
+   alguien que te conoce, y cuesta una línea. */
+const yo = () => (S.me.nombre || '').trim().split(/\s+/)[0] || '';
+const conNombre = (txt) => { const n = yo(); return n ? txt.replace('%n', n) : txt.replace(/,?\s*%n/,''); };
 
-/* ---- los intentos ------------------------------------------------------- */
-/* Orden importa: lo específico antes que lo general. La petición de consejo va
-   la PRIMERA de todas, para que ninguna otra la atienda por accidente. */
+/* ---- normalizar --------------------------------------------------------- */
+const sinTildes = x => String(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+
+/* ---- los intentos --------------------------------------------------------
+   NINGÚN GRUPO CIERRA CON \b, Y ES A PROPÓSITO.
+
+   En español la palabra que el usuario escribe casi nunca es la raíz: escribe
+   «viales», «protocolos», «conserva», «próxima», «recomiendas». Un `\b` al
+   final del grupo exige frontera de palabra justo después de la raíz, así que
+   `vial` no engancha «viales» y el intento se cae al «no lo cogí». El `\b` de
+   delante sí se queda: impide enganchar dentro de otra palabra. Las palabras
+   cortas que sí son enteras —mes, ml, bac, voy, luz— llevan su propio `\b`. */
+/* Orden: lo que NO se contesta va primero de todo, para que ningún otro
+   intento la atienda por accidente. Después lo específico, y al final lo
+   general. */
 function pchResponde(txt){
   const q = String(txt || '').trim();
-  const n = q.toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '');   /* sin tildes */
+  const n = sinTildes(q);
   if(!n) return [];
 
+  const hoy = today();
+  const e = pchBusca(n);           /* ¿hay un compuesto nombrado en la frase? */
+
   /* 1 · lo que no se contesta ------------------------------------------- */
-  if(/\b(recomiend|recomend|que me pongo|que tomo|que deberia|deberia tomar|cuanto me pongo|cuanto tomo|cuanta dosis|que dosis|dosis deberia|es seguro|puedo mezclar|mezclar con|combinar con|ciclo para|para bajar|para subir|para ganar|recommend|should i|how much should|what dose|is it safe|stack)/.test(n))
-    return [pchDi(
-      t('I do not say what to take, how much or how often. That is not modesty — it is the line between a record and a prescription, and PepX stays on this side of it.',
-        'No digo qué tomar, cuánto ni cada cuándo. No es prudencia — es la línea entre un registro y una receta, y PepX se queda de este lado.'),
-      ''),
+  if(/\b(recomiend|recomend|que me pongo|que tomo|que deberia|deberia tomar|cuanto me pongo|cuanto tomo|cuanta dosis|que dosis|dosis deberia|es seguro|es peligroso|efectos secundarios|puedo mezclar|mezclar con|combinar con|ciclo para|para bajar de peso|para subir|para ganar|me sirve para|sirve para|cura|curar|trata|tratar|recommend|should i|how much should|what dose|is it safe|side effect|stack for|will it help|good for)/.test(n))
+    return [pchDi(conNombre(
+      t('I do not say what to take, how much or how often, %n. That is not modesty — it is the line between a record and a prescription, and PepX stays on this side of it.',
+        'No digo qué tomar, cuánto ni cada cuándo, %n. No es prudencia — es la línea entre un registro y una receta, y PepX se queda de este lado.')), ''),
       pchDi(
-      t('What I can do: read back what you wrote, count your adherence, do the reconstitution arithmetic, and quote the operations record for a compound — with its source attached.',
-        'Lo que sí puedo: leerte lo que escribiste, contarte tu adherencia, hacer la aritmética de reconstitución y citarte el registro de operación de un compuesto — con su procedencia.'),
+      t('What I can do: read back what you wrote, count your adherence, do the reconstitution arithmetic, tell you how long a vial lasts at your pace, and quote the operations record for a compound — with its source attached.',
+        'Lo que sí puedo: leerte lo que escribiste, contarte tu adherencia, hacer la aritmética de reconstitución, decirte cuánto te dura un vial a tu ritmo y citarte el registro de operación de un compuesto — con su procedencia.'),
       '')];
 
-  /* 2 · qué toca hoy ----------------------------------------------------- */
-  if(/\b(hoy|today|ahora|pendiente|falta)/.test(n)){
-    const hoy = today(), due = dueList(hoy);
-    if(!S.plan.length) return [pchDi(t('You have no protocol written yet.','Todavía no tienes ningún protocolo escrito.'), SRC.tuyo)];
-    if(!due.length) return [pchDi(t('Nothing scheduled today by your own plan.','Hoy no toca nada según tu propio plan.'), SRC.tuyo)];
-    const hechas = due.filter(p => taken(hoy, p.id));
-    const faltan = due.filter(p => !taken(hoy, p.id));
+  /* 2 · cortesía ---------------------------------------------------------- */
+  if(/^(hola|buenas|hey|hi|hello|que tal|buenos dias|buenas tardes|buenas noches)\b/.test(n))
+    return [pchDi(conNombre(t('%n. What do you need?','%n. ¿Qué necesitas?'))
+      .replace(/^\.\s*/, t('Here.','Aquí estoy.') + ' '), ''),
+      pchDi(t('Your log, your protocols, any of the %c compound sheets, or the arithmetic.',
+              'Tu registro, tus protocolos, cualquiera de las %c fichas de compuesto, o la aritmética.')
+        .replace('%c', LIB.length), '')];
+  if(/\b(gracias|thanks|thank you|genial|perfecto)/.test(n))
+    return [pchDi(t('Noted.','Anotado.'), '')];
+
+  /* 3 · qué toca hoy ------------------------------------------------------ */
+  if(/\b(hoy|today|ahora|pendiente|falta|me queda por|toca hoy)/.test(n)){
+    if(!S.plan.length) return [pchDi(
+      t('You have no protocol written yet. Protocols → New, and this starts answering.',
+        'Todavía no tienes ningún protocolo escrito. Protocolos → Nuevo, y esto empieza a contestar.'), SRC.tuyo)];
+    const due = dueList(hoy);
+    if(!due.length) return [pchDi(
+      t('Nothing scheduled today by your own plan.','Hoy no toca nada según tu propio plan.'), SRC.tuyo)];
+    let total = 0, hechas = 0;
+    const faltan = [];
+    due.forEach(p => pItems(p).forEach((it, i) => {
+      total++;
+      if(takenItem(hoy, p.id, i)) hechas++;
+      else faltan.push(E(it.c) + (doseTxt(it) ? ' ' + E(doseTxt(it)) : '') +
+                       (p.time ? ' · ' + E(p.time) : ''));
+    }));
     const out = [pchDi(t('%h of %d logged today.','%h de %d registrado hoy.')
-      .replace('%h', hechas.length).replace('%d', due.length), SRC.tuyo)];
+      .replace('%h', hechas).replace('%d', total), SRC.tuyo)];
     if(faltan.length) out.push(pchDi(t('Still open: %l.','Sin registrar: %l.')
-      .replace('%l', faltan.map(p => p.c + ' · ' + p.dose + ' ' + p.unit +
-        (p.time ? ' · ' + p.time : '')).join(' — ')), SRC.tuyo));
+      .replace('%l', faltan.join(' — ')), SRC.tuyo));
+    else out.push(pchDi(t('Nothing left for today.','Por hoy no queda nada.'), SRC.tuyo));
     return out;
   }
 
-  /* 3 · la siguiente ------------------------------------------------------ */
-  if(/\b(siguiente|proxim|next|cuando|when|toca)/.test(n)){
+  /* 4 · la siguiente ------------------------------------------------------ */
+  if(/\b(siguiente|proxim|next|cuando|when|toca|manana|tomorrow)/.test(n)){
     const act = S.plan.filter(p => planState(p) === 'active');
     const px = act.map(p => ({p:p, k:nextDue(p)})).filter(x => x.k)
       .sort((a,b) => a.k < b.k ? -1 : 1);
-    if(!px.length) return [pchDi(t('Nothing upcoming in any active protocol.','No hay nada por venir en ningún protocolo activo.'), SRC.tuyo)];
-    /* Un espacio entre la cifra y la unidad. Lo había perdido un apaño para
-       esquivar que `%d` se comiera el `%u` al sustituir: el remedio borraba el
-       espacio y salía «250mcg». La sustitución de derecha a izquierda no
-       necesita ningún apaño. */
-    return [pchDi(t('%c, %d %u — %f%t.','%c, %d %u — %f%t.')
-      .replace('%t', px[0].p.time ? ', ' + px[0].p.time : '')
-      .replace('%f', human(px[0].k))
-      .replace('%u', E(px[0].p.unit)).replace('%d', E(px[0].p.dose))
-      .replace('%c', E(px[0].p.c)), SRC.tuyo)]
+    if(!px.length) return [pchDi(
+      t('Nothing upcoming in any active protocol.','No hay nada por venir en ningún protocolo activo.'), SRC.tuyo)];
+    const p0 = px[0].p, its = pItems(p0);
+    return [pchDi('<b>' + human(px[0].k) + (p0.time ? ', ' + E(p0.time) : '') + '</b> — ' +
+        E(pName(p0)) + '.', SRC.tuyo),
+      pchDi(its.map(it => E(it.c) + (doseTxt(it) ? ' ' + E(doseTxt(it)) : '')).join(' · ') +
+        (its.length > 1 ? ' — ' + t('%n injections','%n inyecciones').replace('%n', its.length) : ''),
+        SRC.tuyo)]
       .concat(px.length > 1 ? [pchDi(t('After that: %l.','Después: %l.')
-        .replace('%l', px.slice(1,3).map(x => x.p.c + ' ' + human(x.k)).join(' · ')), SRC.tuyo)] : []);
+        .replace('%l', px.slice(1,3).map(x => E(pName(x.p)) + ' ' + human(x.k)).join(' · ')),
+        SRC.tuyo)] : []);
   }
 
-  /* 4 · adherencia y racha ------------------------------------------------ */
-  if(/\b(adherenc|racha|streak|semana|week|voy|llevo|cumpl|mes\b|month)/.test(n)){
+  /* 5 · adherencia y racha ------------------------------------------------ */
+  if(/\b(adherenc|racha|streak|semana|week|voy\b|llevo|cumpl|mes\b|month|como voy)/.test(n)){
     const w = /mes|month|30/.test(n) ? 30 : 7;
     const a = adherence(w), st = streak();
-    if(!a.tocaba) return [pchDi(t('Nothing was scheduled in the last %w days, so there is no percentage to give.',
-                                  'No tocaba nada en los últimos %w días, así que no hay porcentaje que dar.')
+    if(!a.tocaba) return [pchDi(
+      t('Nothing was scheduled in the last %w days, so there is no percentage to give.',
+        'No tocaba nada en los últimos %w días, así que no hay porcentaje que dar.')
       .replace('%w', w), SRC.tuyo)];
-    return [pchDi(t('%p% over the last %w days — %h of %t scheduled doses logged.',
-                    '%p% en los últimos %w días — %h de %t dosis programadas, registradas.')
+    const out = [pchDi(t('<b>%p%</b> over the last %w days — %h of %t scheduled injections logged.',
+                    '<b>%p%</b> en los últimos %w días — %h de %t inyecciones programadas, registradas.')
       .replace('%p', Math.round(a.pct*100)).replace('%w', w)
       .replace('%h', a.hecho).replace('%t', a.tocaba), SRC.tuyo),
       pchDi(st ? t('Unbroken streak: %n days.','Racha sin fallar: %n días.').replace('%n', st)
                : t('No streak running right now.','Ahora mismo no hay racha.'), SRC.tuyo)];
+    if(a.pct === 1) out.push(pchDi(t('Nothing missed in the window.','No falta nada en la ventana.'), ''));
+    return out;
   }
 
-  /* 5 · viales y existencias ---------------------------------------------- */
-  if(/\b(vial|frasco|existenc|stock|quedan|reconstitu|caduc|expir)/.test(n)){
-    if(!S.vials.length) return [pchDi(t('You have no vials registered. Library → Vials adds one.',
-                                        'No tienes viales registrados. Biblioteca → Viales añade uno.'), SRC.tuyo)];
-    const hoy = today();
-    return S.vials.slice(0,4).map(v => {
-      const dias = v.recon ? days(v.recon, hoy) : null;
-      return pchDi(E(v.c) + (v.mg ? ' · ' + E(v.mg) : '') +
-        (v.quedan ? ' · ' + t('%n left','quedan %n').replace('%n', E(v.quedan)) : '') +
-        (dias != null ? ' · ' + t('reconstituted %n days ago','reconstituido hace %n días').replace('%n', dias) : '') +
-        (v.exp ? ' · ' + t('expires ','caduca ') + human(v.exp) : ''), SRC.tuyo);
+  /* 6 · mis protocolos ---------------------------------------------------- */
+  if(/\b(protocolo|protocol|mi pila|mis pilas|que llevo|que estoy tomando|stack mio)/.test(n)){
+    if(!S.plan.length) return [pchDi(
+      t('No protocols written yet.','Todavía no hay protocolos escritos.'), SRC.tuyo)];
+    return S.plan.map(p => {
+      const ph = phase(p), st = planState(p);
+      return pchDi('<b>' + E(pName(p)) + '</b> — ' +
+        (st === 'active' ? t('active','activo') : st === 'done' ? t('done','completado')
+                                                                : t('draft','borrador')) +
+        (ph && ph.total ? ' · ' + t('week %w of %t','semana %w de %t')
+          .replace('%w', ph.w).replace('%t', ph.total) : '') +
+        '<br>' + pComps(p).join(' · ') + ' — ' + E(freqText(p)), SRC.tuyo);
     });
   }
 
-  /* 6 · un compuesto por su nombre ---------------------------------------- */
-  const e = pchBusca(n);
+  /* 7 · viales y existencias ---------------------------------------------- */
+  if(/\b(vial|frasco|existenc|stock|quedan|me dura|cuanto dura|caduc|expir)/.test(n)){
+    if(!S.vials.length) return [pchDi(
+      t('You have no vials registered. More → My vials adds one.',
+        'No tienes viales registrados. Más → Mis viales añade uno.'), SRC.tuyo)];
+    return S.vials.slice(0,5).map(v => {
+      const dias = v.recon ? days(v.recon, hoy) : null;
+      /* cuánto dura a SU ritmo, que es lo que se pregunta de verdad */
+      const p = S.plan.filter(x => x.active && pComps(x).indexOf(v.c) >= 0)[0];
+      let dura = '';
+      if(p && v.quedan != null && v.quedan !== ''){
+        let left = +v.quedan, k = hoy, i = 0;
+        while(left > 0 && i < 400){ if(dueOn(p, k)) left--; if(left > 0){ k = shift(k,1); i++; } }
+        dura = ' · ' + t('lasts until %d at your pace','a tu ritmo te llega hasta %d')
+          .replace('%d', human(k).toLowerCase());
+      }
+      return pchDi('<b>' + E(v.c) + '</b>' + (v.mg ? ' · ' + E(v.mg) : '') +
+        (v.quedan ? ' · ' + t('%n left','quedan %n').replace('%n', E(v.quedan)) : '') +
+        (dias != null ? ' · ' + t('reconstituted %n days ago','reconstituido hace %n días')
+          .replace('%n', dias) : '') +
+        (v.exp ? ' · ' + t('expires ','caduca ') + human(v.exp) : '') + dura, SRC.tuyo);
+    });
+  }
+
+  /* 8 · conservación de un compuesto -------------------------------------- */
+  if(e && /\b(conserv|guardar|almacen|frio|nevera|congel|refriger|temperatura|luz\b|storage|store|fridge|freeze)/.test(n)){
+    const cons = conserva(e);
+    return [pchDi('<b>' + E(e.n) + '</b> — ' + E(e.alm || t('no storage note on the sheet',
+      'la ficha no trae nota de conservación')), SRC.libro),
+      cons.length ? pchDi(cons.join(' · '), SRC.libro) : null,
+      pchDi(t('The printed expiry is the powder’s. Once reconstituted another clock starts, and that one you write down.',
+              'La caducidad impresa es la del polvo. Reconstituido empieza otro reloj, y ése lo apuntas tú.'), '')
+    ].filter(Boolean);
+  }
+
+  /* 9 · reconstitución de un compuesto concreto --------------------------- */
+  if(e && /\b(reconstitu|bac\b|agua|disolv|solvente|diluir|cuanta agua|how much water)/.test(n)){
+    const mg = (e.mg && e.mg.length) ? e.mg[0] : null;
+    const ml = e.bac || null;
+    const out = [pchDi('<b>' + E(e.n) + '</b> — ' +
+      (e.esp ? E(e.esp) + '. ' : '') + (e.sol ? t('Solvent: ','Solvente: ') + E(e.sol) + '.' : ''),
+      SRC.libro)];
+    if(mg && ml)
+      out.push(pchDi(t('The record has it at %m mg with %v mL, which is %c mg/mL. Volume is your call — more solvent is the same product on a longer ruler.',
+                       'El registro lo trae a %m mg con %v mL, que son %c mg/mL. El volumen lo eliges tú — más disolvente es el mismo producto con una regla más larga.')
+        .replace('%m', nf(mg,2)).replace('%v', nf(ml,2)).replace('%c', nf(mg/ml,2)), SRC.libro));
+    out.push(pchDi(t('Give me your dose and I do the division. Library → Calculator has the three fields.',
+                     'Dame tu dosis y hago la división. Biblioteca → Calculadora tiene los tres campos.'), ''));
+    return out;
+  }
+
+  /* 10 · un compuesto por su nombre --------------------------------------- */
   if(e){
     const cons = conserva(e), r = e.ref || {};
+    const f = FAM.filter(x => x.id === family(e))[0];
     const out = [pchDi('<b>' + E(e.n) + '</b>' + (e.sku ? ' · ' + E(e.sku) : '') +
+      (f ? ' · ' + t(f.en, f.es) : '') +
       (e.mec ? '<br>' + E(e.mec) : ''), SRC.libro)];
-    if(e.esp || e.sol) out.push(pchDi(
+    if(e.ins) out.push(pchDi(E(e.ins), SRC.libro));
+    if(e.esp || e.sol || cons.length) out.push(pchDi(
       [e.esp && t('Presentation: ','Presentación: ') + E(e.esp),
        e.sol && t('Solvent: ','Solvente: ') + E(e.sol),
        cons.length && t('Storage: ','Conservación: ') + cons.join(', ')]
@@ -2562,11 +3265,27 @@ function pchResponde(txt){
         pie: t('This is the operator document. I am not applying it to you and I am not suggesting it — you read it and decide.',
                'Éste es el documento del operador. No te lo estoy aplicando ni te lo estoy sugiriendo — lo lees tú y decides.')
       }));
+    /* ¿lo llevas ya en alguna pila? */
+    const mio = S.plan.filter(p => pComps(p).indexOf(e.n) >= 0);
+    if(mio.length) out.push(pchDi(t('You have it in %l.','Lo llevas en %l.')
+      .replace('%l', mio.map(p => E(pName(p))).join(' · ')), SRC.tuyo));
     return out;
   }
 
-  /* 7 · la aritmética ------------------------------------------------------ */
-  if(/\b(calcul|reconstitu|bac|agua|diluir|jeringa|unidad|units|ml\b|cuanto pongo)/.test(n)){
+  /* 11 · conversión de unidades ------------------------------------------- */
+  const conv = n.match(/(\d+(?:[.,]\d+)?)\s*(mcg|ug|mg)\b/);
+  if(conv && /\b(cuanto|cuantos|convert|pasa|en mg|en mcg|equivale|son)\b/.test(n)){
+    const v = parseFloat(conv[1].replace(',','.'));
+    const u = conv[2] === 'mg' ? 'mg' : 'mcg';
+    return [pchDi(u === 'mg'
+      ? t('%v mg = <b>%o mcg</b>.','%v mg = <b>%o mcg</b>.')
+          .replace('%v', nf(v,3)).replace('%o', nf(v*1000,0))
+      : t('%v mcg = <b>%o mg</b>.','%v mcg = <b>%o mg</b>.')
+          .replace('%v', nf(v,0)).replace('%o', nf(v/1000,4)), SRC.suma)];
+  }
+
+  /* 12 · la aritmética de reconstitución ---------------------------------- */
+  if(/\b(calcul|reconstitu|bac\b|agua|diluir|jeringa|unidad|units|ml\b|cuanto pongo|que marca)/.test(n)){
     const c = S.calc || {};
     const mg = parseFloat(c.mg), ml = parseFloat(c.ml), d = parseFloat(c.dose);
     if(!(mg > 0 && ml > 0 && d > 0))
@@ -2574,55 +3293,110 @@ function pchResponde(txt){
                       'Dame los tres números en Biblioteca → Calculadora: mg del vial, mL de disolvente y la dosis que decidiste. La aritmética es mía; los tres números son tuyos.'), '')];
     const dmg = c.du === 'mcg' ? d/1000 : d;
     const conc = mg/ml, mlDosis = dmg/conc, u = mlDosis*100;
-    return [pchDi(t('%m mg in %v mL is %c mg/mL. Your %d %u is <b>%x mL</b> — mark <b>%s</b> on a 100-unit syringe.',
+    const dosis = dmg > 0 ? Math.floor(mg/dmg) : 0;
+    const out = [pchDi(t('%m mg in %v mL is %c mg/mL. Your %d %u is <b>%x mL</b> — mark <b>%s</b> on a 100-unit syringe.',
                     '%m mg en %v mL son %c mg/mL. Tu dosis de %d %u es <b>%x mL</b> — marca <b>%s</b> en una jeringa de 100 unidades.')
       .replace('%m', nf(mg,2)).replace('%v', nf(ml,2)).replace('%c', nf(conc,2))
       .replace('%d', nf(d,2)).replace('%u', c.du || 'mcg')
-      .replace('%x', nf(mlDosis,3)).replace('%s', nf(u,1)), SRC.suma),
-      pchDi(t('That is division, not advice. The dose in it is the one you entered.',
-              'Eso es una división, no un consejo. La dosis que lleva es la que escribiste tú.'), '')];
+      .replace('%x', nf(mlDosis,3)).replace('%s', nf(u,1)), SRC.suma)];
+    if(dosis) out.push(pchDi(t('That vial holds <b>%n</b> doses of that size.',
+                                'Ese vial da para <b>%n</b> dosis de ese tamaño.')
+      .replace('%n', dosis), SRC.suma));
+    if(u < 3) out.push(pchDi(t('%s units is a hard mark to read. Double the solvent and the same dose lands on %d.',
+                               '%s unidades es una marca difícil de leer. Con el doble de disolvente la misma dosis cae en %d.')
+      .replace('%s', nf(u,1)).replace('%d', nf(u*2,1)), ''));
+    if(u > 100) out.push(pchDi(t('%s units does not fit in a 1 mL syringe — it needs more than one fill, or less solvent.',
+                                 '%s unidades no caben en una jeringa de 1 mL — hacen falta más de una carga, o menos disolvente.')
+      .replace('%s', nf(u,1)), ''));
+    out.push(pchDi(t('That is division, not advice. The dose in it is the one you entered.',
+                     'Eso es una división, no un consejo. La dosis que lleva es la que escribiste tú.'), ''));
+    return out;
   }
 
-  /* 8 · quién eres --------------------------------------------------------- */
-  if(/\b(quien eres|que eres|who are you|what are you|pepcheems|ayuda|help|puedes)/.test(n))
-    return [pchDi(t('PepCheems. I read two things: what you wrote in this app, and the PEPTIDEX operations record. Both live on this device.',
-                    'PepCheems. Leo dos cosas: lo que escribiste en esta app y el registro de operación de PEPTIDEX. Las dos viven en este aparato.'), ''),
-            pchDi(t('I am not a language model and there is no server behind me — which is why I answer offline and why nothing you write leaves the phone.',
-                    'No soy un modelo de lenguaje y no hay servidor detrás — por eso contesto sin conexión y por eso nada de lo que escribes sale del teléfono.'), '')];
+  /* 13 · zonas ------------------------------------------------------------- */
+  if(/\b(zona|sitio|donde me|rotar|rotation|site)/.test(n)){
+    if(!S.sites.length) return [pchDi(
+      t('You have not noted a site yet. The log form has the field.',
+        'Todavía no has apuntado ninguna zona. El formulario de registro tiene el campo.'), SRC.tuyo)];
+    const cuenta = {};
+    S.sites.forEach(x => { cuenta[x.z] = (cuenta[x.z]||0) + 1; });
+    const orden = Object.keys(cuenta).sort((a,b) => cuenta[b]-cuenta[a]);
+    return [pchDi(orden.slice(0,5).map(z => E(zName(z)) + ' ×' + cuenta[z]).join(' · '), SRC.tuyo),
+      pchDi(t('That is your pattern. What to do with it is not mine to say.',
+              'Ése es tu patrón. Qué hacer con él no me toca a mí decirlo.'), '')];
+  }
 
-  /* 9 · no entendido ------------------------------------------------------- */
-  return [pchDi(t('I did not catch that. Try a compound name, or one of these.',
-                  'No lo cogí. Prueba con el nombre de un compuesto, o con una de éstas.'), '')];
+  /* 14 · cuántos compuestos hay -------------------------------------------- */
+  if(/\b(cuantos compuestos|cuantas fichas|how many compounds|biblioteca|library|catalogo)/.test(n)){
+    const porFam = FAM.map(f => {
+      const k = LIB.filter(x => family(x) === f.id).length;
+      return k ? t(f.en, f.es) + ' ' + k : '';
+    }).filter(Boolean);
+    return [pchDi(t('%n sheets in the operations record.','%n fichas en el registro de operación.')
+      .replace('%n', LIB.length), SRC.libro),
+      pchDi(porFam.join(' · '), SRC.libro),
+      pchDi(t('Name any one and I read it back.','Nómbrame cualquiera y te la leo.'), '')];
+  }
+
+  /* 15 · quién eres --------------------------------------------------------- */
+  if(/\b(quien eres|que eres|who are you|what are you|pepcheems|ayuda|help|puedes|que sabes|que haces)/.test(n))
+    return [pchDi(conNombre(t('PepCheems, %n. I read three things: what you wrote in this app, the PEPTIDEX operations record, and a calculator.',
+                    'PepCheems, %n. Leo tres cosas: lo que escribiste en esta app, el registro de operación de PEPTIDEX y una calculadora.')), ''),
+            pchDi(t('Ask me what is due, how your week is going, what a compound sheet says, how long a vial lasts you, or the arithmetic of a reconstitution.',
+                    'Pregúntame qué toca, cómo va tu semana, qué dice la ficha de un compuesto, cuánto te dura un vial, o la aritmética de una reconstitución.'), ''),
+            pchDi(t('What I will not do is tell you what to take, how much or how often.',
+                    'Lo que no voy a hacer es decirte qué tomar, cuánto ni cada cuándo.'), '')];
+
+  /* 16 · no entendido ------------------------------------------------------- */
+  return [pchDi(t('I did not catch that.','Eso no lo cogí.'), ''),
+          pchDi(t('Try a compound name, or one of these.',
+                  'Prueba con el nombre de un compuesto, o con una de éstas.'), '')];
 }
 
 /* Busca un compuesto dentro de la frase. Primero el nombre más largo, para que
-   «BPC157 + TB500» no se resuelva como «TB500». */
+   «BPC157 + TB500» no se resuelva como «TB500». Además del nombre completo
+   prueba con la raíz sin sufijos —«CJC 1295 With DAC» encuentra «CJC-1295»—
+   porque nadie escribe el nombre de catálogo entero. */
 function pchBusca(n){
-  const limpio = s => String(s||'').toLowerCase().normalize('NFD')
-    .replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+  const limpio = s => sinTildes(s).replace(/[^a-z0-9]/g,'');
   const frase = limpio(n);
   let mejor = null;
+  const prueba = (clave, e) => {
+    if(clave.length >= 3 && frase.indexOf(clave) >= 0 &&
+       (!mejor || clave.length > limpio(mejor.k).length)) mejor = {k:clave, e:e};
+  };
   for(const e of LIB){
-    const k = limpio(e.n);
-    if(k.length >= 3 && frase.indexOf(k) >= 0 && (!mejor || k.length > limpio(mejor.n).length))
-      mejor = e;
+    prueba(limpio(e.n), e);
+    /* la raíz: hasta el primer paréntesis o la primera palabra suelta larga */
+    const raiz = String(e.n).split(/[(\s]/)[0];
+    if(raiz && raiz.length >= 4) prueba(limpio(raiz), e);
   }
-  return mejor;
+  return mejor ? mejor.e : null;
 }
 
-const PCHSUG = () => [
-  t('What is due today?','¿Qué toca hoy?'),
-  t('When is my next injection?','¿Cuándo es mi siguiente inyección?'),
-  t('How is my adherence this week?','¿Cómo voy de adherencia esta semana?'),
-  t('BPC 157','BPC 157'),
-  t('My vials','Mis viales')
-];
+/* Las sugerencias cambian con lo que el usuario TIENE. Ofrecerle «mis viales»
+   a quien no ha registrado ninguno es enseñarle una puerta cerrada. */
+const PCHSUG = () => {
+  const s = [t('What is due today?','¿Qué toca hoy?'),
+             t('When is my next injection?','¿Cuándo es mi siguiente inyección?')];
+  if(S.plan.length) s.push(t('How is my adherence?','¿Cómo voy de adherencia?'));
+  const primero = S.plan.length ? pComps(S.plan[0])[0] : null;
+  s.push(primero || 'BPC-157');
+  if(S.vials.length) s.push(t('My vials','Mis viales'));
+  else s.push(t('How do I reconstitute?','¿Cómo se reconstituye?'));
+  return s.slice(0,5);
+};
 
 function pchAbre(pregunta){
   PCH.open = true;
-  if(!PCH.msgs.length)
-    PCH.msgs = [pchDi(t('PepCheems. Ask about your log or about a compound.',
-                        'PepCheems. Pregúntame por tu registro o por un compuesto.'), '')];
+  if(!PCH.msgs.length){
+    const n = yo();
+    PCH.msgs = [pchDi(n ? t('PepCheems. Ask me about your log or any compound, %n.',
+                            'PepCheems. Pregúntame por tu registro o por cualquier compuesto, %n.')
+                          .replace('%n', E(n))
+                        : t('PepCheems. Ask me about your log or any compound.',
+                            'PepCheems. Pregúntame por tu registro o por cualquier compuesto.'), '')];
+  }
   paint();
   if(pregunta) setTimeout(() => pchEnvia(pregunta), 60);
   else setTimeout(() => { const i = document.getElementById('pchQ'); if(i) i.focus(); }, 120);
@@ -2645,14 +3419,17 @@ function pchUI(){
   /* El flotante estorba donde PepCheems ya tiene su fila a la vista: en «Más»
      taparía justo el contenido de debajo para ofrecer lo que está tres dedos
      más arriba. */
-  if(!PCH.open) return S.route === 'more' ? '' :
+  /* El flotante estorba donde PepCheems ya tiene su fila a la vista, y donde
+     el usuario está escribiendo: en «Más» taparía justo lo que ofrece, y en
+     «Buscar» tapa resultados mientras se teclea. */
+  if(!PCH.open) return (S.route === 'more' || S.route === 'find') ? '' :
     '<button class="pch-fab" data-pch aria-label="PepCheems">' +
     MK + '<span>PepCheems</span></button>';
   return '<div class="pch-scrim" data-pch-close></div>' +
     '<aside class="pch" role="dialog" aria-label="PepCheems">' +
       '<header class="pch-hd">' +
         '<span class="pch-id">' + MK + '<b>PepCheems</b>' +
-          '<i>' + t('reads your log · offline','lee tu registro · sin conexión') + '</i></span>' +
+          '<i>' + t('reads your log','lee tu registro') + '</i></span>' +
         '<button class="ibtn" data-pch-close aria-label="' + t('Close','Cerrar') + '">' +
           svg('close') + '</button>' +
       '</header>' +
@@ -2674,7 +3451,7 @@ function pchUI(){
       '<form class="pch-in" id="pchF">' +
         '<label class="sr" for="pchQ">PepCheems</label>' +
         '<input id="pchQ" autocomplete="off" placeholder="' +
-          t('Ask about your log or a compound','Pregunta por tu registro o un compuesto') + '"/>' +
+          t('Ask anything','Pregunta lo que sea') + '"/>' +
         '<button class="ibtn solid" type="submit" aria-label="' + t('Send','Enviar') + '">' +
           svg('right') + '</button>' +
       '</form>' +

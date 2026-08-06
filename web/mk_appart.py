@@ -49,6 +49,54 @@ def uri(im, q=82, lossless=False):
     return 'data:image/webp;base64,' + base64.b64encode(b.getvalue()).decode()
 
 
+def destapa(im, tol=14):
+    """Quita el fondo blanco de una foto de producto, sólo por fuera.
+
+    LA REGLA SIGUE EN PIE: esto no recolorea nada. Es el mismo recorte de
+    siempre, hecho contra un fondo plano en vez de contra un rectángulo — la
+    pluma no se toca, se le quita el papel de detrás.
+
+    Y se hace por RELLENO DESDE EL BORDE, no por «todo lo que sea claro»:
+    la pluma de LONGEVITY es plateada y la de FITNESS tiene reflejos blancos
+    en el cuerpo. Un umbral global se los comería y dejaría el producto
+    agujereado. El relleno sólo alcanza el blanco que está conectado con el
+    borde, que es exactamente el fondo.
+
+    Hace falta en el tema oscuro: sobre #0D0D0D un fondo blanco es un
+    rectángulo blanco, y la portada es la primera pantalla que se ve.
+    """
+    from PIL import Image
+    from collections import deque
+    im = im.convert('RGBA')
+    w, h = im.size
+    px = im.load()
+    fuera = bytearray(w * h)
+    q = deque()
+    def blanco(x, y):
+        r, g, b, _ = px[x, y]
+        return r >= 255 - tol and g >= 255 - tol and b >= 255 - tol
+    for x in range(w):
+        for y in (0, h - 1):
+            if not fuera[y*w+x] and blanco(x, y): fuera[y*w+x] = 1; q.append((x, y))
+    for y in range(h):
+        for x in (0, w - 1):
+            if not fuera[y*w+x] and blanco(x, y): fuera[y*w+x] = 1; q.append((x, y))
+    while q:
+        x, y = q.popleft()
+        for dx, dy in ((1,0), (-1,0), (0,1), (0,-1)):
+            nx, ny = x+dx, y+dy
+            if 0 <= nx < w and 0 <= ny < h and not fuera[ny*w+nx] and blanco(nx, ny):
+                fuera[ny*w+nx] = 1
+                q.append((nx, ny))
+    for y in range(h):
+        row = y * w
+        for x in range(w):
+            if fuera[row+x]:
+                r, g, b, _ = px[x, y]
+                px[x, y] = (r, g, b, 0)
+    return im
+
+
 def cut(src, box, alto, q=82):
     """Recorta `box` de `src` y lo deja con `alto` píxeles de alto."""
     from PIL import Image
@@ -99,12 +147,16 @@ def main():
         art['vialt_%s' % k] = uri(cut('line_%s.webp' % k, (0, 0, 411, 1155), 160), 82)
 
     # --- las plumas ---------------------------------------------------------
+    # Sólo la PLUMA. El fichero entregado trae debajo su bloque de rótulo
+    # —Px PEPTIDEX / FITNESS / REUSABLE PEN INJECTOR— y en la portada de la
+    # referencia las plumas van solas, sin pie. Se recorta por encima de ese
+    # bloque: 950 de 1340 es donde termina la punta y empieza el aire.
     for k in ('fitness', 'beauty', 'longevity'):
         p = os.path.join(A, 'pens', '%s.png' % k)
         if not os.path.exists(p):
             continue
-        art['pen_%s' % k] = uri(cut(os.path.join('pens', '%s.png' % k),
-                                    (0, 0, 790, 1340), 560), 78)
+        im = cut(os.path.join('pens', '%s.png' % k), (0, 0, 790, 950), 560)
+        art['pen_%s' % k] = uri(destapa(im), 82)
 
     # --- los tres bloques de línea -----------------------------------------
     for k, box in FAM.items():
