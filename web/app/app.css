@@ -1302,3 +1302,149 @@ svg .zone.recent{fill:var(--tx);}
   font-variant-numeric:tabular-nums; color:var(--tx);}
 .mstats span{display:block; margin-top:6px; font-size:11px; letter-spacing:.12em;
   text-transform:uppercase; color:var(--tx3);}
+
+/* ============================================================================
+   30 · PEPCHEEMS
+
+   Dos formas para el mismo asistente, y no es capricho:
+
+     móvil       hoja que sube desde abajo. El pulgar llega al campo sin mover
+                 la mano, y el gesto de cerrar es hacia abajo — el que ya
+                 espera cualquiera que use un teléfono.
+     escritorio  panel a la derecha. No tapa el contenido que se está mirando,
+                 que es justo lo que se le está preguntando.
+
+   Monocromo, como el resto. Lo que separa la pregunta de la respuesta es la
+   alineación y el peso, no un color de burbuja.
+   ============================================================================ */
+
+/* el botón: flotante sobre la barra de pestañas, discreto hasta que se necesita */
+.pch-fab{
+  position:fixed; z-index:45; right:18px;
+  bottom:calc(78px + env(safe-area-inset-bottom));
+  display:inline-flex; align-items:center; gap:9px;
+  padding:12px 18px 12px 14px; border-radius:var(--r-pill);
+  background:var(--btn); color:var(--onbtn);
+  box-shadow:0 2px 6px rgba(0,0,0,.10), 0 16px 34px -14px rgba(0,0,0,.36);
+  font-size:13px; font-weight:600; letter-spacing:-.01em;
+  transition:transform .18s var(--e), opacity .18s var(--e);
+}
+[data-theme="dark"] .pch-fab{box-shadow:0 0 0 1px var(--line2);}
+.pch-fab:active{transform:scale(.97);}
+.pch-fab .mk svg{width:16px; height:16px; fill:currentColor; stroke:none;}
+@media (min-width:1024px){
+  .pch-fab{right:26px; bottom:26px;}
+}
+
+.pch-scrim{position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.34);
+  animation:pchIn .22s var(--e);}
+[data-theme="dark"] .pch-scrim{background:rgba(0,0,0,.6);}
+
+.pch{
+  position:fixed; z-index:61; display:flex; flex-direction:column;
+  background:var(--bg); border:1px solid var(--line);
+  /* móvil: hoja pegada abajo, con el alto suficiente para no tapar del todo */
+  left:0; right:0; bottom:0; max-height:86vh; max-height:86svh;
+  border-radius:22px 22px 0 0; border-bottom:0;
+  animation:pchSube .3s var(--e);
+}
+@media (min-width:1024px){
+  .pch{
+    left:auto; top:0; bottom:0; width:400px; max-height:none;
+    border-radius:0; border-right:0; border-top:0; border-bottom:0;
+    animation:pchEntra .28s var(--e);
+  }
+}
+@keyframes pchIn{from{opacity:0}to{opacity:1}}
+@keyframes pchSube{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes pchEntra{from{transform:translateX(100%)}to{transform:translateX(0)}}
+/* Quien pidió menos movimiento, menos movimiento. */
+@media (prefers-reduced-motion:reduce){
+  .pch, .pch-scrim{animation:none;}
+}
+
+.pch-hd{display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:16px 16px 14px 20px; border-bottom:1px solid var(--line); flex:0 0 auto;}
+.pch-id{display:flex; align-items:center; gap:9px; flex-wrap:wrap; min-width:0;}
+.pch-id .mk svg{width:16px; height:16px; fill:var(--tx); stroke:none;}
+.pch-id b{font-size:15px; font-weight:600; letter-spacing:-.025em;}
+.pch-id i{font-style:normal; width:100%; padding-left:25px; margin-top:-2px;
+  font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--tx3);}
+
+.pch-scroll{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding:20px; display:flex; flex-direction:column; gap:16px;}
+
+/* La pregunta va a la derecha con placa; la respuesta a la izquierda desnuda.
+   Alineación y peso, sin dos colores de burbuja. */
+.pch-q{align-self:flex-end; max-width:82%;
+  background:var(--s2); border-radius:16px 16px 4px 16px;
+  padding:11px 15px; font-size:14.5px; line-height:1.5; color:var(--tx);}
+[data-theme="dark"] .pch-q{background:var(--s3);}
+.pch-a{align-self:flex-start; max-width:94%;}
+.pch-tx{font-size:14.5px; line-height:1.6; color:var(--tx); letter-spacing:-.008em;}
+.pch-tx b{font-weight:600;}
+.pch-src{margin-top:7px; font-size:10px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--tx3);}
+.pch-cita{margin-top:12px;}
+
+.pch-sug{display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;}
+.pch-sug button{padding:9px 14px; border:1px solid var(--line); border-radius:var(--r-pill);
+  font-size:12.5px; color:var(--tx2); text-align:left;
+  transition:border-color .18s var(--e), color .18s var(--e);}
+.pch-sug button:hover{border-color:var(--tx); color:var(--tx);}
+
+.pch-in{display:flex; gap:10px; align-items:center; flex:0 0 auto;
+  padding:14px 16px; border-top:1px solid var(--line);}
+.pch-in input{border-radius:var(--r-pill); padding:12px 18px;}
+.ibtn.solid{background:var(--btn); color:var(--onbtn); border-color:var(--btn);}
+.ibtn.solid svg{stroke:currentColor;}
+
+.pch-foot{flex:0 0 auto; padding:0 20px calc(16px + env(safe-area-inset-bottom));
+  font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--tx3); line-height:1.6;}
+
+/* ---------- 30.1 · SECCIONES ------------------------------------------------
+   El seccionamiento de índice: rótulo pegado arriba mientras se recorre la
+   sección. En un teléfono es la diferencia entre buscar y hojear — el usuario
+   siempre sabe en qué familia está sin tener que recordar dónde empezó.
+
+   El rótulo lleva el acento de línea como un filete de 2 px a la izquierda, y
+   es de los poquísimos sitios donde el color de familia sale del halo: aquí
+   está rotulando literalmente un mundo de producto.
+   ---------------------------------------------------------------------------- */
+.csec{margin-top:26px;}
+.csec:first-of-type{margin-top:18px;}
+.csec-h{
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  margin:0; padding:12px 0 10px;
+  background:var(--bg);                                   /* iOS < 16.2 */
+  background:color-mix(in srgb, var(--bg) 94%, transparent);
+  -webkit-backdrop-filter:blur(16px);
+          backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+  font-size:11px; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--tx2);
+}
+.csec-h > span{position:relative; padding-left:14px;}
+.csec-h > span::before{
+  content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+  width:2px; height:12px; background:var(--tx3); border-radius:1px;
+}
+.csec.l-fitness   .csec-h > span::before{background:var(--fitness);}
+.csec.l-beauty    .csec-h > span::before{background:var(--beauty);}
+.csec.l-longevity .csec-h > span::before{background:var(--longevity);}
+.csec-h > i{font-style:normal; letter-spacing:.08em; color:var(--tx3);
+  font-variant-numeric:tabular-nums;}
+/* En escritorio la barra superior está pegada arriba y mide 67 px: sin esto,
+   el rótulo de sección se pegaría DEBAJO de ella y quedaría medio tapado. */
+@media (min-width:1024px){ .csec-h{top:67px;} }
+.csec .complist .row:first-child{border-top:0;}
+.csec .bare .row:first-child{border-top:0;}
+
+.rico{flex:0 0 auto; width:18px; height:18px; color:var(--tx2);
+  display:flex; align-items:center; justify-content:center;}
+.rico svg{width:18px; height:18px;}
+.rico .mk svg{width:17px; height:17px; fill:var(--tx); stroke:none;}
+.mtop0{padding-top:4px;}
+.pchrow{border-top:1px solid var(--line);}

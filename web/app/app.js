@@ -337,7 +337,20 @@ const I = {
   down:'<path d="M12 5v14M6 13l6 6 6-6"/>',
   flat:'<path d="M5 12h14"/>'
 };
-const svg = n => '<svg viewBox="0 0 24 24" aria-hidden="true">' + (I[n]||'') + '</svg>';
+/* LOS ATRIBUTOS VAN EN EL SVG, NO EN CADA SITIO QUE LO USA.
+
+   Sin ellos, un <svg> con trazados dentro se pinta con el valor de fábrica de
+   la especificación: fill negro, stroke ninguno. Es decir, una mancha. Iba
+   bien donde la hoja de estilos lo corregía —la lateral, la barra de
+   pestañas, los botones— y salía como un borrón en todos los demás: los
+   iconos de las filas de «Más», los de accesos rápidos y los de ajustes.
+
+   Como ATRIBUTOS de presentación pierden contra cualquier regla CSS, así que
+   los sitios que ya rellenan el icono a propósito —la pestaña activa— siguen
+   ganando. La capa correcta para un valor por defecto. */
+const svg = n => '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" ' +
+  'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" ' +
+  'stroke-linejoin="round">' + (I[n]||'') + '</svg>';
 
 /* ==========================================================================
    9 · LA BIBLIOTECA DE COMPUESTOS
@@ -1187,15 +1200,34 @@ function vComp(){
         return n ? '<button class="pill' + (fam === f.id ? ' on' : '') + '" data-sub="comp:' + f.id + '">' +
           t(f.en, f.es) + '<i>' + n + '</i></button>' : '';
       }).join('') + '</div>' +
-    /* La lista sin marco: el filete separa las fichas, no las encierra. Con
-       sesenta entradas, sesenta bordes redondeados eran sesenta cajas. */
+    /* SECCIONADA, NO UN MURO DE SESENTA FILAS.
+
+       Una lista plana de sesenta entradas obliga a leerlas todas para saber
+       dónde está uno. Partida por familia, con el rótulo pegado arriba
+       mientras se recorre esa familia, el usuario siempre sabe en qué mundo
+       está — y en un teléfono eso es la diferencia entre buscar y hojear.
+
+       Sólo se secciona cuando NO hay filtro: con un filtro puesto la sección
+       sería una sola y el rótulo estaría diciendo lo que ya dice la píldora. */
     (list.length
-      ? '<div class="bare complist">' + list.map(e =>
-          '<button class="row go" data-comp="' + E(e.n) + '">' + vial(e.n) +
-            '<span class="bd"><span class="nm">' + E(e.n) + '</span>' +
-              '<span class="mt">' + E(full && e.mec ? e.mec.slice(0,72) : (e.cat||'')) + '</span>' +
-              '<span class="mt dim">' + E(research(e)) + '</span></span>' +
-            '<span class="cv"></span></button>').join('') + '</div>'
+      ? (fam || q ? '<div class="bare complist">' + list.map(compRow).join('') + '</div>'
+        : FAM.map(f => {
+            const g = list.filter(x => family(x) === f.id);
+            if(!g.length) return '';
+            return '<section class="csec l-' + (LINEA[f.id] || 'fitness') + '">' +
+              '<h2 class="csec-h"><span>' + t(f.en, f.es) + '</span>' +
+                '<i>' + g.length + '</i></h2>' +
+              '<div class="bare complist">' + g.map(compRow).join('') + '</div>' +
+            '</section>';
+          }).join('') +
+          (function(){
+            const sueltos = list.filter(x => !family(x));
+            return sueltos.length ? '<section class="csec">' +
+              '<h2 class="csec-h"><span>' + t('Other','Otros') + '</span>' +
+                '<i>' + sueltos.length + '</i></h2>' +
+              '<div class="bare complist">' + sueltos.map(compRow).join('') + '</div>' +
+            '</section>' : '';
+          })())
       : '<div class="band">' + empty('search', t('Nothing matches','Nada coincide'),
           E(S.lq || ''), '<button class="btn ghost" data-clear-q>' + t('Clear','Limpiar') + '</button>') + '</div>') +
     (!full && LIB.length ? '<div class="card" style="margin-top:12px">' + empty('lock',
@@ -1204,6 +1236,19 @@ function vComp(){
         'Mecanismo, presentación, solvente y cadena de frío — y la calculadora precargada con ella.'),
       '<button class="btn" data-go="set">' + t('See plans','Ver planes') + '</button>') + '</div>' : '') +
     ruo();
+}
+
+
+/* Una fila de compuesto. Una sola definición: la usan la lista plana (con
+   filtro o búsqueda) y la seccionada por familia. Duplicarla era la manera
+   segura de que las dos se separaran en el siguiente cambio. */
+function compRow(e){
+  const full = can('ult');
+  return '<button class="row go" data-comp="' + E(e.n) + '">' + vial(e.n) +
+    '<span class="bd"><span class="nm">' + E(e.n) + '</span>' +
+      '<span class="mt">' + E(full && e.mec ? e.mec.slice(0,72) : (e.cat||'')) + '</span>' +
+      '<span class="mt dim">' + E(research(e)) + '</span></span>' +
+    '<span class="cv"></span></button>';
 }
 
 /* La ficha: héroe, resumen, investigación, especificaciones, relacionados —
@@ -1893,21 +1938,58 @@ function eduResto(list){
 /* ==========================================================================
    24 · MÁS (sólo móvil)
    ========================================================================== */
+/* «Más» era una caja con seis filas sin orden. Aquí no cabe todo el menú, así
+   que lo que cabe tiene que estar agrupado por PARA QUÉ SIRVE — que es lo que
+   el usuario tiene en la cabeza cuando abre esta pestaña. */
 function vMore(){
-  const items = NAV.filter(n => !n.mob);
+  const GRUPOS = [
+    {t:t('Your record','Tu registro'),   ids:['cal','prog']},
+    {t:t('Reference','Referencia'),      ids:['lib','edu']},
+    {t:t('Account','Cuenta'),            ids:['set']}
+  ];
+  const fila = n => '<button class="row go" data-go="' + n.id + '">' +
+    '<span class="rico">' + svg(n.ic) + '</span>' +
+    '<span class="bd"><span class="nm">' + t(n.en, n.es) + '</span>' +
+      '<span class="mt">' + t(MOREDESC[n.id].en, MOREDESC[n.id].es) + '</span></span>' +
+    '<span class="cv"></span></button>';
   return '' +
     phead('', t('More.','Más.')) +
-    '<div class="card">' + items.map(n =>
-      '<button class="row go" data-go="' + n.id + '">' +
-        '<span style="flex:0 0 auto;width:18px;height:18px;color:var(--tx2)">' + svg(n.ic) + '</span>' +
-        '<span class="bd"><span class="nm">' + t(n.en, n.es) + '</span></span>' +
-        '<span class="cv"></span></button>').join('') +
-      '<a class="row go" href="' + STORE + '" target="_blank" rel="noopener">' +
-        '<span style="flex:0 0 auto;width:18px;height:18px;color:var(--tx2)">' + svg('bag') + '</span>' +
-        '<span class="bd"><span class="nm">' + t('Store','Tienda') + '</span>' +
-        '<span class="mt">peptidex.netlify.app</span></span><span class="cv"></span></a>' +
-    '</div>' + ruo();
+
+    '<section class="band mtop0">' +
+      '<button class="row go pchrow" data-pch>' +
+        '<span class="rico">' + MK + '</span>' +
+        '<span class="bd"><span class="nm">PepCheems</span>' +
+          '<span class="mt">' + t('Ask about your log or a compound. Offline.',
+                                  'Pregunta por tu registro o un compuesto. Sin conexión.') + '</span></span>' +
+        '<span class="cv"></span></button>' +
+    '</section>' +
+
+    GRUPOS.map(g => '<section class="csec">' +
+      '<h2 class="csec-h"><span>' + g.t + '</span></h2>' +
+      '<div class="bare">' + g.ids.map(id => fila(NAV.filter(n => n.id === id)[0])).join('') + '</div>' +
+    '</section>').join('') +
+
+    '<section class="csec">' +
+      '<h2 class="csec-h"><span>' + t('PEPTIDEX','PEPTIDEX') + '</span></h2>' +
+      '<div class="bare">' +
+        '<a class="row go" href="' + STORE + '" target="_blank" rel="noopener">' +
+          '<span class="rico">' + svg('bag') + '</span>' +
+          '<span class="bd"><span class="nm">' + t('Store','Tienda') + '</span>' +
+          '<span class="mt">peptidex.netlify.app</span></span><span class="cv"></span></a>' +
+        '<a class="row go" href="mailto:' + MAIL + '">' +
+          '<span class="rico">' + svg('help') + '</span>' +
+          '<span class="bd"><span class="nm">' + t('Support','Soporte') + '</span>' +
+          '<span class="mt">' + MAIL + '</span></span><span class="cv"></span></a>' +
+      '</div>' +
+    '</section>' + ruo();
 }
+const MOREDESC = {
+  cal:  {en:'Your month, day by day',       es:'Tu mes, día por día'},
+  prog: {en:'What you measured, over time', es:'Lo que mediste, en el tiempo'},
+  lib:  {en:'Vials, calculator, half-life', es:'Viales, calculadora, vida media'},
+  edu:  {en:'Read before, not after',       es:'Leer antes, no después'},
+  set:  {en:'Profile, theme, plan, data',   es:'Perfil, tema, plan, datos'}
+};
 
 /* ==========================================================================
    25 · CONFIGURACIÓN
@@ -2064,8 +2146,14 @@ function paint(){
   if(!S.on){ root.innerHTML = vSplash(); wire(); return; }
   const view = (VIEWS[S.route] || vDash)();
   root.innerHTML = '<div class="shell">' + sidebar() +
-    '<div class="main">' + topbar() + '<main class="view">' + view + '</main></div></div>' + tabbar();
+    '<div class="main">' + topbar() + '<main class="view">' + view + '</main></div></div>' +
+    tabbar() + pchUI();
+  /* Mientras PepCheems está abierto, el fondo no se desplaza. En un teléfono
+     sin esto, arrastrar dentro de la hoja mueve la página de debajo y al
+     cerrarla el usuario está en otro sitio. */
+  document.documentElement.style.overflow = PCH.open ? 'hidden' : '';
   wire();
+  pchWire();
 }
 const val = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
 const top0 = () => scrollTo({top:0, behavior:'instant'});
@@ -2325,6 +2413,291 @@ function redrawCalc(){
   tmp.innerHTML = toolCalc();
   const nuevo = tmp.querySelector('.out');
   if(nuevo) old.replaceWith(nuevo);
+}
+
+
+/* ==========================================================================
+   27b · PEPCHEEMS — EL ASISTENTE
+
+   QUÉ ES, Y QUÉ NO ES
+
+   No es un modelo de lenguaje. No hay servidor, no hay clave de API y no sale
+   ni una petición de este fichero. Es un intérprete determinista sobre DOS
+   fuentes, y las dos son locales:
+
+     1. lo que el usuario escribió — sus protocolos, su registro, sus viales
+     2. el registro de operación de PEPTIDEX — la biblioteca de 60 compuestos
+
+   Decir que es una IA conversacional en el sentido de un LLM sería mentir
+   sobre el producto. Lo que hace de verdad —leer tu registro y contestar de
+   ahí, al instante y sin conexión— es más útil para esto que una llamada a un
+   modelo, y no manda los datos de nadie a ninguna parte.
+
+   LA LÍNEA, QUE NO SE CRUZA
+
+   PepCheems NO dice qué tomar, cuánto ni cada cuándo. Cuando la pregunta pide
+   eso, lo dice y ofrece lo que sí puede hacer. La columna de dosis del libro de
+   operación se CITA, con marco y procedencia, como lo que es: el documento del
+   operador, no un consejo de la app.
+
+   Esto no es prudencia decorativa. Es lo que separa un registro de una
+   prescripción, y es también lo que hace que la app pueda estar en una tienda.
+   ========================================================================== */
+
+const PCH = {open:false, msgs:[], q:''};
+
+/* Cada respuesta declara DE DÓNDE sale. Sin procedencia, un dato en una
+   burbuja parece una opinión del programa. */
+const SRC = {
+  tuyo:  t('from your log','de tu registro'),
+  libro: t('from the operations record','del registro de operación'),
+  suma:  t('arithmetic','aritmética')
+};
+
+function pchDi(txt, src, cita){
+  return {q:false, txt:txt, src:src || '', cita:cita || null};
+}
+
+/* ---- los intentos ------------------------------------------------------- */
+/* Orden importa: lo específico antes que lo general. La petición de consejo va
+   la PRIMERA de todas, para que ninguna otra la atienda por accidente. */
+function pchResponde(txt){
+  const q = String(txt || '').trim();
+  const n = q.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');   /* sin tildes */
+  if(!n) return [];
+
+  /* 1 · lo que no se contesta ------------------------------------------- */
+  if(/\b(recomiend|recomend|que me pongo|que tomo|que deberia|deberia tomar|cuanto me pongo|cuanto tomo|cuanta dosis|que dosis|dosis deberia|es seguro|puedo mezclar|mezclar con|combinar con|ciclo para|para bajar|para subir|para ganar|recommend|should i|how much should|what dose|is it safe|stack)/.test(n))
+    return [pchDi(
+      t('I do not say what to take, how much or how often. That is not modesty — it is the line between a record and a prescription, and PepX stays on this side of it.',
+        'No digo qué tomar, cuánto ni cada cuándo. No es prudencia — es la línea entre un registro y una receta, y PepX se queda de este lado.'),
+      ''),
+      pchDi(
+      t('What I can do: read back what you wrote, count your adherence, do the reconstitution arithmetic, and quote the operations record for a compound — with its source attached.',
+        'Lo que sí puedo: leerte lo que escribiste, contarte tu adherencia, hacer la aritmética de reconstitución y citarte el registro de operación de un compuesto — con su procedencia.'),
+      '')];
+
+  /* 2 · qué toca hoy ----------------------------------------------------- */
+  if(/\b(hoy|today|ahora|pendiente|falta)/.test(n)){
+    const hoy = today(), due = dueList(hoy);
+    if(!S.plan.length) return [pchDi(t('You have no protocol written yet.','Todavía no tienes ningún protocolo escrito.'), SRC.tuyo)];
+    if(!due.length) return [pchDi(t('Nothing scheduled today by your own plan.','Hoy no toca nada según tu propio plan.'), SRC.tuyo)];
+    const hechas = due.filter(p => taken(hoy, p.id));
+    const faltan = due.filter(p => !taken(hoy, p.id));
+    const out = [pchDi(t('%h of %d logged today.','%h de %d registrado hoy.')
+      .replace('%h', hechas.length).replace('%d', due.length), SRC.tuyo)];
+    if(faltan.length) out.push(pchDi(t('Still open: %l.','Sin registrar: %l.')
+      .replace('%l', faltan.map(p => p.c + ' · ' + p.dose + ' ' + p.unit +
+        (p.time ? ' · ' + p.time : '')).join(' — ')), SRC.tuyo));
+    return out;
+  }
+
+  /* 3 · la siguiente ------------------------------------------------------ */
+  if(/\b(siguiente|proxim|next|cuando|when|toca)/.test(n)){
+    const act = S.plan.filter(p => planState(p) === 'active');
+    const px = act.map(p => ({p:p, k:nextDue(p)})).filter(x => x.k)
+      .sort((a,b) => a.k < b.k ? -1 : 1);
+    if(!px.length) return [pchDi(t('Nothing upcoming in any active protocol.','No hay nada por venir en ningún protocolo activo.'), SRC.tuyo)];
+    /* Un espacio entre la cifra y la unidad. Lo había perdido un apaño para
+       esquivar que `%d` se comiera el `%u` al sustituir: el remedio borraba el
+       espacio y salía «250mcg». La sustitución de derecha a izquierda no
+       necesita ningún apaño. */
+    return [pchDi(t('%c, %d %u — %f%t.','%c, %d %u — %f%t.')
+      .replace('%t', px[0].p.time ? ', ' + px[0].p.time : '')
+      .replace('%f', human(px[0].k))
+      .replace('%u', E(px[0].p.unit)).replace('%d', E(px[0].p.dose))
+      .replace('%c', E(px[0].p.c)), SRC.tuyo)]
+      .concat(px.length > 1 ? [pchDi(t('After that: %l.','Después: %l.')
+        .replace('%l', px.slice(1,3).map(x => x.p.c + ' ' + human(x.k)).join(' · ')), SRC.tuyo)] : []);
+  }
+
+  /* 4 · adherencia y racha ------------------------------------------------ */
+  if(/\b(adherenc|racha|streak|semana|week|voy|llevo|cumpl|mes\b|month)/.test(n)){
+    const w = /mes|month|30/.test(n) ? 30 : 7;
+    const a = adherence(w), st = streak();
+    if(!a.tocaba) return [pchDi(t('Nothing was scheduled in the last %w days, so there is no percentage to give.',
+                                  'No tocaba nada en los últimos %w días, así que no hay porcentaje que dar.')
+      .replace('%w', w), SRC.tuyo)];
+    return [pchDi(t('%p% over the last %w days — %h of %t scheduled doses logged.',
+                    '%p% en los últimos %w días — %h de %t dosis programadas, registradas.')
+      .replace('%p', Math.round(a.pct*100)).replace('%w', w)
+      .replace('%h', a.hecho).replace('%t', a.tocaba), SRC.tuyo),
+      pchDi(st ? t('Unbroken streak: %n days.','Racha sin fallar: %n días.').replace('%n', st)
+               : t('No streak running right now.','Ahora mismo no hay racha.'), SRC.tuyo)];
+  }
+
+  /* 5 · viales y existencias ---------------------------------------------- */
+  if(/\b(vial|frasco|existenc|stock|quedan|reconstitu|caduc|expir)/.test(n)){
+    if(!S.vials.length) return [pchDi(t('You have no vials registered. Library → Vials adds one.',
+                                        'No tienes viales registrados. Biblioteca → Viales añade uno.'), SRC.tuyo)];
+    const hoy = today();
+    return S.vials.slice(0,4).map(v => {
+      const dias = v.recon ? days(v.recon, hoy) : null;
+      return pchDi(E(v.c) + (v.mg ? ' · ' + E(v.mg) : '') +
+        (v.quedan ? ' · ' + t('%n left','quedan %n').replace('%n', E(v.quedan)) : '') +
+        (dias != null ? ' · ' + t('reconstituted %n days ago','reconstituido hace %n días').replace('%n', dias) : '') +
+        (v.exp ? ' · ' + t('expires ','caduca ') + human(v.exp) : ''), SRC.tuyo);
+    });
+  }
+
+  /* 6 · un compuesto por su nombre ---------------------------------------- */
+  const e = pchBusca(n);
+  if(e){
+    const cons = conserva(e), r = e.ref || {};
+    const out = [pchDi('<b>' + E(e.n) + '</b>' + (e.sku ? ' · ' + E(e.sku) : '') +
+      (e.mec ? '<br>' + E(e.mec) : ''), SRC.libro)];
+    if(e.esp || e.sol) out.push(pchDi(
+      [e.esp && t('Presentation: ','Presentación: ') + E(e.esp),
+       e.sol && t('Solvent: ','Solvente: ') + E(e.sol),
+       cons.length && t('Storage: ','Conservación: ') + cons.join(', ')]
+      .filter(Boolean).join('<br>'), SRC.libro));
+    /* La columna de dosis se CITA, no se aplica. El marco lo dice. */
+    if(r.ini || r.mant || r.frec)
+      out.push(pchDi('', SRC.libro, {
+        titulo: t('Quoted from the operations record','Citado del registro de operación'),
+        filas: [[t('Initial','Inicial'), r.ini], [t('Maintenance','Mantenimiento'), r.mant],
+                [t('Frequency','Frecuencia'), r.frec], [t('Timing','Horario'), r.hora]]
+               .filter(x => x[1]),
+        pie: t('This is the operator document. I am not applying it to you and I am not suggesting it — you read it and decide.',
+               'Éste es el documento del operador. No te lo estoy aplicando ni te lo estoy sugiriendo — lo lees tú y decides.')
+      }));
+    return out;
+  }
+
+  /* 7 · la aritmética ------------------------------------------------------ */
+  if(/\b(calcul|reconstitu|bac|agua|diluir|jeringa|unidad|units|ml\b|cuanto pongo)/.test(n)){
+    const c = S.calc || {};
+    const mg = parseFloat(c.mg), ml = parseFloat(c.ml), d = parseFloat(c.dose);
+    if(!(mg > 0 && ml > 0 && d > 0))
+      return [pchDi(t('Give me the three numbers in Library → Calculator: mg in the vial, mL of solvent, and the dose you decided. The arithmetic is mine; the three numbers are yours.',
+                      'Dame los tres números en Biblioteca → Calculadora: mg del vial, mL de disolvente y la dosis que decidiste. La aritmética es mía; los tres números son tuyos.'), '')];
+    const dmg = c.du === 'mcg' ? d/1000 : d;
+    const conc = mg/ml, mlDosis = dmg/conc, u = mlDosis*100;
+    return [pchDi(t('%m mg in %v mL is %c mg/mL. Your %d %u is <b>%x mL</b> — mark <b>%s</b> on a 100-unit syringe.',
+                    '%m mg en %v mL son %c mg/mL. Tu dosis de %d %u es <b>%x mL</b> — marca <b>%s</b> en una jeringa de 100 unidades.')
+      .replace('%m', nf(mg,2)).replace('%v', nf(ml,2)).replace('%c', nf(conc,2))
+      .replace('%d', nf(d,2)).replace('%u', c.du || 'mcg')
+      .replace('%x', nf(mlDosis,3)).replace('%s', nf(u,1)), SRC.suma),
+      pchDi(t('That is division, not advice. The dose in it is the one you entered.',
+              'Eso es una división, no un consejo. La dosis que lleva es la que escribiste tú.'), '')];
+  }
+
+  /* 8 · quién eres --------------------------------------------------------- */
+  if(/\b(quien eres|que eres|who are you|what are you|pepcheems|ayuda|help|puedes)/.test(n))
+    return [pchDi(t('PepCheems. I read two things: what you wrote in this app, and the PEPTIDEX operations record. Both live on this device.',
+                    'PepCheems. Leo dos cosas: lo que escribiste en esta app y el registro de operación de PEPTIDEX. Las dos viven en este aparato.'), ''),
+            pchDi(t('I am not a language model and there is no server behind me — which is why I answer offline and why nothing you write leaves the phone.',
+                    'No soy un modelo de lenguaje y no hay servidor detrás — por eso contesto sin conexión y por eso nada de lo que escribes sale del teléfono.'), '')];
+
+  /* 9 · no entendido ------------------------------------------------------- */
+  return [pchDi(t('I did not catch that. Try a compound name, or one of these.',
+                  'No lo cogí. Prueba con el nombre de un compuesto, o con una de éstas.'), '')];
+}
+
+/* Busca un compuesto dentro de la frase. Primero el nombre más largo, para que
+   «BPC157 + TB500» no se resuelva como «TB500». */
+function pchBusca(n){
+  const limpio = s => String(s||'').toLowerCase().normalize('NFD')
+    .replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+  const frase = limpio(n);
+  let mejor = null;
+  for(const e of LIB){
+    const k = limpio(e.n);
+    if(k.length >= 3 && frase.indexOf(k) >= 0 && (!mejor || k.length > limpio(mejor.n).length))
+      mejor = e;
+  }
+  return mejor;
+}
+
+const PCHSUG = () => [
+  t('What is due today?','¿Qué toca hoy?'),
+  t('When is my next injection?','¿Cuándo es mi siguiente inyección?'),
+  t('How is my adherence this week?','¿Cómo voy de adherencia esta semana?'),
+  t('BPC 157','BPC 157'),
+  t('My vials','Mis viales')
+];
+
+function pchAbre(pregunta){
+  PCH.open = true;
+  if(!PCH.msgs.length)
+    PCH.msgs = [pchDi(t('PepCheems. Ask about your log or about a compound.',
+                        'PepCheems. Pregúntame por tu registro o por un compuesto.'), '')];
+  paint();
+  if(pregunta) setTimeout(() => pchEnvia(pregunta), 60);
+  else setTimeout(() => { const i = document.getElementById('pchQ'); if(i) i.focus(); }, 120);
+}
+function pchEnvia(txt){
+  const q = String(txt || '').trim();
+  if(!q) return;
+  PCH.msgs.push({q:true, txt:E(q)});
+  PCH.msgs = PCH.msgs.concat(pchResponde(q));
+  PCH.q = '';
+  paint();
+  setTimeout(() => {
+    const sc = document.getElementById('pchScroll');
+    if(sc) sc.scrollTop = sc.scrollHeight;
+    const i = document.getElementById('pchQ'); if(i) i.focus();
+  }, 30);
+}
+
+function pchUI(){
+  /* El flotante estorba donde PepCheems ya tiene su fila a la vista: en «Más»
+     taparía justo el contenido de debajo para ofrecer lo que está tres dedos
+     más arriba. */
+  if(!PCH.open) return S.route === 'more' ? '' :
+    '<button class="pch-fab" data-pch aria-label="PepCheems">' +
+    MK + '<span>PepCheems</span></button>';
+  return '<div class="pch-scrim" data-pch-close></div>' +
+    '<aside class="pch" role="dialog" aria-label="PepCheems">' +
+      '<header class="pch-hd">' +
+        '<span class="pch-id">' + MK + '<b>PepCheems</b>' +
+          '<i>' + t('reads your log · offline','lee tu registro · sin conexión') + '</i></span>' +
+        '<button class="ibtn" data-pch-close aria-label="' + t('Close','Cerrar') + '">' +
+          svg('close') + '</button>' +
+      '</header>' +
+      '<div class="pch-scroll" id="pchScroll">' +
+        PCH.msgs.map(m => m.q
+          ? '<div class="pch-q">' + m.txt + '</div>'
+          : '<div class="pch-a">' +
+              (m.txt ? '<div class="pch-tx">' + m.txt + '</div>' : '') +
+              (m.cita ? '<div class="quote pch-cita">' +
+                 '<div class="qh">' + m.cita.titulo + '</div>' +
+                 m.cita.filas.map(f => '<div class="kv"><span>' + f[0] + '</span><b>' +
+                   E(f[1]) + '</b></div>').join('') +
+                 '<div class="qf">' + m.cita.pie + '</div></div>' : '') +
+              (m.src ? '<div class="pch-src">' + m.src + '</div>' : '') +
+            '</div>').join('') +
+        '<div class="pch-sug">' + PCHSUG().map(s =>
+          '<button data-pch-ask="' + E(s) + '">' + E(s) + '</button>').join('') + '</div>' +
+      '</div>' +
+      '<form class="pch-in" id="pchF">' +
+        '<label class="sr" for="pchQ">PepCheems</label>' +
+        '<input id="pchQ" autocomplete="off" placeholder="' +
+          t('Ask about your log or a compound','Pregunta por tu registro o un compuesto') + '"/>' +
+        '<button class="ibtn solid" type="submit" aria-label="' + t('Send','Enviar') + '">' +
+          svg('right') + '</button>' +
+      '</form>' +
+      '<div class="pch-foot">' + t('PepCheems does not recommend compounds, doses or schedules.',
+                                   'PepCheems no recomienda compuestos, dosis ni pautas.') + '</div>' +
+    '</aside>';
+}
+
+function pchWire(){
+  const on = (sel, ev, fn) => document.querySelectorAll(sel).forEach(el => el.addEventListener(ev, fn));
+  on('[data-pch]', 'click', () => pchAbre());
+  on('[data-pch-close]', 'click', () => { PCH.open = false; paint(); });
+  on('[data-pch-ask]', 'click', function(){ pchEnvia(this.dataset.pchAsk); });
+  const f = document.getElementById('pchF');
+  if(f) f.addEventListener('submit', ev => {
+    ev.preventDefault();
+    const i = document.getElementById('pchQ');
+    if(i) pchEnvia(i.value);
+  });
+  if(PCH.open) document.addEventListener('keydown', pchEsc);
+}
+function pchEsc(ev){
+  if(ev.key === 'Escape'){ PCH.open = false; document.removeEventListener('keydown', pchEsc); paint(); }
 }
 
 /* ==========================================================================
