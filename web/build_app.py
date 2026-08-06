@@ -46,6 +46,7 @@ APPDIR = os.path.join(HERE, 'app')
 OUT    = os.path.join(HERE, 'pepx')
 LOGO   = os.path.join(HERE, 'assets', 'logo_master.png')
 LIBSRC = os.path.join(HERE, 'assets', 'library.json')
+ARTSRC = os.path.join(HERE, 'assets', 'appart.json')
 
 # El monograma dentro de logo_master.png, medido sobre el propio archivo.
 # (el recorte de alfa empieza en 10,10; el monograma va de 201,0 a 881,454)
@@ -67,6 +68,7 @@ def bundle():
     css   = rd(os.path.join(APPDIR, 'app.css'))
     js    = rd(os.path.join(APPDIR, 'app.js'))
     lib   = rd(LIBSRC) if os.path.exists(LIBSRC) else '[]'
+    art   = rd(ARTSRC) if os.path.exists(ARTSRC) else '{}'
 
     # Un `</script>` dentro de una cadena de JavaScript cierra la etiqueta que
     # lo contiene: el analizador de HTML no sabe que está dentro de comillas.
@@ -78,9 +80,11 @@ def bundle():
             raise SystemExit('%s contiene %s — rompería el documento' % (nombre, mal))
 
     n = json.loads(lib)
+    a = json.loads(art)
     doc = (shell
            .replace('/*__CSS__*/', css)
-           .replace('/*__LIB__*/', 'const PX_LIB = ' + lib + ';')
+           .replace('/*__LIB__*/', 'const PX_LIB = ' + lib + ';\n'
+                                   'const PX_ART = ' + art + ';')
            .replace('/*__JS__*/',  js))
     if '/*__CSS__*/' in doc or '/*__JS__*/' in doc or '/*__LIB__*/' in doc:
         raise SystemExit('shell.html no tiene los tres huecos')
@@ -88,6 +92,10 @@ def bundle():
     print('  app.css          %6.1f KB' % (len(css.encode()) / 1024))
     print('  app.js           %6.1f KB' % (len(js.encode()) / 1024))
     print('  library.json     %6.1f KB   %d compuestos' % (len(lib.encode()) / 1024, len(n)))
+    print('  appart.json      %6.1f KB   %d piezas de arte' % (len(art.encode()) / 1024, len(a)))
+    if not a:
+        print('  ATENCIÓN: sin arte. Corre mk_appart.py — la app cae a los')
+        print('            marcadores dibujados y pierde el producto real.')
     return doc
 
 

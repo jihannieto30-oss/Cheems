@@ -484,7 +484,12 @@ input::placeholder,textarea::placeholder{color:var(--tx3);}
   display:flex; flex-direction:column; gap:6px;
   padding:22px 14px 16px; background:var(--s1); border-right:1px solid var(--line);
 }
-.side .brand{padding:4px 10px 22px;}
+/* El bloque de la lateral ya no es dos <span> dentro de .mark: es la imagen
+   entregada más la palabra. El hueco entre las dos lo pone .brand, que es
+   quien los tiene ahora — sin esto salía «PXPEPTIDEX» pegado. */
+.side .brand{display:flex; align-items:center; gap:11px; padding:4px 10px 24px;}
+.side .brand .wm{font-size:10.5px; font-weight:500; letter-spacing:.3em;
+  text-transform:uppercase; color:var(--tx2); white-space:nowrap;}
 .side nav{display:flex; flex-direction:column; gap:2px; flex:1; overflow-y:auto;}
 .side nav button{
   display:flex; align-items:center; gap:12px; width:100%;
@@ -852,3 +857,426 @@ svg .zone.recent{fill:var(--tx);}
   .out{padding:20px;}
   .vrow{gap:10px;}
 }
+
+/* ============================================================================
+   29 · PEPTIDEX 2.0 — LA CAPA EDITORIAL
+
+   Lo que había funcionaba y parecía un tablero: cada dato dentro de una ficha,
+   cada ficha con su borde, su radio y su sombra. Cuatro números arriba, filas
+   de tarjetas debajo. Eso es el reflejo de SaaS que había que quitar.
+
+   Aquí no se añade decoración: se QUITA contenedor. Un número no necesita una
+   caja, un titular no necesita un marco, y el producto —que existe y está
+   fotografiado— manda sobre cualquier widget.
+
+   Tres primitivas, y con ellas se compone todo:
+
+     .phero     titular y aire, sin nada más
+     .strip     cifras en una tira, separadas por filete
+     .feature   composición partida: producto grande a un lado, estado al otro
+     .band      una sección con su rótulo, sin marco
+
+   La tarjeta sigue existiendo — hay sitios donde un contenedor SÍ significa
+   algo, como un formulario o un aviso — pero deja de ser la respuesta a todo.
+   ============================================================================ */
+
+/* ---------- 29.1 · LA MARCA, EN SUS DOS POLARIDADES -------------------------
+   Las dos imágenes van al DOM y el tema enseña una. No se conmuta repintando,
+   porque cambiar de tema no repinta el árbol: si dependiera de eso, la marca
+   se quedaría en la polaridad equivocada hasta el siguiente render. */
+.pxmark{display:inline-flex; align-items:center; line-height:0;}
+.pxmark img{display:block; height:100%; width:auto;}
+.pxmark .md{display:none;}
+[data-theme="dark"] .pxmark .ml{display:none;}
+[data-theme="dark"] .pxmark .md{display:block;}
+
+.brand-px{height:22px;}
+.mob-px{height:17px; margin-right:9px;}
+.splash-lock{height:clamp(96px,26vw,132px);}
+
+/* La placa negra del panel entregado viaja con el recorte del tema oscuro. Es
+   casi negra (#1e1e1e) y sobre #000 se nota el canto, así que se funde: la
+   máscara la desvanece por los bordes en vez de recortarla, que sería
+   procesar el arte. */
+[data-theme="dark"] .pxmark .md{
+  -webkit-mask-image:radial-gradient(120% 120% at 50% 50%, #000 62%, transparent 96%);
+          mask-image:radial-gradient(120% 120% at 50% 50%, #000 62%, transparent 96%);
+}
+
+/* ---------- 29.2 · EL PRODUCTO REAL ----------------------------------------
+   Foto entregada, con alfa. Nada de fondo, nada de borde: el vial se sostiene
+   solo, que para eso está fotografiado sobre transparencia. */
+.pv{display:inline-flex; align-items:center; justify-content:center;
+  flex:0 0 auto; line-height:0;}
+.pv img{display:block; height:100%; width:auto; object-fit:contain;}
+.pv{height:54px;}
+.pv.sm{height:38px;}
+.pv.lg{height:88px;}
+.pv.xl{height:190px;}
+.pv.hero{height:clamp(210px,30vw,340px);}
+
+/* La sombra de contacto: el vial se apoya en algo. Va DEBAJO y desenfocada, y
+   en oscuro casi desaparece porque en oscuro una sombra negra no existe. */
+.pv.lg::after, .pv.xl::after, .pv.hero::after{
+  content:''; position:absolute; left:50%; bottom:-2px; transform:translateX(-50%);
+  width:58%; height:10px; border-radius:50%;
+  background:radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.20), transparent 72%);
+}
+.pv.lg, .pv.xl, .pv.hero{position:relative;}
+[data-theme="dark"] .pv.lg::after,
+[data-theme="dark"] .pv.xl::after,
+[data-theme="dark"] .pv.hero::after{background:radial-gradient(50% 50% at 50% 50%, rgba(255,255,255,.07), transparent 72%);}
+
+/* El bloque de línea entregado. Marca de familia, y sólo donde se está mirando
+   UN producto — repetido en una lista sería ruido de marca.
+
+   A 34 px el símbolo y el nombre de línea eran una mancha; o se lee o no está.
+   Va al pie de la columna del producto, que es lo que rotula, y no arriba a la
+   derecha donde competía con la tira de cifras. */
+.famlock{position:absolute; left:0; bottom:clamp(18px,2.6vw,30px);
+  height:52px; width:auto; opacity:.62; pointer-events:none;}
+[data-theme="dark"] .famlock{opacity:.5; filter:grayscale(1) invert(1);}
+@media (max-width:1023px){
+  .famlock{position:static; height:34px; margin:2px 0 0; opacity:.55;}
+}
+
+/* ---------- 29.3 · TIPOGRAFÍA DE PORTADA -----------------------------------
+   La escala sube. Un titular de 30 px es un encabezado de tablero; uno de 62
+   es una portada. Y el interletrado se cierra al crecer, porque el espaciado
+   óptico que funciona a 15 px abre demasiado a 60. */
+.display{
+  font-size:clamp(38px,6.2vw,62px); font-weight:600; line-height:1.02;
+  letter-spacing:-.045em; color:var(--tx); margin:0;
+}
+.h-lg{font-size:clamp(26px,3.4vw,38px); font-weight:600; line-height:1.08;
+  letter-spacing:-.035em; color:var(--tx); margin:0;}
+.lede{margin:14px 0 0; font-size:17px; line-height:1.55; color:var(--tx2);
+  letter-spacing:-.01em; max-width:46ch;}
+.lede.sm{font-size:14.5px; margin-top:8px;}
+
+.phero{padding:clamp(28px,5vw,56px) 0 clamp(22px,3vw,32px);}
+.phero .pills{margin-top:clamp(20px,3vw,30px);}
+
+/* ---------- 29.4 · LA TIRA DE CIFRAS ---------------------------------------
+   Cuatro fichas para cuatro números era el tablero. Aquí el número se sostiene
+   con un filete y aire, que es lo que hace una hoja de especificaciones. */
+.strip{display:grid; grid-template-columns:repeat(4,1fr);
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  margin-top:clamp(6px,2vw,14px);}
+.strip .stat{padding:clamp(20px,2.6vw,30px) clamp(14px,2vw,26px);
+  border-left:1px solid var(--line); min-width:0;}
+.strip .stat:first-child{border-left:0; padding-left:0;}
+.strip .stat b{display:block; font-size:clamp(30px,3.6vw,44px); font-weight:600;
+  line-height:1; letter-spacing:-.05em; font-variant-numeric:tabular-nums;
+  color:var(--tx);}
+.strip .stat span{display:block; margin-top:12px; font-size:11px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--tx2); line-height:1.5;}
+.strip .stat span i{display:block; font-style:normal; letter-spacing:.1em;
+  text-transform:none; font-size:11.5px; color:var(--tx3); margin-top:2px;}
+@media (max-width:760px){
+  .strip{grid-template-columns:1fr 1fr;}
+  .strip .stat:nth-child(1),.strip .stat:nth-child(3){border-left:0; padding-left:0;}
+  .strip .stat:nth-child(3),.strip .stat:nth-child(4){border-top:1px solid var(--line);}
+}
+
+/* ---------- 29.5 · LA COMPOSICIÓN PARTIDA ----------------------------------
+   El protocolo activo: el producto a tamaño de producto y el estado al lado.
+   Asimétrica a propósito — dos columnas iguales dan un widget, una de 0.9 y
+   otra de 1.4 dan una composición. */
+.feature{
+  position:relative; display:grid; grid-template-columns:.9fr 1.4fr;
+  gap:clamp(20px,4vw,56px); align-items:center;
+  padding:clamp(30px,4.4vw,62px) 0;
+  border-bottom:1px solid var(--line);
+}
+.feature-art{display:flex; align-items:center; justify-content:center;
+  padding:clamp(8px,2vw,20px);}
+/* El halo de línea: el único sitio donde el color de familia se ve, y muy
+   por debajo del producto. En oscuro se apaga a la mitad. */
+.feature::before{
+  content:''; position:absolute; left:0; top:8%; width:34%; height:84%;
+  border-radius:50%; z-index:0; pointer-events:none;
+  background:radial-gradient(50% 50% at 50% 50%, var(--lineahalo,transparent), transparent 70%);
+  opacity:.5;
+}
+[data-theme="dark"] .feature::before{opacity:.3;}
+.feature.l-fitness  {--lineahalo:rgba(27,42,74,.16);}
+.feature.l-beauty   {--lineahalo:rgba(176,141,119,.20);}
+.feature.l-longevity{--lineahalo:rgba(140,145,150,.18);}
+.feature-art, .feature-bd{position:relative; z-index:1;}
+.feature-bd .eyebrow{display:block; margin-bottom:12px;}
+.feature-act{display:flex; gap:10px; flex-wrap:wrap; margin-top:clamp(20px,2.6vw,28px);}
+.empty-feature{grid-template-columns:1fr; border-bottom:1px solid var(--line);}
+
+/* el viaje: en qué fase va y cuánto lleva */
+.journey{margin-top:clamp(20px,2.6vw,26px); max-width:420px;}
+.journey-hd{display:flex; justify-content:space-between; gap:14px;
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--tx2); margin-bottom:10px;}
+
+/* la siguiente acción: no se entierra dentro de una ficha genérica */
+.nextact{margin-top:clamp(18px,2.4vw,24px); padding-top:16px;
+  border-top:1px solid var(--line);}
+.nextact .eyebrow{display:block; margin-bottom:8px;}
+.nextact-when{font-size:15px; color:var(--tx2); letter-spacing:-.01em;}
+.nextact-when b{display:inline-block; margin-left:10px; font-size:20px;
+  font-weight:600; letter-spacing:-.03em; color:var(--tx);
+  font-variant-numeric:tabular-nums;}
+
+/* ---------- 29.6 · LA BANDA ------------------------------------------------
+   Una sección con rótulo y contenido, sin marco. Sustituye a «meter todo en
+   una .card». */
+.band{padding:clamp(28px,3.6vw,48px) 0; border-bottom:1px solid var(--line);}
+.band:last-of-type{border-bottom:0;}
+.band-h{display:flex; align-items:baseline; justify-content:space-between;
+  gap:16px; margin-bottom:clamp(14px,2vw,22px);}
+
+/* filas desnudas: el filete separa, no el borde de una caja */
+.bare .row{padding-left:0; padding-right:0;}
+.bare .row:first-child{border-top:1px solid var(--line);}
+.actlist .row{padding-left:0; padding-right:0;}
+.actlist .row:first-child{border-top:1px solid var(--line);}
+.actlist .row.go:hover{background:none; color:var(--tx);}
+.actlist .row.go:hover .nm{text-decoration:underline; text-underline-offset:3px;}
+
+/* ---------- 29.7 · UNA LECTURA, NO SEIS ------------------------------------ */
+.insight{display:grid; grid-template-columns:.85fr 1.15fr;
+  gap:clamp(20px,4vw,48px); align-items:center;}
+.insight-n b{display:block; font-size:clamp(56px,8vw,96px); font-weight:600;
+  line-height:.92; letter-spacing:-.055em; color:var(--tx);
+  font-variant-numeric:tabular-nums;}
+.insight-n b i{font-style:normal; font-size:.42em; letter-spacing:-.02em;
+  margin-left:4px; color:var(--tx3);}
+.insight-n span{display:block; margin-top:16px; font-size:14.5px;
+  line-height:1.5; color:var(--tx2); max-width:24ch;}
+@media (max-width:760px){
+  .insight{grid-template-columns:1fr; gap:22px;}
+}
+
+/* ---------- 29.8 · MÓVIL: LA MISMA IDEA, OTRA COMPOSICIÓN ------------------
+   No es la de escritorio encogida. El producto se sube arriba y ocupa el
+   ancho; el estado va debajo, alineado a la izquierda y a tamaño de lectura. */
+@media (max-width:1023px){
+  .feature{grid-template-columns:1fr; gap:8px; padding:26px 0 30px;}
+  .feature-art{padding:4px 0 10px;}
+  .feature::before{width:100%; height:38%; top:0;}
+  .famlock{right:0; top:0; height:26px;}
+  .journey{max-width:none;}
+  .phero{padding:22px 0 18px;}
+  .lede{font-size:16px; margin-top:10px;}
+}
+
+/* ---------- 29.9 · LA FICHA DE PRODUCTO -------------------------------------
+   Un compuesto abierto es una página de producto, no una pila de tarjetas
+   apiladas de arriba abajo. El producto grande a la izquierda, el nombre a
+   tamaño de portada a la derecha, y las secciones debajo separadas por filete.
+   ---------------------------------------------------------------------------- */
+.phero-prod{
+  position:relative; display:grid; grid-template-columns:.85fr 1.15fr;
+  gap:clamp(20px,4vw,56px); align-items:center;
+  padding:clamp(26px,4vw,54px) 0 clamp(28px,4vw,52px);
+  border-bottom:1px solid var(--line);
+}
+.pp-art{position:relative; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; padding-bottom:34px;}
+.pp-art .famlock{left:50%; transform:translateX(-50%); bottom:0;}
+.phero-prod::before{
+  content:''; position:absolute; left:0; top:6%; width:34%; height:88%;
+  border-radius:50%; z-index:0; pointer-events:none; opacity:.5;
+  background:radial-gradient(50% 50% at 50% 50%, var(--lineahalo,transparent), transparent 70%);
+}
+[data-theme="dark"] .phero-prod::before{opacity:.3;}
+.phero-prod.l-fitness  {--lineahalo:rgba(27,42,74,.16);}
+.phero-prod.l-beauty   {--lineahalo:rgba(176,141,119,.20);}
+.phero-prod.l-longevity{--lineahalo:rgba(140,145,150,.18);}
+.pp-art, .pp-bd{position:relative; z-index:1;}
+.pp-bd .eyebrow{display:block; margin-bottom:12px;}
+.display.sm{font-size:clamp(30px,4.4vw,46px);}
+.pp-sku{margin-top:10px; font-size:12px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--tx3); font-variant-numeric:tabular-nums;}
+
+/* texto a ancho de lectura: 68 caracteres, no el ancho de la ventana */
+.read{margin:0 0 14px; font-size:16.5px; line-height:1.68; color:var(--tx2);
+  letter-spacing:-.008em; max-width:68ch;}
+.read.dim{color:var(--tx3); font-size:15px;}
+.mt.dim{color:var(--tx3);}
+
+/* la hoja técnica: dos columnas de filete */
+.spec{display:grid; grid-template-columns:1fr 1fr; gap:0 clamp(24px,4vw,56px);}
+.spec .kv{padding:13px 0;}
+@media (max-width:760px){ .spec{grid-template-columns:1fr;} }
+
+/* relacionados: producto, no fila */
+.relgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:clamp(10px,1.6vw,16px);}
+.relcard{display:flex; flex-direction:column; align-items:center; gap:12px;
+  padding:22px 14px 20px; border:1px solid var(--line); border-radius:var(--r-card);
+  text-align:center; transition:border-color .2s var(--e), transform .2s var(--e);}
+.relcard:hover{border-color:var(--line2); transform:translateY(-2px);}
+.relart{display:flex; align-items:center; justify-content:center; height:96px;}
+.relnm{font-size:13.5px; font-weight:600; letter-spacing:-.02em; color:var(--tx);
+  line-height:1.3;}
+.relsku{font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--tx3);}
+@media (max-width:900px){ .relgrid{grid-template-columns:1fr 1fr;} }
+
+/* la lista de compuestos, sin marco */
+.complist{margin-top:18px;}
+.complist .row{padding-top:17px; padding-bottom:17px;}
+
+@media (max-width:1023px){
+  .phero-prod{grid-template-columns:1fr; gap:10px; padding:20px 0 26px;}
+  .phero-prod::before{width:100%; height:42%; top:0;}
+  .pp-art{padding-bottom:8px;}
+  .pp-art .famlock{position:static; transform:none;}
+  .read{font-size:15.5px;}
+}
+
+/* ---------- 29.10 · EL PROTOCOLO COMO RECORRIDO -----------------------------
+   El usuario quiere cuatro respuestas de un vistazo: dónde empezó, dónde está,
+   cuánto queda, qué toca. Una barra dentro de una tarjeta da la tercera y se
+   calla las otras tres. Los hitos las dan las cuatro, con fechas.
+   ---------------------------------------------------------------------------- */
+.protlist{margin-top:18px;}
+.prot{
+  position:relative; display:grid; grid-template-columns:auto 1fr;
+  gap:clamp(18px,3vw,34px); align-items:start;
+  padding:clamp(24px,3.2vw,34px) 0; border-bottom:1px solid var(--line);
+}
+.prot:first-child{border-top:1px solid var(--line);}
+.prot-art{display:flex; align-items:flex-start; justify-content:center;
+  width:clamp(64px,7vw,96px); padding-top:4px;}
+.prot-art .pv{height:clamp(74px,8vw,104px);}
+.prot-bd{min-width:0;}
+.prot-hd{display:flex; align-items:flex-start; justify-content:space-between; gap:16px;}
+.prot-hd > *{min-width:0;}
+
+/* los hitos: punto, rótulo y fecha. El de ahora se rellena, el siguiente lleva
+   anillo. Sin color: la forma es la que codifica. */
+.miles{list-style:none; margin:20px 0 0; padding:0;}
+.miles li{position:relative; padding:8px 0 8px 22px; font-size:13.5px;
+  color:var(--tx3); display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline;}
+.miles li::before{content:''; position:absolute; left:2px; top:14px;
+  width:7px; height:7px; border-radius:50%; border:1.5px solid var(--line2);
+  background:var(--bg); box-sizing:border-box;}
+/* el hilo que une los hitos */
+.miles li::after{content:''; position:absolute; left:5.2px; top:21px; bottom:-8px;
+  width:1px; background:var(--line);}
+.miles li:last-child::after{display:none;}
+.miles li.now::before{background:var(--tx); border-color:var(--tx);}
+.miles li.now .ml{color:var(--tx); font-weight:600;}
+.miles li.next::before{border-color:var(--tx); border-width:2px;}
+.miles li.next .ml{color:var(--tx2);}
+.miles .ml{letter-spacing:-.01em;}
+.miles .mk{margin-left:auto; color:var(--tx2); font-variant-numeric:tabular-nums;
+  font-size:13px;}
+
+.prot-comps{display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:18px;
+  padding-top:16px; border-top:1px solid var(--line);}
+.prot-comps .pc{display:inline-flex; align-items:center; gap:8px;
+  font-size:12.5px; color:var(--tx2);}
+.prot-comps .more{font-size:12px; color:var(--tx3); align-self:center;}
+.prot-more{margin-top:20px; padding-top:20px; border-top:1px solid var(--line);}
+
+@media (max-width:640px){
+  .prot{grid-template-columns:1fr; gap:14px;}
+  .prot-art{width:auto; justify-content:flex-start;}
+  .miles .mk{margin-left:0; width:100%;}
+}
+
+/* ---------- 29.11 · EDUCACIÓN EDITORIAL -------------------------------------
+   Un artículo primero y grande; los demás en una lista de filete. Doce
+   tarjetas iguales se niegan a decir cuál importa.
+   ---------------------------------------------------------------------------- */
+.edu-lead{
+  position:relative; overflow:hidden;
+  display:block; width:100%; text-align:left; margin-top:20px;
+  padding:clamp(28px,4vw,52px) clamp(24px,4vw,52px);
+  border:1px solid var(--line); border-radius:var(--r-card);
+  background:var(--s2);
+  transition:border-color .22s var(--e), transform .22s var(--e);
+}
+[data-theme="dark"] .edu-lead{background:var(--s1);}
+/* La trama de puntos —textura de publicación, no ilustración— va en una capa
+   propia y se DESVANECE hacia la izquierda. Antes iba de fondo en toda la
+   caja y había que taparla detrás del texto con un rectángulo opaco: se veía
+   la costura. Una máscara no deja costura porque no hay dos fondos. */
+.edu-lead::before{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background-image:radial-gradient(var(--line2) .9px, transparent .9px);
+  background-size:16px 16px;
+  -webkit-mask-image:linear-gradient(90deg, transparent 34%, #000 82%);
+          mask-image:linear-gradient(90deg, transparent 34%, #000 82%);
+}
+.edu-lead:hover{border-color:var(--line2); transform:translateY(-2px);}
+.edu-lead-bd{position:relative; z-index:1; display:block; max-width:44ch;}
+.edu-lead .eyebrow{display:block; margin-bottom:14px;}
+.edu-lead .h-lg{display:block;}
+.edu-lead .lede{display:block;}
+.edu-go{display:inline-block; margin-top:22px; font-size:13.5px; font-weight:600;
+  color:var(--tx); letter-spacing:-.01em;}
+.edu-lead:hover .edu-go{text-decoration:underline; text-underline-offset:4px;}
+
+.edu-rest{margin-top:26px; border-top:1px solid var(--line);}
+.edu-item{display:grid; grid-template-columns:130px 1fr; gap:20px; width:100%;
+  text-align:left; padding:20px 0; border-bottom:1px solid var(--line);
+  align-items:baseline;}
+.edu-item .eyebrow{padding-top:3px;}
+.edu-item .ei-t{font-size:17px; font-weight:600; letter-spacing:-.025em;
+  color:var(--tx); line-height:1.32;}
+.edu-item .ei-m{grid-column:2; font-size:13.5px; color:var(--tx3); margin-top:5px;}
+.edu-item:hover .ei-t{text-decoration:underline; text-underline-offset:4px;}
+@media (max-width:640px){
+  .edu-item{grid-template-columns:1fr; gap:6px;}
+  .edu-item .ei-m{grid-column:1;}
+}
+
+/* ---------- 29.12 · LAS TRES LÍNEAS ----------------------------------------
+   Descubrimiento por familia. Producto entregado arriba, bloque de línea
+   entregado debajo. Aquí SÍ se ve el color de familia — es literalmente el
+   sitio donde el usuario está eligiendo entre ecosistemas. */
+.lines{display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(10px,1.6vw,16px);}
+.linecard{
+  position:relative; display:flex; flex-direction:column; align-items:center;
+  gap:16px; padding:clamp(24px,3vw,36px) 20px clamp(20px,2.4vw,28px);
+  border:1px solid var(--line); border-radius:var(--r-card); overflow:hidden;
+  transition:border-color .22s var(--e), transform .22s var(--e);
+}
+.linecard:hover{border-color:var(--line2); transform:translateY(-3px);}
+.linecard::before{
+  content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background:radial-gradient(70% 46% at 50% 6%, var(--lineahalo,transparent), transparent 72%);
+  opacity:.75;
+}
+[data-theme="dark"] .linecard::before{opacity:.42;}
+.linecard.l-fitness  {--lineahalo:rgba(27,42,74,.17);}
+.linecard.l-beauty   {--lineahalo:rgba(176,141,119,.22);}
+.linecard.l-longevity{--lineahalo:rgba(140,145,150,.20);}
+.lc-art, .lc-bd{position:relative; z-index:1;}
+.lc-art{display:flex; align-items:flex-end; justify-content:center; height:clamp(140px,16vw,190px);}
+.lc-art img{height:100%; width:auto; display:block;}
+.lc-bd{display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center;}
+.lc-bd .famlock{position:static; height:34px; opacity:.72;}
+[data-theme="dark"] .lc-bd .famlock{opacity:.62;}
+.lc-tx{font-size:12.5px; color:var(--tx3); line-height:1.5; max-width:24ch;}
+@media (max-width:760px){
+  .lines{grid-template-columns:1fr;}
+  .lc-art{height:150px;}
+}
+
+/* ---------- 29.13 · PROGRESO: UNA LECTURA, LUEGO LAS DEMÁS -----------------
+   El brief pide que se entienda en segundos. Una cifra grande arriba con su
+   frase, y cada métrica debajo como banda sin marco.
+   ---------------------------------------------------------------------------- */
+.lead-insight{padding-top:clamp(20px,2.6vw,30px);}
+.mband{padding:clamp(26px,3.2vw,38px) 0; border-bottom:1px solid var(--line);}
+.mband:first-of-type{border-top:1px solid var(--line);}
+.mband-h{display:flex; align-items:flex-start; justify-content:space-between; gap:16px;}
+.mband-h > *{min-width:0;}
+.mstats{display:grid; grid-template-columns:repeat(3,1fr); gap:0;
+  margin-top:18px; padding-top:16px; border-top:1px solid var(--line);}
+.mstats > div{padding-left:18px; border-left:1px solid var(--line); min-width:0;}
+.mstats > div:first-child{padding-left:0; border-left:0;}
+.mstats b{display:block; font-size:22px; font-weight:600; letter-spacing:-.04em;
+  font-variant-numeric:tabular-nums; color:var(--tx);}
+.mstats span{display:block; margin-top:6px; font-size:11px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--tx3);}

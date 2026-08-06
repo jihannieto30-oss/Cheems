@@ -383,14 +383,63 @@ const research = e => /R&D|Investigaci/i.test(e.reg || '')
   ? t('Research use only','Solo para uso de investigación')
   : t('Research material','Material de investigación');
 
-/* La miniatura de vial: el elemento firma de la referencia. Se dibuja con la
-   clave del producto dentro, porque no hay foto para los sesenta y una foto
-   inventada sería peor que un dibujo honesto. */
+/* ==========================================================================
+   9b · EL PRODUCTO REAL
+
+   Antes esto dibujaba un rectángulo con dos sombras y la clave dentro. A 40 px
+   pasaba por vial; a 400 px era un rectángulo. Y no hacía falta: el producto de
+   PEPTIDEX existe y está fotografiado, y mk_appart.py recorta esas fotos del
+   material entregado.
+
+   Lo que se enseña es el vial de LÍNEA — lleva la línea y nada más, ni
+   compuesto ni dosis— porque en una lista el compuesto cambia en cada fila y
+   la etiqueta específica no existe para los sesenta.
+
+   Si no hay arte (nadie corrió mk_appart.py) cae al dibujo de antes en vez de
+   dejar un hueco. Degradar, no romper.
+   ========================================================================== */
+const ART = (typeof PX_ART !== 'undefined' && PX_ART) || {};
+const hayArte = !!ART.vial_fitness;
+
+/* La marca, en sus dos polaridades. Las dos van al DOM y el tema enseña una:
+   cambiar de tema no repinta el árbol entero, así que no puede depender de que
+   algo se vuelva a dibujar. */
+function mark(pieza, cls){
+  const l = ART[pieza + '_light'], d = ART[pieza + '_dark'];
+  if(!l) return '<span class="' + (cls||'') + ' pxmark-txt">Px</span>';
+  return '<span class="pxmark ' + (cls || '') + '" aria-hidden="true">' +
+    '<img class="ml" src="' + l + '" alt=""/>' +
+    '<img class="md" src="' + (d || l) + '" alt=""/></span>';
+}
+
+/* La línea a la que pertenece un compuesto, para elegir su vial. */
+function lineaDe(nombre){
+  const e = libFind(nombre);
+  return (e && LINEA[family(e)]) || 'fitness';
+}
+
 function vial(nombre, size){
   const e = libFind(nombre);
+  const linea = (e && LINEA[family(e)]) || 'fitness';
   const cod = (e && e.sku ? String(e.sku).split('/')[0] : String(nombre||'')).trim().slice(0,7);
-  return '<span class="vial' + (size ? ' ' + size : '') + (e ? famClass(e) : '') + '">' +
-    '<em>' + E(cod) + '</em></span>';
+  if(!hayArte){
+    return '<span class="vial' + (size ? ' ' + size : '') + (e ? famClass(e) : '') + '">' +
+      '<em>' + E(cod) + '</em></span>';
+  }
+  const grande = size === 'lg' || size === 'xl' || size === 'hero';
+  const src = ART[(grande ? 'vial_' : 'vialt_') + linea];
+  return '<span class="pv' + (size ? ' ' + size : '') + ' l-' + linea + '">' +
+    '<img src="' + src + '" alt="' + E(t('PEPTIDEX vial','Vial PEPTIDEX')) + ' ' +
+      linea.toUpperCase() + '" loading="lazy" decoding="async"/></span>';
+}
+
+/* El bloque de línea entregado — Px con su símbolo, PEPTIDEX y el nombre de la
+   línea. Es la firma de familia, y va donde el usuario está mirando UN
+   producto, nunca repetido en una lista. */
+function famLock(linea){
+  const src = ART['fam_' + linea];
+  return src ? '<img class="famlock" src="' + src + '" alt="PEPTIDEX ' +
+    linea.toUpperCase() + '" loading="lazy" decoding="async"/>' : '';
 }
 
 /* ==========================================================================
@@ -747,8 +796,8 @@ const THEMEICON = () => S.theme === 'dark' ? 'moon' : S.theme === 'system' ? 'au
 
 function sidebar(){
   return '<aside class="side">' +
-    '<div class="brand"><span class="mark"><span class="px">Px</span>' +
-      '<span class="wm">PEPTIDEX</span></span></div>' +
+    '<div class="brand">' + mark('px', 'brand-px') +
+      '<span class="wm">PEPTIDEX</span></div>' +
     '<nav>' + NAV.map(n => '<button data-go="' + n.id + '"' +
       (S.route === n.id ? ' class="on" aria-current="page"' : '') + '>' +
       svg(n.ic) + '<span>' + t(n.en, n.es) + '</span></button>').join('') + '</nav>' +
@@ -762,7 +811,8 @@ function sidebar(){
 }
 function topbar(){
   return '<header class="topbar">' +
-    '<span class="mob-mark mark"><span class="wm">PEPTIDEX</span></span>' +
+    '<span class="mob-mark">' + mark('px', 'mob-px') +
+      '<span class="wm">PEPTIDEX</span></span>' +
     '<div class="search"><label class="sr" for="gq">' + t('Search','Buscar') + '</label>' +
       svg('search') +
       '<input id="gq" type="search" placeholder="' +
@@ -805,13 +855,15 @@ const ruo = () => '<div class="ruo">' + t('Research use only.','Solo uso en inve
 /* ==========================================================================
    15 · PORTADA — sin las plumas, sólo el Px
    ========================================================================== */
+/* La portada lleva el BLOQUE ENTREGADO, no un «Px» compuesto con la tipografía
+   del sistema. Componer las letras era, literalmente, rehacer el logotipo: la
+   P con el corte diagonal y la X con su remate no son dos caracteres de una
+   fuente. Ahora es el fichero, recortado, en las dos polaridades.
+
+   Y sólo el Px, sin las plumas, como se pidió. */
 function vSplash(){
   return '<div class="splash">' +
-    '<div class="top">' +
-      '<h1 class="px">Px</h1>' +
-      '<div class="wm">PEPTIDEX</div>' +
-      '<div class="tagline">Engineered Beyond Perfection</div>' +
-    '</div>' +
+    '<div class="top">' + mark('lock', 'splash-lock') + '</div>' +
     '<div class="bottom">' +
       '<button class="btn wide" data-enter="in">' + t('Sign in','Iniciar sesión') + '</button>' +
       '<button class="btn ghost wide" data-enter="new">' + t('Create account','Crear cuenta') + '</button>' +
@@ -835,104 +887,116 @@ function vDash(){
     '<button class="pill' + (w === x[0] ? ' sel' : '') + '" data-sub="win:' + x[0] + '">' +
     x[1] + '</button>').join('') + '</div>';
 
+  /* EL PROTOCOLO DOMINANTE. Uno, el que toca antes. No una lista de fichas:
+     una composición partida con el producto real a un lado y el estado al
+     otro. Es lo primero que el usuario quiere saber y ocupa el sitio que eso
+     merece. */
+  const act = prox ? prox.p : activos[0];
+  const ph  = act ? phase(act) : null;
+  const pg  = act ? planProgress(act) : 0;
+
   return '' +
-    phead('', greet() + (S.me.nombre ? ', ' + E(S.me.nombre.split(/\s+/)[0]) : '') + '.',
-      t('Here is a summary of your progress.','Aquí tienes un resumen de tu progreso.'), sel) +
+    /* --- HÉROE: sólo tipografía y aire. Ni tarjeta ni borde. --- */
+    '<section class="phero">' +
+      '<h1 class="display">' + greet() +
+        (S.me.nombre ? ',<br>' + E(S.me.nombre.split(/\s+/)[0]) : '') + '.</h1>' +
+      '<p class="lede">' + t('Your PEPTIDEX overview.','Tu resumen PEPTIDEX.') + '</p>' +
+      sel +
+    '</section>' +
 
-    '<div class="dash-top">' +
-      '<div class="metrics4">' +
-        metric(ad.hecho, t('Injections<br>Completed','Inyecciones<br>Completadas')) +
-        metric(Math.round(ad.pct*100) + '%', t('Protocol<br>Adherence','Adherencia a<br>Protocolos')) +
-        metric(st, t('Days<br>Streak','Días de<br>Racha')) +
-        metric(activos.length, t('Active<br>Protocols','Protocolos<br>Activos')) +
-      '</div>' +
-      '<div class="card">' +
-        '<div class="chead"><span class="eyebrow">' + t('Next injection','Próxima inyección') + '</span></div>' +
-        '<div class="cbody">' +
-          (prox ? '<div style="display:flex;gap:14px;align-items:center">' +
-            vial(prox.p.c, 'lg') +
-            '<div style="flex:1;min-width:0">' +
-              '<div class="h3">' + E(prox.p.c) + '</div>' +
-              '<div class="meta" style="margin-top:3px">' + E(prox.p.dose) + ' ' + E(prox.p.unit) + '</div>' +
-              '<div class="meta" style="margin-top:7px">' + fullDate(prox.k) +
-                (prox.p.time ? ' · ' + E(prox.p.time) : '') + '</div>' +
-            '</div></div>' +
-            '<button class="btn wide sq" style="margin-top:16px" data-go="prot">' +
-              t('View Details','Ver Detalles') + '</button>'
-          : empty('check', t('Nothing pending','Nada pendiente'),
-              t('Everything scheduled has been logged.','Todo lo programado está registrado.'))) +
+    /* --- LA CIFRA: cuatro datos en una tira, separados por filetes.
+           Cuatro tarjetas para cuatro números era el reflejo de tablero que
+           había que quitar. Un número no necesita una caja. --- */
+    '<section class="strip">' +
+      stat(ad.hecho,                   t('Injections','Inyecciones'),  t('completed','completadas')) +
+      stat(Math.round(ad.pct*100)+'%', t('Adherence','Adherencia'),    t('to protocol','al protocolo')) +
+      stat(st,                         t('Day streak','Días seguidos'),t('unbroken','sin fallar')) +
+      stat(activos.length,             t('Protocols','Protocolos'),    t('active','activos')) +
+    '</section>' +
+
+    (act ? '<section class="feature' + (act ? ' l-' + lineaDe(act.c) : '') + '">' +
+      '<div class="feature-art">' + vial(act.c, 'hero') + '</div>' +
+      '<div class="feature-bd">' +
+        '<span class="eyebrow">' + t('Active protocol','Protocolo activo') + '</span>' +
+        '<h2 class="h-lg">' + E(act.c) + '</h2>' +
+        '<p class="lede sm">' + E(act.dose) + ' ' + E(act.unit) + ' · ' + E(freqText(act)) + '</p>' +
+        (ph && ph.total
+          ? '<div class="journey">' +
+              '<div class="journey-hd"><span>' + t('Phase ','Fase ') + ph.f + '</span>' +
+                '<span>' + t('Week ','Semana ') + ph.w + t(' of ',' de ') + ph.total + '</span></div>' +
+              '<div class="bar"><i style="width:' + Math.round(pg*100) + '%"></i></div>' +
+            '</div>' : '') +
+        (prox ? '<div class="nextact">' +
+            '<span class="eyebrow">' + t('Next','Siguiente') + '</span>' +
+            '<div class="nextact-when">' + fullDate(prox.k) +
+              (prox.p.time ? '<b>' + E(prox.p.time) + '</b>' : '') + '</div>' +
+          '</div>' : '') +
+        '<div class="feature-act">' +
+          '<button class="btn" data-open-prot="' + act.id + '">' +
+            t('View Details','Ver Detalles') + '</button>' +
+          '<button class="btn ghost" data-new-inj>' + t('Log injection','Registrar inyección') + '</button>' +
         '</div>' +
       '</div>' +
-    '</div>' +
+      famLock(lineaDe(act.c)) +
+    '</section>'
+    : '<section class="feature empty-feature">' +
+        empty('prot', t('No active protocol','Ningún protocolo activo'),
+          t('A protocol is a compound, a dose and a frequency — all three yours.',
+            'Un protocolo es un compuesto, una dosis y una frecuencia — los tres tuyos.'),
+          '<button class="btn" data-new-prot>' + t('Create one','Crear uno') + '</button>') +
+      '</section>') +
 
-    '<div class="dash-mid">' +
-      /* MIS PROTOCOLOS */
-      '<div class="card">' +
-        '<div class="chead"><span class="eyebrow">' + t('My protocols','Mis protocolos') + '</span>' +
-          '<button class="btn quiet sm" data-go="prot">' + t('View all','Ver todos') + '</button></div>' +
-        (activos.length ? '<div style="margin-top:12px">' + activos.slice(0,4).map(p => {
-          const ph = phase(p);
-          return '<button class="row go" data-open-prot="' + p.id + '">' +
-            vial(p.c) +
-            '<span class="bd"><span class="nm">' + E(p.c) + '</span>' +
-              '<span class="mt">' + (ph && ph.total
-                ? t('Phase ','Fase ') + ph.f + ' · ' + t('Week ','Semana ') + ph.w + t(' of ',' de ') + ph.total
-                : E(freqText(p))) + '</span></span>' +
-            '<span class="badge">' + t('ACTIVE','ACTIVO') + '</span>' +
-            '<span class="cv"></span></button>';
-        }).join('') + '</div>'
-        : '<div class="cbody">' + empty('prot', t('No active protocol','Ningún protocolo activo'),
-            t('A protocol is a compound, a dose and a frequency — all three yours.',
-              'Un protocolo es un compuesto, una dosis y una frecuencia — los tres tuyos.'),
-            '<button class="btn sm" data-go="prot">' + t('Create one','Crear uno') + '</button>') + '</div>') +
+    /* --- LOS OTROS PROTOCOLOS, si los hay: una lista sobria y sin marco --- */
+    (activos.length > 1 ? '<section class="band">' +
+      '<div class="band-h"><span class="eyebrow">' + t('Also active','También activos') + '</span>' +
+        '<button class="btn quiet sm" data-go="prot">' + t('View all','Ver todos') + '</button></div>' +
+      '<div class="bare">' + activos.filter(p => !act || p.id !== act.id).slice(0,3).map(p => {
+        const q = phase(p);
+        return '<button class="row go" data-open-prot="' + p.id + '">' +
+          vial(p.c) +
+          '<span class="bd"><span class="nm">' + E(p.c) + '</span>' +
+            '<span class="mt">' + (q && q.total
+              ? t('Phase ','Fase ') + q.f + ' · ' + t('Week ','Semana ') + q.w + t(' of ',' de ') + q.total
+              : E(freqText(p))) + '</span></span>' +
+          '<span class="cv"></span></button>';
+      }).join('') + '</div></section>' : '') +
+
+    /* --- UNA lectura principal, no seis gráficas --- */
+    '<section class="band">' +
+      '<div class="band-h"><span class="eyebrow">' + t('This week','Esta semana') + '</span>' +
+        '<button class="btn quiet sm" data-go="prog">' + t('All progress','Todo el progreso') + '</button></div>' +
+      '<div class="insight">' +
+        '<div class="insight-n"><b>' + Math.round(ad.pct*100) + '<i>%</i></b>' +
+          '<span>' + t('of what you scheduled, logged.','de lo que programaste, registrado.') + '</span></div>' +
+        '<div class="insight-c">' + weekChart() + '</div>' +
       '</div>' +
+    '</section>' +
 
-      /* PROGRESO GENERAL */
-      '<div class="card">' +
-        '<div class="chead"><span class="eyebrow">' + t('Overall progress','Progreso general') + '</span></div>' +
-        '<div class="cbody" style="padding-top:14px">' + weekChart() + '</div>' +
+    /* --- ACCIONES: texto y filete. Sin cajas, sin iconos decorativos. --- */
+    '<section class="band">' +
+      '<div class="band-h"><span class="eyebrow">' + t('Quick actions','Acciones rápidas') + '</span></div>' +
+      '<div class="actlist">' +
+        qaRow('inj',   t('Log Injection','Registrar Inyección'), 'inj') +
+        qaRow('comp',  t('My Compounds','Mis Compuestos'),       'comp') +
+        qaRow('bag',   t('Order History','Historial de Pedidos'),'store') +
+        qaRow('edu',   t('Education','Educación'),               'edu') +
       '</div>' +
+    '</section>' +
 
-      /* ACCESOS RÁPIDOS — la lista del PDF de web, tercer panel de la fila */
-      '<div class="card w-only">' +
-        '<div class="chead"><span class="eyebrow">' + t('Quick actions','Accesos rápidos') + '</span></div>' +
-        '<div style="margin-top:10px">' +
-          qaRow('inj',   t('Log Injection','Registrar Inyección'), 'inj') +
-          qaRow('comp',  t('My Compounds','Mis Compuestos'),       'comp') +
-          qaRow('bag',   t('Order History','Historial de Pedidos'),'store') +
-          qaRow('edu',   t('Education','Educación'),               'edu') +
-        '</div>' +
-      '</div>' +
-    '</div>' +
+    '<section class="band">' + dp(dpToday(), true) + '</section>' +
 
-    /* ACCIONES RÁPIDAS — las cuatro casillas con icono del PDF de móvil.
-       Es la MISMA función en las dos referencias, dibujada distinto en cada
-       una, así que se emiten las dos y cada anchura enseña la suya. Emitirlas
-       las dos a la vez era el fallo: en escritorio salía «Quick actions» como
-       panel y otra vez debajo como rejilla. */
-    '<div class="m-only">' +
-      '<div class="sect-h"><span class="eyebrow">' + t('Quick actions','Acciones rápidas') + '</span></div>' +
-      '<div class="qa-grid">' +
-        qaTile('inj',  t('Log<br>Injection','Registrar<br>Inyección'), 'inj') +
-        qaTile('comp', t('My<br>Compounds','Mis<br>Compuestos'), 'comp') +
-        qaTile('bag',  t('Order<br>History','Historial de<br>Pedidos'), 'store') +
-        qaTile('edu',  t('Education','Educación'), 'edu') +
-      '</div>' +
-    '</div>' +
-
-    '<div class="card pad" style="margin-top:12px">' + dp(dpToday(), true) + '</div>' +
-
-    '<div class="sect-h"><span class="eyebrow">' + t('Alerts','Avisos') + '</span></div>' +
-    notesHTML() + ruo();
+    (notesHTML() ? '<section class="band">' +
+      '<div class="band-h"><span class="eyebrow">' + t('Alerts','Avisos') + '</span></div>' +
+      notesHTML() + '</section>' : '') + ruo();
 }
-const metric = (v, l) => '<div class="card"><div class="metric"><b>' + v + '</b>' +
-  '<span>' + l + '</span></div></div>';
+/* El dato desnudo: cifra grande, dos renglones de rótulo y un filete a la
+   izquierda. Sin fondo, sin borde, sin sombra. */
+const stat = (v, l1, l2) => '<div class="stat"><b>' + v + '</b>' +
+  '<span>' + l1 + '<i>' + l2 + '</i></span></div>';
 const qaRow = (ic, label, go) => '<button class="row go" data-go="' + go + '">' +
   '<span style="flex:0 0 auto;width:17px;height:17px;color:var(--tx2)">' + svg(ic) + '</span>' +
   '<span class="bd"><span class="nm" style="font-weight:500;font-size:13.5px">' + label + '</span></span>' +
   '<span class="cv"></span></button>';
-const qaTile = (ic, label, go) => '<button data-go="' + go + '">' + svg(ic) +
-  '<span>' + label + '</span></button>';
 
 /* ==========================================================================
    17 · PROTOCOLOS
@@ -952,7 +1016,7 @@ function vProt(){
       '<button class="pill' + (w === x[0] ? ' sel' : '') + '" data-sub="prot:' + x[0] + '">' +
       x[1] + (g[x[0]].length ? '<i>' + g[x[0]].length + '</i>' : '') + '</button>').join('') + '</div>' +
     (S.newProt ? protForm() : '') +
-    '<div style="margin-top:14px;display:flex;flex-direction:column;gap:12px">' +
+    '<div class="protlist">' +
       (list.length ? list.map(p => protCard(p)).join('')
         : '<div class="card">' + empty('prot',
             w === 'active' ? t('No active protocol','Ningún protocolo activo')
@@ -963,40 +1027,64 @@ function vProt(){
             '<button class="btn" data-new-prot>' + t('New protocol','Nuevo protocolo') + '</button>') + '</div>') +
     '</div>' + ruo();
 }
+/* UN PROTOCOLO ES UN RECORRIDO, NO UNA FILA.
+
+   El usuario quiere saber cuatro cosas de un vistazo: dónde empezó, dónde está
+   ahora, cuánto le queda y qué toca después. Antes eso era una tarjeta con una
+   barra dentro; ahora es una composición con el producto real a un lado y el
+   recorrido —hitos, no porcentaje suelto— al otro. */
 function protCard(p){
   const ph = phase(p), pr = planProgress(p), nx = nextDue(p);
   const st = planState(p), abierto = S.open === p.id;
-  const comps = planCompounds(p).slice(0, 4);
-  const resto = planCompounds(p).length - comps.length;
-  return '<div class="card">' +
-    '<div class="chead">' +
-      '<div><div class="h3">' + E(p.c) + '</div>' +
-        '<div class="meta" style="margin-top:4px">' + (ph && ph.total
-          ? t('Phase ','Fase ') + ph.f + ' · ' + t('Week ','Semana ') + ph.w + t(' of ',' de ') + ph.total
-          : E(freqText(p))) + '</div></div>' +
-      '<span class="badge">' + (st === 'active' ? t('ACTIVE','ACTIVO')
-        : st === 'done' ? t('DONE','COMPLETADO') : t('DRAFT','BORRADOR')) + '</span>' +
+  const comps = planCompounds(p);
+  const linea = lineaDe(p.c);
+  const hoy = today();
+
+  /* Los hitos: inicio, la fase de ahora, el final. Con fechas de verdad, no
+     con un tanto por ciento que no dice cuándo. */
+  const hitos = [];
+  if(p.start) hitos.push({k:p.start, l:t('Started','Empezó'), on:true});
+  if(ph && ph.total) hitos.push({k:null,
+    l:t('Phase ','Fase ') + ph.f + ' · ' + t('week ','semana ') + ph.w + t(' of ',' de ') + ph.total,
+    on:true, now:true});
+  if(nx) hitos.push({k:nx, l:t('Next injection','Próxima inyección'), next:true});
+  if(p.end) hitos.push({k:p.end, l:t('Ends','Termina'), on:false});
+
+  return '<article class="prot l-' + linea + (abierto ? ' open' : '') + '">' +
+    '<div class="prot-art">' + vial(p.c, 'lg') + '</div>' +
+    '<div class="prot-bd">' +
+      '<div class="prot-hd">' +
+        '<div><h3 class="h2">' + E(p.c) + '</h3>' +
+          '<div class="meta" style="margin-top:5px">' + E(p.dose) + ' ' + E(p.unit) +
+            ' · ' + E(freqText(p)) + '</div></div>' +
+        '<span class="badge' + (st === 'active' ? ' solid' : '') + '">' +
+          (st === 'active' ? t('ACTIVE','ACTIVO')
+            : st === 'done' ? t('DONE','COMPLETADO') : t('DRAFT','BORRADOR')) + '</span>' +
+      '</div>' +
+
+      (pr != null ? '<div class="bar" style="margin-top:16px"><i style="width:' +
+        (pr*100).toFixed(0) + '%"></i></div>' : '') +
+
+      (hitos.length ? '<ol class="miles">' + hitos.map(h =>
+        '<li' + (h.now ? ' class="now"' : h.next ? ' class="next"' : '') + '>' +
+          '<span class="ml">' + h.l + '</span>' +
+          (h.k ? '<span class="mk">' + human(h.k) +
+            (h.next && p.time ? ', ' + E(p.time) : '') + '</span>' : '') +
+        '</li>').join('') + '</ol>' : '') +
+
+      (comps.length > 1 ? '<div class="prot-comps">' + comps.slice(0,5).map(c =>
+        '<span class="pc">' + vial(c, 'sm') + '<span>' + E(c) + '</span></span>').join('') +
+        (comps.length > 5 ? '<span class="more">+' + (comps.length-5) + '</span>' : '') +
+        '</div>' : '') +
+
+      '<div class="acts" style="margin-top:18px">' +
+        '<button class="btn ghost sm" data-open-prot="' + p.id + '">' +
+          (abierto ? t('Hide details','Ocultar detalles') : t('View details','Ver detalles')) + '</button>' +
+      '</div>' +
+
+      (abierto ? '<div class="prot-more">' + protBody(p) + '</div>' : '') +
     '</div>' +
-    '<div class="cbody">' +
-      '<div class="vrow">' + comps.map(c =>
-        '<span class="v">' + vial(c) + '<span>' + E(c) + '</span></span>').join('') +
-        (resto > 0 ? '<span class="more">+' + resto + '</span>' : '') + '</div>' +
-      (pr != null ? '<div style="margin-top:18px">' +
-        '<div style="display:flex;justify-content:space-between" class="meta">' +
-          '<span>' + t('Progress','Progreso') + '</span><span>' + Math.round(pr*100) + '%</span></div>' +
-        '<div class="bar" style="margin-top:8px"><i style="width:' + (pr*100).toFixed(0) + '%"></i></div>' +
-      '</div>' : '') +
-    '</div>' +
-    (nx ? '<button class="row go" data-open-prot="' + p.id + '" style="border-top:1px solid var(--line)">' +
-      '<span class="bd"><span class="mt" style="margin-top:0">' + t('Next injection','Próxima inyección') + '</span>' +
-      '<span class="nm" style="margin-top:3px">' + human(nx) +
-        (p.time ? ', ' + E(p.time) : '') + '</span></span><span class="cv"></span></button>'
-    : '<button class="row go" data-open-prot="' + p.id + '" style="border-top:1px solid var(--line)">' +
-      '<span class="bd"><span class="nm">' + t('View details','Ver detalles') + '</span></span>' +
-      '<span class="cv"></span></button>') +
-    (abierto ? '<div class="cbody" style="border-top:1px solid var(--line);padding-top:18px">' +
-      protBody(p) + '</div>' : '') +
-  '</div>';
+  '</article>';
 }
 function protBody(p){
   const kv = (k, v) => v ? '<div class="kv"><span>' + k + '</span><b>' + E(v) + '</b></div>' : '';
@@ -1099,14 +1187,16 @@ function vComp(){
         return n ? '<button class="pill' + (fam === f.id ? ' on' : '') + '" data-sub="comp:' + f.id + '">' +
           t(f.en, f.es) + '<i>' + n + '</i></button>' : '';
       }).join('') + '</div>' +
+    /* La lista sin marco: el filete separa las fichas, no las encierra. Con
+       sesenta entradas, sesenta bordes redondeados eran sesenta cajas. */
     (list.length
-      ? '<div class="card" style="margin-top:14px">' + list.map(e =>
+      ? '<div class="bare complist">' + list.map(e =>
           '<button class="row go" data-comp="' + E(e.n) + '">' + vial(e.n) +
             '<span class="bd"><span class="nm">' + E(e.n) + '</span>' +
               '<span class="mt">' + E(full && e.mec ? e.mec.slice(0,72) : (e.cat||'')) + '</span>' +
-              '<span class="mt">' + E(research(e)) + '</span></span>' +
+              '<span class="mt dim">' + E(research(e)) + '</span></span>' +
             '<span class="cv"></span></button>').join('') + '</div>'
-      : '<div class="card" style="margin-top:14px">' + empty('search', t('Nothing matches','Nada coincide'),
+      : '<div class="band">' + empty('search', t('Nothing matches','Nada coincide'),
           E(S.lq || ''), '<button class="btn ghost" data-clear-q>' + t('Clear','Limpiar') + '</button>') + '</div>') +
     (!full && LIB.length ? '<div class="card" style="margin-top:12px">' + empty('lock',
       t('Full sheet is Ultimate','La ficha completa es de Ultimate'),
@@ -1132,49 +1222,52 @@ function compDetail(e, full){
     kv(t('Storage','Almacenamiento'), e.alm) +
     kv(t('Status','Estatus'), e.reg);
 
+  const linea = LINEA[family(e)] || 'fitness';
+
   return '' +
     '<div class="acts" style="margin:6px 0 0"><button class="btn quiet sm" data-back-comp>' +
       svg('left') + t('Compounds','Compuestos') + '</button></div>' +
 
-    /* HÉROE */
-    '<div class="card pad-lg" style="margin-top:12px">' +
-      '<div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">' +
-        vial(e.n, 'xl') +
-        '<div style="flex:1;min-width:200px">' +
-          (f ? '<div class="eyebrow"><span class="dot' + famClass(e) + '" style="display:inline-block;margin-right:7px"></span>' +
-            t(f.en, f.es) + '</div>' : '') +
-          '<h1 class="h1" style="margin-top:8px">' + E(e.n) + '</h1>' +
-          (e.sku ? '<div class="meta" style="margin-top:6px">' + E(e.sku) + '</div>' : '') +
-          '<div class="tags" style="margin-top:14px">' +
-            '<span class="badge solid">' + E(research(e)) + '</span>' +
-            cons.map(c => '<span class="badge">' + E(c) + '</span>').join('') + '</div>' +
-        '</div>' +
+    /* HÉROE — el producto a tamaño de producto y el nombre a tamaño de
+       portada. Sin tarjeta: lo que enmarca es el aire y un filete al pie. */
+    '<section class="phero-prod l-' + linea + '">' +
+      '<div class="pp-art">' + vial(e.n, 'hero') + famLock(linea) + '</div>' +
+      '<div class="pp-bd">' +
+        (f ? '<span class="eyebrow">' + t(f.en, f.es) + '</span>' : '') +
+        '<h1 class="display sm">' + E(e.n) + '</h1>' +
+        (e.sku ? '<div class="pp-sku">' + E(e.sku) + '</div>' : '') +
+        (e.esp ? '<p class="lede sm">' + E(e.esp) + '</p>' : '') +
+        '<div class="tags" style="margin-top:18px">' +
+          '<span class="badge solid">' + E(research(e)) + '</span>' +
+          cons.map(c => '<span class="badge">' + E(c) + '</span>').join('') + '</div>' +
+        (e.mg && e.mg.length && full ? '<div class="acts" style="margin-top:22px">' +
+          '<button class="btn" data-calc="' + E(e.n) + '">' + svg('flask') +
+          t('Open in calculator','Abrir en la calculadora') + '</button></div>' : '') +
       '</div>' +
-      (e.mg && e.mg.length && full ? '<div class="acts" style="margin-top:20px">' +
-        '<button class="btn ghost sm" data-calc="' + E(e.n) + '">' + svg('flask') +
-        t('Open in calculator','Abrir en la calculadora') + '</button></div>' : '') +
-    '</div>' +
+    '</section>' +
 
-    (!full ? '<div class="card" style="margin-top:12px">' + empty('lock',
+    (!full ? '<section class="band">' + empty('lock',
       t('Full sheet is Ultimate','La ficha completa es de Ultimate'),
       t('Mechanism, vial presentation, solvent, cold chain and your reference sheet.',
         'Mecanismo, presentación, solvente, cadena de frío y tu hoja de referencia.'),
-      '<button class="btn" data-go="set">' + t('See plans','Ver planes') + '</button>') + '</div>'
+      '<button class="btn" data-go="set">' + t('See plans','Ver planes') + '</button>') + '</section>'
     :
-    /* RESUMEN */
-    (e.mec ? '<div class="card pad" style="margin-top:12px">' +
-      '<div class="eyebrow">' + t('Overview','Resumen') + '</div>' +
-      '<p class="body" style="margin:10px 0 0">' + E(e.mec) + '</p>' +
-      (e.ins ? '<p class="body" style="margin-top:10px">' + E(e.ins) + '</p>' : '') + '</div>' : '') +
+    /* RESUMEN — a ancho de lectura, tipografía grande, sin caja */
+    (e.mec ? '<section class="band">' +
+      '<div class="band-h"><span class="eyebrow">' + t('Overview','Resumen') + '</span></div>' +
+      '<p class="read">' + E(e.mec) + '</p>' +
+      (e.ins ? '<p class="read dim">' + E(e.ins) + '</p>' : '') + '</section>' : '') +
 
-    /* ESPECIFICACIONES */
-    (ficha ? '<div class="card pad" style="margin-top:12px">' +
-      '<div class="eyebrow" style="margin-bottom:6px">' + t('Specifications','Especificaciones') + '</div>' +
-      ficha + '</div>' : '') +
+    /* ESPECIFICACIONES — hoja técnica: dos columnas de filete, como Leica */
+    (ficha ? '<section class="band">' +
+      '<div class="band-h"><span class="eyebrow">' + t('Specifications','Especificaciones') + '</span></div>' +
+      '<div class="spec">' + ficha + '</div></section>' : '') +
 
-    /* INVESTIGACIÓN — la cita, con su marco y su procedencia */
-    (hayRef ? '<div class="card pad" style="margin-top:12px">' +
-      '<div class="eyebrow">' + t('Research','Investigación') + '</div>' +
+    /* INVESTIGACIÓN — la cita, con su marco y su procedencia. Ésta SÍ lleva
+       contenedor, y a propósito: es material citado, no dicho por PepX, y el
+       marco es lo que lo dice sin tener que escribirlo. */
+    (hayRef ? '<section class="band">' +
+      '<div class="band-h"><span class="eyebrow">' + t('Research','Investigación') + '</span></div>' +
       '<div class="quote">' +
         '<div class="qh">' + t('From your reference sheet','De tu hoja de referencia') + '</div>' +
         kv(t('Initial','Inicial'), r.ini) + kv(t('Maintenance','Mantenimiento'), r.mant) +
@@ -1183,15 +1276,17 @@ function compDetail(e, full){
         (r.nota ? '<p class="meta" style="margin-top:12px">' + E(r.nota) + '</p>' : '') +
         '<div class="qf">' + t('Quoted from the operations record. PepX does not apply these numbers on its own — you read them and enter what you decide.',
                                'Citado del registro de operación. PepX no aplica estos números por su cuenta — los lees tú y escribes lo que decidas.') + '</div>' +
-      '</div></div>' : '')) +
+      '</div></section>' : '')) +
 
-    /* RELACIONADOS */
-    (rel.length ? '<div class="sect-h"><span class="eyebrow">' + t('Related compounds','Compuestos relacionados') + '</span></div>' +
-      '<div class="card">' + rel.map(x =>
-        '<button class="row go" data-comp="' + E(x.n) + '">' + vial(x.n) +
-        '<span class="bd"><span class="nm">' + E(x.n) + '</span>' +
-        '<span class="mt">' + E(x.sku || '') + '</span></span><span class="cv"></span></button>').join('') +
-      '</div>' : '') +
+    /* RELACIONADOS — rejilla de producto, no lista de filas */
+    (rel.length ? '<section class="band">' +
+      '<div class="band-h"><span class="eyebrow">' + t('Related compounds','Compuestos relacionados') + '</span></div>' +
+      '<div class="relgrid">' + rel.map(x =>
+        '<button class="relcard" data-comp="' + E(x.n) + '">' +
+          '<span class="relart">' + vial(x.n, 'lg') + '</span>' +
+          '<span class="relnm">' + E(x.n) + '</span>' +
+          '<span class="relsku">' + E(x.sku || (x.cat || '')) + '</span>' +
+        '</button>').join('') + '</div></section>' : '') +
     ruo();
 }
 
@@ -1336,20 +1431,26 @@ function vProg(){
     const pts = series(m.id, win);
     if(!pts.length) return '';
     const vs = pts.map(p => p.v), d = dpMetric(m, pts, win);
-    return '<div class="card pad">' +
-      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px">' +
-        '<div><div class="h3">' + E(mName(m)) + '</div>' +
+    return '<section class="mband">' +
+      '<div class="mband-h">' +
+        '<div><h3 class="h2">' + E(mName(m)) + '</h3>' +
           '<div class="meta" style="margin-top:5px;max-width:420px">' + t(m.de.en, m.de.es) + '</div></div>' +
         trendChip(pts, m) + '</div>' +
-      '<div style="margin-top:16px">' + (m.col ? cols(pts, win, m) : line(pts, win, m)) + '</div>' +
-      '<div class="metrics3" style="border-top:1px solid var(--line);margin-top:14px;padding-top:14px">' +
-        '<div class="metric"><b style="font-size:22px">' + nf(mean(vs), m.dec) + '</b><span>' + t('avg','media') + ' ' + m.u + '</span></div>' +
-        '<div class="metric"><b style="font-size:22px">' + nf(mn(vs), m.dec) + '</b><span>' + t('low','mín') + '</span></div>' +
-        '<div class="metric"><b style="font-size:22px">' + nf(mx(vs), m.dec) + '</b><span>' + t('high','máx') + '</span></div>' +
+      '<div style="margin-top:18px">' + (m.col ? cols(pts, win, m) : line(pts, win, m)) + '</div>' +
+      '<div class="mstats">' +
+        '<div><b>' + nf(mean(vs), m.dec) + '</b><span>' + t('avg','media') + ' ' + m.u + '</span></div>' +
+        '<div><b>' + nf(mn(vs), m.dec) + '</b><span>' + t('low','mín') + '</span></div>' +
+        '<div><b>' + nf(mx(vs), m.dec) + '</b><span>' + t('high','máx') + '</span></div>' +
       '</div>' +
-      (d ? '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:14px">' + dp(d) + '</div>' : '') +
-    '</div>';
+      (d ? '<div style="margin-top:16px">' + dp(d) + '</div>' : '') +
+    '</section>';
   }).filter(Boolean);
+
+  /* UNA lectura principal arriba, y las demás debajo. El brief pide una
+     visualización que se entienda en segundos, no un tablero de analítica.
+     La principal es la adherencia: es la única cifra de esta pantalla que
+     sale del registro y no de lo que el usuario se mide a mano. */
+  const ad = adherence(win);
 
   return '' +
     phead(t('PROGRESS','PROGRESO'), t('What changed.','Qué cambió.'),
@@ -1357,9 +1458,19 @@ function vProg(){
         'Números que mides tú. Con una vez por semana basta; una vez al mes y la curva deja de decir nada.')) +
     '<div class="pills">' + WINS.map(w => '<button class="pill' + (w === win ? ' sel' : '') +
       '" data-win="' + w + '">' + w + ' ' + t('days','días') + '</button>').join('') + '</div>' +
-    '<div class="card pad" style="margin-top:14px">' + dp(dpReport(win), true) + '</div>' +
-    (cards.length ? '<div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">' +
-      cards.join('') + '</div>'
+
+    '<section class="band lead-insight">' +
+      '<div class="insight">' +
+        '<div class="insight-n"><b>' + Math.round(ad.pct*100) + '<i>%</i></b>' +
+          '<span>' + t('of the %n doses scheduled in these %d days, logged.',
+                       'de las %n dosis programadas en estos %d días, registradas.')
+            .replace('%n', ad.tocaba).replace('%d', win) + '</span></div>' +
+        '<div class="insight-c">' + weekChart() + '</div>' +
+      '</div>' +
+    '</section>' +
+
+    '<section class="band">' + dp(dpReport(win), true) + '</section>' +
+    (cards.length ? cards.join('')
       : '<div class="card" style="margin-top:12px">' + empty('prog',
           t('Nothing measured in this window','Nada medido en esta ventana'),
           t('Use the form below. One weight is enough to start.','Usa el formulario de abajo. Con un peso basta para empezar.')) + '</div>') +
@@ -1737,12 +1848,46 @@ function vEdu(){
       ? '<div class="card" style="margin-top:14px">' + empty('play', t('No videos yet','Todavía no hay vídeos'),
           t('This shelf is empty on purpose. It will hold PEPTIDEX material when there is PEPTIDEX material — not stock footage about compounds.',
             'Este estante está vacío a propósito. Llevará material de PEPTIDEX cuando haya material de PEPTIDEX — no vídeo de archivo sobre compuestos.')) + '</div>'
-      : '<div class="edu" style="margin-top:14px">' + list.map(a =>
-          '<button class="educard" data-go="' + a.go + '">' +
-            '<span class="eyebrow">' + (a.k === 'pro' ? t('PROTOCOL','PROTOCOLO') : t('ARTICLE','ARTÍCULO')) + '</span>' +
-            '<span class="h3">' + t(a.t.en, a.t.es) + '</span>' +
-            '<span class="meta">' + t(a.m.en, a.m.es) + '</span></button>').join('') + '</div>') +
+      : (list.length ? eduPortada(list[0]) + eduResto(list.slice(1)) : '')) +
+
+    /* LAS TRES LÍNEAS — descubrimiento por familia, con el producto y el
+       bloque entregados. Es lo más cerca de una portada de catálogo que puede
+       estar esto sin inventar fotografía que no existe. */
+    '<section class="band">' +
+      '<div class="band-h"><span class="eyebrow">' + t('The three lines','Las tres líneas') + '</span></div>' +
+      '<div class="lines">' + [
+        ['fitness',   t('Performance, recovery and engineering.','Rendimiento, recuperación e ingeniería.'), 'perf'],
+        ['beauty',    t('Refinement and cosmetic science.','Refinamiento y ciencia cosmética.'), 'beau'],
+        ['longevity', t('Time, calm and advanced science.','Tiempo, calma y ciencia avanzada.'), 'long']
+      ].map(x => '<button class="linecard l-' + x[0] + '" data-sub="comp:' + x[2] + '" data-go="comp">' +
+        '<span class="lc-art">' + (ART['vial_' + x[0]]
+          ? '<img src="' + ART['vial_' + x[0]] + '" alt="PEPTIDEX ' + x[0].toUpperCase() +
+            '" loading="lazy" decoding="async"/>' : '') + '</span>' +
+        '<span class="lc-bd">' + famLock(x[0]) +
+          '<span class="lc-tx">' + x[1] + '</span></span>' +
+      '</button>').join('') + '</div>' +
+    '</section>' +
     ruo();
+}
+/* La portada editorial: UN artículo grande, no doce iguales. Que algo sea lo
+   primero es una decisión, y una rejilla de tarjetas idénticas se niega a
+   tomarla. */
+function eduPortada(a){
+  return '<button class="edu-lead" data-go="' + a.go + '">' +
+    '<span class="edu-lead-bd">' +
+      '<span class="eyebrow">' + (a.k === 'pro' ? t('PROTOCOL','PROTOCOLO') : t('ARTICLE','ARTÍCULO')) + '</span>' +
+      '<span class="h-lg">' + t(a.t.en, a.t.es) + '</span>' +
+      '<span class="lede sm">' + t(a.m.en, a.m.es) + '</span>' +
+      '<span class="edu-go">' + t('Read','Leer') + ' →</span>' +
+    '</span></button>';
+}
+function eduResto(list){
+  if(!list.length) return '';
+  return '<div class="edu-rest">' + list.map(a =>
+    '<button class="edu-item" data-go="' + a.go + '">' +
+      '<span class="eyebrow">' + (a.k === 'pro' ? t('PROTOCOL','PROTOCOLO') : t('ARTICLE','ARTÍCULO')) + '</span>' +
+      '<span class="ei-t">' + t(a.t.en, a.t.es) + '</span>' +
+      '<span class="ei-m">' + t(a.m.en, a.m.es) + '</span></button>').join('') + '</div>';
 }
 
 /* ==========================================================================
