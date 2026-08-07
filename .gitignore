@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Sinapsis se genera: cerebro/sinapsis/build.py
+cerebro/sinapsis/index.html

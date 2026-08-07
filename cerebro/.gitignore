@@ -1,0 +1,9 @@
+# Obsidian: lo que es de ESTE aparato y no del cerebro
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+.trash/
+
+# sistema
+.DS_Store
+Thumbs.db

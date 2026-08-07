@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Sinapsis — el cerebro</title>
+<meta name="theme-color" content="#FFFFFF"/>
+<meta name="description" content="El cerebro de PEPTIDEX: grafo de notas, búsqueda y análisis."/>
+<script>
+/* El tema se aplica ANTES del primer píxel. Dejarlo al final produce el
+   destello blanco que delata a las páginas que no se lo pensaron. */
+(function(){
+  var m = 'light';
+  try{ m = localStorage.getItem('sinapsis-tema') || 'light'; }catch(e){}
+  if(m === 'system') m = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  document.documentElement.dataset.theme = m;
+})();
+</script>
+<style>/*__CSS__*/</style>
+</head>
+<body>
+<div id="root"></div>
+<script>/*__DATOS__*/</script>
+<script>/*__JS__*/</script>
+</body>
+</html>
