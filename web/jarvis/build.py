@@ -97,6 +97,22 @@ def contexto():
                               's': res})
     ctx['notas'] = notas
 
+    # Los agentes se presentan en inglés porque este Jarvis habla inglés. La
+    # `description` del fichero se queda en español a propósito: es lo que lee
+    # el enrutador de Claude Code, y ahí el idioma de trabajo es el de Jihan.
+    # Lo que cambia es cómo los presenta Jarvis, que es su propia voz.
+    EN = {
+        'vera':  'Keeps the operations register honest — the 60 compound '
+                 'sheets. Catches what is missing before it reaches a customer.',
+        'lex':   'The compliance line. Nothing goes out that turns a record '
+                 'into a prescription. Read-only on purpose.',
+        'iris':  'Checks that what gets built looks like the reference that '
+                 'was handed over, not an improved version of it.',
+        'lira':  'Writes in the PEPTIDEX voice — store, product, education, '
+                 'campaigns. Drafts only; never publishes.',
+        'atlas': 'Carries the business end: prices and margins, stock, '
+                 'shipping and customs, the invoicer.',
+    }
     ag = os.path.join(RAIZ, '.claude', 'agents')
     if os.path.isdir(ag):
         ctx['agentes'] = []
@@ -105,8 +121,11 @@ def contexto():
                 continue
             t = open(os.path.join(ag, f), encoding='utf-8').read()
             d = re.search(r'^description:\s*(.+)$', t, re.M)
-            ctx['agentes'].append({'n': f[:-3],
-                                   'd': (d.group(1).strip() if d else '')[:200],
+            nombre = f[:-3]
+            assert nombre in EN, f'agente sin presentación en inglés: {nombre}'
+            ctx['agentes'].append({'n': nombre,
+                                   'd': EN[nombre],
+                                   'es': (d.group(1).strip() if d else '')[:200],
                                    # Viñetas, filas de tabla y apartados
                                    # numerados en negrita: las tres formas en
                                    # que un agente escribe una regla. Contar
@@ -140,16 +159,59 @@ def contexto():
 # núcleo probado. Lo que se toca aquí es lo que este Jarvis sabe de más.
 # ---------------------------------------------------------------------------
 EMPRESA = r"""
-/* ---- lo que sabe de la empresa ---------------------------------------- */
+/* ==========================================================================
+   JARVIS · the company layer, in English
+
+   The engine underneath came from the invoicer and speaks Spanish about
+   invoices. Everything a person actually says to Jarvis is handled here, in
+   English, before it ever gets there.
+
+   The thing that made the old version feel like a robot was not vocabulary.
+   It was that every turn started from nothing: ask about BPC 157, then ask
+   "and its storage?", and it had already forgotten what "its" meant. Three
+   things fix that, and none of them need a model:
+
+     1. MEM   — what we were just talking about
+     2. varia — never say the same sentence twice in a row
+     3. glue  — "it", "why", "and", "no", "go on" mean something
+
+   What is NOT here, deliberately: any invented fact. Every number comes out
+   of CTX, which is built from library.json and the vault at compile time. The
+   measured reason is in llm/README.md — a model trained on this corpus put a
+   dose figure on the wrong compound 70 % of the time. Facts are looked up.
+   Only the phrasing is free.
+   ========================================================================== */
+
 var CTX = (typeof JV_CTX !== 'undefined' && JV_CTX) || {};
 var API = (typeof JV_API !== 'undefined' && JV_API) || '';
 
-/* Cómo se dirige a él. En la película es «sir»; aquí, «señor», y con cuentagotas:
-   una fórmula de cortesía en cada frase deja de ser cortesía y pasa a ser un tic. */
-var TRATO = ['', '', 'señor', '', 'señor', ''];
+/* ---- memory of the conversation --------------------------------------- */
+var MEM = {
+  comp: null,       // last compound we discussed
+  tema: null,       // last topic: catalogo | cerebro | equipo | factura
+  agente: null,
+  turnos: 0,
+  dichas: {},       // phrasings already used, so they do not repeat
+  saludado: false
+};
+
+/* Pick a phrasing that is not the one used last time for this slot. A single
+   canned string per intent is what makes something sound mechanical — not the
+   words themselves, the fact that they never change. */
+function varia(clave, opciones){
+  if(opciones.length === 1) return opciones[0];
+  var ult = MEM.dichas[clave];
+  var libres = opciones.filter(function(x){ return x !== ult; });
+  var pick = libres[Math.floor(Math.random() * libres.length)];
+  MEM.dichas[clave] = pick;
+  return pick;
+}
+
+/* "sir", sparingly. A courtesy in every sentence stops being courtesy and
+   becomes a tic. Roughly one turn in three. */
+var TRATO = ['', '', ', sir', '', ', sir', ''];
 var trato = 0;
-function sr(){ trato = (trato + 1) % TRATO.length;
-  return TRATO[trato] ? ', ' + TRATO[trato] : ''; }
+function sr(){ trato = (trato + 1) % TRATO.length; return TRATO[trato]; }
 
 function buscaComp(n){
   var L = CTX.comp || [], limpio = function(x){
@@ -167,97 +229,251 @@ function buscaComp(n){
   return mejor;
 }
 
-var VACIAS = /^(cerebro|notas?|apuntes?|decisiones?|bitacora|busca|buscame|donde|dice|esta|escrito|hay|sobre|para|como|cual|que|los|las|del|una|uno|con|por|mas|muy|tengo|tienes|hace|sabe|sabes)$/;
+/* Words that carry no search value. Kept short on purpose: an over-eager stop
+   list eats the actual query. */
+var VACIAS = /^(brain|vault|note|notes|decision|decisions|log|search|find|where|says|said|about|for|the|what|which|does|has|have|with|from|that|this|there|here|know|tell|show|give|any|our|your|and|but|its|it|is|are|was|were|los|las|del|que|sobre|cerebro|nota|notas)$/;
 
-/* Se engancha DELANTE de las reglas del facturador: lo de la empresa manda
-   sobre lo de las facturas cuando las dos podrían contestar. */
+function palabraClave(n){
+  return n.replace(/[¿?¡!.,;:()]/g, ' ').split(/\s+/)
+          .filter(function(w){ return w.length > 2 && !VACIAS.test(w); })
+          .sort(function(a, b){ return b.length - a.length; })[0] || '';
+}
+
+/* ---- rendering a compound --------------------------------------------- */
+function fichaDe(e, breve){
+  var r = e.ref || {}, filas = [];
+  if(e.cat) filas.push(['Class', e.cat]);
+  if(e.esp) filas.push(['Presentation', e.esp]);
+  if(e.sku) filas.push(['SKU', e.sku]);
+  if(e.sol) filas.push(['Solvent', e.sol]);
+  if(e.alm) filas.push(['Storage', e.alm]);
+
+  var out = [];
+  var cab = e.mec
+    ? varia('mec', ['<b>' + jvE(e.n) + '</b>. ' + jvE(e.mec),
+                    '<b>' + jvE(e.n) + '</b> — ' + jvE(e.mec),
+                    '<b>' + jvE(e.n) + '</b>.<br>' + jvE(e.mec)])
+    : '<b>' + jvE(e.n) + '</b>.';
+  out.push(di(cab));
+  if(!breve) out.push(tel('SHEET', filas));
+
+  /* Reference figures always travel with the notice attached. Never apart. */
+  if(r.ini || r.mant)
+    out.push(di('The operations register has reference figures on this one. ' +
+                'I am quoting them, not applying them: <b>' +
+                jvE(r.ini || r.mant) + '</b>' + (r.frec ? ' · ' + jvE(r.frec) : '') + '.'),
+             eco('QUOTED FROM THE REGISTER · NOT A RECOMMENDATION', 'aviso'));
+
+  /* Say what is missing. That is the difference between reading a record and
+     being useful about it. */
+  var falta = [];
+  if(!e.mg)  falta.push('no milligrams, so it does not preload the calculator');
+  if(!e.alm) falta.push('no storage on file');
+  if(!e.sol) falta.push('no solvent on file');
+  if(falta.length && !breve)
+    out.push(di('Worth knowing: ' + falta.join(', ') + '. Vera would flag that.'));
+  return out;
+}
+
+function campoDe(e, campo){
+  var M = {alm:['Storage','stored'], sol:['Solvent','reconstituted'],
+           cat:['Class','filed'], esp:['Presentation','presented'], sku:['SKU','coded']};
+  var v = e[campo];
+  if(!v) return [di('<b>' + jvE(e.n) + '</b> has no ' + M[campo][0].toLowerCase() +
+                    ' on file' + sr() + '. That is a gap in the sheet, not something I am withholding.')];
+  return [di(varia('campo', [
+    '<b>' + jvE(e.n) + '</b> — ' + jvE(v) + '.',
+    jvE(v) + '. That is what the sheet says for <b>' + jvE(e.n) + '</b>.',
+    'For <b>' + jvE(e.n) + '</b>: ' + jvE(v) + '.'
+  ]))];
+}
+
+/* ======================================================================== */
 var jvBase = jvPiensa;
 jvPiensa = function(txt){
   var q = String(txt || '').trim(), n = sinT(q);
   if(!n) return [];
+  MEM.turnos++;
 
-  /* -- quién es ---------------------------------------------------------- */
-  if(/\b(quien eres|que eres|quien sos|preséntate|presentate|quién eres)/.test(n)){
-    return [di('Jarvis' + sr() + '. No soy el ayudante del facturador — ' +
-               'eso era antes, cuando vivía dentro de él. Ahora miro la empresa entera.'),
-      tel('LO QUE ALCANZO', [
-        ['Catálogo', (CTX.comp || []).length + ' compuestos, con su ficha y su estado'],
-        ['Cerebro', (CTX.notas || []).length + ' notas — lo decidido y por qué'],
-        ['Equipo', (CTX.agentes || []).length + ' agentes y lo que ha corrido cada uno'],
-        ['Facturador', 'clientes, documentos y pedidos']
-      ]),
-      di(API
-        ? 'Cuando la pregunta no cae en ninguna regla, razono con un modelo. ' +
-          'Lo que sé de la empresa va con la pregunta.'
-        : 'Contesto con reglas: lo que hay en los ficheros, sin inventar. ' +
-          'Para conversación abierta falta conectar el modelo.')];
+  /* -- conversational glue, before anything else ------------------------ */
+
+  /* greetings */
+  if(/^(hi|hey|hello|good morning|good evening|good afternoon|yo|hola)\b/.test(n)){
+    MEM.saludado = true;
+    return [di(varia('saludo', [
+      'Good to see you' + sr() + '. What are we looking at?',
+      'Here. What do you need?',
+      'Morning. The catalogue and the vault are both loaded.',
+      'At your service. Where do you want to start?'
+    ]))];
   }
 
-  /* -- una ficha de compuesto ------------------------------------------- */
+  if(/^(thanks|thank you|cheers|gracias|nice|good|perfect|great)\b/.test(n))
+    return [di(varia('gracias', ['Of course.', 'Any time.',
+                                 'That is what I am for.', 'Noted.']))];
+
+  if(/^(bye|goodbye|see you|that is all|thats all|done|nothing)\b/.test(n))
+    return [di(varia('adios', ['I will be here.', 'Standing by.',
+                               'Whenever you need me.']))];
+
+  if(/\b(how are you|you ok|you there|are you there)\b/.test(n))
+    return [di(varia('estado', [
+      'Running' + sr() + '. ' + (CTX.comp || []).length + ' compounds and ' +
+        (CTX.notas || []).length + ' notes loaded.',
+      'Fine. Everything is where it should be.',
+      'All systems. Nothing has fallen over.'
+    ]))];
+
+  /* "why" with nothing else — refers back */
+  if(/^(why|why is that|how come|and why)\b/.test(n) && MEM.comp)
+    return [di('Because that is what the sheet for <b>' + jvE(MEM.comp.n) +
+               '</b> says. I do not derive it — I read it. If it looks wrong, ' +
+               'the sheet is wrong, and that is a job for Vera.')];
+
+  /* follow-up: a bare field question refers to the last compound */
+  var CAMPOS = [
+    [/\b(storage|stor|temperatur|cold chain|keep|kept|fridge|freez)/, 'alm'],
+    [/\b(solvent|reconstitut|dilut|mix with)|\bbac\b/, 'sol'],
+    [/\b(class|famil|categor)/, 'cat'],
+    [/\b(presentation|format|vial|size|comes)/, 'esp'],
+    [/\b(sku|code)\b/, 'sku']
+  ];
   var e = buscaComp(n);
-  if(e && !/\b(factur|cliente|cobr|pagad|pedido)/.test(n)){
-    var r = e.ref || {};
-    var filas = [];
-    if(e.cat) filas.push(['Clase', e.cat]);
-    if(e.esp) filas.push(['Presentación', e.esp]);
-    if(e.sku) filas.push(['SKU', e.sku]);
-    if(e.sol) filas.push(['Solvente', e.sol]);
-    if(e.alm) filas.push(['Conservación', e.alm]);
-    var out = [di('<b>' + jvE(e.n) + '</b>' + (e.mec ? '<br>' + jvE(e.mec) : '')),
-               tel('FICHA', filas)];
-    if(r.ini || r.mant)
-      out.push(di('El registro de operación trae cifras de referencia para éste. ' +
-                  'Las cito, no las aplico: <b>' + jvE(r.ini || r.mant) + '</b>' +
-                  (r.frec ? ' · ' + jvE(r.frec) : '') + '.'),
-               eco('CITADO DEL REGISTRO · NO ES UNA RECOMENDACIÓN', 'aviso'));
+  if(e) MEM.comp = e;
+
+  for(var ci = 0; ci < CAMPOS.length; ci++){
+    if(CAMPOS[ci][0].test(n)){
+      var obj = e || MEM.comp;
+      if(obj){ MEM.tema = 'catalogo'; return campoDe(obj, CAMPOS[ci][1]); }
+    }
+  }
+
+  /* pronoun without a referent */
+  if(/^(and it|what about it|its|it|that one|the same)\b/.test(n) && !e){
+    if(MEM.comp) return fichaDe(MEM.comp);
+    return [di('I have lost the thread' + sr() + '. Name it again.')];
+  }
+
+  /* -- a compound sheet -------------------------------------------------- */
+  if(e && !/\b(invoice|client|charge|paid|order|factur|cliente|cobr|pagad|pedido)/.test(n)){
+    MEM.tema = 'catalogo';
+    return fichaDe(e);
+  }
+
+  /* -- the catalogue ----------------------------------------------------- */
+  if(/\b(catalogue|catalog|compound|peptide|inventory|product|catalogo|compuesto)/.test(n)){
+    var L = CTX.comp || [];
+    var sinMg = L.filter(function(x){ return !x.mg; });
+    var sinAlm = L.filter(function(x){ return !x.alm; });
+    MEM.tema = 'catalogo';
+    var out = [di('<b>' + L.length + '</b> compounds in the operations register' + sr() + '.'),
+      tel('CATALOGUE STATE', [
+        ['No milligrams', sinMg.length + ' — these do not preload the calculator'],
+        ['No storage', String(sinAlm.length)],
+        ['Complete', String(L.length - sinMg.length)]
+      ])];
+    if(sinMg.length)
+      out.push(di('The gaps are not cosmetic: without milligrams the calculator ' +
+                  'starts empty, and someone has to type the number by hand — ' +
+                  'which is where mistakes come from. ' +
+                  jvE(sinMg.slice(0,4).map(function(x){ return x.n; }).join(', ')) +
+                  (sinMg.length > 4 ? ' and ' + (sinMg.length - 4) + ' more.' : '.')));
+    out.push(di('Name any of them and I will read you the sheet.'));
     return out;
   }
 
-  /* -- el catálogo entero ------------------------------------------------ */
-  if(/\b(catalogo|compuesto|peptido|ficha|inventario de producto)/.test(n)){
-    var L = CTX.comp || [];
-    var sinMg = L.filter(function(x){ return !x.mg; }).length;
-    var sinAlm = L.filter(function(x){ return !x.alm; }).length;
-    return [di('<b>' + L.length + '</b> compuestos en el registro de operación' + sr() + '.'),
-      tel('ESTADO DEL CATÁLOGO', [
-        ['Sin miligramos', String(sinMg) + ' — no precargan la calculadora'],
-        ['Sin conservación', String(sinAlm)],
-        ['Completos', String(L.length - sinMg)]
-      ]),
-      di('Nómbrame cualquiera y te leo su ficha.')];
-  }
-
-  /* -- el cerebro -------------------------------------------------------- */
-  if(/\b(cerebro|nota|apunt|decision|bitacora|donde dice|donde esta escrito)/.test(n)){
+  /* -- the vault --------------------------------------------------------- */
+  if(/\b(brain|vault|note|decision|logbook|decided|why did we|cerebro|nota|decision)/.test(n)){
     var N = CTX.notas || [];
-    /* Se busca UNA palabra, la más larga que sobreviva al filtro — no la frase
-       que queda al quitar las vacías. «qué hay en el cerebro sobre jarvis»
-       dejaba «hay jarvis», que no está en ninguna nota. */
-    var pal = n.replace(/[¿?¡!.,;:]/g, ' ').split(/\s+/)
-               .filter(function(w){ return w.length > 2 && !VACIAS.test(w); })
-               .sort(function(a, b){ return b.length - a.length; })[0] || '';
+    MEM.tema = 'cerebro';
+    var pal = palabraClave(n);
     var hits = pal.length > 2
       ? N.filter(function(x){ return sinT(x.t + ' ' + x.s + ' ' + x.r).indexOf(pal) >= 0; })
       : [];
     if(hits.length)
-      return [di('<b>' + hits.length + '</b> en el cerebro sobre «' + jvE(pal) + '».'),
-        tel('NOTAS', hits.slice(0,6).map(function(x){ return [x.t, x.r]; }))];
-    return [di('El cerebro tiene <b>' + N.length + '</b> notas.'),
-      tel('LO QUE HAY', N.slice(0,8).map(function(x){ return [x.t, x.r]; })),
-      di('Dime de qué y te digo dónde está.')];
+      return [di('<b>' + hits.length + '</b> ' + (hits.length === 1 ? 'note' : 'notes') +
+                 ' on «' + jvE(pal) + '».'),
+        tel('NOTES', hits.slice(0,6).map(function(x){ return [x.t, x.r]; })),
+        di(hits.length === 1 ? 'That is the one.' : 'Narrow it and I will go deeper.')];
+    return [di('The vault holds <b>' + N.length + '</b> notes' + sr() + '.'),
+      tel('WHAT IS IN THERE', N.slice(0,8).map(function(x){ return [x.t, x.r]; })),
+      di(pal ? 'Nothing on «' + jvE(pal) + '» though. If it was decided, it was ' +
+               'not written down — and if it was not written down, it did not happen.'
+             : 'Tell me the subject and I will tell you where it lives.')];
   }
 
-  /* -- los agentes ------------------------------------------------------- */
-  if(/\b(agente|equipo|quien vigila|quien lleva)/.test(n)){
+  /* -- the team ---------------------------------------------------------- */
+  /* Raíces sin \b de cierre («agent» tiene que casar con «agents»), y los
+     nombres propios sí con \b porque son palabras enteras. */
+  if(/\b(agent|team|who watches|who handles|equipo)|\b(vera|lex|iris|lira|atlas)\b/.test(n)){
     var A = CTX.agentes || [], C = CTX.corridas || [];
-    if(!A.length) return [di('No tengo a los agentes cargados.')];
-    return [di('Cinco especialistas' + sr() + '.'),
-      tel('EL EQUIPO', A.map(function(x){
+    if(!A.length) return [di('The agents are not loaded.')];
+    MEM.tema = 'equipo';
+
+    var uno = A.filter(function(x){ return n.indexOf(x.n) >= 0; })[0];
+    if(uno){
+      MEM.agente = uno;
+      var mios = C.filter(function(c){ return c.agente === uno.n; });
+      var out = [di('<b>' + uno.n.toUpperCase() + '</b>. ' + jvE(uno.d))];
+      if(mios.length)
+        out.push(tel('RUNS', mios.map(function(c){
+          return [c.tarea, c.hallazgos + ' found · ' + c.arreglados + ' fixed']; })));
+      else
+        out.push(di('Has not run yet.'));
+      return out;
+    }
+    return [di(varia('equipo', [
+        'Five specialists' + sr() + '.',
+        'Five of them. Each one watches a different part.',
+        'The team, and what each one has actually done:'
+      ])),
+      tel('THE TEAM', A.map(function(x){
         var mios = C.filter(function(c){ return c.agente === x.n; });
-        return [x.n, x.reglas + ' reglas · ' + mios.length + ' corridas']; })),
-      di('No aprenden solos: mejoran cuando se les añade una regla. Lo que sube ' +
-         'de verdad es lo que vigilan.')];
+        return [x.n, x.reglas + ' rules · ' + mios.length + ' runs']; })),
+      di('They do not learn on their own — they improve when someone adds a ' +
+         'rule. What actually goes up is what they watch. Name one and I will ' +
+         'tell you what it has found.')];
   }
+
+  /* -- what it is, and what it is not ------------------------------------ */
+  if(/\b(who are you|what are you|introduce yourself|quien eres|que eres)\b/.test(n))
+    return [di('Jarvis' + sr() + '. I used to live inside the invoicer, which ' +
+               'meant I could only talk about invoices. Not anymore.'),
+      tel('WHAT I REACH', [
+        ['Catalogue', (CTX.comp || []).length + ' compounds, with their sheets and gaps'],
+        ['Vault', (CTX.notas || []).length + ' notes — what was decided and why'],
+        ['Team', (CTX.agentes || []).length + ' agents and what each has run'],
+        ['Invoicer', 'clients, documents, orders']
+      ]),
+      di(API ? 'When a question falls outside the rules, I reason with a model, ' +
+               'and what I know about the company goes with the question.'
+             : 'I answer from rules — which means I only say what is actually in ' +
+               'the files. That is a floor, not a ceiling: it is why I cannot ' +
+               'make something up.')];
+
+  if(/\b(can you (recommend|suggest) (a )?(dose|dosage)|how much should i|what should i take)\b/.test(n))
+    return [di('No' + sr() + '. I can read you what the operations register has ' +
+               'on file, and I will say plainly that it is a quoted record.'),
+      eco('RESEARCH USE ONLY · THAT LINE IS NOT MINE TO CROSS', 'aviso')];
+
+  if(/\b(are you (an? )?(llm|ai|model)|do you think|are you conscious|are you real)\b/.test(n))
+    return [di('Honestly' + sr() + '? Right now I am a very well-read set of rules. ' +
+               'I read your files and I answer from them. ' +
+               (API ? 'A model is wired in for what the rules do not cover.'
+                    : 'No model is wired in yet, so anything I cannot look up, I say I cannot.')),
+      di('Which is not nothing. It means I have never told you something that ' +
+         'was not in a file.')];
+
+  if(/\b(what can you do|help|commands|what do you know)\b/.test(n))
+    return [di('Ask me in plain English' + sr() + '. Some of what lands:'),
+      tel('TRY', [
+        ['Catalogue', 'the catalogue · BPC 157 · how do I store TB-500'],
+        ['Vault',     'what does the brain say about jarvis'],
+        ['Team',      'the agents · what has iris found'],
+        ['Invoicer',  'summary · who owes me · new invoice']
+      ]),
+      di('And you can follow up. Ask about a compound, then just ask ' +
+         '«and its storage?» — I keep the thread.')];
 
   return jvBase(txt);
 };
@@ -326,27 +542,54 @@ function pregunta(txt){
 """
 
 
-def ensancha(js):
-    """Mete las intenciones de empresa e hispaniza lo heredado.
+# Todo lo que ve el usuario y viene en español del facturador. La izquierda es
+# la fuente literal; la derecha, cómo queda aquí. Cada par se comprueba: si el
+# facturador cambia una cadena, esto revienta en la compilación en vez de dejar
+# medio Jarvis en español sin que nadie se entere.
+TRADUCE = [
+    # saludo y atajos: además de traducirse, dejan de hablar sólo de facturas
+    ("'Jarvis en línea. Leo tus clientes, tus documentos y tus pedidos.'",
+     "'Jarvis online. I have the catalogue, the vault, the team and the invoicer.'"),
+    ("['Resumen', '¿Quién me debe?', '¿Cuánto facturé este mes?', 'Nueva factura']",
+     "['The catalogue', 'The agents', 'What is in the vault', 'Summary', 'Who owes me']"),
+    # identidad de la cabecera
+    ("PEPTIDEX · consola de mando", "PEPTIDEX · command console"),
+    # estados del núcleo
+    ("var ESTADOS = {idle:'en línea', oyendo:'escuchando', pensando:'procesando',\n"
+     "               hablando:'respondiendo', guardia:'en guardia · di «Jarvis»'};",
+     "var ESTADOS = {idle:'online', oyendo:'listening', pensando:'thinking',\n"
+     "               hablando:'speaking', guardia:'standing by · say «Jarvis»'};"),
+    # campo de entrada y pie
+    ('placeholder="Dime qué necesitas"', 'placeholder="Tell me what you need"'),
+    ("'Micrófono abierto esperando «Jarvis» · sólo mientras esta página esté abierta'",
+     "'Mic open, waiting for «Jarvis» · only while this page is open'"),
+    ("'Opera sobre tus datos locales · no envía nada a ningún sitio'",
+     "'Works on your local data · sends nothing anywhere'"),
+    # avisos del micrófono
+    ("'MICRÓFONO NO DISPONIBLE'", "'MICROPHONE UNAVAILABLE'"),
+    ("'MICRÓFONO DENEGADO · GUARDIA APAGADA'", "'MICROPHONE DENIED · STANDBY OFF'"),
+    # botones
+    ('aria-label="Enviar"', 'aria-label="Send"'),
+    ('aria-label="Cerrar"', 'aria-label="Close"'),
+    # el «¿sí?» de la palabra de activación
+    ("jvHabla('¿Sí?'", "jvHabla('Yes?'"),
+]
 
-    El núcleo viene del facturador y se presenta como su ayudante: el saludo
-    habla de clientes y documentos, y los atajos son los cuatro de facturar.
-    Aquí Jarvis no es eso, así que se reescriben. Cada cambio va con su
-    comprobación: si la fuente se mueve, esto falla en la compilación y no en
-    silencio."""
+
+def ensancha(js):
+    """Injerta la capa de empresa y pasa a inglés lo heredado.
+
+    El núcleo viene del facturador, que es una herramienta en español para
+    Jihan. Este Jarvis habla inglés, así que las cadenas que ve el usuario se
+    sustituyen aquí — no en la fuente, que tiene que seguir en español donde
+    vive."""
     ancla = "document.addEventListener('keydown', function(ev){"
     assert ancla in js, 'no encuentro dónde injertar'
     js = js.replace(ancla, EMPRESA + '\n' + ancla, 1)
 
-    saludo = "'Jarvis en línea. Leo tus clientes, tus documentos y tus pedidos.'"
-    assert saludo in js, 'el saludo heredado cambió'
-    js = js.replace(saludo, "'Jarvis en línea. Llevo el catálogo, el cerebro, "
-                            "el equipo y el facturador.'", 1)
-
-    atajos = "['Resumen', '¿Quién me debe?', '¿Cuánto facturé este mes?', 'Nueva factura']"
-    assert atajos in js, 'los atajos heredados cambiaron'
-    js = js.replace(atajos, "['El catálogo', 'Los agentes', 'Qué hay en el cerebro',"
-                            " 'Resumen', '¿Quién me debe?']", 1)
+    for viejo, nuevo in TRADUCE:
+        assert viejo in js, f'la fuente cambió, no encuentro: {viejo[:60]}'
+        js = js.replace(viejo, nuevo, 1)
 
     return js
 
