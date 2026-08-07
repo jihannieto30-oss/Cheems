@@ -1,0 +1,99 @@
+# Manda por correo el estudio más reciente de cerebro/50-estudios/.
+#
+# POR QUÉ EXISTE
+#
+# El estudio lo escriben los cinco agentes y lo deja commiteado la Rutina de
+# las 7. La entrega es otra cosa, y depender de un conector la ataba a que
+# `official.peptidex@outlook.com` fuera una cuenta de organización — y no lo
+# es. Aquí no hay conector: hay SMTP, una contraseña de aplicación, y un
+# destinatario que puede ser cualquier dirección, personal incluida.
+#
+# Separar generar de entregar tiene además la ventaja de que un fallo de correo
+# no es un día sin estudio: el estudio ya está en el repo.
+#
+# QUÉ HACE FALTA (Settings → Secrets and variables → Actions)
+#
+#   SMTP_USUARIO   la cuenta desde la que sale el correo (p. ej. el Gmail)
+#   SMTP_CLAVE     su CONTRASEÑA DE APLICACIÓN, no la del correo
+#   ESTUDIO_PARA   a dónde llega — official.peptidex@outlook.com
+#
+# La contraseña de aplicación se saca con la verificación en dos pasos activa,
+# en la configuración de seguridad de la cuenta. Es una clave de un solo uso
+# para un solo programa: se puede revocar sin tocar la contraseña de verdad, y
+# por eso es la única forma aceptable de meter un correo en un repositorio.
+#
+# Sin los tres secretos el trabajo NO falla: avisa y termina. Un workflow que
+# se pone rojo cada mañana por algo que aún no se ha configurado enseña a
+# ignorar los rojos.
+
+name: Estudio de las 7 por correo
+
+on:
+  schedule:
+    # 13:40 UTC = 7:40 en Ciudad de México (UTC−6 todo el año, sin horario de
+    # verano desde 2022). Cuarenta minutos después de la Rutina: le da tiempo a
+    # escribir el estudio y empujarlo antes de que esto lo busque.
+    - cron: '40 13 * * *'
+  workflow_dispatch:          # y a mano, para probarlo sin esperar a mañana
+
+permissions:
+  contents: read
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/peptidex-luxury-web-xpptte
+
+      - name: Buscar el estudio de hoy
+        id: buscar
+        run: |
+          set -euo pipefail
+          HOY=$(TZ=America/Mexico_City date +%Y-%m-%d)
+          RUTA="cerebro/50-estudios/$HOY.md"
+          if [ ! -f "$RUTA" ]; then
+            # Si hoy no hay, se manda el último que sí exista, y se dice. Es
+            # mejor que el silencio: el silencio no distingue «no hay nada que
+            # contar» de «se rompió algo».
+            RUTA=$(ls -1 cerebro/50-estudios/[0-9]*.md 2>/dev/null | sort | tail -1 || true)
+            echo "atrasado=si" >> "$GITHUB_OUTPUT"
+          else
+            echo "atrasado=no" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -z "${RUTA:-}" ] || [ ! -f "$RUTA" ]; then
+            echo "hay=no" >> "$GITHUB_OUTPUT"
+            echo "Todavía no hay ningún estudio en cerebro/50-estudios/."
+            exit 0
+          fi
+          echo "hay=si"        >> "$GITHUB_OUTPUT"
+          echo "ruta=$RUTA"    >> "$GITHUB_OUTPUT"
+          echo "fecha=$HOY"    >> "$GITHUB_OUTPUT"
+
+      - name: Comprobar los secretos
+        id: llaves
+        env:
+          U: ${{ secrets.SMTP_USUARIO }}
+          C: ${{ secrets.SMTP_CLAVE }}
+          P: ${{ secrets.ESTUDIO_PARA }}
+        run: |
+          if [ -z "$U" ] || [ -z "$C" ] || [ -z "$P" ]; then
+            echo "listo=no" >> "$GITHUB_OUTPUT"
+            echo "::notice::Faltan SMTP_USUARIO, SMTP_CLAVE o ESTUDIO_PARA. El estudio está en el repo; el correo no sale hasta que se configuren."
+          else
+            echo "listo=si" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enviar
+        if: steps.buscar.outputs.hay == 'si' && steps.llaves.outputs.listo == 'si'
+        env:
+          SMTP_USUARIO: ${{ secrets.SMTP_USUARIO }}
+          SMTP_CLAVE:   ${{ secrets.SMTP_CLAVE }}
+          ESTUDIO_PARA: ${{ secrets.ESTUDIO_PARA }}
+          SMTP_HOST:    ${{ vars.SMTP_HOST || 'smtp.gmail.com' }}
+          SMTP_PUERTO:  ${{ vars.SMTP_PUERTO || '587' }}
+          RUTA:         ${{ steps.buscar.outputs.ruta }}
+          FECHA:        ${{ steps.buscar.outputs.fecha }}
+          ATRASADO:     ${{ steps.buscar.outputs.atrasado }}
+        run: python3 .github/scripts/manda_estudio.py
