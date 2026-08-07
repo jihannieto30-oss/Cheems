@@ -141,3 +141,44 @@ cortas y en lenguaje normal.
 
 **Por qué:** al usuario no le importa dónde no vive un servidor. Le importa quién
 puede ver lo que escribe y qué pasa si cambia de teléfono.
+
+---
+
+## 2026-08-07 · Jarvis sale del facturador
+
+**Se decidió:** Jarvis pasa a `web/jarvis/index.html`, su propia página. El
+motor no se copia: `web/jarvis/build.py` lee el CSS, el núcleo y el JS de
+`docs/src/build_jarvis.py` y los injerta.
+
+**Se descartó:** duplicar el código para poder tocarlo libre en cada sitio.
+
+**Por qué:** dentro del facturador, Jarvis sólo podía hablar de facturas —era
+lo único que tenía delante—. Fuera, mira el catálogo, el cerebro, el equipo y
+el facturador como una parte más. Y dos copias del motor se habrían separado
+en el primer arreglo; con el injerto, un cambio en la fuente rompe la
+compilación y se ve, en vez de dejar una copia vieja funcionando mal.
+
+**Regla derivada:** lo heredado que suena a facturador (el saludo, los atajos)
+se reescribe en `ensancha()`, y cada reescritura va con su `assert`.
+
+---
+
+## 2026-08-07 · El estudio de las 7 vive en el repo, y el correo va aparte
+
+**Se decidió:** el estudio diario de los cinco agentes se escribe en
+`cerebro/50-estudios/AAAA-MM-DD.md` y se commitea. El envío a
+`official.peptidex@outlook.com` es un paso posterior e independiente.
+
+**Se descartó:** que el correo fuera el único sitio donde existe el estudio.
+
+**Por qué:** dos motivos. Uno, un correo se lee una vez y se pierde; en el repo,
+el estudio de mañana puede leer el de hoy y decir «esto sigue pendiente» en vez
+de repetirlo como nuevo. Dos, el envío depende de un conector que puede caerse
+o no estar autorizado, y si el estudio dependiera de él, un fallo de correo
+sería un día sin estudio.
+
+**Pendiente:** la Rutina de las 7:00 (13:00 UTC, México es UTC−6 todo el año)
+está redactada pero **no creada** — la creación de Rutinas pide aprobación de
+Jihan. Y el conector de Microsoft 365 aparece en el directorio de la
+organización pero no está activo en la sesión, que es lo que haría falta para
+que el correo salga solo.
