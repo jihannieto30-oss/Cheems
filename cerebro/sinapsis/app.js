@@ -124,7 +124,10 @@ function montaGrafo(){
     G.nodos[b].grado - G.nodos[a].grado ||
     G.nodos[a].t.localeCompare(G.nodos[b].t)));
 
-  const SEP_X = 250, SEP_Y = 82;
+  /* SEP_Y por encima de MIN_Y a propósito. El encuadre es proporcional y aquí
+     lo limita el ANCHO —cinco columnas—, así que con las filas juntas sobraban
+     200px de alto sin usar. Separarlas no cambia la escala: rellena el hueco. */
+  const SEP_X = 250, SEP_Y = 112;
   const usadas = porCapa.filter(g => g.length).length;
   let col = 0;
   porCapa.forEach((g, ci) => {
@@ -169,24 +172,50 @@ function paso(){
     const d = (a.y - b.y) * 0.06;
     a.vy -= d; b.vy += d;
   }
-  /* y que no se solapen dentro de la misma columna */
-  for(let i = 0; i < n.length; i++){
-    for(let j = i+1; j < n.length; j++){
-      if(n[i].col !== n[j].col) continue;
-      const dy = n[i].y - n[j].y;
-      const ad = Math.abs(dy);
-      if(ad < 62 && ad > 0.01){
-        const f = (62 - ad) * 0.5 * (dy > 0 ? 1 : -1);
-        n[i].vy += f; n[j].vy -= f;
-      }
-    }
-  }
   for(const x of n){
     if(x.fijo) continue;
     x.x += (x.cx - x.x) * 0.25;          /* siempre de vuelta a su columna */
     x.y += Math.max(-9, Math.min(9, x.vy * G.T));
   }
+  separa();
   G.T *= 0.955;
+}
+
+/* La separación mínima es una RESTRICCIÓN, no una fuerza.
+
+   Antes era un muelle que empujaba cuando dos nodos de la misma columna se
+   acercaban a menos de 62. Con seis nodos en una columna y muchas aristas
+   tirando, la suma de atracciones ganaba al muelle y la columna se comprimía a
+   unos 44 — que es menos de lo que ocupa el rótulo, así que el texto de un
+   nodo caía encima del siguiente.
+
+   Una fuerza negocia; una restricción no. Se ordena la columna por altura y se
+   empujan los pares que estén demasiado juntos, hasta que ninguno lo esté. El
+   dibujo deja de depender de quién tire más fuerte. */
+/* Este número, y no SEP_Y, es el que manda en la altura final: la atracción
+   entre nodos enlazados comprime siempre hasta el suelo de la restricción, así
+   que la columna acaba exactamente a MIN_Y pase lo que pase el reparto
+   inicial. Subirlo es lo que rellena el alto que sobraba. */
+const MIN_Y = 104;  /* nodo + rótulo + aire, en unidades del dibujo */
+function separa(){
+  const cols = {};
+  for(const x of G.nodos) (cols[x.col] = cols[x.col] || []).push(x);
+  for(const k in cols){
+    const g = cols[k].sort((a, b) => a.y - b.y);
+    for(let it = 0; it < 4; it++){          /* relajación: converge en pocas */
+      let movido = false;
+      for(let i = 0; i + 1 < g.length; i++){
+        const falta = MIN_Y - (g[i+1].y - g[i].y);
+        if(falta > 0.5){
+          const m = falta / 2;
+          if(!g[i].fijo)   g[i].y   -= m;
+          if(!g[i+1].fijo) g[i+1].y += m;
+          movido = true;
+        }
+      }
+      if(!movido) break;
+    }
+  }
 }
 function pinta(){
   const c = document.getElementById('lienzo');

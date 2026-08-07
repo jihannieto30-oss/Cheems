@@ -108,6 +108,27 @@ compuestos), y contra la línea base de responder siempre el valor más común:
 En dos de los tres campos, el modelo es peor que una constante. El 84 % del
 solvente no es conocimiento: es que 86 % de las fichas dicen «BAC Water».
 
+### Se probó lo obvio, y salió al revés
+
+Si sobra modelo para el dato, encoger el modelo debería ayudar. Se midió con
+una segunda corrida —3 capas, 128 dim, 902.400 parámetros, dropout 0,3— y no:
+
+| | A · 2,16 M | B · 0,90 M |
+|---|---:|---:|
+| Mejor validación | **2,4399** | 2,6001 |
+| Aciertos totales | **62,1 %** | 51,1 % |
+| Conservación | **33,3 %** | 12,3 % |
+| Solvente | 84,2 % | 86,0 % |
+| Clase | **68,3 %** | 55,0 % |
+| Nombra a otro compuesto | **70,1 %** | 82,2 % |
+
+Peor en todo. Y el dato que remata la cuestión: el 86,0 % de solvente de B es
+**exactamente** la línea base. B no aprendió qué disolvente lleva cada
+compuesto — aprendió a decir «BAC Water» siempre.
+
+Es decir: el cuello de botella no es cómo se reparten los parámetros. Es que no
+hay dato. Encoger el modelo sólo le quita también lo poco que sí aprendía.
+
 Lo que sale por la pantalla:
 
 ```

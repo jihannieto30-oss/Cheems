@@ -182,3 +182,51 @@ está redactada pero **no creada** — la creación de Rutinas pide aprobación 
 Jihan. Y el conector de Microsoft 365 aparece en el directorio de la
 organización pero no está activo en la sesión, que es lo que haría falta para
 que el correo salga solo.
+
+---
+
+## 2026-08-07 · Los agentes tienen nombre: Vera, Lex, Iris, Lira, Atlas
+
+**Se decidió:** cada agente pasa de llamarse por su función (`catalogo`,
+`la-raya`, `ojo`, `voz`, `operacion`) a un nombre propio.
+
+**Se descartó:** dejarlos como estaban, y también inventar nombres decorativos
+sin relación con lo que hacen.
+
+**Por qué:** funcionaba escrito y no dicho. «Voz» y «ojo» son palabras normales
+del español, así que en una frase hablada no se distinguía si se estaba
+nombrando a un agente o hablando de una voz y de un ojo. Con Jarvis escuchando
+por micrófono, eso deja de ser un detalle de estilo.
+
+Cada nombre dice lo suyo: **Vera** de *verus*, lo verdadero; **Lex**, la ley;
+**Iris**, la parte del ojo que regula la luz; **Lira**, el instrumento del que
+cuenta; **Atlas**, el que carga el peso.
+
+**Regla derivada:** el histórico no se tira. En `registro.jsonl` cada corrida
+antigua guarda `agente_antes`, así que las cuentas siguen cuadrando.
+
+---
+
+## 2026-08-07 · El LLM propio no es fuente de hechos
+
+**Se decidió:** el modelo entrenado en `llm/` no se conecta a Jarvis para
+responder datos. Jarvis busca el hecho en `library.json` o en el cerebro y lo
+responde literal; el modelo, como mucho, redacta alrededor.
+
+**Se descartó:** enchufarlo como cerebro conversacional, que era el plan.
+
+**Por qué:** se midió. Sobre 174 preguntas de los 60 compuestos, acierta el
+62,1 % — pero es **peor que responder siempre el valor más común** en dos de
+los tres campos, y el **70 % de sus respuestas nombran a otro compuesto**. Por
+la pantalla salía una cifra de dosis bien redactada, con el aviso de
+cumplimiento aprendido entero, pegada al compuesto equivocado. Es exactamente
+lo que Lex existe para impedir.
+
+Y no es cuestión de afinar: se probó una segunda configuración más pequeña y
+salió peor en todo (51,1 %, 82,2 % de confusión). El cuello de botella son
+0,03 tokens por parámetro donde la referencia de Chinchilla son 20. Faltan tres
+órdenes de magnitud de dato.
+
+**Regla derivada:** un modelo que suena bien no sabe. Antes de dejar que algo
+generado hable de un compuesto, hay que medir contra la línea base de responder
+siempre lo más frecuente. Si no le gana, no aporta.

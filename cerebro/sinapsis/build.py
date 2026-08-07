@@ -202,11 +202,11 @@ def leer_peptidex(repo):
 #     regla, y eso está en git con su fecha
 # ---------------------------------------------------------------------------
 AGENTES = [
-    ('catalogo',  'Catálogo',    'las 60 fichas de compuesto'),
-    ('la-raya',   'La raya',     'que nada cruce de registro a receta'),
-    ('ojo',       'Ojo',         'que se parezca a las referencias'),
-    ('voz',       'Voz',         'la copia que lee un cliente'),
-    ('operacion', 'Operación',   'precios, stock, envíos'),
+    ('vera',  'Vera',  'las 60 fichas de compuesto'),
+    ('lex',   'Lex',   'que nada cruce de registro a receta'),
+    ('iris',  'Iris',  'que se parezca a las referencias'),
+    ('lira',  'Lira',  'la copia que lee un cliente'),
+    ('atlas', 'Atlas', 'precios, stock, envíos'),
 ]
 CAMPOS = ('n', 'cat', 'sku', 'esp', 'mg', 'bac', 'sol', 'alm', 'ins', 'mec')
 
@@ -242,7 +242,7 @@ def leer_agentes(repo, vault, lib):
 
         # la medida de resultado, sólo donde se puede calcular de verdad
         medida = None
-        if slug == 'catalogo' and lib:
+        if slug == 'vera' and lib:
             hay = sum(1 for e in lib for k in CAMPOS if e.get(k))
             tot = len(lib) * len(CAMPOS)
             medida = {'et': 'Fichas completas', 'pct': round(hay / tot * 100),
@@ -385,6 +385,23 @@ CLARO  = ('--bg:#FFFFFF;--s1:#FFFFFF;--s2:#F5F5F5;--s3:#EDEDED;'
           '--grafo:#111111;--arista:#C8C8C8;color-scheme:light;')
 
 
+def repo_por_defecto():
+    """Dónde está el repo, mirando en vez de suponiendo.
+
+    El vault vive DENTRO del repo (`Cheems/cerebro/`), pero antes era hermano
+    suyo y el valor por defecto seguía siendo `../Cheems`. Desde dentro eso
+    apunta a `Cheems/Cheems`, que no existe, y el panel se quedaba sin las 60
+    fichas sin decir por qué. Se comprueba: gana el primero que tenga
+    `.claude/agents`.
+    """
+    padre = os.path.dirname(VAULT)
+    for cand in (padre, os.path.join(padre, 'Cheems'),
+                 os.path.join(os.path.dirname(padre), 'Cheems')):
+        if os.path.isdir(os.path.join(cand, '.claude', 'agents')):
+            return cand
+    return os.path.join(padre, 'Cheems')
+
+
 def rd(n):
     with open(os.path.join(AQUI, n), encoding='utf-8') as f:
         return f.read()
@@ -392,7 +409,7 @@ def rd(n):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--peptidex', default=os.path.join(os.path.dirname(VAULT), 'Cheems'),
+    ap.add_argument('--peptidex', default=repo_por_defecto(),
                     help='ruta al repo de PEPTIDEX (para las 60 fichas)')
     ap.add_argument('--salida', default=os.path.join(AQUI, 'index.html'))
     ap.add_argument('--artifact', action='store_true',
