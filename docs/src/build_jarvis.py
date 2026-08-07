@@ -194,13 +194,29 @@ CSS = r'''
 .jv-mic.oyendo{border-color:var(--j-amber); color:var(--j-amber);
   background:rgba(233,166,72,.1);}
 .jv-mic.oyendo svg{animation:jvPulso 1s ease-in-out infinite;}
+.jv-voz{
+  width:36px; height:36px; flex:0 0 auto; border:1px solid var(--j-line);
+  background:transparent; color:var(--j-tx2); cursor:pointer; border-radius:2px;
+  display:flex; align-items:center; justify-content:center;
+  transition:border-color .16s, color .16s;
+}
+.jv-voz:hover{border-color:var(--j-cyan); color:var(--j-cyan);}
+.jv-voz.on{border-color:var(--j-cyan); color:var(--j-cyan);}
+.jv-voz svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;}
+/* Mientras habla, la retícula late. Refleja un estado real — no es adorno:
+   es la única señal de que el silencio es «pensando» y no «se colgó». */
+#jarvis[data-estado="hablando"] .jv-ret svg{animation:jvLate 1.1s ease-in-out infinite;}
+@keyframes jvLate{0%,100%{opacity:1}50%{opacity:.5}}
+#jarvis[data-estado="hablando"] .jv-ret .spin{animation:jvSpin 3s linear infinite;}
 @keyframes jvPulso{0%,100%{opacity:1}50%{opacity:.35}}
 
 .jv-pie{padding:0 18px 12px; font-family:var(--j-mono); font-size:9px;
   letter-spacing:.1em; color:var(--j-dim); line-height:1.6; text-transform:uppercase;}
 
 @media(prefers-reduced-motion:reduce){
-  #jarvis,#jarvis::after,.jv-ret .spin,.jv-mic.oyendo svg{animation:none !important;}
+  #jarvis,#jarvis::after,.jv-ret .spin,.jv-ret svg,
+  .jv-mic.oyendo svg{animation:none !important;}
 }
 '''
 
@@ -254,7 +270,7 @@ JS = r'''
 (function(){
 'use strict';
 
-var JV = {abierto:false, msgs:[], estado:'idle', pend:null};
+var JV = {abierto:false, msgs:[], estado:'idle', pend:null, conversa:false};
 var RETICULA = '__RETICULA__';
 
 var jvE = function(s){ return String(s==null?'':s)
@@ -595,6 +611,14 @@ function jvPinta(){
         '<button type="button" class="jv-mic" id="jvMic" aria-label="Hablar">' +
           '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/>' +
           '<path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>' +
+        '<button type="button" class="jv-voz' + (vozOn ? ' on' : '') + '" id="jvVoz" ' +
+          'aria-label="Voz" title="Que Jarvis hable">' +
+          (vozOn
+            ? '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/>' +
+              '<path d="M16 8.5a4.5 4.5 0 0 1 0 7M19 5.5a8.5 8.5 0 0 1 0 13"/></svg>'
+            : '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/>' +
+              '<path d="M17 9.5l5 5M22 9.5l-5 5"/></svg>') +
+        '</button>' +
         '<button type="submit" class="jv-go" aria-label="Enviar">' +
           '<svg viewBox="0 0 24 24"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>' +
       '</form>' +
@@ -619,10 +643,92 @@ function jvManda(txt){
     JV.estado = 'idle';
     jvPinta();
     var i = document.getElementById('jvQ'); if(i) i.focus();
+    /* Habla, y al terminar vuelve a abrir el micrófono: eso es lo que
+       convierte dictar una orden en tener una conversación. */
+    jvHabla(paraDecir(r), function(){
+      if(vozOn && JV.abierto && JV.conversa){
+        var m = document.getElementById('jvMic');
+        if(m && !m.classList.contains('oyendo')) jvEscucha(m);
+      }
+    });
   }, 260);
 }
 
-/* ---- voz ----------------------------------------------------------------
+/* ==========================================================================
+   LA VOZ
+
+   Dos mitades distintas de la Web Speech API, y conviene no confundirlas:
+
+     SpeechRecognition   te oye.  Chrome y Safari. No está en todos.
+     speechSynthesis     te habla. Está prácticamente en todos.
+
+   Ninguna necesita servidor ni clave. La voz sale del sistema operativo, así
+   que en un iPhone suena a iPhone y en un Mac suena a Mac.
+
+   MODO CONVERSACIÓN
+
+   Cuando la voz está encendida, al terminar de hablar Jarvis vuelve a abrir el
+   micrófono solo. Eso es lo que convierte «dictar una orden» en «tener una
+   conversación» — y es también por lo que hay que cerrarlo bien: un micrófono
+   que se reabre para siempre es una batería vacía y un usuario asustado. Se
+   corta en cuanto se cierra el panel, se pulsa el conmutador o pasa un turno
+   sin que se diga nada.
+   ========================================================================== */
+var SINT = window.speechSynthesis || null;
+var vozOn = false;
+try{ vozOn = localStorage.getItem('jv-voz') === '1'; }catch(e){}
+
+/* La voz española del sistema, si la hay. Sin esto un texto en español lo lee
+   una voz inglesa y no se entiende nada. */
+function vozES(){
+  if(!SINT) return null;
+  var vs = SINT.getVoices() || [];
+  return vs.filter(function(v){ return /^es[-_]MX/i.test(v.lang); })[0] ||
+         vs.filter(function(v){ return /^es[-_]US/i.test(v.lang); })[0] ||
+         vs.filter(function(v){ return /^es/i.test(v.lang); })[0] || null;
+}
+/* Chrome carga las voces tarde y de forma asíncrona. */
+if(SINT && SINT.onvoiceschanged !== undefined) SINT.onvoiceschanged = function(){};
+
+/* Lo que se dice en voz alta NO es lo que se ve.
+
+   Una tabla de telemetría leída en alto es tortura: «CLIENTES dos DOCUMENTOS
+   tres FACTURADO MES eme equis ene veintiún mil punto cero cero». Se lee la
+   frase, y de la tabla sólo lo que tiene sentido oír. */
+function paraDecir(msgs){
+  var partes = [];
+  msgs.forEach(function(m){
+    if(m.tu) return;
+    if(m.t === 'di') partes.push(m.txt.replace(/<[^>]+>/g, ''));
+    if(m.t === 'tel' && m.filas.length <= 4)
+      m.filas.forEach(function(f){ partes.push(f[0] + ', ' + f[1]); });
+    if(m.t === 'eco' && m.cls === 'aviso')
+      partes.push(m.txt.charAt(0) + m.txt.slice(1).toLowerCase());
+  });
+  return partes.join('. ')
+    .replace(/\bMXN\b/gi, 'pesos').replace(/\bUSD\b/gi, 'dólares')
+    /* «En este mes:. Facturado…» — la puntuación de pantalla no es la del
+       habla. Se limpia antes de mandarla al sintetizador. */
+    .replace(/[:;]\s*\./g, '.').replace(/\.{2,}/g, '.')
+    .replace(/\s+([.,])/g, '$1').replace(/\s+/g, ' ').trim();
+}
+
+function jvHabla(txt, alTerminar){
+  if(!SINT || !vozOn || !txt){ if(alTerminar) alTerminar(); return; }
+  try{ SINT.cancel(); }catch(e){}
+  var u = new SpeechSynthesisUtterance(txt);
+  var v = vozES();
+  if(v) u.voice = v;
+  u.lang = v ? v.lang : 'es-MX';
+  u.rate = 1.04; u.pitch = 0.95;
+  JV.estado = 'hablando'; jvPinta();
+  u.onend = function(){ JV.estado = 'idle'; jvPinta(); if(alTerminar) alTerminar(); };
+  u.onerror = function(){ JV.estado = 'idle'; jvPinta(); if(alTerminar) alTerminar(); };
+  try{ SINT.speak(u); }catch(e){ JV.estado = 'idle'; jvPinta(); if(alTerminar) alTerminar(); }
+}
+function jvCalla(){ if(SINT){ try{ SINT.cancel(); }catch(e){} } JV.estado = 'idle'; }
+
+/* ---- escuchar -----------------------------------------------------------
    Web Speech API, que existe en Chrome y Safari y no en todos. Si no está, el
    botón no aparece: es mejor que un botón que no hace nada.                */
 var RECO = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -634,6 +740,7 @@ function jvEscucha(btn){
   reco.lang = 'es-MX'; reco.interimResults = false; reco.maxAlternatives = 1;
   btn.classList.add('oyendo');
   reco.onresult = function(ev){
+    JV.conversa = true;          /* habló por voz: sigue la conversación */
     var t = ev.results[0][0].transcript;
     var i = document.getElementById('jvQ'); if(i) i.value = t;
     jvManda(t);
@@ -648,16 +755,35 @@ function jvEscucha(btn){
 }
 
 function jvCablea(){
+  /* Cerrar corta la voz Y el micrófono. Un micrófono que sigue abierto con el
+     panel cerrado es una batería vacía y un susto. */
+  var cierra = function(){
+    JV.abierto = false; JV.conversa = false;
+    jvCalla();
+    if(reco){ try{ reco.stop(); }catch(e){} reco = null; }
+    jvPinta();
+  };
   var x = document.getElementById('jvX');
-  if(x) x.onclick = function(){ JV.abierto = false; jvPinta(); };
+  if(x) x.onclick = cierra;
   var sc = document.getElementById('jvScrim');
-  if(sc) sc.onclick = function(){ JV.abierto = false; jvPinta(); };
+  if(sc) sc.onclick = cierra;
   var f = document.getElementById('jvF');
   if(f) f.onsubmit = function(ev){
     ev.preventDefault();
     var i = document.getElementById('jvQ');
     if(i){ var t = i.value; i.value = ''; jvManda(t); }
   };
+  var vz = document.getElementById('jvVoz');
+  if(vz){
+    if(!SINT) vz.style.display = 'none';
+    else vz.onclick = function(){
+      vozOn = !vozOn;
+      try{ localStorage.setItem('jv-voz', vozOn ? '1' : '0'); }catch(e){}
+      if(!vozOn){ jvCalla(); JV.conversa = false; }
+      jvPinta();
+      if(vozOn) jvHabla('Voz activada.');
+    };
+  }
   var mic = document.getElementById('jvMic');
   if(mic){
     if(!RECO) mic.style.display = 'none';
@@ -679,16 +805,66 @@ function jvAbre(){
 }
 
 document.addEventListener('keydown', function(ev){
-  if(ev.key === 'Escape' && JV.abierto){ JV.abierto = false; jvPinta(); }
+  if(ev.key === 'Escape' && JV.abierto){
+    JV.abierto = false; JV.conversa = false; jvCalla();
+    if(reco){ try{ reco.stop(); }catch(e){} reco = null; }
+    jvPinta();
+  }
   /* Ctrl/Cmd + J: la forma más rápida de llamarlo sin soltar el teclado */
   if((ev.ctrlKey || ev.metaKey) && (ev.key === 'j' || ev.key === 'J')){
     ev.preventDefault(); JV.abierto ? (JV.abierto = false, jvPinta()) : jvAbre();
   }
 });
 
+/* ==========================================================================
+   LA PUERTA DE ATRÁS: ?jv=
+
+   Ésta es la pieza que hace posible el «Oye Siri, Jarvis».
+
+   Un atajo de iOS puede dictar una frase y abrir una URL con ella dentro. Si
+   la página entiende `?jv=cuanto+facture+este+mes`, abre Jarvis, le hace la
+   pregunta y —con la voz encendida— la contesta en alto. Desde fuera se ve
+   como hablar con Siri; por dentro no hay nada más que un parámetro.
+
+   Lo que NO se puede, y conviene saberlo antes de intentarlo: una página web
+   no tiene palabra de activación. No hay «Oye Jarvis» escuchando de fondo.
+   Quien escucha es Siri, y Jarvis recibe lo que Siri le pasa.
+
+   `autoplay` obliga a hablar sin que el usuario haya tocado nada, que es justo
+   lo que los navegadores bloquean. Se pide de todas formas: en un atajo de iOS
+   el gesto de lanzarlo cuenta como interacción y sí suena. Si el navegador lo
+   bloquea, la respuesta sigue estando escrita en pantalla.
+
+   El parámetro se borra de la barra en cuanto se lee, para que recargar no
+   vuelva a preguntar lo mismo. */
 (function arranca(){
   var f = document.getElementById('jvFab');
   if(f) f.onclick = jvAbre;
+
+  var url;
+  try{ url = new URLSearchParams(location.search); }catch(e){ return; }
+  var q = url.get('jv');
+  if(q == null) return;
+
+  if(url.get('voz') === '1' || url.get('hablar') === '1'){
+    vozOn = true;
+    try{ localStorage.setItem('jv-voz', '1'); }catch(e){}
+  }
+  try{ history.replaceState(null, '', location.pathname); }catch(e){}
+
+  setTimeout(function(){
+    jvAbre();
+    q = String(q).trim();
+    if(q) jvManda(q);
+    else if(vozOn){
+      /* «Oye Siri, Jarvis» sin nada más: abre y se pone a escuchar. */
+      JV.conversa = true;
+      jvHabla('Aquí estoy.', function(){
+        var m = document.getElementById('jvMic');
+        if(m && RECO) jvEscucha(m);
+      });
+    }
+  }, 420);
 })();
 
 window.__jarvis = {abre:jvAbre, piensa:jvPiensa, estado:JV};
