@@ -75,6 +75,10 @@ CSS = r'''
 }
 #jvFab:hover{transform:scale(1.06);}
 #jvFab:active{transform:scale(.95);}
+/* en guardia el flotante late: el micrófono está abierto y tiene que verse */
+#jvFab.guardia{animation:jvGua 2.2s ease-in-out infinite;}
+@keyframes jvGua{0%,100%{filter:drop-shadow(0 0 12px rgba(98,230,236,.45))}
+                 50%{filter:drop-shadow(0 0 20px rgba(233,166,72,.75))}}
 #jvFab svg{width:54px; height:54px; display:block;}
 
 #jvScrim{
@@ -85,7 +89,7 @@ CSS = r'''
 @keyframes jvFade{from{opacity:0}to{opacity:1}}
 
 #jarvis{
-  position:fixed; z-index:9002; top:0; right:0; bottom:0; width:min(460px,100%);
+  position:fixed; z-index:9002; top:0; right:0; bottom:0; width:min(520px,100%);
   background:var(--j-bg); color:var(--j-tx);
   border-left:1px solid var(--j-line2);
   display:flex; flex-direction:column;
@@ -113,11 +117,42 @@ CSS = r'''
   display:flex; align-items:center; gap:14px; padding:16px 18px 14px;
   border-bottom:1px solid var(--j-line); flex:0 0 auto; position:relative;
 }
-.jv-ret{width:44px; height:44px; flex:0 0 auto;}
-.jv-ret svg{width:44px; height:44px; display:block;}
-.jv-ret .spin{transform-origin:50% 50%;}
-#jarvis[data-estado="pensando"] .jv-ret .spin{animation:jvSpin 1.6s linear infinite;}
+/* EL NÚCLEO
+
+   Tres anillos concéntricos que giran en sentidos contrarios, con marcas de
+   escala. Es la pieza que hace que esto se lea como JARVIS y no como un chat
+   con el fondo oscuro, así que se lleva el sitio que merece: 132 px y arriba
+   del todo.
+
+   Los anillos giran SIEMPRE, despacio, porque un instrumento encendido no está
+   quieto. Lo que cambia con el estado es la velocidad y el núcleo. */
+.jv-nuc{width:132px; height:132px; margin:6px auto 2px; position:relative;}
+.jv-nuc svg{width:132px; height:132px; display:block; overflow:visible;}
+.jv-nuc .r1{transform-origin:50% 50%; animation:jvSpin 42s linear infinite;}
+.jv-nuc .r2{transform-origin:50% 50%; animation:jvSpin 28s linear infinite reverse;}
+.jv-nuc .r3{transform-origin:50% 50%; animation:jvSpin 15s linear infinite;}
 @keyframes jvSpin{to{transform:rotate(360deg)}}
+#jarvis[data-estado="pensando"] .jv-nuc .r3{animation-duration:2.4s;}
+#jarvis[data-estado="pensando"] .jv-nuc .r2{animation-duration:6s;}
+#jarvis[data-estado="hablando"] .jv-nuc .r1{animation-duration:12s;}
+
+/* El núcleo late con el AUDIO DE VERDAD, no con un temporizador: la escala la
+   escribe el analizador desde el micrófono. Cuando no hay micrófono, respira. */
+.jv-nuc .core{transform-origin:50% 50%; transition:transform .06s linear;}
+#jarvis[data-estado="hablando"] .jv-nuc .core{animation:jvResp 1.05s ease-in-out infinite;}
+@keyframes jvResp{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+
+/* las barras radiales del nivel de entrada */
+.jv-nuc .lvl line{stroke:var(--j-cyan); stroke-width:2; stroke-linecap:round;
+  opacity:0; transition:opacity .2s;}
+#jarvis[data-estado="oyendo"] .jv-nuc .lvl line{opacity:.85;}
+
+.jv-est{text-align:center; font-family:var(--j-mono); font-size:9.5px;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--j-dim);
+  margin:2px 0 14px; min-height:12px;}
+#jarvis[data-estado="oyendo"] .jv-est{color:var(--j-amber);}
+#jarvis[data-estado="hablando"] .jv-est,
+#jarvis[data-estado="pensando"] .jv-est{color:var(--j-cyan);}
 .jv-id{flex:1; min-width:0;}
 .jv-id b{display:block; font-family:var(--j-mono); font-size:15px; font-weight:600;
   letter-spacing:.26em; color:var(--j-cyan); text-transform:uppercase;}
@@ -215,8 +250,8 @@ CSS = r'''
   letter-spacing:.1em; color:var(--j-dim); line-height:1.6; text-transform:uppercase;}
 
 @media(prefers-reduced-motion:reduce){
-  #jarvis,#jarvis::after,.jv-ret .spin,.jv-ret svg,
-  .jv-mic.oyendo svg{animation:none !important;}
+  #jarvis,#jarvis::after,.jv-nuc .r1,.jv-nuc .r2,.jv-nuc .r3,
+  .jv-nuc .core,.jv-mic.oyendo svg{animation:none !important;}
 }
 '''
 
@@ -236,17 +271,75 @@ HTML = r'''
 </button>
 '''
 
-RETICULA = r'''<svg viewBox="0 0 44 44" aria-hidden="true">
-  <circle cx="22" cy="22" r="20.5" fill="none" stroke="#123039"/>
-  <g class="spin">
-    <path d="M22 3.5a18.5 18.5 0 0 1 16 9.3" fill="none" stroke="#62E6EC"
-          stroke-width="1.6" stroke-linecap="round"/>
-    <path d="M22 40.5a18.5 18.5 0 0 1-16-9.3" fill="none" stroke="#62E6EC"
-          stroke-width="1.6" stroke-linecap="round" opacity=".55"/>
-  </g>
-  <circle cx="22" cy="22" r="12" fill="none" stroke="#2C7E88" stroke-width="1"/>
-  <circle cx="22" cy="22" r="4.5" fill="#62E6EC"/>
-</svg>'''
+import math
+
+
+def _marcas(r, n, largo, ancho, op, cada=1):
+    """Marcas de escala alrededor de un círculo.
+
+    Escritas a mano serían sesenta líneas de coordenadas que nadie podría
+    ajustar después. Generadas, cambiar el radio es cambiar un número."""
+    out = []
+    for i in range(n):
+        if i % cada:
+            continue
+        a = 2 * math.pi * i / n
+        c, s_ = math.cos(a), math.sin(a)
+        out.append('<line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f" '
+                   'stroke="#62E6EC" stroke-width="%s" opacity="%s"/>'
+                   % (66 + c*r, 66 + s_*r, 66 + c*(r+largo), 66 + s_*(r+largo),
+                      ancho, op))
+    return ''.join(out)
+
+
+def _nivel():
+    """Las 24 barras radiales del nivel de entrada. El JS les mueve el largo."""
+    out = []
+    for i in range(24):
+        a = 2 * math.pi * i / 24
+        c, s_ = math.cos(a), math.sin(a)
+        out.append('<line data-l="%d" x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f"/>'
+                   % (i, 66 + c*30, 66 + s_*30, 66 + c*34, 66 + s_*34))
+    return ''.join(out)
+
+
+def nucleo():
+    """El núcleo: tres anillos concéntricos girando en sentidos contrarios."""
+    return ('<svg viewBox="0 0 132 132" aria-hidden="true">'
+            # anillo exterior, marcas largas cada 5
+            '<g class="r1">'
+            '<circle cx="66" cy="66" r="62" fill="none" stroke="#123039"/>'
+            + _marcas(56, 60, 5, '1', '.55')
+            + _marcas(54, 60, 7, '1.4', '.9', cada=5) +
+            '</g>'
+            # anillo medio: dos arcos abiertos, que es lo que da el giro visible
+            '<g class="r2">'
+            '<path d="M66 20a46 46 0 0 1 39.8 23" fill="none" stroke="#62E6EC" '
+            'stroke-width="1.8" stroke-linecap="round"/>'
+            '<path d="M66 112a46 46 0 0 1-39.8-23" fill="none" stroke="#62E6EC" '
+            'stroke-width="1.8" stroke-linecap="round" opacity=".55"/>'
+            '<circle cx="66" cy="66" r="46" fill="none" stroke="#123039" '
+            'stroke-dasharray="2 6"/>'
+            '</g>'
+            # anillo interior
+            '<g class="r3">'
+            '<circle cx="66" cy="66" r="36" fill="none" stroke="#2C7E88" '
+            'stroke-width="1" stroke-dasharray="34 12"/>'
+            '</g>'
+            '<g class="lvl">' + _nivel() + '</g>'
+            # el núcleo
+            '<g class="core">'
+            '<circle cx="66" cy="66" r="22" fill="none" stroke="#1D4A55"/>'
+            '<circle cx="66" cy="66" r="15" fill="none" stroke="#62E6EC" '
+            'stroke-width="1.4" opacity=".8"/>'
+            '<circle cx="66" cy="66" r="8" fill="#62E6EC" opacity=".92"/>'
+            '<circle cx="66" cy="66" r="8" fill="none" stroke="#BFE0E5" '
+            'stroke-width=".6" opacity=".5"/>'
+            '</g>'
+            '</svg>')
+
+
+RETICULA = nucleo()
 
 
 # ===========================================================================
@@ -272,6 +365,8 @@ JS = r'''
 
 var JV = {abierto:false, msgs:[], estado:'idle', pend:null, conversa:false};
 var RETICULA = '__RETICULA__';
+var ESTADOS = {idle:'en línea', oyendo:'escuchando', pensando:'procesando',
+               hablando:'respondiendo', guardia:'en guardia · di «Jarvis»'};
 
 var jvE = function(s){ return String(s==null?'':s)
   .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
@@ -571,7 +666,10 @@ function jvPinta(){
   var v = document.getElementById('jvWrap');
   if(!v){ v = document.createElement('div'); v.id = 'jvWrap'; document.body.appendChild(v); }
   var fab = document.getElementById('jvFab');
-  if(fab) fab.style.display = JV.abierto ? 'none' : '';
+  if(fab){
+    fab.style.display = JV.abierto ? 'none' : '';
+    fab.classList.toggle('guardia', !!guardia);
+  }
   if(!JV.abierto){ v.innerHTML = ''; return; }
 
   var cuerpo = JV.msgs.map(function(m){
@@ -595,11 +693,12 @@ function jvPinta(){
     '<div id="jvScrim"></div>' +
     '<aside id="jarvis" role="dialog" aria-label="Jarvis" data-estado="' + JV.estado + '">' +
       '<header class="jv-hd">' +
-        '<span class="jv-ret">' + RETICULA + '</span>' +
         '<span class="jv-id"><b>Jarvis</b><span>PEPTIDEX · consola de mando</span></span>' +
         '<button class="jv-x" id="jvX" aria-label="Cerrar">' +
           '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>' +
       '</header>' +
+      '<div class="jv-nuc">' + RETICULA + '</div>' +
+      '<div class="jv-est">' + jvE(ESTADOS[JV.estado] || '') + '</div>' +
       '<div class="jv-scroll" id="jvScroll">' + cuerpo +
         '<div class="jv-sug">' + sug.map(function(s){
           return '<button data-jv-di="' + jvE(s) + '">' + jvE(s) + '</button>'; }).join('') +
@@ -611,6 +710,12 @@ function jvPinta(){
         '<button type="button" class="jv-mic" id="jvMic" aria-label="Hablar">' +
           '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/>' +
           '<path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>' +
+        '<button type="button" class="jv-mic' + (guardia ? ' oyendo' : '') + '" id="jvGua" ' +
+          'aria-label="Guardia" title="Escuchar y esperar a «Jarvis»">' +
+          '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/>' +
+          '<path d="M6.5 6.5a7.8 7.8 0 0 0 0 11M17.5 6.5a7.8 7.8 0 0 1 0 11' +
+          'M3.6 3.6a11.9 11.9 0 0 0 0 16.8M20.4 3.6a11.9 11.9 0 0 1 0 16.8"/></svg>' +
+        '</button>' +
         '<button type="button" class="jv-voz' + (vozOn ? ' on' : '') + '" id="jvVoz" ' +
           'aria-label="Voz" title="Que Jarvis hable">' +
           (vozOn
@@ -622,7 +727,9 @@ function jvPinta(){
         '<button type="submit" class="jv-go" aria-label="Enviar">' +
           '<svg viewBox="0 0 24 24"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>' +
       '</form>' +
-      '<div class="jv-pie">Opera sobre tus datos locales · no envía nada a ningún sitio</div>' +
+      '<div class="jv-pie">' + (guardia
+        ? 'Micrófono abierto esperando «Jarvis» · sólo mientras esta página esté abierta'
+        : 'Opera sobre tus datos locales · no envía nada a ningún sitio') + '</div>' +
     '</aside>';
 
   jvCablea();
@@ -680,12 +787,38 @@ try{ vozOn = localStorage.getItem('jv-voz') === '1'; }catch(e){}
 
 /* La voz española del sistema, si la hay. Sin esto un texto en español lo lee
    una voz inglesa y no se entiende nada. */
+/* VOZ MASCULINA EN ESPAÑOL
+
+   La API no dice el sexo de una voz: `SpeechSynthesisVoice` sólo trae nombre,
+   idioma y poco más. Así que se va por el nombre, que es lo único que hay.
+
+   La lista son las voces masculinas españolas que reparten los sistemas:
+   Jorge y Juan en Apple, Pablo y Raúl en Microsoft, y las de Google. No están
+   todas en todas partes — por eso hay orden de preferencia y por eso el
+   usuario puede elegir a mano si la que sale no le gusta. */
+var HOMBRES = /(jorge|juan|diego|pablo|raul|raúl|carlos|enrique|miguel|arnau|male|hombre)/i;
+var MUJERES = /(monica|mónica|paulina|marisol|helena|laura|sabina|esperanza|female|mujer)/i;
+
+function vocesES(){
+  if(!SINT) return [];
+  return (SINT.getVoices() || []).filter(function(v){ return /^es/i.test(v.lang); });
+}
 function vozES(){
-  if(!SINT) return null;
-  var vs = SINT.getVoices() || [];
-  return vs.filter(function(v){ return /^es[-_]MX/i.test(v.lang); })[0] ||
-         vs.filter(function(v){ return /^es[-_]US/i.test(v.lang); })[0] ||
-         vs.filter(function(v){ return /^es/i.test(v.lang); })[0] || null;
+  var vs = vocesES();
+  if(!vs.length) return null;
+  /* si el usuario eligió una, manda */
+  var puesta = null;
+  try{ puesta = localStorage.getItem('jv-voznom'); }catch(e){}
+  if(puesta){
+    var m = vs.filter(function(v){ return v.name === puesta; })[0];
+    if(m) return m;
+  }
+  var varon = vs.filter(function(v){ return HOMBRES.test(v.name) && !MUJERES.test(v.name); });
+  /* dentro de las masculinas, la del español de México antes que las demás */
+  var pref = function(l){ return varon.filter(function(v){ return l.test(v.lang); }); };
+  return pref(/^es[-_]MX/i)[0] || pref(/^es[-_]US/i)[0] || pref(/^es[-_]419/i)[0] ||
+         varon[0] ||
+         vs.filter(function(v){ return !MUJERES.test(v.name); })[0] || vs[0];
 }
 /* Chrome carga las voces tarde y de forma asíncrona. */
 if(SINT && SINT.onvoiceschanged !== undefined) SINT.onvoiceschanged = function(){};
@@ -720,12 +853,61 @@ function jvHabla(txt, alTerminar){
   var v = vozES();
   if(v) u.voice = v;
   u.lang = v ? v.lang : 'es-MX';
-  u.rate = 1.04; u.pitch = 0.95;
+  /* algo más grave y algo más lento: la voz de la película no corre */
+  u.rate = 0.98; u.pitch = 0.82;
   JV.estado = 'hablando'; jvPinta();
   u.onend = function(){ JV.estado = 'idle'; jvPinta(); if(alTerminar) alTerminar(); };
   u.onerror = function(){ JV.estado = 'idle'; jvPinta(); if(alTerminar) alTerminar(); };
   try{ SINT.speak(u); }catch(e){ JV.estado = 'idle'; jvPinta(); if(alTerminar) alTerminar(); }
 }
+/* ==========================================================================
+   EL NIVEL DE ENTRADA
+
+   Las barras del núcleo se mueven con el micrófono DE VERDAD, leído con un
+   AnalyserNode. Podrían moverse con un temporizador y nadie notaría la
+   diferencia a simple vista — pero entonces el instrumento estaría mintiendo,
+   y en cuanto te callas y sigue bailando, se nota.
+   ========================================================================== */
+var AC = null, ana = null, mic = null, datos = null, raf = 0;
+
+function nivelArranca(){
+  if(ana || !navigator.mediaDevices || !window.AudioContext) return;
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){
+    mic = st;
+    AC = new AudioContext();
+    var src = AC.createMediaStreamSource(st);
+    ana = AC.createAnalyser();
+    ana.fftSize = 64; ana.smoothingTimeConstant = 0.75;
+    src.connect(ana);
+    datos = new Uint8Array(ana.frequencyBinCount);
+    pintaNivel();
+  }).catch(function(){ /* sin permiso: las barras se quedan quietas */ });
+}
+function nivelPara(){
+  if(raf) cancelAnimationFrame(raf), raf = 0;
+  if(mic){ mic.getTracks().forEach(function(t){ t.stop(); }); mic = null; }
+  if(AC){ try{ AC.close(); }catch(e){} AC = null; }
+  ana = null;
+}
+function pintaNivel(){
+  if(!ana) return;
+  raf = requestAnimationFrame(pintaNivel);
+  ana.getByteFrequencyData(datos);
+  var barras = document.querySelectorAll('.jv-nuc .lvl line');
+  if(!barras.length) return;
+  var med = 0;
+  for(var i = 0; i < barras.length; i++){
+    var v = (datos[i % datos.length] || 0) / 255;
+    med += v;
+    var largo = 4 + v * 22;
+    var a = 2 * Math.PI * i / barras.length;
+    barras[i].setAttribute('x2', (66 + Math.cos(a) * (30 + largo)).toFixed(2));
+    barras[i].setAttribute('y2', (66 + Math.sin(a) * (30 + largo)).toFixed(2));
+  }
+  var core = document.querySelector('.jv-nuc .core');
+  if(core) core.style.transform = 'scale(' + (1 + (med / barras.length) * 0.55).toFixed(3) + ')';
+}
+
 function jvCalla(){ if(SINT){ try{ SINT.cancel(); }catch(e){} } JV.estado = 'idle'; }
 
 /* ---- escuchar -----------------------------------------------------------
@@ -754,13 +936,101 @@ function jvEscucha(btn){
   try{ reco.start(); }catch(e){ btn.classList.remove('oyendo'); reco = null; }
 }
 
+/* ==========================================================================
+   LA PALABRA DE ACTIVACIÓN
+
+   Aquí hay que ser exacto, porque es fácil prometer de más.
+
+   LO QUE SÍ: con la página abierta y el permiso de micrófono dado, el
+   reconocimiento continuo escucha y espera a oír «Jarvis». Al oírlo, se activa.
+   Si en la misma frase viene la orden —«Jarvis, quién me debe»— la ejecuta
+   directamente. Si sólo viene el nombre, contesta y se queda escuchando.
+
+   LO QUE NO: escuchar con la pestaña cerrada, con el navegador cerrado, o con
+   el teléfono bloqueado. Eso lo hace Siri porque es del sistema operativo; una
+   página web no tiene ese permiso y no debería tenerlo.
+
+   Y va con dos frenos, porque un micrófono siempre abierto es una decisión
+   seria y no un detalle:
+
+     · se enciende A MANO. Nunca por defecto.
+     · mientras está en guardia SE VE, con el estado y el botón en ámbar.
+
+   Chrome corta el reconocimiento continuo cada pocos minutos por su cuenta.
+   Por eso se rearranca en `onend`, y por eso hay una bandera que distingue
+   «se paró solo» de «lo paró el usuario»: sin ella, apagar la guardia no
+   apagaba nada.
+   ========================================================================== */
+var guardia = false, gReco = null, gRearranca = true;
+
+function guardiaEnciende(){
+  if(!RECO || guardia) return;
+  guardia = true; gRearranca = true;
+  try{ localStorage.setItem('jv-guardia', '1'); }catch(e){}
+  nivelArranca();
+  guardiaCiclo();
+  if(!JV.abierto){ JV.estado = 'guardia'; }
+  jvPinta();
+}
+function guardiaApaga(){
+  guardia = false; gRearranca = false;
+  if(gReco){ try{ gReco.stop(); }catch(e){} gReco = null; }
+  nivelPara();
+  try{ localStorage.setItem('jv-guardia', '0'); }catch(e){}
+  if(JV.estado === 'guardia') JV.estado = 'idle';
+  jvPinta();
+}
+function guardiaCiclo(){
+  if(!guardia || !RECO) return;
+  try{ gReco = new RECO(); }catch(e){ guardia = false; return; }
+  gReco.lang = 'es-MX';
+  gReco.continuous = true;
+  gReco.interimResults = false;
+  gReco.onresult = function(ev){
+    for(var i = ev.resultIndex; i < ev.results.length; i++){
+      if(!ev.results[i].isFinal) continue;
+      var t = String(ev.results[i][0].transcript || '');
+      var n = sinT(t);
+      var m = n.match(/\b(jarvis|yarvis|charvis|jarbis|harvis)\b/);
+      if(!m) continue;
+      /* lo que venga DESPUÉS del nombre es la orden */
+      var resto = t.slice(n.indexOf(m[0]) + m[0].length)
+                   .replace(/^[\s,.:;¿¡]+/, '').trim();
+      JV.conversa = true;
+      if(!JV.abierto) jvAbre();
+      if(resto.length > 2) jvManda(resto);
+      else jvHabla('¿Sí?', function(){
+        var b = document.getElementById('jvMic');
+        if(b) jvEscucha(b);
+      });
+      return;
+    }
+  };
+  gReco.onerror = function(ev){
+    /* «not-allowed» es que el usuario dijo que no: no se insiste */
+    if(ev && (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')){
+      gRearranca = false; guardia = false;
+      JV.msgs.push({t:'eco', txt:'MICRÓFONO DENEGADO · GUARDIA APAGADA', cls:'aviso'});
+      jvPinta();
+    }
+  };
+  gReco.onend = function(){
+    gReco = null;
+    if(guardia && gRearranca) setTimeout(guardiaCiclo, 350);
+  };
+  try{ gReco.start(); }catch(e){}
+}
+
 function jvCablea(){
   /* Cerrar corta la voz Y el micrófono. Un micrófono que sigue abierto con el
      panel cerrado es una batería vacía y un susto. */
+  /* Cerrar corta la voz y el micrófono de dictado, pero NO la guardia: la
+     gracia de la guardia es justamente seguir esperando con el panel cerrado. */
   var cierra = function(){
     JV.abierto = false; JV.conversa = false;
     jvCalla();
     if(reco){ try{ reco.stop(); }catch(e){} reco = null; }
+    JV.estado = guardia ? 'guardia' : 'idle';
     jvPinta();
   };
   var x = document.getElementById('jvX');
@@ -773,6 +1043,19 @@ function jvCablea(){
     var i = document.getElementById('jvQ');
     if(i){ var t = i.value; i.value = ''; jvManda(t); }
   };
+  var gu = document.getElementById('jvGua');
+  if(gu){
+    if(!RECO) gu.style.display = 'none';
+    else gu.onclick = function(){
+      if(guardia){ guardiaApaga(); jvHabla('Guardia apagada.'); }
+      else{
+        vozOn = true;
+        try{ localStorage.setItem('jv-voz','1'); }catch(e){}
+        guardiaEnciende();
+        jvHabla('En guardia. Di Jarvis cuando me necesites.');
+      }
+    };
+  }
   var vz = document.getElementById('jvVoz');
   if(vz){
     if(!SINT) vz.style.display = 'none';
