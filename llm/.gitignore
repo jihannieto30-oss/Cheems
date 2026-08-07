@@ -1,0 +1,5 @@
+# Los pesos no van al repo: 8 MB por checkpoint y se regeneran con
+# `python3 llm/entrena.py`. El tokenizador sí, que es pequeño y define
+# el vocabulario con el que se entrenó.
+salida*/modelo.pt
+__pycache__/

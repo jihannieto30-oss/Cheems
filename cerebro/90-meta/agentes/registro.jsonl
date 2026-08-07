@@ -1,3 +1,3 @@
-{"ts":"2026-08-06T22:10:00","agente":"catalogo","tarea":"Auditoría del registro de operación","hallazgos":34,"arreglados":0,"nota":"3 fichas casi vacías, 10 sin mg de vial, 5 en «Otros»"}
-{"ts":"2026-08-06T23:40:00","agente":"ojo","tarea":"Revisión de PepX contra los dos PDF","hallazgos":3,"arreglados":3,"nota":"grafo disperso, fugas de escuchadores, famlock a tamaño natural"}
-{"ts":"2026-08-07T00:20:00","agente":"la-raya","tarea":"Barrido de cadenas de la app","hallazgos":0,"arreglados":0,"nota":"limpio tras quitar la jerga técnica de la interfaz"}
+{"ts": "2026-08-06T22:10:00", "agente": "vera", "tarea": "Auditoría del registro de operación", "hallazgos": 34, "arreglados": 0, "nota": "3 fichas casi vacías, 10 sin mg de vial, 5 en «Otros»", "agente_antes": "catalogo"}
+{"ts": "2026-08-06T23:40:00", "agente": "iris", "tarea": "Revisión de PepX contra los dos PDF", "hallazgos": 3, "arreglados": 3, "nota": "grafo disperso, fugas de escuchadores, famlock a tamaño natural", "agente_antes": "ojo"}
+{"ts": "2026-08-07T00:20:00", "agente": "lex", "tarea": "Barrido de cadenas de la app", "hallazgos": 0, "arreglados": 0, "nota": "limpio tras quitar la jerga técnica de la interfaz", "agente_antes": "la-raya"}

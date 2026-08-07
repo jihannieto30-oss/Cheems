@@ -13,11 +13,11 @@ para ganar más**.
 
 | Agente | Su pregunta de cada mañana |
 |---|---|
-| `operacion` | ¿Dónde se está dejando margen? Precios contra el estudio de mercado, viales parados, coste de envío, cobros sin cerrar. |
-| `catalogo` | ¿Qué compuesto no se puede vender bien porque su ficha está coja? Faltan mg, falta conservación, familia mal puesta. |
-| `voz` | ¿Qué hay que decir esta semana? Un ángulo concreto, con el texto ya empezado, no «hacer contenido». |
-| `ojo` | ¿Qué se ve mal en lo que ya está publicado? Pantalla, tienda, etiqueta. |
-| `la-raya` | ¿Hay algo publicado que cruce de registro a receta? Esto es lo único que puede parar todo lo demás. |
+| `atlas` | ¿Dónde se está dejando margen? Precios contra el estudio de mercado, viales parados, coste de envío, cobros sin cerrar. |
+| `vera` | ¿Qué compuesto no se puede vender bien porque su ficha está coja? Faltan mg, falta conservación, familia mal puesta. |
+| `lira` | ¿Qué hay que decir esta semana? Un ángulo concreto, con el texto ya empezado, no «hacer contenido». |
+| `iris` | ¿Qué se ve mal en lo que ya está publicado? Pantalla, tienda, etiqueta. |
+| `lex` | ¿Hay algo publicado que cruce de registro a receta? Esto es lo único que puede parar todo lo demás. |
 
 ## Cómo se corre
 

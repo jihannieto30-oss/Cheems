@@ -23,13 +23,13 @@ Es la medida honesta, porque **mide el resultado, no al agente**.
 
 | agente | su medida | de dónde sale |
 |---|---|---|
-| **catalogo** | % de campos completos en las 60 fichas | se calcula de `library.json` |
-| **ojo** | pantallas sin desborde ni errores | se mide abriendo la app |
-| **la-raya** | cadenas revisadas sin hallazgos | de su registro |
-| **voz** | borradores entregados y aprobados | de `docs/borradores/` |
-| **operacion** | precios dentro de banda | del estudio de mercado |
+| **vera** | % de campos completos en las 60 fichas | se calcula de `library.json` |
+| **iris** | pantallas sin desborde ni errores | se mide abriendo la app |
+| **lex** | cadenas revisadas sin hallazgos | de su registro |
+| **lira** | borradores entregados y aprobados | de `docs/borradores/` |
+| **atlas** | precios dentro de banda | del estudio de mercado |
 
-La de `catalogo` es la más limpia: hoy está en un número concreto, y cada ficha
+La de `vera` es la más limpia: hoy está en un número concreto, y cada ficha
 que se completa lo sube. Eso no es una animación — es aritmética sobre el
 fichero.
 
