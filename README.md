@@ -15,8 +15,13 @@ architecture.
 npm install
 npm run dev      # both apps, / and /ows/
 npm run build
-npm run art      # regenerate public/ows/*.svg artwork
+npm run art         # regenerate public/ows/*.svg artwork
+npm run standalone  # → onlineweldingsupply.html, one portable file
 ```
+
+`onlineweldingsupply.html` is a generated distribution artefact: the whole
+Online Welding Supply experience in a single file, opens from disk with no
+server. Regenerate it rather than editing it — the source is `src/ows/`.
 
 ---
 
