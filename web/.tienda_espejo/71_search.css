@@ -1,0 +1,123 @@
+/* ============================================================================
+   PEPTIDEX — SEARCH
+   White, hairline, the site's own accent. The panel is the only thing on
+   screen while it is open, and it opens by rising a little rather than by
+   appearing.
+   ============================================================================ */
+
+/* ---------- the way in, in the bar ---------------------------------------- */
+/* The same round button as the bag and the account, so the bar reads as one
+   row of controls rather than as a search box wedged among icons. */
+.px-s-open{
+  display:flex; align-items:center; justify-content:center;
+  width:34px; height:34px; padding:0;
+  border:1px solid var(--hairline); border-radius:50%;
+  background:rgba(255,255,255,.7); color:var(--muted);
+  font-family:inherit;
+  transition:color .25s, border-color .25s, background .25s, box-shadow .25s;
+}
+.px-s-open svg{width:16px; height:16px;}
+.px-s-open:hover{
+  color:var(--ink); border-color:rgba(30,94,255,.34); background:#fff;
+  box-shadow:0 8px 22px -14px rgba(10,20,60,.6);
+}
+
+/* ---------- the panel ------------------------------------------------------ */
+#px-search{position:fixed; inset:0; z-index:120; display:none;}
+#px-search.on{display:block;}
+html.px-search-open{overflow:hidden;}
+
+#px-search .px-s-veil{
+  position:absolute; inset:0;
+  background:rgba(244,246,250,.72);
+  backdrop-filter:blur(22px) saturate(150%);
+  -webkit-backdrop-filter:blur(22px) saturate(150%);
+  animation:px-s-veil .3s ease-out;
+}
+@keyframes px-s-veil{from{opacity:0} to{opacity:1}}
+
+#px-search .px-s-panel{
+  position:absolute; left:50%; top:11vh;
+  width:min(680px, 92vw); max-height:74vh;
+  transform:translateX(-50%);
+  display:flex; flex-direction:column; overflow:hidden;
+  background:#fff; border:1px solid var(--hairline); border-radius:20px;
+  box-shadow:0 40px 90px -40px rgba(10,20,60,.5), 0 8px 20px -12px rgba(10,20,60,.24);
+  animation:px-s-rise .42s cubic-bezier(.22,1,.36,1);
+}
+@keyframes px-s-rise{
+  from{opacity:0; transform:translateX(-50%) translateY(14px) scale(.985);}
+  to  {opacity:1; transform:translateX(-50%) translateY(0) scale(1);}
+}
+
+/* ---------- the field ------------------------------------------------------ */
+#px-search .px-s-field{
+  display:flex; align-items:center; gap:12px;
+  padding:16px 18px; border-bottom:1px solid var(--hairline); flex:0 0 auto;
+}
+#px-search .px-s-field svg{width:19px; height:19px; color:var(--muted); flex:0 0 19px;}
+#px-search .px-s-field input{
+  flex:1 1 auto; min-width:0; border:none; outline:none; background:none;
+  font-family:inherit; font-size:17px; color:var(--ink); letter-spacing:-.01em;
+}
+#px-search .px-s-field input::placeholder{color:var(--muted); opacity:.8;}
+
+
+/* ---------- results -------------------------------------------------------- */
+#px-search .px-s-list{flex:1 1 auto; overflow-y:auto; padding:8px;}
+#px-search .px-s-g + .px-s-g{margin-top:6px;}
+#px-search .px-s-gh{
+  font-size:9.5px; letter-spacing:.22em; text-transform:uppercase;
+  font-weight:700; color:var(--muted); padding:10px 12px 6px;
+}
+
+#px-search .px-s-row{
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  padding:10px 12px; border:none; background:none; border-radius:12px;
+  font-family:inherit; color:var(--ink); transition:background .14s;
+}
+/* the cursor is what lights a row; the keyboard's mark only appears once
+   someone reaches for an arrow key */
+#px-search .px-s-row:hover{background:rgba(10,20,60,.045);}
+#px-search .px-s-row.on{background:rgba(30,94,255,.075);}
+#px-search .px-s-row .i{
+  width:32px; height:32px; flex:0 0 32px; border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(10,20,60,.045); color:var(--muted);
+}
+#px-search .px-s-row:hover .i{background:rgba(10,20,60,.075); color:var(--ink);}
+#px-search .px-s-row.on .i{background:rgba(30,94,255,.12); color:var(--accent);}
+#px-search .px-s-row .i svg{width:16px; height:16px;}
+#px-search .px-s-row .m{flex:1 1 auto; min-width:0;}
+#px-search .px-s-row .t{
+  display:block; font-size:14px; font-weight:600; letter-spacing:-.01em;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#px-search .px-s-row .s{
+  display:block; font-size:11.5px; color:var(--muted); margin-top:2px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#px-search .px-s-row .c{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:10.5px; font-weight:600; letter-spacing:.08em; color:var(--muted);
+  border:1px solid var(--hairline); border-radius:6px; padding:3px 7px;
+  flex:0 0 auto;
+}
+#px-search mark{background:rgba(30,94,255,.16); color:inherit; border-radius:3px; padding:0 1px;}
+
+#px-search .px-s-none{
+  padding:34px 16px 40px; text-align:center; font-size:14.5px; color:var(--ink);
+}
+#px-search .px-s-none span{font-size:12.5px; color:var(--muted);}
+
+/* ---------- the footer ----------------------------------------------------- */
+#px-search .px-s-foot{
+  flex:0 0 auto; display:flex; align-items:center; gap:16px;
+  padding:10px 16px; border-top:1px solid var(--hairline);
+  font-size:11px; color:var(--muted);
+}
+#px-search .px-s-foot .px-s-count{margin-left:auto;}
+
+@media (prefers-reduced-motion:reduce){
+  #px-search .px-s-panel,#px-search .px-s-veil{animation:none;}
+}

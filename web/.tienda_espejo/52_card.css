@@ -1,0 +1,97 @@
+/* ============================================================================
+   PEPTIDEX — THE MEMBER PLATE
+
+   Black metal, and as little else as possible.
+
+   The previous pass reached for depth — heavy inner shadows, a deboss on the
+   emblem, an etched record, a sequence. It read as a rendering of a card
+   rather than as a card. This one keeps the material and drops the theatre:
+   an anodised black face with a fine grain, one honest edge, and four pieces
+   of information. Nothing is embossed, nothing is beveled twice, and the only
+   light that moves is the one following the pointer.
+
+   What makes it read as metal at this restraint is the edge. A milled edge
+   holds a bright hairline where it faces the lamp and loses it where it turns
+   away — one pixel each, no more. Everything else is grain.
+   ============================================================================ */
+
+.member-card.px-plate{
+  border-radius:16px;
+  background:
+    /* The grain of the anodising. Two passes at periods that do not divide
+       into each other, so they never line up into stripes — a single
+       repeating gradient reads as corduroy at any zoom. */
+    repeating-linear-gradient(97deg,
+      rgba(255,255,255,.010) 0px, rgba(255,255,255,0) 1px,
+      rgba(0,0,0,.024) 2px,      rgba(0,0,0,0) 3px),
+    repeating-linear-gradient(94deg,
+      rgba(255,255,255,.007) 0px, rgba(255,255,255,0) 2px,
+      rgba(0,0,0,.018) 4px,      rgba(0,0,0,0) 7px),
+    /* one lamp, high and to the left, and a long fall to black */
+    linear-gradient(158deg, #1c1e22 0%, #131519 38%, #0b0c0f 72%, #060708 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),      /* the lit edge */
+    inset 0 -1px 0 rgba(0,0,0,.85),           /* the edge that turned away */
+    inset 0 0 0 1px rgba(255,255,255,.025),
+    0 24px 48px -26px rgba(0,0,0,.7),
+    0 60px 100px -60px rgba(0,0,0,.75);
+}
+
+/* the pointer's light: one soft pass, no hotspot */
+.member-card.px-plate::after{
+  background:radial-gradient(58cqw 44cqw at var(--gx,68%) var(--gy,24%),
+    rgba(255,255,255,.085), rgba(255,255,255,.02) 44%, transparent 66%);
+}
+
+/* the woven field behind it is too busy for this much restraint */
+.member-card.px-plate::before{opacity:.14;}
+
+/* ---------- what the plate does not carry --------------------------------- */
+.member-card.px-plate .mc-frame,
+.member-card.px-plate .mc-chip,
+.member-card.px-plate .px-inlay,
+.member-card.px-plate .px-seq,
+.member-card.px-plate .px-etch{display:none;}
+
+/* the emblem stays, as the faintest shadow of itself */
+.member-card.px-plate .mc-emblem{
+  color:#0c0d10;
+  text-shadow:0 1px 0 rgba(255,255,255,.02);
+  opacity:.85;
+}
+
+/* ---------- what it does carry -------------------------------------------- */
+.member-card.px-plate .mc-logo{
+  height:7.4cqw;
+  filter:brightness(0) invert(.86) drop-shadow(0 1px 0 rgba(0,0,0,.8));
+  opacity:.94;
+}
+.member-card.px-plate .mc-tier{
+  font-size:2.3cqw; letter-spacing:.4em;
+  color:transparent;
+  background-image:linear-gradient(180deg,#9ea3ac,#6f747c);
+}
+
+.member-card.px-plate .mc-idblock{top:auto; bottom:16.5cqw;}
+.member-card.px-plate .mc-name{
+  font-size:7.6cqw; font-weight:600; letter-spacing:.1em;
+  background-image:linear-gradient(180deg,#f4f5f7 0%,#c3c7ce 46%,#8f949c 62%,#dcdfe4 100%);
+}
+.member-card.px-plate .mc-id{
+  font-size:2.9cqw; letter-spacing:.34em; margin-top:2cqw;
+  background-image:linear-gradient(180deg,#8d929a,#63676e);
+}
+
+.member-card.px-plate .mc-brand{font-size:3.5cqw; letter-spacing:.38em;}
+.member-card.px-plate .mc-since{font-size:2.3cqw; letter-spacing:.28em;}
+
+/* it deepens under the pointer; nothing moves */
+.member-card.px-plate{transition:box-shadow .55s cubic-bezier(.22,1,.36,1);}
+.member-card.px-plate:hover{
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.14),
+    inset 0 -1px 0 rgba(0,0,0,.85),
+    inset 0 0 0 1px rgba(255,255,255,.035),
+    0 30px 60px -28px rgba(0,0,0,.74),
+    0 80px 130px -60px rgba(0,0,0,.8);
+}

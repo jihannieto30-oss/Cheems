@@ -1,0 +1,123 @@
+/* ============================================================================
+   PEPTIDEX — EL TELÉFONO
+
+   Dos defectos, los dos reproducidos antes de tocar nada.
+
+   1 · LA HOJA DEL COMPUESTO NO SE PODÍA RECORRER
+
+   Medido en un iPhone 12 emulado, con BPC-157 abierto:
+
+     alto de la hoja      305 px   (46 % de 664)
+     alto del contenido   445 px
+     overflow-y           visible
+     "Add to cart"        de 760 a 804 px
+
+   El viewport termina en 664. Los dos botones — guardar y añadir a la bolsa —
+   quedaban 96 px por debajo del borde de la pantalla, y la hoja no tenía por
+   dónde recorrerse. No es que costara llegar: no había manera. Y con presenta-
+   ciones (5 · 10 · 20 mg) el contenido crece otros 90 px, así que era peor en
+   los compuestos que más se abren.
+
+   Encima openProduct llama a lenis.stop(), que cancela el touchmove de toda la
+   página, de modo que tampoco se podía recorrer lo de detrás.
+
+   La hoja se recorre ahora, y las dos acciones dejan de recorrerse con ella:
+   se quedan pegadas abajo, siempre a un toque, con el texto pasando por
+   detrás. Y el vial se recoloca: se centraba dentro del 76 % de alto de la
+   pantalla, que con la hoja subida lo dejaba casi entero por detrás de ella y
+   con la tapa cortada contra el borde de arriba. Ahora se centra en la franja
+   que la hoja le deja libre: entero, y apoyado sobre ella.
+
+   2 · EL DESENFOQUE DE FONDO
+
+   Catorce backdrop-filter, y los que importan cubren la pantalla entera sobre
+   un lienzo WebGL que está dibujando: la barra al hacer scroll (blur 26 px,
+   más dos capas desenfocadas animadas encima), el fondo del compuesto (blur
+   28 px), el menú, la bolsa, la cuenta, el buscador. En un teléfono cada
+   fotograma vuelve a desenfocar todo lo que hay debajo, y lo que hay debajo se
+   mueve.
+
+   Sobre blanco el desenfoque casi no se ve — el fondo ya es blanco. Así que en
+   pantallas de hasta 860 px se cambia por blanco algo más opaco: la misma
+   lectura, sin el coste. En escritorio no cambia nada.
+
+   Nada de esto altera color, tipografía, texto ni una sola imagen entregada.
+   ============================================================================ */
+
+@media (max-width:860px){
+
+  /* ---------- 1 · la hoja se recorre ------------------------------------- */
+  #product .panel{
+    top:auto; bottom:0;
+    height:56vh; height:56svh;      /* svh: la barra de Safari no la encoge */
+    padding:22px 22px 0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;    /* al llegar al final no arrastra la página */
+    touch-action:pan-y;
+    scrollbar-width:none;
+    border-radius:22px 22px 0 0;
+    box-shadow:0 -30px 60px -44px rgba(10,20,60,.4);
+  }
+  #product .panel::-webkit-scrollbar{display:none;}
+
+  /* Las acciones no viajan con el texto. Se quedan al pie de la hoja, con el
+     texto pasando por detrás y el hueco del indicador de inicio del iPhone por
+     debajo, para que el sistema no las pise. La sombra blanca de arriba es el
+     desvanecido: cuesta menos que un degradado y no deja banda. */
+  #product .pactions{
+    position:sticky; bottom:0; z-index:2;
+    margin:20px -22px 0;
+    padding:16px 22px calc(16px + env(safe-area-inset-bottom));
+    background:#fff;
+    box-shadow:0 -16px 22px -4px #fff;
+    flex-wrap:nowrap;
+  }
+  /* las dos, del mismo ancho, y la de guardar deja de ser transparente para
+     que el texto no se lea a través de ella */
+  #product .pactions .btn{flex:1 1 0; justify-content:center; text-align:center;}
+  #product .pactions .fav{background:#fff;}
+
+  /* El vial se centra dentro de la franja que la hoja le deja libre, en vez de
+     dentro del 76 % de la pantalla — con la hoja al 56 % quedaba casi entero
+     por detrás de ella, y por arriba perdía la tapa contra el borde. */
+  #pv{height:52vh; height:52svh;}
+  #pv img{
+    max-height:46vh; max-height:46svh;
+    /* media sombra: el desenfoque de 54 px se vuelve a rasterizar cada vez que
+       la imagen entra, y en un teléfono eso se nota */
+    filter:drop-shadow(0 22px 26px rgba(10,20,60,.20));
+  }
+
+  /* ---------- 2 · fuera el desenfoque de pantalla completa ---------------- */
+  nav.scrolled{
+    background:rgba(255,255,255,.93);
+    backdrop-filter:none; -webkit-backdrop-filter:none;
+  }
+  /* la luz que cruza la barra son dos capas desenfocadas y animadas, siempre
+     en marcha, siempre encima del lienzo — en el teléfono no se ve y se paga */
+  nav.scrolled::before,nav.scrolled::after{animation:none; opacity:0;}
+
+  #product .backdrop{
+    background:rgba(255,255,255,.955);
+    backdrop-filter:none; -webkit-backdrop-filter:none;
+  }
+  #mmenu{
+    background:rgba(255,255,255,.985);
+    backdrop-filter:none; -webkit-backdrop-filter:none;
+  }
+  #auth,#wl{
+    background:rgba(255,255,255,.955);
+    backdrop-filter:none; -webkit-backdrop-filter:none;
+  }
+  #bag .bback{
+    background:rgba(255,255,255,.86);
+    backdrop-filter:none; -webkit-backdrop-filter:none;
+  }
+  #px-search .px-s-veil{
+    background:rgba(244,246,250,.97);
+    backdrop-filter:none; -webkit-backdrop-filter:none;
+  }
+  /* dentro de #sci el fondo es un tono sólido: desenfocarlo devuelve el tono */
+  .stat{backdrop-filter:none; -webkit-backdrop-filter:none;}
+}

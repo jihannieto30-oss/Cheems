@@ -1,0 +1,41 @@
+/* ============================================================================
+   PEPTIDEX — THE OPEN PRODUCT
+
+   Two things were wrong with the vial when a compound is opened.
+
+   It was centred with `transform:translate(-50%,-50%)`, and the motion
+   governor anchors #pv with `transform:none !important` so that nothing can
+   ever move it. That anchor also cancelled the centring, so the vial hung from
+   the middle of the screen downwards and ran off the bottom edge. It is
+   re-centred here without a transform, which keeps it both centred and locked.
+
+   And it sat at a third of the viewport, well left of the space it actually
+   has. #pv now spans the whole area the right-hand panel leaves free and
+   centres the vial inside it, carried a little further toward the middle of
+   the screen — as far as it can go before running under the panel's type.
+   ============================================================================ */
+
+#pv{
+  position:fixed; z-index:86;
+  top:0; bottom:0; left:0;
+  width:calc(100vw - min(460px, 92vw));
+  padding-left:min(9vw, 150px);
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none;
+}
+#pv .inner{display:flex; align-items:center; justify-content:center;}
+#pv img{
+  width:auto;
+  max-width:min(44vw, 520px);
+  max-height:84vh;
+}
+
+/* Below this the panel is a sheet along the bottom, so the vial owns the whole
+   width and sits a little above the middle, where it did before. */
+@media(max-width:860px){
+  #pv{
+    width:100vw; padding-left:0;
+    top:0; bottom:auto; height:76vh;
+  }
+  #pv img{max-width:min(60vw, 340px);}
+}

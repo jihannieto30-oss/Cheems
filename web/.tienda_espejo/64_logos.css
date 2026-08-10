@@ -1,0 +1,25 @@
+/* ============================================================================
+   PEPTIDEX — THE LINE LOCKUPS
+
+   The supplied line logos are wide horizontal lockups — icon, Px, a rule, then
+   PEPTIDEX and the line — about five and a quarter to one. The badges they
+   replace were nearly square, so every place that sized them by height now
+   makes them five times too wide. They are sized by width instead, and their
+   height follows, so the artwork keeps its own proportions everywhere.
+   ============================================================================ */
+
+.lcard .logo-l{
+  height:auto;
+  width:min(42%, 400px);
+  flex-shrink:1;
+}
+@media(max-width:760px){
+  .lcard .logo-l{width:min(56%, 290px);}
+}
+
+/* the line hero: the lockup carries the top of the page, so it runs wider */
+.lhero .badge{width:min(500px, 82vw);}
+
+/* the dictionary header sits in a corner and has to stay out of the way */
+.dh-badge{height:auto; width:min(230px, 42vw);}
+@media(max-width:560px){.dh-badge{width:min(160px, 46vw);}}

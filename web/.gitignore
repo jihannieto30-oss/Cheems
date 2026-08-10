@@ -6,8 +6,13 @@ assets/pens.json
 # trabajador sí se versionan: son pequeños y son la definición de la app.
 pepx/index.html
 
-# La tienda construida, que produce build_restore.py. 5,3 MB de artefacto.
-PEPTIDEX.html
+# La tienda construida. YA NO SE IGNORA, y el motivo importa:
+# `build_restore.py` no puede regenerarla —faltan `PEPTIDEX.base.html` y
+# `ls_master/`, que no están ni en el repo ni en el disco—. Así que esto dejó
+# de ser un artefacto reproducible y pasó a ser la única copia que existe.
+# Un fichero irreemplazable fuera del control de versiones es un fichero que se
+# pierde el día que se pierda la máquina. Pesa 5,6 MB; se aguanta.
+# Cuando aparezcan la base y ls_master, vuelve a ignorarse.
 index.html
 
 # Caché de Python, no fuente.

@@ -1,0 +1,235 @@
+/* ============================================================================
+   PEPTIDEX — EL SET BLANCO
+
+   Esto es el estudio, no el producto. El producto llega como imagen; lo que hay
+   aquí es todo lo que hace que una imagen recortada se apoye en la página en
+   vez de flotar sobre ella.
+
+   LO QUE HACE QUE UN RECORTE SE APOYE
+
+   Un objeto sobre blanco puro sin nada más parece pegado con cinta. Lo que
+   engaña al ojo no es la calidad del recorte — son tres cosas que ocurren
+   debajo del objeto y que ninguna imagen recortada trae consigo:
+
+     la sombra de contacto   oscura, muy pegada a la base, se apaga en unos
+                             pocos píxeles. Es la que dice «esto toca el suelo».
+     la sombra ambiental     mucho más ancha, mucho más clara, se extiende
+                             lejos. Es la que dice «hay una habitación».
+     el reflejo              el suelo de un ciclorama de estudio devuelve algo.
+                             Poco: por encima del 12 % ya parece un escaparate.
+
+   Las tres se dibujan aquí, en CSS, contra el ancho real de cada pieza. Y las
+   tres son lo único que separa una foto de producto de un PNG sobre blanco.
+
+   Nada de esto toca la imagen entregada: la sombra es un elemento aparte y el
+   reflejo es la misma imagen espejada por el compositor. Ni un píxel del
+   render se modifica.
+   ============================================================================ */
+
+/* ---------- el escenario ------------------------------------------------- */
+
+.px-stage{
+  --pen-h:min(52vh, 460px);   /* alto de la pieza; lo demás se deriva */
+  --floor:18px;               /* separación entre la base y su sombra */
+  margin:52px 0 0;
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:clamp(18px, 5vw, 74px);
+  align-items:end;
+}
+
+.px-plinth{
+  display:flex; flex-direction:column; align-items:center;
+  min-width:0;
+}
+
+/* La caja de la pieza. Altura fija y `contain` dentro, para que las tres
+   queden a la misma escala aunque los tres recortes vengan con márgenes
+   distintos — que es lo que siempre pasa. */
+.px-pen{
+  position:relative;
+  width:100%; height:var(--pen-h);
+  display:flex; align-items:flex-end; justify-content:center;
+}
+.px-pen img{
+  max-width:100%; max-height:100%;
+  width:auto; height:auto;
+  object-fit:contain;
+  /* El reflejo del suelo.
+
+     El degradado va al revés de lo que parece: en box-reflect el ARRIBA del
+     degradado es el arriba del reflejo, que es la base espejada de la pieza —
+     el punto que toca el suelo. Así que opaco arriba y transparente enseguida.
+     Escrito al revés, como estaba, salía una losa entera desplazada hacia
+     abajo que se comía las etiquetas.
+
+     Se apaga al 11 %: un ciclorama blanco devuelve poco, y pasarse convierte
+     el estudio en escaparate. */
+  -webkit-box-reflect:below 8px
+    linear-gradient(to bottom, rgba(255,255,255,.20), rgba(255,255,255,0) 11%);
+}
+
+/* Las dos sombras, en el mismo elemento: el gradiente interior es el contacto
+   —oscuro y muy corto— y el box-shadow es la ambiental, ancha y clarísima. */
+.px-pen .sh{
+  position:absolute; left:50%; bottom:calc(var(--floor) * -1);
+  width:64%; height:16px;
+  transform:translateX(-50%);
+  border-radius:50%;
+  background:radial-gradient(ellipse at center,
+    rgba(10,20,60,.30) 0%,
+    rgba(10,20,60,.16) 34%,
+    rgba(10,20,60,.05) 62%,
+    rgba(10,20,60,0) 100%);
+  box-shadow:0 6px 40px 22px rgba(10,20,60,.035);
+  pointer-events:none;
+}
+
+/* El nombre de la línea, debajo. Es lo que convierte tres objetos iguales en
+   una colección: sin él sólo hay tres plumas negras. */
+.px-plinth .ln{
+  /* deja pasar el reflejo por debajo: no ocupa sitio en el flujo, pero se
+     pinta, y un texto encima de él se lee mal */
+  margin-top:calc(var(--floor) + 56px);
+  font-size:11px; letter-spacing:.26em; font-weight:600;
+  text-transform:uppercase; color:var(--muted);
+  text-align:center;
+}
+/* --muted, no --line: openProduct() reescribe --line con el color de la línea
+   abierta, así que un texto que la use sale azul en cuanto alguien ha abierto
+   un compuesto. Una variable con dos dueños no es una variable. */
+.px-plinth .dz{
+  margin-top:5px;
+  font-size:11px; letter-spacing:.1em; color:var(--muted); opacity:.62;
+  text-align:center;
+}
+
+/* ---------- mientras no hay imagen ---------------------------------------
+   Un hueco vacío en un hero se lee como que la página está rota. Un contorno
+   en proporción, con el nombre de la línea debajo y sin una sola palabra de
+   relleno, se lee como que todavía no ha salido — que es la verdad. */
+.px-pen.empty{align-items:center;}
+/* Ocupa parte de la caja, no toda: un contorno del tamaño exacto de la pieza
+   final es un monumento a lo que falta. */
+.px-pen .ghostpen{
+  width:min(46px, 26%); height:58%;
+  border:1px dashed var(--hairline);
+  border-radius:999px 999px 12px 12px;
+  display:flex; align-items:flex-end; justify-content:center;
+  padding-bottom:12px;
+}
+.px-pen .ghostpen i{
+  width:14px; height:14px; border-radius:3px;
+  border:1px dashed var(--hairline);
+}
+.px-pen.empty .sh{display:none;}
+
+/* ---------- el hero de la sección ---------------------------------------- */
+
+.px-soon.stage-on{
+  min-height:auto;
+  padding:118px 0 130px;
+  display:block;                        /* el escenario manda el alto */
+}
+/* Composición centrada: titular, una línea, y el producto grande debajo. Es la
+   forma de una presentación de producto y no la de una página de texto. */
+.px-soon.stage-on .in{max-width:none; text-align:center;}
+.px-soon.stage-on .lead{margin-left:auto; margin-right:auto; text-align:center;}
+.px-soon.stage-on .rule{margin-left:auto; margin-right:auto;
+  background:linear-gradient(90deg,rgba(10,20,60,0),var(--ink),rgba(10,20,60,0));}
+.px-soon.stage-on .acts{justify-content:center; margin-top:56px;}
+.px-soon.stage-on .note{text-align:center;}
+
+@media (max-width:860px){
+  /* En vertical las tres en fila salen a 90 px cada una, que no es enseñar el
+     producto: es insinuarlo. Una debajo de otra, a tamaño de verdad. */
+  .px-stage{
+    --pen-h:min(38vh, 320px);
+    grid-template-columns:1fr;
+    gap:54px;
+    margin-top:46px;
+  }
+  .px-soon.stage-on{padding:92px 0 96px;}
+  .px-soon.stage-on .acts{margin-top:44px;}
+}
+
+/* ============================================================================
+   MODO PANEL — CUANDO LA IMAGEN YA ES LA COMPOSICIÓN
+
+   El arte entregado no son tres recortes sueltos: son tres paneles completos,
+   cada uno con su marca, su nombre de línea, «REUSABLE PEN INJECTOR», «60
+   UNITS» y su propia sombra, fotografiados sobre un fondo de 254,254,254 —
+   un nivel por debajo del blanco de la página, invisible al ojo.
+
+   Con eso, todo lo que este escenario sabía hacer sobra. La sombra de contacto
+   estaría debajo de otra sombra; el reflejo duplicaría un suelo que ya existe;
+   y el rótulo de línea diría por segunda vez lo que la imagen ya dice, con la
+   fuente de la web en vez de la del lockup. Dos veces lo mismo y desalineado
+   una de ellas.
+
+   Así que en modo panel el escenario se calla y sólo coloca: tres columnas,
+   mismo alto, mismo espacio. Ni un píxel del PDF se toca — sólo se recortó,
+   que es elegir una región, no rehacerla.
+   ============================================================================ */
+
+.px-stage.panel{
+  --pen-h:min(64vh, 620px);
+  gap:clamp(4px, 1.4vw, 26px);   /* los paneles ya traen su propio aire dentro */
+  align-items:stretch;
+
+  /* EL PAPEL DE LA FOTO, NO EL DE LA PÁGINA
+
+     El fondo del PDF es 254,254,254 y el de la página es 255. Un solo nivel —
+     0.4 % de luminancia— pero sobre una superficie tan grande y tan plana el
+     ojo lo lee igual: aparecían tres cajas tenues, una por panel.
+
+     No se toca la imagen para arreglarlo. Se le da al escenario el mismo papel
+     que trae la foto, con aire alrededor: los tres paneles se funden en un
+     campo continuo y el único borde que queda es el del campo entero, que a un
+     nivel de distancia no se ve. */
+  background:#fefefe;
+  padding:clamp(16px,2.6vw,38px) clamp(8px,1.6vw,26px);
+  border-radius:22px;
+}
+.px-stage.panel .px-pen{
+  height:var(--pen-h);
+  align-items:center;
+}
+.px-stage.panel .px-pen img{
+  -webkit-box-reflect:none;       /* el suelo ya está en la foto */
+}
+.px-stage.panel .px-plinth .ln,
+.px-stage.panel .px-plinth .dz{display:none;}
+
+@media (max-width:860px){
+  .px-stage.panel{
+    --pen-h:min(56vh, 460px);
+    gap:26px;
+  }
+}
+
+/* ---------- el distintivo NUEVO ------------------------------------------
+   Va pegado al epígrafe, no al titular: el titular es el nombre del producto y
+   no debería llevar nada colgando. Y no parpadea — lo nuevo se nota por estar,
+   no por moverse. */
+.px-soon .eyebrow .px-new{
+  display:inline-block; vertical-align:2px;
+  margin-left:12px; padding:3px 9px;
+  font-size:9.5px; font-style:normal; font-weight:700; letter-spacing:.18em;
+  color:#fff; background:var(--ink);
+  border-radius:999px;
+}
+
+/* ---------- el correo, escrito entero -------------------------------------
+   Debajo de los botones y en claro. Un botón que dice «escríbenos» esconde la
+   dirección, y quien quiere copiarla a su cliente de correo tiene que hacer
+   clic para verla. */
+.px-mail{
+  display:inline-block; margin-top:22px;
+  font-size:13.5px; letter-spacing:.02em;
+  color:var(--muted); text-decoration:none;
+  border-bottom:1px solid var(--hairline);
+  padding-bottom:3px;
+  transition:color .25s, border-color .25s;
+}
+.px-mail:hover{color:var(--ink); border-color:var(--ink);}
