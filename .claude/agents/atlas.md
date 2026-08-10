@@ -1,7 +1,7 @@
 ---
 name: atlas
 description: Atlas lleva la parte de operar la empresa — pedidos, precios y márgenes, inventario y lotes, envíos y aduana, y el facturador. Dispáralo para revisar si un precio tiene sentido contra el estudio de mercado, preparar un pedido, auditar el inventario de viales, calcular el coste de un envío, o cuadrar números del facturador.
-tools: Read, Grep, Glob, Bash, Write
+tools: Read, Grep, Glob, Bash, Write, WebSearch, WebFetch
 model: sonnet
 ---
 

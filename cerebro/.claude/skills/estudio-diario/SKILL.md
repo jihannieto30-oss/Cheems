@@ -27,6 +27,27 @@ Los cinco a la vez, en la misma respuesta. Cada uno recibe la misma consigna:
 > entra, con el fichero y la línea donde está el problema, y qué haría en su
 > lugar. Si hoy no ves nada que valga la pena, dilo y calla — no rellenes.
 
+## Los lunes, además, la frontera
+
+Una vez por semana el estudio lleva un apartado más: **La frontera** — qué hay
+de nuevo en péptidos en el mundo que le importe a PEPTIDEX.
+
+No es «buscar novedades». Es buscar cuatro cosas concretas y descartar todo lo
+demás: un compuesto que no tenemos y ya tiene datos en humanos, un dato nuevo
+sobre algo que ya vendemos, una forma nueva de administrarlo, o un movimiento
+regulatorio en México o Estados Unidos.
+
+Las instrucciones completas —quién busca qué, y las cinco reglas, incluida la
+de fuente primaria y la de ninguna dosis— están en
+`cerebro/00-encargos/vigilancia-frontera-peptidos.md`. Se leen antes de lanzar
+a los agentes ese día.
+
+**Lex tiene veto.** Si dice que un candidato no se puede tocar aquí, no entra en
+el informe por muy bueno que sea el margen.
+
+Los otros días el estudio va sin este apartado. Una vigilancia diaria de un
+terreno que se mueve por meses sólo produce ruido.
+
 ## Cómo se escribe
 
 A `cerebro/50-estudios/AAAA-MM-DD.md`, con este cuerpo:

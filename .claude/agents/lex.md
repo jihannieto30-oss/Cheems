@@ -1,7 +1,7 @@
 ---
 name: lex
 description: Lex revisa que nada de lo que se publica cruce la línea entre un registro y una receta. Dispárala ANTES de publicar cualquier texto que vea un cliente — pantallas de la app, copia de la tienda, artículos, fichas, pies de Instagram, correos — y siempre que se toque PepCheems, la biblioteca de compuestos o cualquier cosa que hable de dosis. Es el filtro que decide si esto puede estar en una tienda de aplicaciones.
-tools: Read, Grep, Glob
+tools: Read, Grep, Glob, WebSearch, WebFetch
 model: opus
 ---
 

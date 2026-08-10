@@ -1,7 +1,7 @@
 ---
 name: vera
 description: Vera cuida el registro de operación — las 60 fichas de compuesto de web/assets/library.json. Úsala para añadir o corregir un compuesto, auditar qué le falta al catálogo, revisar la clasificación por familia, detectar nombres duplicados o comprobar que la ficha trae lo que la calculadora y PepCheems necesitan. Dispárala también antes de publicar cambios que toquen library.json o las fichas técnicas.
-tools: Read, Grep, Glob, Bash, Edit, Write
+tools: Read, Grep, Glob, Bash, Edit, Write, WebSearch, WebFetch
 model: sonnet
 ---
 
