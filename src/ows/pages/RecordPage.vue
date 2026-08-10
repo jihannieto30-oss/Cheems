@@ -417,10 +417,11 @@ onUnmounted(() => {
 
 .intro__title {
   margin-top: 0.75rem;
+  font-family: var(--ows-display);
   font-size: var(--ows-t-h3);
-  font-weight: 500;
-  letter-spacing: 0.03em;
-  line-height: 1.05;
+  font-weight: 400;
+  letter-spacing: var(--ows-track-display);
+  line-height: 1;
   color: var(--ows-ink);
 }
 

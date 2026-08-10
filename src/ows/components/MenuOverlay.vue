@@ -78,9 +78,10 @@ const items = [
 }
 
 .menu__label {
-  font-size: clamp(1.375rem, 4.5vw, 2.5rem);
-  font-weight: 500;
-  letter-spacing: 0.1em;
+  font-family: var(--ows-display);
+  font-size: clamp(1.625rem, 5vw, 3rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   line-height: 1.2;
 }

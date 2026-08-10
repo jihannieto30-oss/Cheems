@@ -27,6 +27,13 @@ import { useParallax } from '../composables/useParallax'
 */
 
 const props = defineProps({
+  /*
+    arc  a stick or MIG arc: spatter thrown in every direction from a point.
+    cut  plasma or oxy-fuel cutting: a jet driven through the plate, throwing a
+         continuous curtain of molten material downward that bounces off the
+         floor. Denser, heavier and far more directional than an arc.
+  */
+  mode: { type: String, default: 'arc' },
   /** Emitter position as a fraction of the canvas. */
   originX: { type: Number, default: 0.5 },
   originY: { type: Number, default: 0.74 },
@@ -60,8 +67,21 @@ let t = 0
 let visible = true
 let running = false
 
-// Cooling curve: white-hot → amber → the brand red, by remaining life.
-function sparkColor(k) {
+/*
+  Cooling curve: white-hot → amber → the brand red, by remaining life.
+
+  Cutting gets its own ramp. Its particles are given a much slower decay so
+  they survive the fall and the bounce, which on the arc ramp would leave them
+  reading white for most of their travel — the opposite of a real cut, where
+  the stream turns orange within a few centimetres of the plate.
+*/
+function sparkColor(k, cut) {
+  if (cut) {
+    if (k > 0.88) return [255, 252, 240]
+    if (k > 0.62) return [255, 218, 132]
+    if (k > 0.3) return [255, 138, 38]
+    return [216, 46, 8]
+  }
   if (k > 0.72) return [255, 255, 250]
   if (k > 0.45) return [255, 226, 160]
   if (k > 0.22) return [255, 138, 42]
@@ -83,27 +103,56 @@ function resize() {
   ctx.fillRect(0, 0, w, h)
 }
 
+const isCut = () => props.mode === 'cut'
+
 function emit(n) {
   const ox = w * props.originX
   const oy = h * props.originY
-  for (let i = 0; i < n; i++) {
-    // Biased flat and outward, the way an arc actually throws material.
-    const a = Math.random() * Math.PI * 2
-    const flat = 0.34 + Math.random() * 0.5
-    const speed = 1.4 + Math.pow(Math.random(), 2) * 8.5
+  const count = isCut() ? Math.round(n * 2.6) : n
+
+  for (let i = 0; i < count; i++) {
+    let vx
+    let vy
+    let decay
+    let size
+
+    if (isCut()) {
+      // Canvas y grows downward, so an angle in (0, π) is the lower hemisphere.
+      // 12°–168° gives a wide curtain that still never throws upward.
+      const a = ((12 + Math.random() * 156) * Math.PI) / 180
+      const speed = 2 + Math.pow(Math.random(), 1.5) * 13
+      vx = Math.cos(a) * speed * 1.2
+      vy = Math.sin(a) * speed * 0.8 + 1.4
+      // Longer-lived than arc spatter: they have to survive the fall and the
+      // bounce, which is the part that reads as cutting.
+      decay = 0.0035 + Math.random() * 0.009
+      size = 0.6 + Math.random() * 1.9
+    } else {
+      // Biased flat and outward, the way an arc actually throws material.
+      const a = Math.random() * Math.PI * 2
+      const flat = 0.34 + Math.random() * 0.5
+      const speed = 1.4 + Math.pow(Math.random(), 2) * 8.5
+      vx = Math.cos(a) * speed
+      vy = Math.sin(a) * speed * flat - 0.6
+      decay = 0.006 + Math.random() * 0.019
+      size = 0.5 + Math.random() * 1.6
+    }
+
     sparks.push({
-      x: ox + (Math.random() - 0.5) * 8,
+      x: ox + (Math.random() - 0.5) * (isCut() ? 14 : 8),
       y: oy + (Math.random() - 0.5) * 5,
-      vx: Math.cos(a) * speed,
-      vy: Math.sin(a) * speed * flat - 0.6,
+      vx,
+      vy,
       px: ox,
       py: oy,
       life: 1,
-      decay: 0.006 + Math.random() * 0.019,
-      size: 0.5 + Math.random() * 1.6,
+      decay,
+      size,
+      bounces: 0,
     })
   }
-  if (sparks.length > 900) sparks.splice(0, sparks.length - 900)
+  const cap = isCut() ? 1600 : 900
+  if (sparks.length > cap) sparks.splice(0, sparks.length - cap)
 
   if (Math.random() > 0.72) {
     smoke.push({
@@ -121,30 +170,73 @@ function emit(n) {
 
 function drawCore(ox, oy, flare) {
   const I = props.intensity
+  // A cutting jet concentrates its light: the visible incandescence is a small
+  // hot point, not the broad ball an open arc produces.
+  const coreR = (isCut() ? 24 : 42) * flare
+
   // Wide atmospheric bloom, then the hard core on top.
   const bloom = ctx.createRadialGradient(ox, oy, 0, ox, oy, 240 * flare)
-  bloom.addColorStop(0, `rgba(255,240,220,${0.3 * I})`)
+  bloom.addColorStop(0, `rgba(255,240,220,${(isCut() ? 0.22 : 0.3) * I})`)
   bloom.addColorStop(0.28, `rgba(255,150,60,${0.09 * I})`)
   bloom.addColorStop(1, 'rgba(0,0,0,0)')
   ctx.fillStyle = bloom
   ctx.fillRect(ox - 260, oy - 260, 520, 520)
 
-  const core = ctx.createRadialGradient(ox, oy, 0, ox, oy, 42 * flare)
+  const core = ctx.createRadialGradient(ox, oy, 0, ox, oy, coreR)
   core.addColorStop(0, `rgba(255,255,255,${0.98 * I})`)
   core.addColorStop(0.35, `rgba(255,246,225,${0.6 * I})`)
   core.addColorStop(1, 'rgba(255,120,40,0)')
   ctx.fillStyle = core
   ctx.beginPath()
-  ctx.arc(ox, oy, 42 * flare, 0, Math.PI * 2)
+  ctx.arc(ox, oy, coreR, 0, Math.PI * 2)
   ctx.fill()
 
-  // The lit edge of the workpiece the arc is sitting on.
-  const edge = ctx.createLinearGradient(ox - 340, 0, ox + 340, 0)
-  edge.addColorStop(0, 'rgba(255,120,40,0)')
-  edge.addColorStop(0.5, `rgba(255,190,120,${0.34 * I * flare})`)
-  edge.addColorStop(1, 'rgba(255,120,40,0)')
-  ctx.fillStyle = edge
-  ctx.fillRect(ox - 340, oy + 1, 680, 1.6)
+  if (!isCut()) {
+    // The lit edge of the workpiece the arc is sitting on. Cutting replaces it
+    // with the kerf below — drawing both leaves a rule running clean through
+    // the torch and out the far side, which no cut ever does.
+    const edge = ctx.createLinearGradient(ox - 340, 0, ox + 340, 0)
+    edge.addColorStop(0, 'rgba(255,120,40,0)')
+    edge.addColorStop(0.5, `rgba(255,190,120,${0.34 * I * flare})`)
+    edge.addColorStop(1, 'rgba(255,120,40,0)')
+    ctx.fillStyle = edge
+    ctx.fillRect(ox - 340, oy + 1, 680, 1.6)
+    return
+  }
+
+  /*
+    Cutting adds two things an arc does not have: a jet driven vertically
+    through the plate, and a kerf — the glowing slot already cut, trailing
+    behind the torch and cooling as it goes.
+  */
+  const jet = ctx.createLinearGradient(ox, oy - 26, ox, oy + 150 * flare)
+  jet.addColorStop(0, `rgba(255,255,255,${0.9 * I})`)
+  jet.addColorStop(0.18, `rgba(255,240,205,${0.6 * I})`)
+  jet.addColorStop(0.55, `rgba(255,150,55,${0.22 * I})`)
+  jet.addColorStop(1, 'rgba(255,90,20,0)')
+  ctx.fillStyle = jet
+  ctx.beginPath()
+  ctx.moveTo(ox - 13 * flare, oy - 20)
+  ctx.lineTo(ox + 13 * flare, oy - 20)
+  ctx.lineTo(ox + 30 * flare, oy + 150 * flare)
+  ctx.lineTo(ox - 30 * flare, oy + 150 * flare)
+  ctx.closePath()
+  ctx.fill()
+
+  // Uncut plate ahead of the torch: lit only by the jet, fading fast.
+  const ahead = ctx.createLinearGradient(ox, 0, ox + 320, 0)
+  ahead.addColorStop(0, `rgba(255,170,90,${0.3 * I * flare})`)
+  ahead.addColorStop(1, 'rgba(255,120,40,0)')
+  ctx.fillStyle = ahead
+  ctx.fillRect(ox, oy - 1, 320, 2)
+
+  const kerf = ctx.createLinearGradient(ox - 620, 0, ox + 40, 0)
+  kerf.addColorStop(0, 'rgba(120,20,0,0)')
+  kerf.addColorStop(0.45, `rgba(200,55,10,${0.3 * I})`)
+  kerf.addColorStop(0.82, `rgba(255,170,90,${0.7 * I * flare})`)
+  kerf.addColorStop(1, `rgba(255,245,225,${0.9 * I * flare})`)
+  ctx.fillStyle = kerf
+  ctx.fillRect(ox - 620, oy - 3, 660, 6)
 }
 
 function frame() {
@@ -161,6 +253,7 @@ function frame() {
 
   const ox = w * props.originX
   const oy = h * props.originY
+  const cut = isCut()
   // Irregular flicker — a steady pulse reads as a lamp, not an arc.
   const flare =
     0.86 + Math.sin(t * 0.29) * 0.06 + Math.sin(t * 1.7) * 0.035 + Math.random() * 0.05
@@ -183,18 +276,30 @@ function frame() {
 
   drawCore(ox, oy, flare)
 
+  const floorY = h * 0.99
+
   for (const s of sparks) {
     s.px = s.x
     s.py = s.y
-    s.vy += 0.055 // gravity
+    s.vy += cut ? 0.115 : 0.055 // gravity
     s.vx *= 0.985 // drag
     s.vy *= 0.985
     s.x += s.vx
     s.y += s.vy
     s.life -= s.decay
 
+    // Molten material hitting the floor and skipping outward is the single
+    // strongest cue that this is a cut and not an arc.
+    if (cut && s.y > floorY && s.vy > 0 && s.bounces < 2) {
+      s.y = floorY
+      s.vy *= -0.3
+      s.vx *= 0.7 + Math.random() * 0.2
+      s.bounces++
+      s.life *= 0.7
+    }
+
     if (s.life <= 0) continue
-    const [r, g, b] = sparkColor(s.life)
+    const [r, g, b] = sparkColor(s.life, cut)
     const alpha = Math.min(1, s.life * 1.5) * props.intensity
     ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`
     ctx.lineWidth = s.size * s.life
@@ -218,23 +323,32 @@ function still() {
   ctx.fillStyle = '#000'
   ctx.fillRect(0, 0, w, h)
   ctx.globalCompositeOperation = 'lighter'
-  emit(260)
+  const cut = isCut()
+  const floorY = h * 0.99
+  emit(cut ? 160 : 260)
   for (const s of sparks) {
     // Advance each particle to a different point in its own arc so the field
     // reads as a frozen moment rather than an explosion at the origin.
-    const steps = Math.random() * 70
+    const steps = Math.random() * (cut ? 130 : 70)
     for (let i = 0; i < steps; i++) {
       s.px = s.x
       s.py = s.y
-      s.vy += 0.055
+      s.vy += cut ? 0.115 : 0.055
       s.vx *= 0.985
       s.vy *= 0.985
       s.x += s.vx
       s.y += s.vy
       s.life -= s.decay
+      if (cut && s.y > floorY && s.vy > 0 && s.bounces < 2) {
+        s.y = floorY
+        s.vy *= -0.3
+        s.vx *= 0.8
+        s.bounces++
+        s.life *= 0.7
+      }
     }
     if (s.life <= 0) continue
-    const [r, g, b] = sparkColor(s.life)
+    const [r, g, b] = sparkColor(s.life, cut)
     ctx.strokeStyle = `rgba(${r},${g},${b},${Math.min(1, s.life * 1.5) * props.intensity})`
     ctx.lineWidth = s.size * s.life
     ctx.beginPath()

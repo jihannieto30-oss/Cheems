@@ -8,28 +8,48 @@
   tabs, rules, the arc) and never fills a surface.
 */
 
-/* Self-hosted so the page makes no external request and the type never
-   flashes a fallback. Variable weight 300-700, SIL OFL 1.1. */
+/*
+  Two families, self-hosted, both SIL OFL 1.1 — nothing is fetched at runtime.
+
+  Instrument Serif   display only. High-contrast didone forms; on black at
+                     large sizes it does the executive work a grotesque cannot.
+  Inter Tight        everything else. Tight, neutral, and its tabular figures
+                     are what make the composition and property tables line up.
+
+  Latin subset only: every accented character Spanish and English use sits in
+  U+00C0–00FF, so the 90 kB latin-ext cut buys nothing here.
+*/
 @font-face {
-  font-family: 'Space Grotesk';
+  font-family: 'Instrument Serif';
   font-style: normal;
-  font-weight: 300 700;
+  font-weight: 400;
   font-display: swap;
-  src: url('/ows/fonts/space-grotesk-latin.woff2') format('woff2');
+  src: url('/ows/fonts/instrument-serif-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
     U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
     U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
-  font-family: 'Space Grotesk';
+  font-family: 'Instrument Serif';
   font-style: normal;
-  font-weight: 300 700;
+  font-weight: 400;
   font-display: swap;
-  src: url('/ows/fonts/space-grotesk-latin-ext.woff2') format('woff2');
+  src: url('/ows/fonts/instrument-serif-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
     U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
     U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Inter Tight';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/ows/fonts/inter-tight-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 :root {
@@ -56,19 +76,24 @@
   --ows-line-strong: rgba(255, 255, 255, 0.2);
 
   /* ---- type ---- */
-  --ows-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Roboto, Arial, sans-serif;
+  --ows-display: 'Instrument Serif', 'Times New Roman', Georgia, serif;
+  --ows-sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Arial, sans-serif;
   --ows-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
 
-  --ows-t-hero: clamp(2.25rem, 6.2vw, 5rem);
-  --ows-t-h2: clamp(1.5rem, 3.4vw, 2.75rem);
-  --ows-t-h3: clamp(1.75rem, 4vw, 3rem);
+  /* The serif carries more visual weight per point than the grotesque did, so
+     display sizes run slightly larger and the tracking comes right down —
+     wide-tracked serif caps read as decoration rather than as authority. */
+  --ows-t-hero: clamp(2.5rem, 7vw, 5.75rem);
+  --ows-t-h2: clamp(1.75rem, 4vw, 3.25rem);
+  --ows-t-h3: clamp(2rem, 4.6vw, 3.5rem);
   --ows-t-lead: clamp(0.9375rem, 1.2vw, 1.0625rem);
   --ows-t-body: 0.875rem;
   --ows-t-meta: 0.6875rem;
   --ows-t-micro: 0.625rem;
 
-  --ows-track-hero: 0.16em;
+  --ows-track-hero: 0.045em;
+  --ows-track-display: 0.02em;
   --ows-track-label: 0.28em;
   --ows-track-meta: 0.2em;
 

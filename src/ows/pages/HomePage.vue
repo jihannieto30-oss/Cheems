@@ -15,7 +15,7 @@
         canvas is transparent and clears each frame, so it goes on top: the
         standards fall through the arc light rather than behind it.
       -->
-      <ArcScene :depth="10" :density="3" :origin-y="0.94" :intensity="0.5" />
+      <ArcScene mode="cut" :depth="10" :density="5" :origin-y="0.8" :intensity="0.9" />
       <StandardsCascade :depth="16" />
 
       <div class="hero__rail" aria-hidden="true">
@@ -161,9 +161,10 @@ const pillars = [
 }
 
 .hero__title {
-  font-size: clamp(1.5rem, 4.4vw, 3.25rem);
-  font-weight: 300;
-  line-height: 1.1;
+  font-family: var(--ows-display);
+  font-size: var(--ows-t-hero);
+  font-weight: 400;
+  line-height: 1.04;
   letter-spacing: var(--ows-track-hero);
   text-transform: uppercase;
   color: var(--ows-ink);
@@ -394,10 +395,11 @@ const pillars = [
 
 .creed__title {
   margin-top: 1.75rem;
+  font-family: var(--ows-display);
   font-size: var(--ows-t-h2);
-  font-weight: 500;
-  line-height: 1.24;
-  letter-spacing: 0.06em;
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: var(--ows-track-display);
   color: var(--ows-ink);
 }
 

@@ -91,10 +91,11 @@ const facts = [
 
 .body__title {
   margin-top: 1.75rem;
+  font-family: var(--ows-display);
   font-size: var(--ows-t-h2);
-  font-weight: 500;
-  line-height: 1.24;
-  letter-spacing: 0.06em;
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: var(--ows-track-display);
   color: var(--ows-ink);
 }
 

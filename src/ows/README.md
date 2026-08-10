@@ -15,7 +15,8 @@ Taken from the brand sheets, not invented here.
 | Surfaces   | `#000` `#0A0A0A` `#111` `#1A1A1A` | page, panels, rows                   |
 | Ink        | `#FFF` `#9A9A9A` `#5A5A5A`     | title, body, meta                       |
 | Accent     | `#E10600`                      | direction and state only — never a fill  |
-| Type       | Space Grotesk 300–700          | self-hosted, `public/ows/fonts`, SIL OFL |
+| Display    | Instrument Serif 400           | headings only — self-hosted, SIL OFL     |
+| Text       | Inter Tight 300–700            | UI, body, tabular figures — SIL OFL      |
 
 The OWS mark stays white in every placement, per the identity sheet. Red marks
 arrows, active tabs, rail position, the section tick and defect bullets. It is
@@ -101,6 +102,21 @@ provider.query(text, { limit, signal })
 `resolveProvider()` returns the local in-memory provider unless
 `VITE_OWS_SEARCH_ENDPOINT` is set. Record `id` is the route segment.
 
+## Typography
+
+Two families, latin subset only, ~78 kB total and nothing fetched at runtime.
+
+**Instrument Serif** carries every heading. A high-contrast didone at large
+sizes does the executive work a grotesque cannot — but only in display: at text
+sizes its thin strokes disappear on black. Tracking is near zero; wide-tracked
+serif caps read as decoration, not authority.
+
+**Inter Tight** carries everything else. Its tabular figures are what keep the
+composition and mechanical-property tables aligned.
+
+Both are token-level (`--ows-display`, `--ows-sans`), so swapping either is a
+two-line change in `tokens.css` plus the woff2 files.
+
 ## The hero
 
 One line — WELCOME TO A NEW WORLD — the field, and the nomenclature it accepts.
@@ -129,11 +145,21 @@ The catalogue merges into the search corpus in `data/index.js`, so typing a
 designation finds it whether or not a sheet exists. Hand-written records in
 `knowledge.js` win over a catalogue row with the same designation.
 
-## The arc
+## The arc, and the cut
 
-`components/ArcScene.vue` draws the hero: an incandescent core, sparks that cool
-from white through amber to the brand red, drifting smoke, and a lit workpiece
-edge. Motion-blurred by fading the previous frame rather than clearing it.
+`components/ArcScene.vue` runs in two modes.
+
+`arc` — a stick or MIG arc: spatter thrown in every direction from a point.
+
+`cut` — plasma or oxy-fuel cutting, which the hero uses. A jet driven through
+the plate, a glowing kerf trailing behind the torch, and a continuous curtain of
+molten material falling and skipping off the floor. Cut particles get their own
+colour ramp: they are given a slow decay so they survive the fall, and on the
+arc ramp that would leave them reading white for most of their travel — the
+opposite of a real cut, where the stream turns orange within a few centimetres
+of the plate.
+
+Both are motion-blurred by fading the previous frame rather than clearing it.
 
 It is a **stand-in for photography**, chosen because it weighs nothing, animates,
 and reacts to scroll. To move to a real shoot, put the image behind the canvas

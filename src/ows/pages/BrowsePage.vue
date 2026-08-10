@@ -84,9 +84,10 @@ const others = computed(() => FACETS.filter((f) => f.slug !== slug.value))
 
 .head__title {
   margin-top: 1.5rem;
+  font-family: var(--ows-display);
   font-size: var(--ows-t-h2);
-  font-weight: 500;
-  letter-spacing: 0.1em;
+  font-weight: 400;
+  letter-spacing: var(--ows-track-display);
   color: var(--ows-ink);
 }
 
