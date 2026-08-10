@@ -22,7 +22,7 @@
         <hr class="ows-tick" />
         <h1 class="band__title">CATALOGUE</h1>
         <p class="band__lead">
-          Ten sections, {{ CATALOG_TOTAL }} designations. Filler metals, covered electrodes
+          {{ SECTIONS.length }} sections, {{ CATALOG_TOTAL }} designations. Filler metals, covered electrodes
           and brazing alloys across every alloy family Unibraze sections its range by.
         </p>
 

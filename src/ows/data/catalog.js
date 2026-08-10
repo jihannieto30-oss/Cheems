@@ -83,6 +83,20 @@ export const SECTIONS = [
     es: 'Soldadura de Plata',
     blurb: 'Silver, phos-copper and brass brazing filler metals for joining dissimilar metals.',
   },
+  {
+    slug: 'tubular',
+    en: 'Tubular Wires',
+    es: 'Alambres Tubulares',
+    blurb:
+      'Flux-cored stainless and nickel. Carbon-steel flux-cored wires are filed under Carbon Steel with the rest of that alloy family.',
+  },
+  {
+    slug: 'strip',
+    en: 'Strip & Cladding',
+    es: 'Tira y Recubrimiento',
+    blurb:
+      'Electroslag and submerged-arc strip for wide-area overlay on vessel and reactor internals.',
+  },
 ]
 
 /*
@@ -203,7 +217,8 @@ const RAW = {
     ['ESt', 'E', 'AWS A5.15', 'SMAW', 'Steel core, non-machinable repair'],
     ['ERNi-CI', 'R', 'AWS A5.15', 'GTAW', 'Nickel rod for cast iron'],
     ['ERNiFe-CI', 'R', 'AWS A5.15', 'GTAW', 'Nickel-iron rod'],
-    ['RBCuZn-C', 'R', 'AWS A5.8', 'Braze', 'Low fuming bronze, braze-weld iron'],
+    // RBCuZn-C is also used to braze-weld iron, but it is filed once, under
+    // Silver Brazing. Listing a designation twice collides its record id.
   ],
   aluminium: [
     ['ER1100', 'WR', 'AWS A5.10', 'GTAW · GMAW', 'Commercially pure aluminium'],
@@ -280,6 +295,28 @@ const RAW = {
     ['RBCuZn-A', 'R', 'AWS A5.8', 'Braze', 'Naval brass, braze-welding steel'],
     ['RBCuZn-C', 'R', 'AWS A5.8', 'Braze', 'Low fuming bronze'],
     ['RBCuZn-D', 'R', 'AWS A5.8', 'Braze', 'Nickel silver, carbide tips'],
+  ],
+  tubular: [
+    ['E308LT1-1', 'W', 'AWS A5.22', 'FCAW-G', 'Austenitic flux-cored, all position'],
+    ['E308LT0-1', 'W', 'AWS A5.22', 'FCAW-G', 'Flat and horizontal, high deposition'],
+    ['E309LT1-1', 'W', 'AWS A5.22', 'FCAW-G', 'Dissimilar and overlay flux-cored'],
+    ['E316LT1-1', 'W', 'AWS A5.22', 'FCAW-G', 'Molybdenum austenitic flux-cored'],
+    ['E317LT1-1', 'W', 'AWS A5.22', 'FCAW-G', 'Higher Mo flux-cored'],
+    ['E347T1-1', 'W', 'AWS A5.22', 'FCAW-G', 'Niobium stabilised flux-cored'],
+    ['E2209T1-1', 'W', 'AWS A5.22', 'FCAW-G', 'Duplex flux-cored'],
+    ['E410NiMoT1-1', 'W', 'AWS A5.22', 'FCAW-G', 'Soft martensitic overlay'],
+    ['ENiCrMo3T1-4', 'W', 'AWS A5.34', 'FCAW-G', 'Alloy 625 flux-cored'],
+    ['ENiCrFe2T1-4', 'W', 'AWS A5.34', 'FCAW-G', 'Alloy 182 flux-cored'],
+  ],
+  strip: [
+    ['EQ308L', 'W', 'AWS A5.9', 'ESW · SAW strip', '60 mm and 90 mm cladding strip'],
+    ['EQ309L', 'W', 'AWS A5.9', 'ESW · SAW strip', 'First-layer overlay on carbon steel'],
+    ['EQ309LNb', 'W', 'AWS A5.9', 'ESW · SAW strip', 'Niobium stabilised transition layer'],
+    ['EQ316L', 'W', 'AWS A5.9', 'ESW · SAW strip', 'Molybdenum second-layer overlay'],
+    ['EQ347', 'W', 'AWS A5.9', 'ESW · SAW strip', 'Stabilised overlay'],
+    ['EQ430', 'W', 'AWS A5.9', 'ESW · SAW strip', 'Ferritic overlay'],
+    ['EQNiCr-3', 'W', 'AWS A5.14', 'ESW · SAW strip', 'Alloy 82 cladding strip'],
+    ['EQNiCrMo-3', 'W', 'AWS A5.14', 'ESW · SAW strip', 'Alloy 625 cladding strip'],
   ],
 }
 
