@@ -1,0 +1,124 @@
+/* ============================================================================
+   PEPTIDEX — PARALLAX DE LÍNEA
+
+   Sólo vive dentro de `html.lp-on`, y esa clase sólo está puesta mientras la
+   ruta es /fitness, /beauty o /longevity. Fuera de ahí, este fichero no
+   selecciona nada: la portada, ciencia, calidad, herramientas, pedidos y el
+   pie siguen exactamente como estaban, que es la condición.
+
+   Por qué una capa aparte y no tocar el gobernador de movimiento: el
+   gobernador existe porque la web se atascaba en el móvil, y sigue teniendo
+   razón en todo lo que hace. Lo que cambia no es su criterio — es que hay un
+   sitio, uno solo, donde el movimiento es el producto.
+   ============================================================================ */
+
+/* Las tintas de cada línea, tomadas de los lockups entregados: grafito en
+   FITNESS, oro rosa en BEAUTY, plata en LONGEVITY. NO se tocan `--line` ni
+   `L.theme`, que son los colores que ya usa el resto del sitio: esto es un
+   canal nuevo, sólo para la luz de esta vista. */
+html.lp-on{--lp:#8A8F98; --lp2:#C9CDD4;}
+html.lp-on[data-lp-key="fitness"]  {--lp:#3A3F47; --lp2:#9AA1AB;}
+html.lp-on[data-lp-key="beauty"]   {--lp:#B87351; --lp2:#E7B79A;}
+html.lp-on[data-lp-key="longevity"]{--lp:#9AA3AD; --lp2:#DFE4EA;}
+
+/* CUÁNTA LUZ. Éste es el único número que hay que tocar para que la
+   atmósfera se note más o menos, y está aquí arriba a propósito.
+
+   Va en 34 % porque se afinó a ciegas: la tienda no arranca sin conexión —
+   carga GSAP, Lenis y Three desde unpkg— así que esto se calibró sobre un
+   banco de pruebas con marcadores grises, no sobre la página de verdad. Sobre
+   el fondo real puede pedir más o menos. Un número, un sitio.
+
+   Por debajo de 20 no se distingue una línea de otra y sobra la capa entera.
+   Por encima de 55 deja de ser luz y empieza a ser una mancha de color, que
+   es exactamente lo que no queremos: la marca es de acabado, no de tinte. */
+html.lp-on{--lp-fuerza:34%; --lp-fuerza2:26%;}
+
+/* --------------------------------------------------------------------------
+   1 · La atmósfera
+
+   Un campo de luz detrás de todo, del color de la línea. Es lo que hace que
+   entrar a FITNESS y entrar a BEAUTY no se sientan igual, y es la capa más
+   profunda: la que menos se mueve por pantalla y más tarde llega.
+   -------------------------------------------------------------------------- */
+.lp-atmo{
+  position:absolute; inset:-14% -10%; z-index:0;
+  pointer-events:none; opacity:0;
+  transition:opacity .9s cubic-bezier(.22,1,.36,1);
+  will-change:transform;
+  background:
+    radial-gradient(52% 46% at 28% 32%, color-mix(in srgb, var(--lp) var(--lp-fuerza), transparent), transparent 68%),
+    radial-gradient(44% 40% at 76% 66%, color-mix(in srgb, var(--lp2) var(--lp-fuerza2), transparent), transparent 70%);
+  filter:blur(14px);
+}
+html.lp-ready .lp-atmo{opacity:1;}
+
+/* El grano: seis motas muy tenues a distintas profundidades. Sin esto la
+   atmósfera es un degradado bonito y plano; con esto tiene aire dentro. */
+.lp-mote{
+  position:absolute; z-index:0; pointer-events:none;
+  width:3px; height:3px; border-radius:50%;
+  background:var(--lp2); opacity:0;
+  transition:opacity 1.4s ease;
+  will-change:transform;
+}
+html.lp-ready .lp-mote{opacity:.5;}
+
+/* La sección de línea pasa a ser el marco de todo esto. `isolation` crea un
+   contexto de apilado propio, para que la atmósfera no se cuele por debajo de
+   la navegación ni por encima del contenido. */
+html.lp-on .lhero{position:relative; isolation:isolate; overflow:hidden;}
+html.lp-on .lhero .wrap{position:relative; z-index:1;}
+
+/* --------------------------------------------------------------------------
+   2 · Las capas que se mueven
+
+   `will-change` sólo mientras la vista está activa. Dejarlo puesto siempre
+   obliga al navegador a mantener una capa de composición por elemento aunque
+   nadie la esté moviendo, y eso es memoria de vídeo regalada — justo lo que
+   hacía que el móvil se atascara.
+   -------------------------------------------------------------------------- */
+html.lp-on [data-lp]{will-change:transform;}
+
+/* EL LOCKUP NO SE DEFORMA. Se traslada y nada más: ni rotación, ni escala, ni
+   inclinación, ni filtro, ni mezcla. La pieza que llegó es la que se ve.
+   Esto no es prudencia — es que el logotipo es lo único de esta pantalla que
+   no se puede rehacer si sale mal. */
+html.lp-on .lhero .badge{
+  transform-origin:center center;
+  filter:none !important;
+  mix-blend-mode:normal !important;
+}
+
+/* --------------------------------------------------------------------------
+   3 · Las tarjetas de compuesto: inclinación 3D con brillo especular
+
+   El brillo sigue al cursor dentro de la tarjeta. Es lo que hace que la
+   superficie se lea como material y no como un rectángulo con sombra.
+   -------------------------------------------------------------------------- */
+html.lp-on .pcard{transform-style:preserve-3d;}
+html.lp-on .pcard .lp-glow{
+  position:absolute; inset:0; border-radius:inherit;
+  pointer-events:none; opacity:0;
+  transition:opacity .3s ease;
+  mix-blend-mode:soft-light;
+}
+html.lp-on .pcard.lp-tilt .lp-glow{opacity:1;}
+
+/* --------------------------------------------------------------------------
+   4 · Cuándo NO se hace nada de esto
+
+   Tres casos, y los tres mandan sobre lo anterior: quien pidió menos
+   movimiento en su sistema, la pantalla táctil estrecha —donde el parallax de
+   puntero no existe y el de scroll compite con el dedo—, y la impresión.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion:reduce){
+  html.lp-on [data-lp],
+  html.lp-on .lp-atmo,
+  html.lp-on .lp-mote{transform:none !important; transition:none !important;}
+  html.lp-on .lp-mote{display:none;}
+}
+@media print{
+  .lp-atmo,.lp-mote{display:none !important;}
+  html.lp-on [data-lp]{transform:none !important;}
+}

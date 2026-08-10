@@ -39,9 +39,9 @@ BLOQUES = [
     '67_catalog.css', '68_catalog.js', '69_names.js', '70_names.css',
     '64_logos.css', '71_pens.css', '41_label.css', '51_profile.css',
     '52_card.css', '62_dive.css', '71_search.css', '72_nav.css',
-    '30_motion.css', '65_mobile.css', '82_door.css',
+    '30_motion.css', '65_mobile.css', '82_door.css', '83_lineplx.css',
     '50_profile.js', '31_motion.js', '63_dive.js', '70_search.js',
-    '66_mobile.js', '82_door.js',
+    '66_mobile.js', '82_door.js', '83_lineplx.js', '84_sinpepx.js',
 ]
 
 # La copia de referencia: lo que había en el fichero construido la última vez

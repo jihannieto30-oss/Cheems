@@ -3492,6 +3492,133 @@ nav .links a.px-door .nw{
   #mmenu .inner a.px-door{opacity:.9;}
 }
 
+
+/* 83_lineplx.css */
+/* ============================================================================
+   PEPTIDEX — PARALLAX DE LÍNEA
+
+   Sólo vive dentro de `html.lp-on`, y esa clase sólo está puesta mientras la
+   ruta es /fitness, /beauty o /longevity. Fuera de ahí, este fichero no
+   selecciona nada: la portada, ciencia, calidad, herramientas, pedidos y el
+   pie siguen exactamente como estaban, que es la condición.
+
+   Por qué una capa aparte y no tocar el gobernador de movimiento: el
+   gobernador existe porque la web se atascaba en el móvil, y sigue teniendo
+   razón en todo lo que hace. Lo que cambia no es su criterio — es que hay un
+   sitio, uno solo, donde el movimiento es el producto.
+   ============================================================================ */
+
+/* Las tintas de cada línea, tomadas de los lockups entregados: grafito en
+   FITNESS, oro rosa en BEAUTY, plata en LONGEVITY. NO se tocan `--line` ni
+   `L.theme`, que son los colores que ya usa el resto del sitio: esto es un
+   canal nuevo, sólo para la luz de esta vista. */
+html.lp-on{--lp:#8A8F98; --lp2:#C9CDD4;}
+html.lp-on[data-lp-key="fitness"]  {--lp:#3A3F47; --lp2:#9AA1AB;}
+html.lp-on[data-lp-key="beauty"]   {--lp:#B87351; --lp2:#E7B79A;}
+html.lp-on[data-lp-key="longevity"]{--lp:#9AA3AD; --lp2:#DFE4EA;}
+
+/* CUÁNTA LUZ. Éste es el único número que hay que tocar para que la
+   atmósfera se note más o menos, y está aquí arriba a propósito.
+
+   Va en 34 % porque se afinó a ciegas: la tienda no arranca sin conexión —
+   carga GSAP, Lenis y Three desde unpkg— así que esto se calibró sobre un
+   banco de pruebas con marcadores grises, no sobre la página de verdad. Sobre
+   el fondo real puede pedir más o menos. Un número, un sitio.
+
+   Por debajo de 20 no se distingue una línea de otra y sobra la capa entera.
+   Por encima de 55 deja de ser luz y empieza a ser una mancha de color, que
+   es exactamente lo que no queremos: la marca es de acabado, no de tinte. */
+html.lp-on{--lp-fuerza:34%; --lp-fuerza2:26%;}
+
+/* --------------------------------------------------------------------------
+   1 · La atmósfera
+
+   Un campo de luz detrás de todo, del color de la línea. Es lo que hace que
+   entrar a FITNESS y entrar a BEAUTY no se sientan igual, y es la capa más
+   profunda: la que menos se mueve por pantalla y más tarde llega.
+   -------------------------------------------------------------------------- */
+.lp-atmo{
+  position:absolute; inset:-14% -10%; z-index:0;
+  pointer-events:none; opacity:0;
+  transition:opacity .9s cubic-bezier(.22,1,.36,1);
+  will-change:transform;
+  background:
+    radial-gradient(52% 46% at 28% 32%, color-mix(in srgb, var(--lp) var(--lp-fuerza), transparent), transparent 68%),
+    radial-gradient(44% 40% at 76% 66%, color-mix(in srgb, var(--lp2) var(--lp-fuerza2), transparent), transparent 70%);
+  filter:blur(14px);
+}
+html.lp-ready .lp-atmo{opacity:1;}
+
+/* El grano: seis motas muy tenues a distintas profundidades. Sin esto la
+   atmósfera es un degradado bonito y plano; con esto tiene aire dentro. */
+.lp-mote{
+  position:absolute; z-index:0; pointer-events:none;
+  width:3px; height:3px; border-radius:50%;
+  background:var(--lp2); opacity:0;
+  transition:opacity 1.4s ease;
+  will-change:transform;
+}
+html.lp-ready .lp-mote{opacity:.5;}
+
+/* La sección de línea pasa a ser el marco de todo esto. `isolation` crea un
+   contexto de apilado propio, para que la atmósfera no se cuele por debajo de
+   la navegación ni por encima del contenido. */
+html.lp-on .lhero{position:relative; isolation:isolate; overflow:hidden;}
+html.lp-on .lhero .wrap{position:relative; z-index:1;}
+
+/* --------------------------------------------------------------------------
+   2 · Las capas que se mueven
+
+   `will-change` sólo mientras la vista está activa. Dejarlo puesto siempre
+   obliga al navegador a mantener una capa de composición por elemento aunque
+   nadie la esté moviendo, y eso es memoria de vídeo regalada — justo lo que
+   hacía que el móvil se atascara.
+   -------------------------------------------------------------------------- */
+html.lp-on [data-lp]{will-change:transform;}
+
+/* EL LOCKUP NO SE DEFORMA. Se traslada y nada más: ni rotación, ni escala, ni
+   inclinación, ni filtro, ni mezcla. La pieza que llegó es la que se ve.
+   Esto no es prudencia — es que el logotipo es lo único de esta pantalla que
+   no se puede rehacer si sale mal. */
+html.lp-on .lhero .badge{
+  transform-origin:center center;
+  filter:none !important;
+  mix-blend-mode:normal !important;
+}
+
+/* --------------------------------------------------------------------------
+   3 · Las tarjetas de compuesto: inclinación 3D con brillo especular
+
+   El brillo sigue al cursor dentro de la tarjeta. Es lo que hace que la
+   superficie se lea como material y no como un rectángulo con sombra.
+   -------------------------------------------------------------------------- */
+html.lp-on .pcard{transform-style:preserve-3d;}
+html.lp-on .pcard .lp-glow{
+  position:absolute; inset:0; border-radius:inherit;
+  pointer-events:none; opacity:0;
+  transition:opacity .3s ease;
+  mix-blend-mode:soft-light;
+}
+html.lp-on .pcard.lp-tilt .lp-glow{opacity:1;}
+
+/* --------------------------------------------------------------------------
+   4 · Cuándo NO se hace nada de esto
+
+   Tres casos, y los tres mandan sobre lo anterior: quien pidió menos
+   movimiento en su sistema, la pantalla táctil estrecha —donde el parallax de
+   puntero no existe y el de scroll compite con el dedo—, y la impresión.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion:reduce){
+  html.lp-on [data-lp],
+  html.lp-on .lp-atmo,
+  html.lp-on .lp-mote{transform:none !important; transition:none !important;}
+  html.lp-on .lp-mote{display:none;}
+}
+@media print{
+  .lp-atmo,.lp-mote{display:none !important;}
+  html.lp-on [data-lp]{transform:none !important;}
+}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest"/>
@@ -11020,6 +11147,445 @@ if('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations){
     }
   }).catch(() => {});
 }
+
+})();
+
+
+/* 83_lineplx.js */
+/* ============================================================================
+   PEPTIDEX — PARALLAX DE LÍNEA
+
+   Se enciende al entrar a /fitness, /beauty o /longevity, y se apaga entero al
+   salir. Fuera de esas tres rutas este fichero no mueve absolutamente nada:
+   ni un escuchador puesto, ni un `transform` escrito, ni un `will-change`
+   colgado. Ésa es la condición y está comprobada en el desmontaje.
+
+   POR QUÉ NO SE TOCA EL GOBERNADOR DE MOVIMIENTO
+
+   `31_motion.js` quitó el parallax de toda la web porque el móvil se atascaba,
+   y sigue teniendo razón: una capa de composición por elemento, mantenida en
+   todas las pantallas, es memoria de vídeo regalada. Lo que cambia no es su
+   criterio — es que hay UN sitio donde el movimiento es el producto y no el
+   adorno. Así que esta capa:
+
+     · usa su propio atributo, `data-lp`, que el gobernador no mira. Si usara
+       `data-par` se lo quitaría en el siguiente repintado.
+     · usa sus propios elementos para la atmósfera, en vez de disputarle
+       `.halo`. Dos motores escribiendo el mismo `style.transform` es un
+       parpadeo garantizado.
+     · mide una vez, en reposo, y luego sólo lee el scroll. El motor original
+       leía `getBoundingClientRect()` de cada elemento dentro del bucle de
+       escritura, lo que fuerza un cálculo de maquetación por elemento y por
+       cuadro, y además realimenta la posición que acaba de escribir.
+
+   QUÉ HACE EL LOGOTIPO
+
+   Se traslada. Nada más. Ni rota, ni escala, ni se inclina, ni se filtra. Es
+   la única pieza de esta pantalla que no se puede rehacer si sale mal.
+   ============================================================================ */
+(function(){
+'use strict';
+
+var LINEAS = {fitness:1, beauty:1, longevity:1};
+
+/* Lo que se mueve, y cuánto. `d` es profundidad para el scroll; `m`, cuánto
+   responde al puntero. Los números salen de una idea física: lo que está
+   lejos se mueve poco y llega tarde; lo que está cerca, al revés.
+
+   El lockup va deliberadamente BAJO en las dos: es el ancla de la pantalla.
+   Si se mueve como la atmósfera, la marca flota; y una marca que flota no
+   parece cara, parece suelta. */
+var CAPAS = [
+  ['.lp-atmo',        0.030, 26],   /* el fondo de luz: el que menos se mueve */
+  ['.lhero .badge',   0.055,  7],   /* el logotipo. Sólo traslación. */
+  ['.lhero .copy p',  0.085, 12],
+  ['.lhero .copy .usa', 0.105, 16],
+  ['.lhero .stage',   0.070, 20],   /* el vial se mueve por su contenedor */
+  ['.cat .chead',     0.060,  8]
+];
+
+var MOTAS = 6;
+
+var vivo = false, clave = null, raf = null, medido = false;
+var capas = [], motas = [], tarjetas = [];
+var px = 0, py = 0, sx = 0, sy = 0;   /* puntero crudo y suavizado */
+var quieto = null;
+
+function reduce(){
+  try{ return matchMedia('(prefers-reduced-motion:reduce)').matches; }catch(e){ return false; }
+}
+function estrecha(){
+  try{ return matchMedia('(max-width:760px)').matches; }catch(e){ return false; }
+}
+
+/* --------------------------------------------------------------------------
+   La atmósfera, inyectada. No vive en el HTML de la línea porque el HTML de la
+   línea lo genera `lineHTML()`, que es del sitio y no se toca.
+   -------------------------------------------------------------------------- */
+function ponAtmosfera(hero){
+  var a = document.createElement('div');
+  a.className = 'lp-atmo';
+  a.setAttribute('aria-hidden', 'true');
+  hero.insertBefore(a, hero.firstChild);
+
+  motas = [];
+  if(!estrecha()){
+    for(var i = 0; i < MOTAS; i++){
+      var m = document.createElement('span');
+      m.className = 'lp-mote';
+      m.setAttribute('aria-hidden', 'true');
+      /* Repartidas con una secuencia fija, no al azar: si cambian de sitio en
+         cada visita, la pantalla no se reconoce al volver. */
+      m.style.left = (11 + (i * 37) % 78) + '%';
+      m.style.top  = (17 + (i * 53) % 66) + '%';
+      hero.insertBefore(m, hero.firstChild);
+      motas.push({el: m, d: 0.02 + (i % 3) * 0.018, m: 30 + (i % 3) * 22});
+    }
+  }
+  return a;
+}
+
+/* --------------------------------------------------------------------------
+   Medir una vez, en reposo. Se guarda el centro de cada elemento en
+   coordenadas del documento; a partir de ahí todo sale del scroll.
+   -------------------------------------------------------------------------- */
+function mide(){
+  var sc = window.scrollY || window.pageYOffset || 0;
+  capas.concat(motas).forEach(function(c){
+    var prev = c.el.style.transform;
+    c.el.style.transform = 'none';
+    var r = c.el.getBoundingClientRect();
+    c.centro = r.top + sc + r.height / 2;
+    c.el.style.transform = prev;
+    c.tf = null;
+  });
+  medido = true;
+}
+
+function cuadro(){
+  raf = null;
+  if(!vivo) return;
+
+  sx += (px - sx) * 0.07;
+  sy += (py - sy) * 0.07;
+
+  var sc = window.scrollY || window.pageYOffset || 0;
+  var vh = innerHeight;
+  var mueve = false;
+
+  var todas = capas.concat(motas);
+  for(var i = 0; i < todas.length; i++){
+    var c = todas[i];
+    if(c.centro === undefined) continue;
+    var ty = -(c.centro - sc - vh / 2) * c.d;
+    var tx = sx * c.m;
+    var tfy = sy * c.m * 0.45;
+    var tf = 'translate3d(' + tx.toFixed(2) + 'px,' + (ty + tfy).toFixed(2) + 'px,0)';
+    if(c.tf !== tf){ c.tf = tf; c.el.style.transform = tf; mueve = true; }
+  }
+
+  /* Sigue pidiendo cuadros mientras algo se mueva o mientras el puntero no
+     haya terminado de asentarse. Cuando todo llega, el bucle se para solo: un
+     rAF eterno sobre una pantalla quieta es batería quemada por nada. */
+  if(mueve || Math.abs(px - sx) > 0.0015 || Math.abs(py - sy) > 0.0015) pide();
+}
+
+function pide(){ if(!raf && vivo) raf = requestAnimationFrame(cuadro); }
+
+function alPuntero(e){
+  px = e.clientX / innerWidth - 0.5;
+  py = e.clientY / innerHeight - 0.5;
+  pide();
+}
+function alGiro(e){
+  if(e.gamma == null && e.beta == null) return;
+  px = Math.max(-26, Math.min(26, e.gamma || 0)) / 52;
+  py = Math.max(-26, Math.min(26, (e.beta || 0) - 42)) / 52;
+  pide();
+}
+function alScroll(){ pide(); }
+function alTamano(){
+  clearTimeout(quieto);
+  quieto = setTimeout(function(){ if(vivo){ mide(); pide(); } }, 160);
+}
+
+/* --------------------------------------------------------------------------
+   Las tarjetas: inclinación 3D y brillo especular siguiendo al cursor.
+
+   Sólo con ratón. En táctil el puntero está donde está el dedo, así que la
+   tarjeta se inclinaría justo debajo de lo que se quiere tocar.
+   -------------------------------------------------------------------------- */
+function inclina(card){
+  var glow = document.createElement('span');
+  glow.className = 'lp-glow';
+  glow.setAttribute('aria-hidden', 'true');
+  card.appendChild(glow);
+
+  var rx = 0, ry = 0, tx = 0, ty = 0, r2 = null, dentro = false;
+
+  function paso(){
+    rx += (tx - rx) * 0.17;
+    ry += (ty - ry) * 0.17;
+    if(!dentro && Math.abs(rx) < 0.05 && Math.abs(ry) < 0.05){
+      r2 = null;
+      card.style.transform = '';
+      card.classList.remove('lp-tilt');
+      glow.style.background = '';
+      return;
+    }
+    card.style.transform = 'perspective(900px) rotateX(' + rx.toFixed(2) +
+                           'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+    r2 = requestAnimationFrame(paso);
+  }
+
+  function mover(e){
+    if(e.pointerType === 'touch') return;
+    var r = card.getBoundingClientRect();
+    var nx = (e.clientX - r.left) / r.width - 0.5;
+    var ny = (e.clientY - r.top) / r.height - 0.5;
+    tx = -ny * 6; ty = nx * 8;
+    dentro = true;
+    card.classList.add('lp-tilt');
+    glow.style.background = 'radial-gradient(circle at ' +
+      (25 + (nx + 0.5) * 50).toFixed(1) + '% ' + (25 + (ny + 0.5) * 50).toFixed(1) +
+      '%, color-mix(in srgb, var(--lp2) 42%, transparent), transparent 56%)';
+    if(!r2) r2 = requestAnimationFrame(paso);
+  }
+  function salir(){ dentro = false; tx = 0; ty = 0; if(!r2) r2 = requestAnimationFrame(paso); }
+
+  card.addEventListener('pointermove', mover);
+  card.addEventListener('pointerleave', salir);
+  tarjetas.push({el: card, glow: glow, mover: mover, salir: salir,
+                 para: function(){ if(r2) cancelAnimationFrame(r2); }});
+}
+
+/* --------------------------------------------------------------------------
+   Encender y apagar
+   -------------------------------------------------------------------------- */
+function enciende(k){
+  var hero = document.querySelector('.lhero');
+  if(!hero || vivo) return;
+
+  vivo = true; clave = k;
+  var raiz = document.documentElement;
+  raiz.classList.add('lp-on');
+  raiz.setAttribute('data-lp-key', k);
+
+  var atmo = ponAtmosfera(hero);
+
+  capas = [];
+  CAPAS.forEach(function(def){
+    var el = def[0] === '.lp-atmo' ? atmo : document.querySelector(def[0]);
+    if(!el) return;
+    el.setAttribute('data-lp', '');
+    capas.push({el: el, d: def[1], m: def[2]});
+  });
+
+  if(!estrecha())
+    document.querySelectorAll('.cat .pcard').forEach(inclina);
+
+  addEventListener('scroll', alScroll, {passive: true});
+  addEventListener('resize', alTamano, {passive: true});
+  if(!estrecha()) addEventListener('mousemove', alPuntero, {passive: true});
+  else addEventListener('deviceorientation', alGiro, {passive: true});
+
+  /* Medir después de que el navegador haya maquetado y las imágenes tengan
+     caja. Medir antes da centros a cero y la primera pasada salta. */
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      if(!vivo) return;
+      mide();
+      raiz.classList.add('lp-ready');
+      pide();
+    });
+  });
+}
+
+function apaga(){
+  if(!vivo) return;
+  vivo = false; clave = null; medido = false;
+
+  if(raf){ cancelAnimationFrame(raf); raf = null; }
+  clearTimeout(quieto);
+
+  removeEventListener('scroll', alScroll);
+  removeEventListener('resize', alTamano);
+  removeEventListener('mousemove', alPuntero);
+  removeEventListener('deviceorientation', alGiro);
+
+  /* Se borra lo escrito. Dejar un `transform` puesto en un elemento que el
+     sitio va a reutilizar es la forma más silenciosa de romper otra pantalla:
+     no da error, sólo deja algo tres píxeles fuera de sitio para siempre. */
+  capas.forEach(function(c){
+    c.el.removeAttribute('data-lp');
+    c.el.style.transform = '';
+    c.el.style.willChange = '';
+  });
+  tarjetas.forEach(function(t){
+    t.para();
+    t.el.removeEventListener('pointermove', t.mover);
+    t.el.removeEventListener('pointerleave', t.salir);
+    t.el.classList.remove('lp-tilt');
+    t.el.style.transform = '';
+    if(t.glow && t.glow.parentNode) t.glow.parentNode.removeChild(t.glow);
+  });
+  document.querySelectorAll('.lp-atmo,.lp-mote').forEach(function(e){
+    if(e.parentNode) e.parentNode.removeChild(e);
+  });
+
+  capas = []; motas = []; tarjetas = [];
+  px = py = sx = sy = 0;
+
+  var raiz = document.documentElement;
+  raiz.classList.remove('lp-on', 'lp-ready');
+  raiz.removeAttribute('data-lp-key');
+}
+
+/* --------------------------------------------------------------------------
+   Engancharse a la ruta
+   -------------------------------------------------------------------------- */
+function claveDe(){
+  var r = '';
+  try{ r = currentRoute(); }catch(e){ r = (location.hash || '').replace('#', ''); }
+  var k = String(r || '').replace(/^\//, '').split(/[?#]/)[0];
+  return LINEAS[k] ? k : null;
+}
+
+function revisa(){
+  if(reduce()){ apaga(); return; }
+  var k = claveDe();
+  if(!k){ apaga(); return; }
+  if(vivo && k === clave) return;   /* misma línea, ya montado */
+  apaga();
+  enciende(k);
+}
+
+/* El sitio repinta con `render`; hay que esperar a que el DOM nuevo exista. */
+if(typeof render === 'function'){
+  var _render = render;
+  render = function(a, b){
+    apaga();                                   /* lo viejo se va antes */
+    var r = _render(a, b);
+    requestAnimationFrame(revisa);
+    return r;
+  };
+}
+addEventListener('hashchange', function(){ requestAnimationFrame(revisa); });
+
+/* Y la primera pantalla, si se abrió ya dentro de una línea. */
+requestAnimationFrame(revisa);
+
+/* el arnés mira por aquí; el sitio nunca */
+window.__pxLinePlx = {
+  activo: function(){ return vivo; },
+  clave:  function(){ return clave; },
+  capas:  function(){ return capas.length; },
+  motas:  function(){ return motas.length; },
+  tarjetas: function(){ return tarjetas.length; },
+  revisa: revisa, apaga: apaga
+};
+
+})();
+
+
+/* 84_sinpepx.js */
+/* ============================================================================
+   FUERA PEPX DE LA TIENDA
+
+   PepX es otro producto. Vive en `web/pepx/`, con su propio fichero, su propio
+   manifiesto y su propio trabajador de servicio. La tienda no lo anuncia, no
+   lo enlaza y no lo contiene.
+
+   POR QUÉ SE QUITA EN EJECUCIÓN Y NO SE BORRA DEL FICHERO
+
+   Porque el fichero no se puede reconstruir. `build_restore.py` necesita
+   `PEPTIDEX.base.html` y `ls_master/`, y ninguno de los dos existe ya. Dentro
+   de esos 5,6 MB hay dos cosas de PepX: una puerta vieja —anterior a
+   `82_door.js`, escrita directamente en el fichero base— y la aplicación
+   entera embebida, de cuando PepX vivía dentro de la tienda.
+
+   Recortar eso a mano de un HTML de 5,6 MB, sin fuente, es la clase de
+   operación que sale bien nueve de cada diez veces. La décima deja la tienda
+   rota y sin forma de volver atrás.
+
+   Así que se desmonta: se quitan los enlaces cuando aparecen, se cierra la
+   ruta y se tapa lo que quede. Para quien abre la web, PepX no está. Cuando
+   aparezca el fichero base, esto se sustituye por el recorte de verdad y este
+   fichero se borra.
+
+   LO QUE SÍ SE CONSERVA, Y NO ES UN OLVIDO
+
+   El retiro del trabajador de servicio viejo de `82_door.js`. Aquel trabajador
+   quedó registrado en la RAÍZ, con alcance sobre todo el dominio, y mientras
+   siga ahí sirve el índice de la tienda a quien pida cualquier otra cosa sin
+   conexión. Eso es una avería activa en los navegadores que ya lo tienen, y
+   quitar el anuncio de PepX no la cura.
+   ============================================================================ */
+(function(){
+'use strict';
+
+/* Todo lo que anuncia o lleva a la app. La puerta vieja usa `#/app` y
+   `data-route="/app"`; la nueva, `.px-door` y `href="pepx/"`. Se cubren las
+   dos porque las dos están dentro del fichero. */
+var SEL = '.px-door,[data-route="/app"],a[href="#/app"],a[href="pepx/"],' +
+          'a[href="/pepx/"],a[href$="/pepx/index.html"]';
+
+function limpia(){
+  var n = 0;
+  document.querySelectorAll(SEL).forEach(function(a){
+    if(a.parentNode){ a.parentNode.removeChild(a); n++; }
+  });
+  return n;
+}
+
+/* La puerta vieja y la nueva se reinyectan con un `setInterval` durante unos
+   diez segundos, esperando a que la barra termine de construirse. Un
+   `MutationObserver` gana esa carrera sin encuestar: cuando algo aparece, se
+   quita en el mismo ciclo, antes de pintarse. */
+var obs = null;
+function vigila(){
+  if(obs || !window.MutationObserver) return;
+  obs = new MutationObserver(function(muts){
+    for(var i = 0; i < muts.length; i++){
+      if(muts[i].addedNodes && muts[i].addedNodes.length){ limpia(); return; }
+    }
+  });
+  obs.observe(document.documentElement, {childList: true, subtree: true});
+}
+
+/* La ruta. Quien tenga `#/app` en un marcador aterriza en la portada, no en
+   una pantalla a medias ni en un enlace a otro producto. */
+function cierraRuta(){
+  var r = String(location.hash || '').replace('#', '').replace(/^\//, '');
+  if(r === 'app'){
+    location.replace(location.pathname + location.search + '#/');
+    return true;
+  }
+  return false;
+}
+
+/* Y lo que no sea un enlace: cualquier resto de la app embebida que el sitio
+   pinte por su cuenta. Se tapa por CSS en vez de borrarse del árbol, porque el
+   enrutador de la tienda cuenta con que sus contenedores existan. */
+function tapa(){
+  if(document.getElementById('px-sinpepx')) return;
+  var st = document.createElement('style');
+  st.id = 'px-sinpepx';
+  st.textContent =
+    '.px-door,[data-route="/app"],a[href="#/app"],a[href="pepx/"]{display:none !important}' +
+    '#app,#pepx,.pepx-app,.abar{display:none !important}';
+  document.head.appendChild(st);
+}
+
+cierraRuta();
+addEventListener('hashchange', cierraRuta);
+tapa();
+limpia();
+vigila();
+/* Una barrida más tarde, por si algo se pinta después de que esto corra. */
+addEventListener('load', limpia);
+
+window.__pxSinPepX = {limpia: limpia};
 
 })();
 
