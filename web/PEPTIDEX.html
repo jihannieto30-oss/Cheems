@@ -11564,16 +11564,30 @@ function cierraRuta(){
   return false;
 }
 
-/* Y lo que no sea un enlace: cualquier resto de la app embebida que el sitio
-   pinte por su cuenta. Se tapa por CSS en vez de borrarse del árbol, porque el
-   enrutador de la tienda cuenta con que sus contenedores existan. */
+/* Y lo que no sea un enlace: los restos visibles de la app embebida.
+
+   AQUÍ HUBO UN FALLO GRAVE Y SE DEJA ESCRITO PARA NO REPETIRLO.
+
+   La primera versión tapaba `#app`, dando por hecho que sería el contenedor de
+   la app de PepX. No lo es: `<div id="app">` es la RAÍZ DE LA TIENDA ENTERA —
+   `const app = document.getElementById('app')` es donde el sitio pinta todo lo
+   que se ve. La regla dejó la web en blanco.
+
+   La lección no es «se me escapó un selector». Es que un selector amplio
+   —`#app`, `.main`, `#root`— escrito contra un fichero de 5,6 MB que no se
+   puede abrir entero es una apuesta, y aquí se apostó y se perdió. Sólo se
+   nombran marcas inequívocas de PepX, y ninguna genérica.
+
+   `.abar` sí lo es: es la barra superior de la app, la que lleva
+   `<span class="mark"><b>PepX</b><i>PEPTIDEX</i></span>`, y no aparece en
+   ninguna otra parte de la tienda. */
 function tapa(){
   if(document.getElementById('px-sinpepx')) return;
   var st = document.createElement('style');
   st.id = 'px-sinpepx';
   st.textContent =
     '.px-door,[data-route="/app"],a[href="#/app"],a[href="pepx/"]{display:none !important}' +
-    '#app,#pepx,.pepx-app,.abar{display:none !important}';
+    '.abar{display:none !important}';
   document.head.appendChild(st);
 }
 
