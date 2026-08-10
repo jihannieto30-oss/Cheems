@@ -2,6 +2,7 @@ import { KNOWLEDGE } from './knowledge'
 import { getDetail } from './details'
 import { SOLUTIONS } from './solutions'
 import { TAXONOMY } from './taxonomy'
+import { CATALOG, SECTIONS, FORMS } from './catalog'
 
 /*
   Single entry point for reading the corpus. Pages go through here so the
@@ -9,7 +10,73 @@ import { TAXONOMY } from './taxonomy'
   (details.js) stays an implementation detail.
 */
 
-const BY_ID = new Map(KNOWLEDGE.map((r) => [r.id, r]))
+/*
+  The catalogue is part of the search corpus, not a separate island: typing a
+  designation has to find it whether or not a full sheet exists yet.
+
+  Records already written by hand in knowledge.js win — a catalogue row would
+  otherwise shadow the richer entry with the same designation.
+*/
+const SECTION_LABEL = new Map(SECTIONS.map((s) => [s.slug, s.en]))
+const KNOWN_TITLES = new Set(KNOWLEDGE.map((r) => r.title.toUpperCase()))
+
+const KIND_FOR = (item) => {
+  if (item.section === 'brazing') return 'BRAZING ALLOY'
+  return item.forms.includes('E') && !item.forms.includes('W') ? 'ELECTRODE' : 'FILLER METAL'
+}
+
+// Catalogue rows map onto the same record shape the search UI already renders.
+const CATALOG_RECORDS = CATALOG.filter((c) => !KNOWN_TITLES.has(c.designation.toUpperCase())).map(
+  (item) => {
+    const forms = item.forms.map((f) => FORMS[f].en)
+    return {
+      id: item.id,
+      title: item.designation,
+      kind: KIND_FOR(item),
+      category: 'materials',
+      path: ['CATALOGUE', (SECTION_LABEL.get(item.section) ?? '').toUpperCase(), forms.join(' · ').toUpperCase()],
+      spec: item.spec,
+      summary: item.note,
+      facets: [
+        { k: 'PROCESS', v: item.process },
+        { k: 'FORM', v: forms.join(' · ') },
+        { k: 'SPEC', v: item.spec },
+        { k: 'SHEET', v: item.sheet ? 'Published' : 'Pending' },
+      ],
+      tags: [
+        item.section.replace('-', ' '),
+        item.process.toLowerCase(),
+        item.spec.toLowerCase(),
+        ...forms.map((f) => f.toLowerCase()),
+        'catalogue',
+      ],
+      catalogue: item,
+    }
+  },
+)
+
+/** Everything the search engine can return. */
+export const ALL_RECORDS = [...KNOWLEDGE, ...CATALOG_RECORDS]
+
+/** Pre-flattened match surface, built once at module load. */
+export const SEARCHABLE = ALL_RECORDS.map((record) => ({
+  record,
+  haystack: [
+    record.title,
+    record.kind,
+    record.spec ?? '',
+    record.summary,
+    record.path.join(' '),
+    record.tags.join(' '),
+    record.facets.map((f) => `${f.k} ${f.v}`).join(' '),
+  ]
+    .join(' ')
+    .toLowerCase(),
+  titleLower: record.title.toLowerCase(),
+  tagSet: new Set(record.tags.map((t) => t.toLowerCase())),
+}))
+
+const BY_ID = new Map(ALL_RECORDS.map((r) => [r.id, r]))
 const SOLUTION_BY_ID = new Map(SOLUTIONS.map((s) => [s.id, s]))
 
 /** A record with its detail sheet and, for defects, its diagnostic chain. */
@@ -29,10 +96,14 @@ export function hasRecord(id) {
 
 /** Same taxonomy root, excluding the record itself. */
 export function relatedTo(record, limit = 5) {
-  return KNOWLEDGE.filter((r) => r.id !== record.id && r.category === record.category).slice(
-    0,
-    limit,
-  )
+  // Prefer a catalogue sibling from the same section, then fall back to the
+  // taxonomy category, so a filler metal relates to its own alloy family
+  // rather than to whatever else happens to be filed under MATERIALS.
+  const section = record.catalogue?.section
+  const pool = section
+    ? ALL_RECORDS.filter((r) => r.catalogue?.section === section)
+    : ALL_RECORDS.filter((r) => r.category === record.category && !r.catalogue)
+  return pool.filter((r) => r.id !== record.id).slice(0, limit)
 }
 
 /*

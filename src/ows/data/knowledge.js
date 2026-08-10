@@ -777,21 +777,3 @@ export const KNOWLEDGE = [
     tags: ['magnetic particle', 'flux leakage', 'yoke', 'wet fluorescent', 'ndt', 'nde'],
   },
 ]
-
-/** Pre-flattened match surface, built once at module load. */
-export const SEARCHABLE = KNOWLEDGE.map((record) => ({
-  record,
-  haystack: [
-    record.title,
-    record.kind,
-    record.spec ?? '',
-    record.summary,
-    record.path.join(' '),
-    record.tags.join(' '),
-    record.facets.map((f) => `${f.k} ${f.v}`).join(' '),
-  ]
-    .join(' ')
-    .toLowerCase(),
-  titleLower: record.title.toLowerCase(),
-  tagSet: new Set(record.tags.map((t) => t.toLowerCase())),
-}))

@@ -5,33 +5,47 @@
        production build, so it fails invisibly. -->
   <div class="home">
     <!-- ── 01 · HERO ───────────────────────────────────────────────────────
-         Deliberately the simplest screen in the product: a label, a field, and
-         the arc. No headline, no proposition, no navigation into content. -->
+         One line, one field, the nomenclature it accepts. Nothing else: no
+         section links, no popular searches, no explanation of the product. -->
     <section class="hero">
-    <!-- The arc burns in the lower third — clear of the search block so the
-         field stays legible, but high enough that the core is fully in frame
-         rather than bleeding off the bottom edge. -->
-    <ArcScene :depth="12" :density="6" :origin-y="0.79" />
+      <!--
+        Order matters. ArcScene paints on an opaque canvas — it needs one for
+        the frame-fade that draws the spark trails — so it must sit at the
+        back, or it blacks out anything layered beneath it. The cascade's
+        canvas is transparent and clears each frame, so it goes on top: the
+        standards fall through the arc light rather than behind it.
+      -->
+      <ArcScene :depth="10" :density="3" :origin-y="0.94" :intensity="0.5" />
+      <StandardsCascade :depth="16" />
 
-    <div class="hero__rail" aria-hidden="true">
-      <span class="hero__rail-num ows-num">01</span>
-      <span class="hero__rail-line" />
-      <span class="hero__rail-word">SCROLL</span>
-    </div>
-
-    <div class="hero__center">
-      <p class="hero__label">SEARCH KNOWLEDGE</p>
-      <div class="hero__field">
-        <SearchField size="lg" />
+      <div class="hero__rail" aria-hidden="true">
+        <span class="hero__rail-num ows-num">01</span>
+        <span class="hero__rail-line" />
+        <span class="hero__rail-word">SCROLL</span>
       </div>
-      <PopularSearches class="hero__popular" />
-    </div>
 
-    <div class="hero__foot ows-shell">
-      <span class="hero__ticks" aria-hidden="true"><i /><i /></span>
-      <span class="hero__claim">// EXPERT KNOWLEDGE. REAL SOLUTIONS.</span>
-    </div>
-  </section>
+      <div class="hero__center">
+        <h1 class="hero__title">WELCOME TO A NEW WORLD</h1>
+
+        <div class="hero__field">
+          <SearchField size="lg" placeholder="Enter welding designation…" />
+        </div>
+
+        <!-- The nomenclature line is the whole proposition: one field, every
+             standard. It replaces any sentence explaining what this is. -->
+        <div class="hero__nomen">
+          <p class="hero__nomen-label">TYPE NOMENCLATURE</p>
+          <ul class="hero__nomen-list">
+            <li v-for="s in standards" :key="s">{{ s }}</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="hero__foot ows-shell">
+        <span class="hero__ticks" aria-hidden="true"><i /><i /></span>
+        <span class="hero__claim">// EXPERT KNOWLEDGE. REAL SOLUTIONS.</span>
+      </div>
+    </section>
 
   <!-- ── 02 · WHAT IT DOES ─────────────────────────────────────────────── -->
   <section class="pillars">
@@ -86,8 +100,12 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import ArcScene from '../components/ArcScene.vue'
+import StandardsCascade from '../components/StandardsCascade.vue'
 import SearchField from '../components/SearchField.vue'
-import PopularSearches from '../components/PopularSearches.vue'
+
+// The standards the index resolves against — the same set that falls in the
+// cascade behind the hero.
+const standards = ['AWS', 'EN ISO', 'DIN', 'JIS', 'CN', 'W.Nr', 'AISI', 'CWB', 'ASME SFA', 'ASTM']
 
 const pillars = [
   {
@@ -142,24 +160,66 @@ const pillars = [
   width: 100%;
 }
 
-.hero__label {
-  font-size: var(--ows-t-meta);
-  letter-spacing: var(--ows-track-label);
+.hero__title {
+  font-size: clamp(1.5rem, 4.4vw, 3.25rem);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: var(--ows-track-hero);
   text-transform: uppercase;
   color: var(--ows-ink);
+  text-align: center;
+  /* Cancels the trailing space letter-spacing adds after the final glyph, so
+     the line is optically centred rather than sitting slightly left. */
+  margin-right: calc(var(--ows-track-hero) * -1);
   opacity: 0;
-  animation: rise 1.1s var(--ows-ease) 240ms forwards;
+  animation: rise 1.2s var(--ows-ease) 240ms forwards;
 }
 
 .hero__field {
   width: min(100%, 46rem);
   opacity: 0;
-  animation: rise 1.1s var(--ows-ease) 380ms forwards;
+  animation: rise 1.1s var(--ows-ease) 420ms forwards;
 }
 
-.hero__popular {
+.hero__nomen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
   opacity: 0;
-  animation: rise 1.1s var(--ows-ease) 540ms forwards;
+  animation: rise 1.1s var(--ows-ease) 600ms forwards;
+}
+
+.hero__nomen-label {
+  font-size: var(--ows-t-micro);
+  letter-spacing: var(--ows-track-label);
+  color: var(--ows-ink-faint);
+}
+
+.hero__nomen-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.375rem 0.875rem;
+  max-width: 46rem;
+}
+
+.hero__nomen-list li {
+  font-size: var(--ows-t-meta);
+  letter-spacing: 0.14em;
+  color: var(--ows-ink-muted);
+  position: relative;
+}
+
+/* Hairline separators between designations, none after the last. */
+.hero__nomen-list li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -0.5rem;
+  top: 0.35em;
+  bottom: 0.35em;
+  width: 1px;
+  background: var(--ows-line);
 }
 
 @keyframes rise {
@@ -408,9 +468,9 @@ const pillars = [
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero__label,
+  .hero__title,
   .hero__field,
-  .hero__popular,
+  .hero__nomen,
   .hero__foot {
     opacity: 1;
     animation: none;

@@ -6,7 +6,7 @@
 
     <nav class="nav__links" aria-label="Primary">
       <RouterLink class="nav__link" to="/search">Search</RouterLink>
-      <RouterLink class="nav__link" to="/browse/materials">Results</RouterLink>
+      <RouterLink class="nav__link" to="/catalog">Catalogue</RouterLink>
     </nav>
 
     <button class="nav__toggle" :aria-expanded="open" aria-controls="ows-menu" @click="open = !open">

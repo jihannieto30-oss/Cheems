@@ -4,6 +4,7 @@ import HomePage from '../pages/HomePage.vue'
 import SearchPage from '../pages/SearchPage.vue'
 import RecordPage from '../pages/RecordPage.vue'
 import BrowsePage from '../pages/BrowsePage.vue'
+import CatalogPage from '../pages/CatalogPage.vue'
 import AboutPage from '../pages/AboutPage.vue'
 import NotFoundPage from '../pages/NotFoundPage.vue'
 
@@ -11,6 +12,7 @@ import NotFoundPage from '../pages/NotFoundPage.vue'
   Every view is its own URL — nothing is a scroll position on the home page.
 
       /                     home
+      /catalog              product catalogue by section
       /search?q=…           results
       /record/:id           technical record
       /browse/:facet        materials · processes · standards · documents · guides
@@ -31,6 +33,7 @@ const routes = [
   { path: '/', name: 'home', component: HomePage, meta: { scene: true } },
   { path: '/search', name: 'search', component: SearchPage, meta: { title: 'Search' } },
   { path: '/record/:id', name: 'record', component: RecordPage },
+  { path: '/catalog', name: 'catalog', component: CatalogPage, meta: { title: 'Catalogue' } },
   { path: '/browse/:facet', name: 'browse', component: BrowsePage },
   { path: '/about', name: 'about', component: AboutPage, meta: { title: 'About' } },
   {

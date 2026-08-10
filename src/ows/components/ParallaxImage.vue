@@ -2,6 +2,7 @@
   <figure ref="frame" class="pxi" :class="{ 'pxi--loaded': loaded }">
     <img
       class="pxi__img"
+      :class="{ 'pxi__img--mono': mono }"
       :src="src"
       :alt="alt"
       :style="{ '--depth': depth, '--scale': scale }"
@@ -38,6 +39,13 @@ defineProps({
   /** 0–1 black wash over the image. */
   scrim: { type: Number, default: 0.3 },
   hairlines: { type: Boolean, default: true },
+  /*
+    Desaturate to protect the palette. On by default so any photography dropped
+    in later cannot break the monochrome scheme — but turned OFF for product
+    art, where copper is what the consumable actually is and stripping it makes
+    the range read as concept rather than catalogue.
+  */
+  mono: { type: Boolean, default: true },
 })
 
 const frame = useParallax()
@@ -67,8 +75,12 @@ const loaded = ref(false)
   will-change: transform;
   opacity: 0;
   transition: opacity 1.2s var(--ows-ease);
-  /* Any residual colour in a replacement photograph is removed here, so the
-     palette holds no matter what asset is dropped in. */
+  filter: contrast(1.06);
+}
+
+/* Any residual colour in a replacement photograph is removed here, so the
+   palette holds no matter what asset is dropped in. */
+.pxi__img--mono {
   filter: grayscale(1) contrast(1.06);
 }
 

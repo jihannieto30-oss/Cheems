@@ -27,6 +27,7 @@ import { FACETS } from '../data'
 const emit = defineEmits(['close'])
 
 const items = [
+  { label: 'Catalogue', to: '/catalog' },
   ...FACETS.map((f) => ({ label: f.label, to: `/browse/${f.slug}` })),
   { label: 'About', to: '/about' },
 ]

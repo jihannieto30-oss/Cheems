@@ -31,6 +31,7 @@ const columns = [
   {
     title: 'Index',
     links: [
+      { label: 'Catalogue', to: '/catalog' },
       { label: 'Materials', to: '/browse/materials' },
       { label: 'Processes', to: '/browse/processes' },
       { label: 'Standards', to: '/browse/standards' },

@@ -1,4 +1,4 @@
-import { SEARCHABLE } from '../data/knowledge'
+import { SEARCHABLE } from '../data'
 
 /*
   Search provider contract

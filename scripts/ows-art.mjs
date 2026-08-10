@@ -327,8 +327,188 @@ function section() {
   <rect width="${W}" height="${H}" fill="url(#vigd)"/>`)
 }
 
+/*
+  ── PRODUCT ART ───────────────────────────────────────────────────────────
+  Varilla, rollo, electrodo — the three forms from the product sheet.
+
+  These are the only artwork that carries colour. Copper is what the product
+  actually is, and the brand's own product photography shows it; rendering the
+  consumables in greyscale would make them read as concept art rather than as
+  something you can order. Everything around them stays monochrome.
+
+  The realism comes from one trick used consistently: a cylinder is a rect with
+  a linear gradient across its short axis (dark → specular → mid → dark), and a
+  light source fixed to the upper left for every object on the page.
+*/
+
+/** Cylindrical shading across a horizontal bar. */
+const cylinderStops = (dark, mid, hot) => `
+    <stop offset="0%" stop-color="${dark}"/>
+    <stop offset="18%" stop-color="${mid}"/>
+    <stop offset="34%" stop-color="${hot}"/>
+    <stop offset="46%" stop-color="${mid}"/>
+    <stop offset="78%" stop-color="${dark}"/>
+    <stop offset="100%" stop-color="#000"/>`
+
+/* ------------------------------------------------------------------ rod.svg
+   Varilla — a bundle of copper-coated rods, cut ends toward the viewer. */
+function rod() {
+  const r = rng(7781)
+  const rodR = 26 // radius in local units
+  const len = 1500
+  const rows = 6
+  const perRow = [7, 8, 7, 6, 4, 2]
+
+  const bars = []
+  const caps = []
+  let idx = 0
+  for (let row = 0; row < rows; row++) {
+    const y = row * (rodR * 1.72)
+    const offset = (row % 2) * rodR
+    for (let i = 0; i < perRow[row]; i++) {
+      const x = i * (rodR * 2 + 2) + offset
+      // Slight per-rod variation stops the bundle reading as a printed pattern.
+      const jitter = (r() - 0.5) * 5
+      const shade = 0.82 + r() * 0.32
+      bars.push(
+        `<g transform="translate(${n(x)},${n(y + jitter)})" opacity="${n(Math.min(1, shade), 2)}">` +
+          `<rect x="0" y="${-rodR}" width="${len}" height="${rodR * 2}" fill="url(#cu)"/>` +
+          `</g>`,
+      )
+      // Cut face: bare steel, not copper — the coating is only on the flank.
+      caps.push(
+        `<g transform="translate(${n(x)},${n(y + jitter)})">` +
+          `<ellipse cx="0" cy="0" rx="${n(rodR * 0.42)}" ry="${rodR}" fill="url(#cut)"/>` +
+          `<ellipse cx="0" cy="0" rx="${n(rodR * 0.42)}" ry="${rodR}" fill="none" stroke="#d8d2c8" stroke-opacity="0.5" stroke-width="1.6"/>` +
+          `<ellipse cx="${n(-rodR * 0.1)}" cy="${n(-rodR * 0.3)}" rx="${n(rodR * 0.16)}" ry="${n(rodR * 0.34)}" fill="#fff" fill-opacity="0.22"/>` +
+          `</g>`,
+      )
+      idx++
+    }
+  }
+
+  return svg(`
+  <defs>
+    <linearGradient id="cu" x1="0" y1="0" x2="0" y2="1">
+      ${cylinderStops('#3d2110', '#a8642c', '#e5a463')}
+    </linearGradient>
+    <linearGradient id="cut" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#b9b4ab"/>
+      <stop offset="45%" stop-color="#7c7871"/>
+      <stop offset="100%" stop-color="#3a3833"/>
+    </linearGradient>
+    <linearGradient id="rodFade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="62%" stop-color="#000" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="1"/>
+    </linearGradient>
+    ${vignette('vigr', 0.3)}
+    ${grain('grr', 0.9)}
+  </defs>
+
+  <rect width="${W}" height="${H}" fill="#000"/>
+  <ellipse cx="620" cy="820" rx="480" ry="52" fill="#000" fill-opacity="0.85"/>
+
+  <!-- The bundle runs away from the viewer to the upper right. -->
+  <g transform="translate(250,700) rotate(-16)">
+    <g>${bars.join('')}</g>
+    <rect x="0" y="-60" width="${len}" height="600" fill="url(#rodFade)"/>
+    <g>${caps.join('')}</g>
+  </g>
+
+  <rect width="${W}" height="${H}" fill="url(#vigr)"/>
+  <rect width="${W}" height="${H}" filter="url(#grr)" opacity="0.05" style="mix-blend-mode:overlay"/>`)
+}
+
+/* ------------------------------------------------------------ electrode.svg
+   Electrodo — covered electrodes leaving an opened box. */
+function electrode() {
+  const r = rng(3319)
+  const eR = 27
+  const len = 980
+  const rows = [5, 4, 3]
+
+  const sticks = []
+  for (let row = rows.length - 1; row >= 0; row--) {
+    const y = row * (eR * 1.9)
+    const offset = (row % 2) * eR
+    for (let i = 0; i < rows[row]; i++) {
+      const x = i * (eR * 2 + 7) + offset
+      const jitter = (r() - 0.5) * 7
+      // Flux covering stops short of the striking end, leaving bare core.
+      sticks.push(
+        `<g transform="translate(${n(x)},${n(y + jitter)})">` +
+          `<rect x="0" y="${-eR}" width="${len}" height="${eR * 2}" fill="url(#flux)"/>` +
+          // faint longitudinal seam, the way extruded covering actually looks
+          `<rect x="0" y="${n(-eR * 0.52)}" width="${len}" height="1.4" fill="#fff" fill-opacity="0.05"/>` +
+          `<rect x="${-118}" y="${n(-eR * 0.4)}" width="122" height="${n(eR * 0.8)}" fill="url(#core)"/>` +
+          `<ellipse cx="${-118}" cy="0" rx="${n(eR * 0.16)}" ry="${n(eR * 0.4)}" fill="#6f6b64"/>` +
+          `<ellipse cx="0" cy="0" rx="${n(eR * 0.3)}" ry="${eR}" fill="#8d8880"/>` +
+          `<ellipse cx="${n(-eR * 0.06)}" cy="${n(-eR * 0.3)}" rx="${n(eR * 0.13)}" ry="${n(eR * 0.34)}" fill="#fff" fill-opacity="0.14"/>` +
+          `</g>`,
+      )
+    }
+  }
+
+  return svg(`
+  <defs>
+    <!-- Matte: the covering is a pressed mineral flux, so the highlight is
+         broad and dull. A tight specular reads as chromed tube instead. -->
+    <linearGradient id="flux" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#100f0d"/>
+      <stop offset="20%" stop-color="#4a453d"/>
+      <stop offset="40%" stop-color="#8b8478"/>
+      <stop offset="58%" stop-color="#6a655c"/>
+      <stop offset="82%" stop-color="#26241f"/>
+      <stop offset="100%" stop-color="#000"/>
+    </linearGradient>
+    <linearGradient id="core" x1="0" y1="0" x2="0" y2="1">
+      ${cylinderStops('#1c1c1c', '#6e6e6e', '#a8a8a8')}
+    </linearGradient>
+    <linearGradient id="boxFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1c1c1c"/>
+      <stop offset="55%" stop-color="#0c0c0c"/>
+      <stop offset="100%" stop-color="#000"/>
+    </linearGradient>
+    <linearGradient id="boxLid" x1="0" y1="0" x2="1" y2="0.5">
+      <stop offset="0%" stop-color="#343434"/>
+      <stop offset="45%" stop-color="#1a1a1a"/>
+      <stop offset="100%" stop-color="#060606"/>
+    </linearGradient>
+    <linearGradient id="eFade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="55%" stop-color="#000" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="1"/>
+    </linearGradient>
+    ${vignette('vige', 0.3)}
+    ${grain('gre', 0.9)}
+  </defs>
+
+  <rect width="${W}" height="${H}" fill="#000"/>
+  <ellipse cx="720" cy="850" rx="540" ry="56" fill="#000" fill-opacity="0.85"/>
+
+  <g transform="translate(230,600) rotate(-13)">
+    <!-- carton behind and below the sticks -->
+    <path d="M250 -186 L${len + 60} -186 L${len + 60} 250 L250 250 Z" fill="url(#boxFront)"/>
+    <path d="M250 250 L${len + 60} 250" stroke="#fff" stroke-opacity="0.09" stroke-width="2"/>
+
+    <g>${sticks.join('')}</g>
+    <rect x="220" y="-230" width="${len}" height="520" fill="url(#eFade)"/>
+
+    <!-- lid, brand rule and legend -->
+    <path d="M232 -188 L${len + 80} -188 L${len + 80} -84 L232 -84 Z" fill="url(#boxLid)"/>
+    <path d="M232 -188 L${len + 80} -188" stroke="#fff" stroke-opacity="0.2" stroke-width="2.5"/>
+    <path d="M232 -84 L${len + 80} -84" stroke="#000" stroke-opacity="0.9" stroke-width="3"/>
+    <rect x="470" y="-124" width="440" height="6" fill="#e10600"/>
+    <text x="470" y="-140" fill="#fff" fill-opacity="0.62" font-family="ui-monospace,monospace" font-size="28" letter-spacing="8">WELDING ELECTRODES</text>
+  </g>
+
+  <rect width="${W}" height="${H}" fill="url(#vige)"/>
+  <rect width="${W}" height="${H}" filter="url(#gre)" opacity="0.05" style="mix-blend-mode:overlay"/>`)
+}
+
 /* ---------------------------------------------------------------- spool.svg
-   A wire spool, three-quarter. The lead visual on filler-metal records. */
+   Rollo — black spool wound with copper-coated MIG wire. */
 function spool() {
   const r = rng(20260810)
   const cx = 800
@@ -339,30 +519,49 @@ function spool() {
   const flangeRx = 62
   const barrelRy = 214
 
-  // Wire winds read as densely packed vertical lines across the barrel.
+  // Individual copper winds. Spacing near the wire diameter is what sells it:
+  // too coarse and it reads as a striped drum, too fine and it turns to noise.
   const winds = []
-  for (let x = x0 + 4; x < x1 - 4; x += 3.1) {
-    const edge = Math.min(x - x0, x1 - x) / (x1 - x0)
-    const lit = Math.pow(Math.sin((x - x0) / (x1 - x0) * Math.PI), 0.6)
-    const op = n(0.06 + lit * 0.4 + r() * 0.1, 3)
-    const jitter = (r() - 0.5) * 3
+  for (let x = x0 + 3; x < x1 - 3; x += 3.4) {
+    const t = (x - x0) / (x1 - x0)
+    const lit = Math.pow(Math.sin(t * Math.PI), 0.55)
+    const jitter = (r() - 0.5) * 2.5
+    const shade = 0.28 + lit * 0.72
+    const cR = Math.round(70 + shade * 175)
+    const cG = Math.round(38 + shade * 118)
+    const cB = Math.round(18 + shade * 66)
     winds.push(
-      `<line x1="${n(x)}" y1="${n(cy - barrelRy + jitter)}" x2="${n(x)}" y2="${n(cy + barrelRy + jitter)}" stroke="#fff" stroke-opacity="${op}" stroke-width="${n(0.8 + edge * 1.1)}"/>`,
+      `<line x1="${n(x)}" y1="${n(cy - barrelRy + jitter)}" x2="${n(x)}" y2="${n(cy + barrelRy + jitter)}" stroke="rgb(${cR},${cG},${cB})" stroke-width="2.6"/>`,
+    )
+    // Specular thread running along the top of each wind.
+    if (lit > 0.55)
+      winds.push(
+        `<line x1="${n(x)}" y1="${n(cy - barrelRy * 0.72)}" x2="${n(x)}" y2="${n(cy - barrelRy * 0.1)}" stroke="#ffd9a8" stroke-opacity="${n((lit - 0.55) * 0.7, 3)}" stroke-width="1.4"/>`,
+      )
+  }
+
+  // Horizontal seams where one winding pass meets the next.
+  const layers = []
+  for (let i = 1; i < 7; i++) {
+    const yy = cy - barrelRy + (i / 7) * barrelRy * 2 + (r() - 0.5) * 8
+    const op = n(0.1 + r() * 0.16, 3)
+    layers.push(
+      `<line x1="${x0 + 2}" y1="${n(yy)}" x2="${x1 - 2}" y2="${n(yy + (r() - 0.5) * 5)}" stroke="#0d0703" stroke-opacity="${op}" stroke-width="${n(2 + r() * 3)}"/>`,
+      `<line x1="${x0 + 2}" y1="${n(yy - 2.5)}" x2="${x1 - 2}" y2="${n(yy - 2.5)}" stroke="#ffbe86" stroke-opacity="${n(op * 0.5, 3)}" stroke-width="1"/>`,
     )
   }
 
   return svg(`
   <defs>
-    <linearGradient id="barrel" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#050505"/>
-      <stop offset="26%" stop-color="#232323"/>
-      <stop offset="46%" stop-color="#3a3a3a"/>
-      <stop offset="70%" stop-color="#1b1b1b"/>
-      <stop offset="100%" stop-color="#030303"/>
+    <linearGradient id="barrelShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.72"/>
+      <stop offset="26%" stop-color="#000" stop-opacity="0.05"/>
+      <stop offset="62%" stop-color="#000" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.82"/>
     </linearGradient>
-    <radialGradient id="flangeFace" cx="38%" cy="32%" r="80%">
-      <stop offset="0%" stop-color="#2a2a2a"/>
-      <stop offset="55%" stop-color="#121212"/>
+    <radialGradient id="flangeFace" cx="34%" cy="28%" r="82%">
+      <stop offset="0%" stop-color="#2b2b2b"/>
+      <stop offset="42%" stop-color="#131313"/>
       <stop offset="100%" stop-color="#000"/>
     </radialGradient>
     <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
@@ -375,21 +574,40 @@ function spool() {
 
   <rect width="${W}" height="${H}" fill="#000"/>
   <rect y="${cy + flangeRy - 40}" width="${W}" height="${H - cy - flangeRy + 40}" fill="url(#floor)"/>
-  <ellipse cx="${cx}" cy="${cy + flangeRy - 6}" rx="330" ry="34" fill="#000" fill-opacity="0.8"/>
+  <ellipse cx="${cx}" cy="${cy + flangeRy - 6}" rx="330" ry="34" fill="#000" fill-opacity="0.85"/>
 
-  <!-- barrel of wound wire -->
-  <rect x="${x0}" y="${cy - barrelRy}" width="${x1 - x0}" height="${barrelRy * 2}" fill="url(#barrel)"/>
+  <!-- wound copper wire between the flanges -->
+  <rect x="${x0}" y="${cy - barrelRy}" width="${x1 - x0}" height="${barrelRy * 2}" fill="#1a0e05"/>
   <g>${winds.join('')}</g>
+  <!-- Layer edges. A spool is wound in passes, and the seam between passes is
+       the cue that separates "wound wire" from "striped drum". -->
+  <g>${layers.join('')}</g>
+  <rect x="${x0}" y="${cy - barrelRy}" width="${x1 - x0}" height="${barrelRy * 2}" fill="url(#barrelShade)"/>
 
-  <!-- rear flange edge, then the near one over the winds -->
-  <ellipse cx="${x1}" cy="${cy}" rx="${flangeRx}" ry="${flangeRy}" fill="url(#flangeFace)" stroke="#fff" stroke-opacity="0.09"/>
-  <ellipse cx="${x0}" cy="${cy}" rx="${flangeRx}" ry="${flangeRy}" fill="url(#flangeFace)" stroke="#fff" stroke-opacity="0.16"/>
-  <ellipse cx="${x0}" cy="${cy}" rx="${n(flangeRx * 0.42)}" ry="${n(flangeRy * 0.42)}" fill="none" stroke="#fff" stroke-opacity="0.12"/>
-  <ellipse cx="${x0}" cy="${cy}" rx="${n(flangeRx * 0.16)}" ry="${n(flangeRy * 0.16)}" fill="#000" stroke="#fff" stroke-opacity="0.2"/>
+  <!-- rear flange, then the near one over the winds -->
+  <ellipse cx="${x1}" cy="${cy}" rx="${flangeRx}" ry="${flangeRy}" fill="url(#flangeFace)" stroke="#fff" stroke-opacity="0.08"/>
+  <ellipse cx="${x0}" cy="${cy}" rx="${flangeRx}" ry="${flangeRy}" fill="url(#flangeFace)" stroke="#fff" stroke-opacity="0.18"/>
+
+  <!-- Moulded ribs radiating from the hub. Without them the flange reads as a
+       flat black oval rather than a formed plastic part. -->
+  ${Array.from({ length: 12 }, (_, i) => {
+    const a = (i / 12) * Math.PI * 2
+    const ix = x0 + Math.cos(a) * flangeRx * 0.34
+    const iy = cy + Math.sin(a) * flangeRy * 0.34
+    const ox = x0 + Math.cos(a) * flangeRx * 0.9
+    const oy = cy + Math.sin(a) * flangeRy * 0.9
+    const lit = n(0.05 + Math.max(0, Math.cos(a - 2.4)) * 0.13, 3)
+    return `<line x1="${n(ix)}" y1="${n(iy)}" x2="${n(ox)}" y2="${n(oy)}" stroke="#fff" stroke-opacity="${lit}" stroke-width="2"/>`
+  }).join('')}
+
+  <!-- hub: locating ring, brand rule, centre bore -->
+  <ellipse cx="${x0}" cy="${cy}" rx="${n(flangeRx * 0.5)}" ry="${n(flangeRy * 0.5)}" fill="none" stroke="#fff" stroke-opacity="0.1" stroke-width="1.5"/>
+  <path d="M${n(x0 - flangeRx * 0.34)} ${n(cy + flangeRy * 0.56)} A ${n(flangeRx * 0.62)} ${n(flangeRy * 0.62)} 0 0 0 ${n(x0 - flangeRx * 0.34)} ${n(cy - flangeRy * 0.56)}" stroke="#e10600" stroke-opacity="0.85" stroke-width="4" fill="none"/>
+  <ellipse cx="${x0}" cy="${cy}" rx="${n(flangeRx * 0.2)}" ry="${n(flangeRy * 0.2)}" fill="#000" stroke="#fff" stroke-opacity="0.22" stroke-width="1.5"/>
 
   <!-- rim light down the leading edge -->
-  <path d="M${x0} ${cy - flangeRy} A ${flangeRx} ${flangeRy} 0 0 0 ${x0} ${cy + flangeRy}" stroke="#fff" stroke-opacity="0.34" stroke-width="2" fill="none"/>
-  <path d="M${x0 + 6} ${cy - barrelRy} L${x1 - 6} ${cy - barrelRy}" stroke="#fff" stroke-opacity="0.2" stroke-width="1.5"/>
+  <path d="M${x0} ${cy - flangeRy} A ${flangeRx} ${flangeRy} 0 0 0 ${x0} ${cy + flangeRy}" stroke="#fff" stroke-opacity="0.36" stroke-width="2.5" fill="none"/>
+  <path d="M${x0 + 6} ${cy - barrelRy} L${x1 - 6} ${cy - barrelRy}" stroke="#ffcf9a" stroke-opacity="0.28" stroke-width="1.5"/>
 
   <rect width="${W}" height="${H}" fill="url(#vigw)"/>
   <rect width="${W}" height="${H}" filter="url(#grw)" opacity="0.05" style="mix-blend-mode:overlay"/>`)
@@ -416,6 +634,8 @@ const files = {
   'stock.svg': stock(),
   'section.svg': section(),
   'spool.svg': spool(),
+  'rod.svg': rod(),
+  'electrode.svg': electrode(),
   'mark.svg': mark(),
 }
 for (const [name, content] of Object.entries(files)) {
