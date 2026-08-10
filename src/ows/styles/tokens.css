@@ -1,0 +1,84 @@
+/*
+  ONLINE WELDING SUPPLY — design tokens
+  Monochrome only. No hue, no saturation, no accent colour.
+  Depth is built from luminance and hairlines, never from shadow or gradient colour.
+*/
+
+:root {
+  /* ---- surfaces (darkest → lightest) ---- */
+  --ows-void: #000000;
+  --ows-surface: #050505;
+  --ows-raised: #0a0a0a;
+  --ows-panel: #111111;
+  --ows-edge: #1a1a1a;
+
+  /* ---- ink ---- */
+  --ows-ink: #ffffff;
+  --ows-ink-muted: #a0a0a0;
+  --ows-ink-faint: #555555;
+
+  /* ---- hairlines: metal catches light, so lines are white at low alpha ---- */
+  --ows-line: rgba(255, 255, 255, 0.08);
+  --ows-line-soft: rgba(255, 255, 255, 0.045);
+  --ows-line-strong: rgba(255, 255, 255, 0.16);
+
+  /* ---- the only "glow" allowed: white light, barely there ---- */
+  --ows-glow-faint: rgba(255, 255, 255, 0.04);
+  --ows-glow: rgba(255, 255, 255, 0.1);
+  --ows-glow-hot: rgba(255, 255, 255, 0.22);
+
+  /* ---- type ----
+     Local-first stack. Nothing is fetched over the network: Inter/Geist are used
+     when the OS or browser already has them, otherwise we fall back through the
+     grotesque system faces, which share Helvetica's skeleton. */
+  --ows-sans:
+    'Inter', 'Geist', -apple-system, BlinkMacSystemFont, 'Helvetica Neue',
+    'Segoe UI', Roboto, Arial, sans-serif;
+  --ows-mono:
+    'Geist Mono', ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas,
+    monospace;
+
+  /* fluid display sizes — clamp keeps the hero calm on phones and vast on 4K */
+  --ows-t-display: clamp(2.25rem, 9vw, 7.5rem);
+  --ows-t-section: clamp(1.75rem, 6.2vw, 5.25rem);
+  --ows-t-lead: clamp(0.95rem, 1.4vw, 1.125rem);
+  --ows-t-body: clamp(0.875rem, 1.05vw, 0.9375rem);
+  --ows-t-meta: 0.6875rem;
+  --ows-t-micro: 0.625rem;
+
+  /* letterspacing — headings are spaced out to read as engraved, not typed */
+  --ows-track-display: 0.34em;
+  --ows-track-section: 0.3em;
+  --ows-track-meta: 0.22em;
+  --ows-track-body: 0.01em;
+
+  /* ---- rhythm ---- */
+  --ows-gutter: clamp(1.25rem, 5vw, 5.5rem);
+  --ows-measure: 34rem;
+  --ows-max: 96rem;
+
+  /* ---- motion ----
+     One easing curve for the whole site. Consistency reads as intent. */
+  --ows-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ows-ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+  --ows-fast: 220ms;
+  --ows-base: 520ms;
+  --ows-slow: 1100ms;
+
+  /* Parallax master gain. useReducedMotion drops this to 0 so every transform
+     that multiplies by it collapses to zero without touching component code. */
+  --ows-parallax: 1;
+
+  --ows-z-cursor: 90;
+  --ows-z-nav: 70;
+  --ows-z-overlay: 60;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ows-parallax: 0;
+    --ows-fast: 1ms;
+    --ows-base: 1ms;
+    --ows-slow: 1ms;
+  }
+}

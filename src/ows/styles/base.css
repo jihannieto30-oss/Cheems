@@ -1,0 +1,205 @@
+/* ONLINE WELDING SUPPLY — base layer */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--ows-void);
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Sections use scroll-snap-free sticky stacking; smooth scroll is opt-in only
+   where it does not fight the parallax rasteriser. */
+html:focus-within {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--ows-void);
+  color: var(--ows-ink-muted);
+  font-family: var(--ows-sans);
+  font-size: var(--ows-t-body);
+  line-height: 1.6;
+  letter-spacing: var(--ows-track-body);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote,
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input {
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Focus is never removed — only restyled to match the hairline language. */
+:focus-visible {
+  outline: 1px solid var(--ows-glow-hot);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--ows-ink);
+  color: var(--ows-void);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ows-void);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ows-edge);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ows-ink-faint);
+}
+
+/* ---- shared primitives ---- */
+
+.ows-shell {
+  width: 100%;
+  max-width: var(--ows-max);
+  margin-inline: auto;
+  padding-inline: var(--ows-gutter);
+}
+
+/* Section index numerals: "01", "02" … set in mono, tiny, engraved. */
+.ows-index {
+  font-family: var(--ows-mono);
+  font-size: var(--ows-t-meta);
+  letter-spacing: var(--ows-track-meta);
+  color: var(--ows-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.ows-meta {
+  font-family: var(--ows-mono);
+  font-size: var(--ows-t-micro);
+  letter-spacing: var(--ows-track-meta);
+  text-transform: uppercase;
+  color: var(--ows-ink-faint);
+}
+
+/* Headings are letterspaced hard. The trailing negative margin cancels the
+   trailing space that letter-spacing adds after the final glyph, so optically
+   centred text is actually centred. */
+.ows-display {
+  font-size: var(--ows-t-display);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: var(--ows-track-display);
+  text-transform: uppercase;
+  color: var(--ows-ink);
+  margin-right: calc(var(--ows-track-display) * -1);
+}
+
+.ows-title {
+  font-size: var(--ows-t-section);
+  font-weight: 300;
+  line-height: 1.02;
+  letter-spacing: var(--ows-track-section);
+  text-transform: uppercase;
+  color: var(--ows-ink);
+  margin-right: calc(var(--ows-track-section) * -1);
+}
+
+.ows-rule {
+  height: 1px;
+  border: 0;
+  background: var(--ows-line);
+}
+
+/* ---- v-reveal ----
+   Only ever applied by the directive, and only when motion is allowed, so a
+   failed observer can never leave content stranded at opacity 0. */
+.is-reveal-pending,
+.is-revealed {
+  transition:
+    opacity var(--ows-slow) var(--ows-ease) var(--reveal-delay, 0ms),
+    transform var(--ows-slow) var(--ows-ease) var(--reveal-delay, 0ms),
+    clip-path var(--ows-slow) var(--ows-ease) var(--reveal-delay, 0ms);
+}
+
+.is-reveal-pending {
+  opacity: 0;
+  transform: translate3d(0, 1.5rem, 0);
+}
+
+.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Hide from sight, keep for screen readers. */
+.ows-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
