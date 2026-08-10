@@ -1,77 +1,97 @@
 /*
-  ONLINE WELDING SUPPLY — design tokens
-  Monochrome only. No hue, no saturation, no accent colour.
-  Depth is built from luminance and hairlines, never from shadow or gradient colour.
+  OWS — ONLINE WELDING SUPPLY
+  Design tokens, taken from the brand system.
+
+  Palette is the one declared in the system sheet: #E10600, #0A0A0A, #1A1A1A,
+  #FFFFFF. Red is an accent and only an accent — the OWS mark itself stays
+  white, per the identity sheet. It marks direction and state (arrows, active
+  tabs, rules, the arc) and never fills a surface.
 */
 
+/* Self-hosted so the page makes no external request and the type never
+   flashes a fallback. Variable weight 300-700, SIL OFL 1.1. */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/ows/fonts/space-grotesk-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/ows/fonts/space-grotesk-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 :root {
-  /* ---- surfaces (darkest → lightest) ---- */
+  /* ---- surfaces ---- */
   --ows-void: #000000;
-  --ows-surface: #050505;
-  --ows-raised: #0a0a0a;
+  --ows-surface: #0a0a0a;
   --ows-panel: #111111;
-  --ows-edge: #1a1a1a;
+  --ows-raised: #1a1a1a;
 
   /* ---- ink ---- */
   --ows-ink: #ffffff;
-  --ows-ink-muted: #a0a0a0;
-  --ows-ink-faint: #555555;
+  --ows-ink-muted: #9a9a9a;
+  --ows-ink-faint: #5a5a5a;
 
-  /* ---- hairlines: metal catches light, so lines are white at low alpha ---- */
-  --ows-line: rgba(255, 255, 255, 0.08);
-  --ows-line-soft: rgba(255, 255, 255, 0.045);
-  --ows-line-strong: rgba(255, 255, 255, 0.16);
+  /* ---- accent ---- */
+  --ows-red: #e10600;
+  --ows-red-bright: #ff2d20;
+  --ows-red-dim: rgba(225, 6, 0, 0.45);
+  --ows-red-wash: rgba(225, 6, 0, 0.08);
 
-  /* ---- the only "glow" allowed: white light, barely there ---- */
-  --ows-glow-faint: rgba(255, 255, 255, 0.04);
-  --ows-glow: rgba(255, 255, 255, 0.1);
-  --ows-glow-hot: rgba(255, 255, 255, 0.22);
+  /* ---- hairlines ---- */
+  --ows-line: rgba(255, 255, 255, 0.1);
+  --ows-line-soft: rgba(255, 255, 255, 0.055);
+  --ows-line-strong: rgba(255, 255, 255, 0.2);
 
-  /* ---- type ----
-     Local-first stack. Nothing is fetched over the network: Inter/Geist are used
-     when the OS or browser already has them, otherwise we fall back through the
-     grotesque system faces, which share Helvetica's skeleton. */
-  --ows-sans:
-    'Inter', 'Geist', -apple-system, BlinkMacSystemFont, 'Helvetica Neue',
-    'Segoe UI', Roboto, Arial, sans-serif;
-  --ows-mono:
-    'Geist Mono', ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas,
-    monospace;
+  /* ---- type ---- */
+  --ows-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, Arial, sans-serif;
+  --ows-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
 
-  /* fluid display sizes — clamp keeps the hero calm on phones and vast on 4K */
-  --ows-t-display: clamp(2.25rem, 9vw, 7.5rem);
-  --ows-t-section: clamp(1.75rem, 6.2vw, 5.25rem);
-  --ows-t-lead: clamp(0.95rem, 1.4vw, 1.125rem);
-  --ows-t-body: clamp(0.875rem, 1.05vw, 0.9375rem);
+  --ows-t-hero: clamp(2.25rem, 6.2vw, 5rem);
+  --ows-t-h2: clamp(1.5rem, 3.4vw, 2.75rem);
+  --ows-t-h3: clamp(1.75rem, 4vw, 3rem);
+  --ows-t-lead: clamp(0.9375rem, 1.2vw, 1.0625rem);
+  --ows-t-body: 0.875rem;
   --ows-t-meta: 0.6875rem;
   --ows-t-micro: 0.625rem;
 
-  /* letterspacing — headings are spaced out to read as engraved, not typed */
-  --ows-track-display: 0.34em;
-  --ows-track-section: 0.3em;
-  --ows-track-meta: 0.22em;
-  --ows-track-body: 0.01em;
+  --ows-track-hero: 0.16em;
+  --ows-track-label: 0.28em;
+  --ows-track-meta: 0.2em;
 
   /* ---- rhythm ---- */
-  --ows-gutter: clamp(1.25rem, 5vw, 5.5rem);
-  --ows-measure: 34rem;
-  --ows-max: 96rem;
+  --ows-gutter: clamp(1.25rem, 4.5vw, 4.5rem);
+  --ows-max: 90rem;
+  --ows-nav-h: 4.5rem;
 
-  /* ---- motion ----
-     One easing curve for the whole site. Consistency reads as intent. */
+  /* ---- motion ---- */
   --ows-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --ows-ease-io: cubic-bezier(0.65, 0, 0.35, 1);
-  --ows-fast: 220ms;
-  --ows-base: 520ms;
-  --ows-slow: 1100ms;
+  --ows-fast: 200ms;
+  --ows-base: 480ms;
+  --ows-slow: 900ms;
 
-  /* Parallax master gain. useReducedMotion drops this to 0 so every transform
-     that multiplies by it collapses to zero without touching component code. */
+  /* Parallax master gain; reduced-motion drops it to 0 so every transform
+     that multiplies by it collapses without touching component code. */
   --ows-parallax: 1;
 
-  --ows-z-cursor: 90;
+  --ows-z-scene: 0;
+  --ows-z-content: 1;
   --ows-z-nav: 70;
-  --ows-z-overlay: 60;
+  --ows-z-menu: 80;
 }
 
 @media (prefers-reduced-motion: reduce) {

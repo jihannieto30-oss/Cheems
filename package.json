@@ -11,7 +11,8 @@
     "standalone": "node scripts/ows-standalone.mjs"
   },
   "dependencies": {
-    "vue": "^3.5.34"
+    "vue": "^3.5.34",
+    "vue-router": "^5.2.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.6",

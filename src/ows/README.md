@@ -1,38 +1,92 @@
-# Online Welding Supply
+# OWS — Online Welding Supply
 
-A technical knowledge index for welding, fabrication and metallurgy. Black,
-search-first, and written for someone who already knows what `ER70S-6` means.
+The welding knowledge engine. Search materials, processes, standards and defect
+diagnosis in one index.
 
-Served at **`/ows/`**. It is a second Vite entry point alongside the existing
-Cheems app at `/` — separate HTML, separate root, separate CSS. Neither app
-imports from the other.
+Served at **`/ows/`** as a second Vite entry point alongside the Cheems app at
+`/`. Separate HTML, separate root, separate CSS; neither app imports the other.
+
+## Design system
+
+Taken from the brand sheets, not invented here.
+
+| Token      | Value                          | Use                                     |
+| ---------- | ------------------------------ | --------------------------------------- |
+| Surfaces   | `#000` `#0A0A0A` `#111` `#1A1A1A` | page, panels, rows                   |
+| Ink        | `#FFF` `#9A9A9A` `#5A5A5A`     | title, body, meta                       |
+| Accent     | `#E10600`                      | direction and state only — never a fill  |
+| Type       | Space Grotesk 300–700          | self-hosted, `public/ows/fonts`, SIL OFL |
+
+The OWS mark stays white in every placement, per the identity sheet. Red marks
+arrows, active tabs, rail position, the section tick and defect bullets. It is
+never used as a background or a large field.
+
+## Routes
+
+Real URLs, one view each — nothing is a scroll position on the home page.
+
+```
+/                    home      hero · pillars · position
+/search?q=…          results   tabbed, counted, URL-driven
+/record/:id          record    technical sheet
+/browse/:facet       index     materials · processes · standards · documents · guides
+/about               about
+```
+
+History mode when served over HTTP; **hash mode when opened from `file://`**,
+which is what makes the single-file build navigable.
+
+`vite.config.js` carries an `ows-spa-fallback` plugin, because Vite's own SPA
+fallback serves the **root** `index.html` for unmatched paths — which silently
+hands `/ows/search` to the Cheems app. The plugin rewrites extension-less
+`/ows/*` requests to the OWS shell for dev and preview, and emits
+`dist/ows/404.html`. Deploying elsewhere needs the equivalent rule:
+
+```
+Netlify   /ows/*  /ows/index.html  200
+nginx     location /ows/ { try_files $uri $uri/ /ows/index.html; }
+```
+
+## Two traps worth knowing about
+
+Both cost real debugging time and both fail **silently in a production build**:
+
+1. **Pages must have a single root element.** `OwsApp` wraps `<RouterView>` in a
+   `<Transition>`, and a multi-root page renders as nothing. The dev-only
+   warning is stripped from the production bundle.
+2. **No `mode="out-in"` on the route transition.** It holds the incoming page
+   until the outgoing one signals its leave transition finished; when that
+   signal never arrives the view is left empty on every navigation. The
+   transition is enter-only, and there is deliberately no `.page-leave-active`
+   rule in `styles/base.css`.
+
+Routes are imported eagerly for the same reason — lazy routes deadlock against
+the same transition, and the whole app is ~35 kB gzipped.
 
 ## Layout
 
 ```
 ows/index.html                 entry (declared in vite.config.js)
 src/ows/
-  main.js                      mounts OwsApp, registers v-reveal
-  OwsApp.vue                   composition root
-  styles/
-    tokens.css                 palette, type scale, motion — monochrome only
-    base.css                   reset, shared primitives, reveal states
+  main.js · OwsApp.vue · router/
+  pages/       Home · Search · Record · Browse · About · NotFound
   components/
-    SiteNav · SearchHero · SearchField · SearchResults
-    KnowledgeSection · MaterialsSection · ProcessesSection · SolutionsSection
-    SearchOutro · SiteFooter
-    SectionShell · ParallaxImage · TechnicalGrid · CursorLayer · BrandMark
-  composables/
-    useSearch                  search store (query, results, recents)
-    useParallax                shared rAF loop, writes `--p` per element
-    useReducedMotion · usePlaceholderMode
-  directives/reveal.js         v-reveal — progressive entrance with stagger
-  services/searchProvider.js   provider contract + local and HTTP providers
-  data/
-    taxonomy.js                the seven domains
-    knowledge.js               seed index (39 records)
-    solutions.js               defect → cause vectors → resolution
+    ArcScene         canvas particle field — the welding arc
+    SearchField      type-ahead, navigates to /search or straight to a record
+    ResultRow · PopularSearches · RecordVisual
+    SiteNav · MenuOverlay · SiteFooter · OwsMark · ParallaxImage
+  composables/  useSearch · useParallax · useReducedMotion
+  directives/   reveal
+  services/     searchProvider
+  data/         index (merge layer) · knowledge · details · solutions · taxonomy
 ```
+
+## Data
+
+`data/index.js` is the only entry point pages read from. It merges the flat
+search corpus (`knowledge.js`) with the technical sheet (`details.js`) and the
+defect chains (`solutions.js`), and derives the browse facets by predicate — a
+new record surfaces in its section with no list to update.
 
 ## Connecting a backend
 
@@ -44,40 +98,25 @@ provider.query(text, { limit, signal })
 ```
 
 `resolveProvider()` returns the local in-memory provider unless
-`VITE_OWS_SEARCH_ENDPOINT` is set, in which case it returns an HTTP provider
-pointed at that URL. Swapping in a database, a vector index or an LLM means
-returning that same shape — no component changes.
+`VITE_OWS_SEARCH_ENDPOINT` is set. Record `id` is the route segment.
 
-Records follow the shape documented at the top of `data/knowledge.js`. `id` is
-reserved as the future route segment.
+## The arc
 
-## Artwork
+`components/ArcScene.vue` draws the hero: an incandescent core, sparks that cool
+from white through amber to the brand red, drifting smoke, and a lit workpiece
+edge. Motion-blurred by fading the previous frame rather than clearing it.
 
-`public/ows/*.svg` is drawn, not photographed — generated by
-`scripts/ows-art.mjs` (`npm run art`). Vector keeps it crisp at any viewport,
-guaranteed monochrome, 3–7 kB gzipped each, and free of licensing questions.
-Output is deterministic: the PRNG is seeded, so regenerating produces an
-identical file.
+It is a **stand-in for photography**, chosen because it weighs nothing, animates,
+and reacts to scroll. To move to a real shoot, put the image behind the canvas
+and drop `density`. It suspends when scrolled out of view or the tab is hidden,
+and paints exactly one still frame under `prefers-reduced-motion`.
 
-To move to photography, drop a file in `public/ows/` and change the `src` prop
-on the relevant `ParallaxImage`. The component applies `grayscale(1)` itself, so
-the palette holds regardless of the source image.
+Still artwork (`public/ows/*.svg`) is generated by `scripts/ows-art.mjs`
+(`npm run art`) — deterministic, monochrome, 3–7 kB gzipped each.
 
 ## Motion
 
-`prefers-reduced-motion` is honoured in two places, and both are required:
-
-- `tokens.css` zeroes `--ows-parallax`, collapsing every CSS transform that
-  multiplies by it.
-- `useParallax` and the `v-reveal` directive skip their observers entirely, so
-  no rAF loop runs and content is shown immediately rather than waiting on an
-  intersection that will never animate.
-
-## Placeholder modes
-
-Two treatments are implemented and switchable at runtime:
-
-- `quiet` — one discreet word, always present (default)
-- `reveal` — empty until focus, then slowly cycling technical hints
-
-Select via `?placeholder=reveal` or the menu overlay; the choice persists.
+`prefers-reduced-motion` is honoured twice: `tokens.css` zeroes
+`--ows-parallax`, collapsing every CSS transform that multiplies by it, and the
+JS observers in `useParallax`, `reveal` and `ArcScene` skip their loops entirely
+rather than animating to zero.

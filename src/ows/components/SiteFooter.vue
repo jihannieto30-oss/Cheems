@@ -1,98 +1,121 @@
 <template>
-  <footer id="about" class="foot">
-    <div class="foot__inner ows-shell">
+  <footer class="foot">
+    <div class="foot__top ows-shell">
       <div class="foot__brand">
-        <BrandMark />
+        <OwsMark size="md" />
+        <p class="foot__claim">BUILT TO JOIN. BUILT TO LAST.</p>
       </div>
 
-      <nav class="foot__nav" aria-label="Sections">
-        <a v-for="link in links" :key="link.href" class="foot__link" :href="link.href">
-          {{ link.label }}
-        </a>
+      <nav v-for="col in columns" :key="col.title" class="foot__col" :aria-label="col.title">
+        <h2 class="foot__col-title">{{ col.title }}</h2>
+        <ul>
+          <li v-for="link in col.links" :key="link.label">
+            <RouterLink class="foot__link" :to="link.to">{{ link.label }}</RouterLink>
+          </li>
+        </ul>
       </nav>
+    </div>
 
-      <p class="foot__meta">
-        <span>{{ year }}</span>
-        <span class="foot__sep" aria-hidden="true" />
-        <span>TECHNICAL INDEX</span>
-      </p>
+    <div class="foot__bottom ows-shell">
+      <p class="ows-meta">© {{ year }} OWS · ONLINE WELDING SUPPLY</p>
+      <p class="ows-meta foot__sign">CONOCIMIENTO QUE UNE. SOLUCIONES QUE PERDURAN.</p>
     </div>
   </footer>
 </template>
 
 <script setup>
-import BrandMark from './BrandMark.vue'
+import { RouterLink } from 'vue-router'
+import OwsMark from './OwsMark.vue'
 
-const links = [
-  { label: 'KNOWLEDGE', href: '#knowledge' },
-  { label: 'MATERIALS', href: '#materials' },
-  { label: 'PROCESSES', href: '#processes' },
-  { label: 'SOLUTIONS', href: '#solutions' },
+const columns = [
+  {
+    title: 'Index',
+    links: [
+      { label: 'Materials', to: '/browse/materials' },
+      { label: 'Processes', to: '/browse/processes' },
+      { label: 'Standards', to: '/browse/standards' },
+    ],
+  },
+  {
+    title: 'Resources',
+    links: [
+      { label: 'Documents', to: '/browse/documents' },
+      { label: 'Guides', to: '/browse/guides' },
+      { label: 'Search', to: '/search' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [{ label: 'About', to: '/about' }],
+  },
 ]
 
 const year = new Date().getFullYear()
 </script>
 
 <style scoped>
-/* Black on black: the footer is felt as a boundary before it is read. */
 .foot {
   position: relative;
-  z-index: 1;
+  z-index: var(--ows-z-content);
   background: var(--ows-surface);
   border-top: 1px solid var(--ows-line-soft);
-  padding-block: clamp(3rem, 8vh, 5rem);
 }
 
-.foot__inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem 3rem;
-  flex-wrap: wrap;
+.foot__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: 2.5rem;
+  padding-block: clamp(2.5rem, 7vh, 4rem);
 }
 
-.foot__nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 2rem;
-  /* Cancels the links' own vertical padding so the row keeps its optical height. */
-  margin-block: -0.375rem;
-}
-
-.foot__link {
-  padding-block: 0.375rem;
-  font-family: var(--ows-mono);
+.foot__claim {
+  margin-top: 1rem;
   font-size: var(--ows-t-micro);
   letter-spacing: var(--ows-track-meta);
   color: var(--ows-ink-faint);
-  transition: color var(--ows-base) var(--ows-ease);
+}
+
+.foot__col-title {
+  font-size: var(--ows-t-micro);
+  font-weight: 500;
+  letter-spacing: var(--ows-track-label);
+  text-transform: uppercase;
+  color: var(--ows-ink);
+  margin-bottom: 1rem;
+}
+
+.foot__link {
+  display: inline-block;
+  padding-block: 0.375rem;
+  font-size: var(--ows-t-body);
+  color: var(--ows-ink-faint);
+  transition: color var(--ows-fast) var(--ows-ease);
 }
 
 .foot__link:hover {
   color: var(--ows-ink);
 }
 
-.foot__meta {
+.foot__bottom {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
-  font-family: var(--ows-mono);
-  font-size: var(--ows-t-micro);
-  letter-spacing: var(--ows-track-meta);
+  justify-content: space-between;
+  gap: 0.75rem 2rem;
+  padding-block: 1.25rem;
+  border-top: 1px solid var(--ows-line-soft);
+}
+
+.foot__sign {
   color: var(--ows-ink-faint);
 }
 
-.foot__sep {
-  width: 1.5rem;
-  height: 1px;
-  background: var(--ows-line);
-}
-
-@media (max-width: 52rem) {
-  .foot__inner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2rem;
+@media (max-width: 60rem) {
+  .foot__top {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .foot__brand {
+    grid-column: 1 / -1;
   }
 }
 </style>

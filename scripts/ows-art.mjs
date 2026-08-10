@@ -327,6 +327,74 @@ function section() {
   <rect width="${W}" height="${H}" fill="url(#vigd)"/>`)
 }
 
+/* ---------------------------------------------------------------- spool.svg
+   A wire spool, three-quarter. The lead visual on filler-metal records. */
+function spool() {
+  const r = rng(20260810)
+  const cx = 800
+  const cy = 600
+  const x0 = 540
+  const x1 = 1060
+  const flangeRy = 300
+  const flangeRx = 62
+  const barrelRy = 214
+
+  // Wire winds read as densely packed vertical lines across the barrel.
+  const winds = []
+  for (let x = x0 + 4; x < x1 - 4; x += 3.1) {
+    const edge = Math.min(x - x0, x1 - x) / (x1 - x0)
+    const lit = Math.pow(Math.sin((x - x0) / (x1 - x0) * Math.PI), 0.6)
+    const op = n(0.06 + lit * 0.4 + r() * 0.1, 3)
+    const jitter = (r() - 0.5) * 3
+    winds.push(
+      `<line x1="${n(x)}" y1="${n(cy - barrelRy + jitter)}" x2="${n(x)}" y2="${n(cy + barrelRy + jitter)}" stroke="#fff" stroke-opacity="${op}" stroke-width="${n(0.8 + edge * 1.1)}"/>`,
+    )
+  }
+
+  return svg(`
+  <defs>
+    <linearGradient id="barrel" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#050505"/>
+      <stop offset="26%" stop-color="#232323"/>
+      <stop offset="46%" stop-color="#3a3a3a"/>
+      <stop offset="70%" stop-color="#1b1b1b"/>
+      <stop offset="100%" stop-color="#030303"/>
+    </linearGradient>
+    <radialGradient id="flangeFace" cx="38%" cy="32%" r="80%">
+      <stop offset="0%" stop-color="#2a2a2a"/>
+      <stop offset="55%" stop-color="#121212"/>
+      <stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d0d0d"/>
+      <stop offset="100%" stop-color="#000"/>
+    </linearGradient>
+    ${vignette('vigw', 0.24)}
+    ${grain('grw', 0.9)}
+  </defs>
+
+  <rect width="${W}" height="${H}" fill="#000"/>
+  <rect y="${cy + flangeRy - 40}" width="${W}" height="${H - cy - flangeRy + 40}" fill="url(#floor)"/>
+  <ellipse cx="${cx}" cy="${cy + flangeRy - 6}" rx="330" ry="34" fill="#000" fill-opacity="0.8"/>
+
+  <!-- barrel of wound wire -->
+  <rect x="${x0}" y="${cy - barrelRy}" width="${x1 - x0}" height="${barrelRy * 2}" fill="url(#barrel)"/>
+  <g>${winds.join('')}</g>
+
+  <!-- rear flange edge, then the near one over the winds -->
+  <ellipse cx="${x1}" cy="${cy}" rx="${flangeRx}" ry="${flangeRy}" fill="url(#flangeFace)" stroke="#fff" stroke-opacity="0.09"/>
+  <ellipse cx="${x0}" cy="${cy}" rx="${flangeRx}" ry="${flangeRy}" fill="url(#flangeFace)" stroke="#fff" stroke-opacity="0.16"/>
+  <ellipse cx="${x0}" cy="${cy}" rx="${n(flangeRx * 0.42)}" ry="${n(flangeRy * 0.42)}" fill="none" stroke="#fff" stroke-opacity="0.12"/>
+  <ellipse cx="${x0}" cy="${cy}" rx="${n(flangeRx * 0.16)}" ry="${n(flangeRy * 0.16)}" fill="#000" stroke="#fff" stroke-opacity="0.2"/>
+
+  <!-- rim light down the leading edge -->
+  <path d="M${x0} ${cy - flangeRy} A ${flangeRx} ${flangeRy} 0 0 0 ${x0} ${cy + flangeRy}" stroke="#fff" stroke-opacity="0.34" stroke-width="2" fill="none"/>
+  <path d="M${x0 + 6} ${cy - barrelRy} L${x1 - 6} ${cy - barrelRy}" stroke="#fff" stroke-opacity="0.2" stroke-width="1.5"/>
+
+  <rect width="${W}" height="${H}" fill="url(#vigw)"/>
+  <rect width="${W}" height="${H}" filter="url(#grw)" opacity="0.05" style="mix-blend-mode:overlay"/>`)
+}
+
 /* ----------------------------------------------------------------- mark.svg
    Brand mark: a single-V groove joint in section, reduced to three strokes.
    Abstract to anyone else; unmistakable to anyone who preps plate. */
@@ -342,7 +410,14 @@ function mark() {
 }
 
 mkdirSync(OUT, { recursive: true })
-const files = { 'arc.svg': arc(), 'plate.svg': plate(), 'stock.svg': stock(), 'section.svg': section(), 'mark.svg': mark() }
+const files = {
+  'arc.svg': arc(),
+  'plate.svg': plate(),
+  'stock.svg': stock(),
+  'section.svg': section(),
+  'spool.svg': spool(),
+  'mark.svg': mark(),
+}
 for (const [name, content] of Object.entries(files)) {
   writeFileSync(resolve(OUT, name), content)
   console.log(`${name.padEnd(14)} ${(content.length / 1024).toFixed(1)} kB`)

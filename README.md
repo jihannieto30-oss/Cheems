@@ -5,7 +5,10 @@ Vue 3 + Vite. The repository builds two independent apps from one toolchain:
 | Route   | App                       | Entry              |
 | ------- | ------------------------- | ------------------ |
 | `/`     | Cheems — comercio exterior y bolsa de valores | `index.html` → `src/main.js` |
-| `/ows/` | Online Welding Supply — technical knowledge index | `ows/index.html` → `src/ows/main.js` |
+| `/ows/` | OWS — Online Welding Supply, the welding knowledge engine | `ows/index.html` → `src/ows/main.js` |
+
+OWS has its own routes: `/ows/search`, `/ows/record/:id`, `/ows/browse/:facet`,
+`/ows/about`. Serving them needs a rewrite rule — see the OWS readme.
 
 Both entries are declared in `vite.config.js`. They share no code and no
 styles; see [`src/ows/README.md`](src/ows/README.md) for the second app's
