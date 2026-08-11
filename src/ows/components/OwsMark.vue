@@ -13,12 +13,14 @@
       </g>
     </svg>
 
-    <span v-if="wordmark" class="mark__word">OWS</span>
-    <span v-if="tagline" class="mark__tag">ONLINE<br />WELDING<br />SUPPLY</span>
+    <span v-if="wordmark" class="mark__word">{{ BRAND.code }}</span>
+    <span v-if="tagline" class="mark__tag">{{ BRAND.descriptor }}</span>
   </span>
 </template>
 
 <script setup>
+import { BRAND } from '../brand'
+
 defineProps({
   size: { type: String, default: 'md' }, // sm | md | lg | hero
   orientation: { type: String, default: 'h' }, // h | v
@@ -51,12 +53,17 @@ defineProps({
   font-weight: 700;
   font-size: 1em;
   line-height: 1;
-  letter-spacing: -0.005em;
+  /* Positive tracking: a caps wordmark of this length sets too tight at the
+     display weight, and the letters start to knit together at hero size. */
+  letter-spacing: 0.015em;
   color: var(--ows-ink);
+  white-space: nowrap;
 }
 
 .mark__tag {
-  font-size: 0.3em;
+  font-size: 0.26em;
+  max-width: 9em;
+  text-align: left;
   line-height: 1.5;
   letter-spacing: var(--ows-track-label);
   color: var(--ows-ink-faint);
@@ -68,12 +75,17 @@ defineProps({
   font-size: 1.125rem;
 }
 .mark--lg {
-  font-size: clamp(2.25rem, 6vw, 3.5rem);
+  font-size: clamp(1.5rem, 4.6vw, 3rem);
 }
 
-/* Google-scale: the mark is the headline on the home page. */
+/* Google-scale: the mark is the headline on the home page.
+
+   The ceiling is set against the wordmark's length rather than picked by eye.
+   UNIBRAZE is eight characters, so at the old hero size it ran past the gutter
+   on a 320px screen — the clamp floor, not the vw term, is what decides there,
+   and the floor has to fit the narrowest case. */
 .mark--hero {
-  font-size: clamp(2.75rem, 9vw, 5.5rem);
-  gap: 0.4em;
+  font-size: clamp(1.875rem, 7vw, 4.75rem);
+  gap: 0.38em;
 }
 </style>

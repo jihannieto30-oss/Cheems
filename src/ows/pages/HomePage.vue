@@ -16,40 +16,43 @@
         canvas is transparent and clears each frame, so it goes on top: the
         standards fall through the arc light rather than behind it.
       -->
-      <ArcScene mode="cut" :depth="10" :density="5" :origin-y="0.8" :intensity="0.9" />
+      <ArcScene mode="cut" :depth="10" :density="5" :origin-y="0.88" :intensity="0.86" />
       <StandardsCascade :depth="16" />
 
-      <div class="hero__rail" aria-hidden="true">
-        <span class="hero__rail-num ows-num">01</span>
-        <span class="hero__rail-line" />
-        <span class="hero__rail-word">DESLICE</span>
-      </div>
+      <!-- A soft ground under the centre. The cascade and the arc are both
+           live behind it, and without this the mark competes with them. -->
+      <span class="hero__veil" aria-hidden="true" />
 
       <div class="hero__center">
         <h1 class="hero__mark">
           <OwsMark size="hero" />
-          <span class="ows-sr">{{ BRAND.code }} — {{ BRAND.name }}</span>
+          <span class="ows-sr">{{ BRAND.code }} — {{ BRAND.descriptor }}</span>
         </h1>
         <p class="hero__tagline">{{ BRAND.welcome }}</p>
 
         <div class="hero__field">
-          <SearchField size="lg" placeholder="Escriba una designación…" />
+          <!-- Short enough for a phone already, so both variants are the same
+               line — otherwise the hero's prompt changes wording at 46rem. -->
+          <SearchField
+            size="lg"
+            placeholder="Escriba una designación…"
+            placeholder-short="Escriba una designación…"
+          />
         </div>
 
         <!-- The nomenclature line is the whole proposition: one field, every
              standard. It replaces any sentence explaining what this is. -->
-        <div class="hero__nomen">
-          <p class="hero__nomen-label">NOMENCLATURA ACEPTADA</p>
-          <ul class="hero__nomen-list">
-            <li v-for="s in standards" :key="s">{{ s }}</li>
-          </ul>
-        </div>
+        <ul class="hero__nomen">
+          <li v-for="s in standards" :key="s">{{ s }}</li>
+        </ul>
       </div>
 
-      <div class="hero__foot ows-shell">
-        <span class="hero__ticks" aria-hidden="true"><i /><i /></span>
-        <span class="hero__claim">// CONOCIMIENTO TÉCNICO. SOLUCIONES REALES.</span>
-      </div>
+      <!-- A button rather than an anchor: in the single-file build the router
+           is in hash mode, and a fragment link would overwrite the route. -->
+      <button class="hero__cue" type="button" @click="toContent">
+        <span>DESLICE</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9 L12 15 L18 9" /></svg>
+      </button>
     </section>
 
   <!-- ── 02 · THE SPINE ──────────────────────────────────────────────
@@ -117,6 +120,12 @@ const SPLIT = 3
 const opening = CHAPTERS.slice(0, SPLIT)
 const closing = CHAPTERS.slice(SPLIT)
 
+// The cue scrolls to the first chapter by id rather than by a fixed offset, so
+// it keeps working when the hero's height changes with the viewport.
+function toContent() {
+  document.getElementById(CHAPTERS[0].id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 // The standards the index resolves against — the same set that falls in the
 // cascade behind the hero.
 const standards = ['AWS', 'EN ISO', 'DIN', 'JIS', 'CN', 'W.Nr', 'AISI', 'CWB', 'ASME SFA', 'ASTM']
@@ -137,10 +146,9 @@ const standards = ['AWS', 'EN ISO', 'DIN', 'JIS', 'CN', 'W.Nr', 'AISI', 'CWB', '
   isolation: isolate;
 }
 
-/* Lifted individually, not with a blanket `> :not(.scene)` rule — that would
-   overwrite the rail's own `position: absolute` and drop it into flow. */
+/* Lifted above the two live canvases. */
 .hero__center,
-.hero__foot {
+.hero__cue {
   position: relative;
   z-index: var(--ows-z-content);
 }
@@ -149,9 +157,22 @@ const standards = ['AWS', 'EN ISO', 'DIN', 'JIS', 'CN', 'W.Nr', 'AISI', 'CWB', '
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: clamp(1.5rem, 3.5vh, 2.5rem);
   margin-block: auto;
   width: 100%;
+}
+
+/* Sized in vmax so it stays a pool of light around the centre at any aspect,
+   rather than a band that turns into a stripe on a wide monitor. */
+.hero__veil {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120vmax;
+  height: 120vmax;
+  transform: translate(-50%, -55%);
+  background: radial-gradient(closest-side, rgb(0 0 0 / 0.82), rgb(0 0 0 / 0.4) 55%, transparent);
+  pointer-events: none;
 }
 
 .hero__mark {
@@ -161,7 +182,7 @@ const standards = ['AWS', 'EN ISO', 'DIN', 'JIS', 'CN', 'W.Nr', 'AISI', 'CWB', '
 }
 
 .hero__tagline {
-  margin-top: -0.5rem;
+  margin-top: -0.75rem;
   font-size: var(--ows-t-meta);
   font-weight: 400;
   letter-spacing: var(--ows-track-label);
@@ -176,50 +197,47 @@ const standards = ['AWS', 'EN ISO', 'DIN', 'JIS', 'CN', 'W.Nr', 'AISI', 'CWB', '
 }
 
 .hero__field {
-  width: min(100%, 46rem);
+  width: min(100%, 44rem);
   opacity: 0;
   animation: rise 1.1s var(--ows-ease) 500ms forwards;
 }
 
+/* Lifts the field off the arc behind it. The shadow is what makes it read as
+   the one thing on the page you are meant to touch. */
+.hero__field :deep(.field__form) {
+  box-shadow: 0 1.5rem 3.5rem rgb(0 0 0 / 0.6);
+}
+
+.hero__field :deep(.is-focused .field__form) {
+  box-shadow:
+    0 1.5rem 3.5rem rgb(0 0 0 / 0.6),
+    0 0 0 1px var(--ows-red-dim);
+}
+
+/* One quiet line of the standards the field resolves against — separated by
+   middots rather than rules, which at this size read as debris. */
 .hero__nomen {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.25rem;
+  max-width: 44rem;
   opacity: 0;
   animation: rise 1.1s var(--ows-ease) 660ms forwards;
 }
 
-.hero__nomen-label {
+.hero__nomen li {
+  position: relative;
   font-size: var(--ows-t-micro);
-  letter-spacing: var(--ows-track-label);
+  letter-spacing: 0.2em;
   color: var(--ows-ink-faint);
 }
 
-.hero__nomen-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.375rem 0.875rem;
-  max-width: 46rem;
-}
-
-.hero__nomen-list li {
-  font-size: var(--ows-t-meta);
-  letter-spacing: 0.14em;
-  color: var(--ows-ink-muted);
-  position: relative;
-}
-
-/* Hairline separators between designations, none after the last. */
-.hero__nomen-list li:not(:last-child)::after {
-  content: '';
+.hero__nomen li:not(:last-child)::after {
+  content: '·';
   position: absolute;
-  right: -0.5rem;
-  top: 0.35em;
-  bottom: 0.35em;
-  width: 1px;
-  background: var(--ows-line);
+  right: -0.78rem;
+  color: var(--ows-line-strong);
 }
 
 @keyframes rise {
@@ -233,45 +251,45 @@ const standards = ['AWS', 'EN ISO', 'DIN', 'JIS', 'CN', 'W.Nr', 'AISI', 'CWB', '
   }
 }
 
-/* Left rail: section number over a rule, with SCROLL set vertically. */
-.hero__rail {
-  position: absolute;
-  left: var(--ows-gutter);
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
+/*
+  The only thing below the fold line.
+
+  Set to the gutter rather than centred: the cut sits at bottom centre and is
+  the brightest thing on the page, so a label there is unreadable and fights
+  the one image the hero is built around.
+*/
+.hero__cue {
+  align-self: flex-start;
+  margin-left: calc(var(--ows-gutter) - 1.25rem);
+  display: inline-flex;
   align-items: center;
-  gap: 1rem;
-  z-index: var(--ows-z-content);
-}
-
-.hero__rail-num {
-  font-size: var(--ows-t-micro);
-  letter-spacing: var(--ows-track-meta);
-  color: var(--ows-ink-muted);
-}
-
-.hero__rail-line {
-  width: 1px;
-  height: clamp(4rem, 14vh, 9rem);
-  background: linear-gradient(to bottom, var(--ows-line-strong), transparent);
-}
-
-.hero__rail-word {
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: none;
+  border: 0;
+  color: var(--ows-ink-faint);
+  font: inherit;
   font-size: var(--ows-t-micro);
   letter-spacing: var(--ows-track-label);
-  color: var(--ows-ink-faint);
-  writing-mode: vertical-rl;
-}
-
-.hero__foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  cursor: pointer;
   opacity: 0;
   animation: fade 1.4s var(--ows-ease) 900ms forwards;
+  transition: color var(--ows-fast) var(--ows-ease);
+}
+
+.hero__cue:hover {
+  color: var(--ows-ink);
+}
+
+.hero__cue svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: nudge 2.4s var(--ows-ease-io) infinite;
 }
 
 @keyframes fade {
@@ -280,24 +298,13 @@ const standards = ['AWS', 'EN ISO', 'DIN', 'JIS', 'CN', 'W.Nr', 'AISI', 'CWB', '
   }
 }
 
-.hero__ticks {
-  display: flex;
-  gap: 0.5rem;
-}
-.hero__ticks i {
-  width: 1.75rem;
-  height: 1px;
-  background: var(--ows-line-strong);
-}
-.hero__ticks i:first-child {
-  background: var(--ows-red);
-}
-
-.hero__claim {
-  font-size: var(--ows-t-micro);
-  letter-spacing: var(--ows-track-meta);
-  color: var(--ows-ink-muted);
-  text-align: right;
+@keyframes nudge {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(0.28rem);
+  }
 }
 
 /* ---- creed ---- */
@@ -330,11 +337,8 @@ const standards = ['AWS', 'EN ISO', 'DIN', 'JIS', 'CN', 'W.Nr', 'AISI', 'CWB', '
 }
 
 @media (max-width: 46rem) {
-  .hero__rail {
-    display: none;
-  }
-  .hero__claim {
-    font-size: 0.5625rem;
+  .hero__nomen {
+    gap: 0.375rem 1rem;
   }
 }
 
@@ -343,10 +347,14 @@ const standards = ['AWS', 'EN ISO', 'DIN', 'JIS', 'CN', 'W.Nr', 'AISI', 'CWB', '
   .hero__tagline,
   .hero__field,
   .hero__nomen,
-  .hero__foot {
+  .hero__cue {
     opacity: 1;
     animation: none;
     transform: none;
+  }
+
+  .hero__cue svg {
+    animation: none;
   }
 }
 </style>

@@ -1,14 +1,14 @@
 /*
-  Bundles Online Welding Supply into one portable HTML file.
+  Bundles Unibraze into one portable HTML file.
 
-      node scripts/ows-standalone.mjs        # → onlineweldingsupply.html
+      node scripts/unibraze-standalone.mjs        # → unibraze.html
 
   Everything is inlined — styles, the whole app as a single module, and the
   artwork as data URIs — so the result opens from disk, an email attachment or
   any static host with no server, no build step and no network access.
 
   This is a distribution artefact, not the source of truth. The app lives in
-  src/ows/; regenerate this file rather than editing it.
+  src/unibraze/; regenerate this file rather than editing it.
 */
 
 import { build } from 'vite'
@@ -18,23 +18,23 @@ import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const OUT = resolve(ROOT, 'onlineweldingsupply.html')
+const OUT = resolve(ROOT, 'unibraze.html')
 
 // ---- assets → data URIs --------------------------------------------------
-// Artwork and the self-hosted typeface both live under public/ows and are
+// Artwork and the self-hosted typeface both live under public/unibraze and are
 // referenced by absolute path, which resolves to nothing from a file:// page.
 const art = new Map()
 
-for (const file of readdirSync(resolve(ROOT, 'public/ows'))) {
+for (const file of readdirSync(resolve(ROOT, 'public/unibraze'))) {
   if (!file.endsWith('.svg')) continue
-  const svg = readFileSync(resolve(ROOT, 'public/ows', file))
-  art.set(`/ows/${file}`, `data:image/svg+xml;base64,${svg.toString('base64')}`)
+  const svg = readFileSync(resolve(ROOT, 'public/unibraze', file))
+  art.set(`/unibraze/${file}`, `data:image/svg+xml;base64,${svg.toString('base64')}`)
 }
 
-for (const file of readdirSync(resolve(ROOT, 'public/ows/fonts'))) {
+for (const file of readdirSync(resolve(ROOT, 'public/unibraze/fonts'))) {
   if (!file.endsWith('.woff2')) continue
-  const font = readFileSync(resolve(ROOT, 'public/ows/fonts', file))
-  art.set(`/ows/fonts/${file}`, `data:font/woff2;base64,${font.toString('base64')}`)
+  const font = readFileSync(resolve(ROOT, 'public/unibraze/fonts', file))
+  art.set(`/unibraze/fonts/${file}`, `data:font/woff2;base64,${font.toString('base64')}`)
 }
 
 const inlineArt = (text) => {
@@ -43,7 +43,7 @@ const inlineArt = (text) => {
   return out
 }
 
-// ---- build the ows entry as a single chunk -------------------------------
+// ---- build the unibraze entry as a single chunk ---------------------------
 // One entry and no dynamic imports in the app, so Rollup emits a single module
 // with no `import` statements — the only form that runs from a file:// page.
 // The assertion below is the guard: if a lazy route ever creeps back in, this
@@ -58,7 +58,7 @@ const result = await build({
     cssCodeSplit: false,
     assetsInlineLimit: 0,
     rollupOptions: {
-      input: resolve(ROOT, 'ows/index.html'),
+      input: resolve(ROOT, 'unibraze/index.html'),
     },
   },
 })
@@ -90,11 +90,11 @@ const page = html.source
   .replace(/\s*<link[^>]*rel="preload"[^>]*>/g, '')
   .replace(
     /<link rel="icon"[^>]*>/,
-    () => `<link rel="icon" type="image/svg+xml" href="${art.get('/ows/mark.svg')}" />`,
+    () => `<link rel="icon" type="image/svg+xml" href="${art.get('/unibraze/mark.svg')}" />`,
   )
   .replace('</head>', () => `  <style>\n${styles}\n  </style>\n  </head>`)
   .replace('</body>', () => `  <script type="module">\n${code}\n  </script>\n  </body>`)
 
 writeFileSync(OUT, page)
-console.log(`onlineweldingsupply.html  ${(page.length / 1024).toFixed(0)} kB`)
+console.log(`unibraze.html  ${(page.length / 1024).toFixed(0)} kB`)
 console.log(`  styles ${(styles.length / 1024).toFixed(0)} kB · script ${(code.length / 1024).toFixed(0)} kB · art ${art.size} files inlined`)

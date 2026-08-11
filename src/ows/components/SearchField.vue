@@ -66,10 +66,10 @@ const props = defineProps({
   size: { type: String, default: 'lg' }, // lg (hero) | md | sm (nav)
   placeholder: {
     type: String,
-    default: 'Search any welding question, material, process, or standard…',
+    default: 'Busque una designación, un proceso o una norma…',
   },
   /** Shown below ~46rem, where the full sentence would be cut mid-word. */
-  placeholderShort: { type: String, default: 'Search materials, processes, standards…' },
+  placeholderShort: { type: String, default: 'Designación, proceso o norma…' },
   /** Seed the field, e.g. from ?q= on the results page. */
   initial: { type: String, default: '' },
   autofocus: { type: Boolean, default: false },

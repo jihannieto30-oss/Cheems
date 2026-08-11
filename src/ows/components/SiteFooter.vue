@@ -18,7 +18,7 @@
 
     <div class="foot__bottom ows-shell">
       <p class="ows-meta">
-        © {{ year }} {{ BRAND.code }} · {{ BRAND.name.toUpperCase() }}
+        © {{ year }} {{ BRAND.code }} · {{ BRAND.descriptor.toUpperCase() }}
       </p>
       <p class="ows-meta foot__sign">{{ BRAND.claim }}</p>
     </div>

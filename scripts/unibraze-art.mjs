@@ -1,12 +1,12 @@
 /*
-  Generates the monochrome industrial artwork for Online Welding Supply.
+  Generates the monochrome industrial artwork for Unibraze.
 
-      node scripts/ows-art.mjs
+      node scripts/unibraze-art.mjs
 
   These are drawn rather than photographed on purpose: vector art stays crisp at
   any viewport, weighs a few kilobytes, is guaranteed monochrome and carries no
   licensing or watermark question. Every file is a drop-in replacement target —
-  swap public/ows/arc.svg for arc.webp and change one prop on ParallaxImage.
+  swap public/unibraze/arc.svg for arc.webp and change one prop on ParallaxImage.
 
   Output is deterministic: the PRNG is seeded, so regenerating produces a byte
   identical file and the diff stays empty unless the art actually changed.

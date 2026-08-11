@@ -1,4 +1,5 @@
 import { SEARCHABLE } from '../data'
+import { fold } from '../data/synonyms'
 
 /*
   Search provider contract
@@ -15,10 +16,15 @@ import { SEARCHABLE } from '../data'
   an LLM is a matter of returning the same shape from a different function.
 */
 
-/** Fold a query into comparable tokens. "ER 70S-6" and "er70s6" must meet. */
+/*
+  Fold a query into comparable tokens. "ER 70S-6" and "er70s6" must meet.
+
+  Accents are stripped before the character filter, not after: the filter
+  replaces anything outside a-z0-9 with a space, so "aleación" typed with its
+  accent would otherwise split into "aleaci" and "n" and match nothing.
+*/
 function tokenise(text) {
-  return text
-    .toLowerCase()
+  return fold(text)
     .replace(/[^a-z0-9./\s-]/g, ' ')
     .split(/\s+/)
     .filter(Boolean)
@@ -26,7 +32,7 @@ function tokenise(text) {
 
 /** Aggressive form used for fuzzy identity: strips separators entirely. */
 function condense(text) {
-  return text.toLowerCase().replace(/[^a-z0-9]/g, '')
+  return fold(text).replace(/[^a-z0-9]/g, '')
 }
 
 function scoreRecord(entry, tokens, condensedQuery) {
@@ -42,6 +48,9 @@ function scoreRecord(entry, tokens, condensedQuery) {
     if (token.length < 2) continue
 
     if (entry.titleLower === token) score += 100
+    // The Spanish word for what the title says, just under an exact hit: the
+    // record is the subject, not merely a mention of it.
+    else if (entry.titleAliasSet?.has(token)) score += 80
     else if (entry.titleLower.startsWith(token)) score += 55
     else if (entry.titleLower.includes(token)) score += 32
 

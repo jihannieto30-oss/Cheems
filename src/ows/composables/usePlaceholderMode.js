@@ -4,7 +4,7 @@ import { ref, watch } from 'vue'
   Two placeholder treatments were requested for comparison, so the choice is a
   runtime setting rather than a code edit:
 
-      /ows/?placeholder=reveal      pin a mode for this visit and remember it
+      /unibraze/?placeholder=reveal      pin a mode for this visit and remember it
       menu → PLACEHOLDER            switch it live
 
   Default is `quiet`: one discreet word, always present.

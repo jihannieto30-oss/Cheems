@@ -79,7 +79,7 @@ const routes = [
 const fromDisk = typeof window !== 'undefined' && window.location.protocol === 'file:'
 
 export const router = createRouter({
-  history: fromDisk ? createWebHashHistory() : createWebHistory('/ows/'),
+  history: fromDisk ? createWebHashHistory() : createWebHistory('/unibraze/'),
   routes,
   scrollBehavior(to, from, saved) {
     if (saved) return saved

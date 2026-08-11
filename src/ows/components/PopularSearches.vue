@@ -17,7 +17,7 @@ import { RouterLink } from 'vue-router'
 defineProps({
   terms: {
     type: Array,
-    default: () => ['ER70S-6', '316L', 'GTAW', 'P91', 'AWS D1.1', 'ALUMINUM', 'POROSITY'],
+    default: () => ['ER70S-6', '316L', 'GTAW', 'P91', 'AWS D1.1', 'ALUMINIO', 'POROSIDAD'],
   },
 })
 </script>

@@ -16,9 +16,9 @@
 
       <div class="body__cols">
         <p>
-          {{ BRAND.code }} — {{ BRAND.name }} — es un índice técnico de soldadura,
-          fabricación y metalurgia. Existe para quien ya sabe qué está buscando y quiere
-          la respuesta sin atravesar un catálogo entero para llegar a ella.
+          {{ BRAND.name }} es un índice técnico de soldadura, fabricación y metalurgia.
+          Existe para quien ya sabe qué está buscando y quiere la respuesta sin
+          atravesar un catálogo entero para llegar a ella.
         </p>
         <p>
           Cada registro es un documento de trabajo: clasificación, composición, propiedades

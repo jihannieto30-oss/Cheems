@@ -2,15 +2,22 @@
   Brand identity, in one place.
 
   Every name, claim and contact detail the interface renders comes from here.
-  Nothing else in the app hard-codes the company name, so changing the brand —
-  including swapping OWS for UNIBRAZE — is this file and nothing else.
+  Nothing else in the app hard-codes the company name, so changing the brand is
+  this file and nothing else.
 
-  · code  is the short mark used in the nav, the footer and page titles
-  · name  is the full legal-ish name used once, where it is introduced
+  · code       the mark itself — nav, footer, breadcrumbs, page titles
+  · name       the name set in sentence case, for running prose
+  · descriptor the line that says what this is, used beside the name
+
+  The internal namespace is deliberately left alone: the source still lives in
+  src/ows, the CSS custom properties are still --ows-*, and the mark component
+  is still OwsMark. None of that is visible to a reader, and renaming one of
+  the three while leaving the others would be worse than renaming none.
 */
 export const BRAND = {
-  code: 'OWS',
-  name: 'Online Welding Supply',
+  code: 'UNIBRAZE',
+  name: 'Unibraze',
+  descriptor: 'Metales de aporte y soldaduras especiales',
 
   // Voice. These are the only sentences the brand repeats.
   welcome: 'WELCOME TO A NEW WORLD',
@@ -36,9 +43,30 @@ export const BRAND = {
     */
     endpoint: null,
   },
+
+  /*
+    Invitation gate.
+
+    `codeHash` is the hash of the code that opens the site, not the code — so
+    the digits are not sitting in the bundle for anyone who opens the file in a
+    text editor. That is the whole of what it buys.
+
+    This is a doorman, not a lock. The check runs in the browser, on the
+    reader's own machine, over content the browser has already downloaded.
+    Anyone who opens devtools can step past it in under a minute, and there is
+    no client-side design that changes that. It is here to keep the site closed
+    to people who were not invited, not to withstand someone determined to get
+    in. Real access control needs the server to refuse to send the page.
+  */
+  gate: {
+    enabled: true,
+    codeHash: '668cc377',
+    // How long an accepted code is remembered, in days.
+    remember: 60,
+  },
 }
 
-/** `TITLE — OWS`, or the bare brand line when a page has no title of its own. */
+/** `TÍTULO — UNIBRAZE`, or the brand line when a page has no title of its own. */
 export function pageTitle(title) {
-  return title ? `${title} — ${BRAND.code}` : `${BRAND.code} — ${BRAND.name}`
+  return title ? `${title} — ${BRAND.code}` : `${BRAND.code} — ${BRAND.descriptor}`
 }

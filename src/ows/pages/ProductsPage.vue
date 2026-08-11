@@ -5,9 +5,9 @@
          through them. This is the "cargado" the catalogue was asked for; the
          listing below stays flat and quiet by contrast. -->
     <header class="band">
-      <ParallaxImage class="band__far" src="/ows/plate.svg" alt="" :depth="4" :scale="1.3" :scrim="0.62" :hairlines="false" />
-      <ParallaxImage class="band__mid" src="/ows/rod.svg" alt="" :depth="11" :scale="1.25" :scrim="0.22" :hairlines="false" :mono="false" />
-      <ParallaxImage class="band__near" src="/ows/spool.svg" alt="" :depth="19" :scale="1.2" :scrim="0.12" :hairlines="false" :mono="false" />
+      <ParallaxImage class="band__far" src="/unibraze/plate.svg" alt="" :depth="4" :scale="1.3" :scrim="0.62" :hairlines="false" />
+      <ParallaxImage class="band__mid" src="/unibraze/rod.svg" alt="" :depth="11" :scale="1.25" :scrim="0.22" :hairlines="false" :mono="false" />
+      <ParallaxImage class="band__near" src="/unibraze/spool.svg" alt="" :depth="19" :scale="1.2" :scrim="0.12" :hairlines="false" :mono="false" />
       <StandardsCascade :depth="24" :density="0.7" :intensity="0.8" />
       <!-- Holds the reading column dark. The product art is bright enough that
            the copy loses against it without this. -->
@@ -136,7 +136,7 @@ const formCards = [
     id: 'rod',
     es: 'VARILLA',
     en: 'Cut length rod',
-    art: '/ows/rod.svg',
+    art: '/unibraze/rod.svg',
     alt: 'Bundle of copper-coated welding rods',
     body: 'High quality filler rod for GTAW and brazing, with excellent flow and penetration. Available across alloys and diameters.',
     count: countForm('R'),
@@ -145,7 +145,7 @@ const formCards = [
     id: 'wire',
     es: 'ROLLO',
     en: 'Spooled wire',
-    art: '/ows/spool.svg',
+    art: '/unibraze/spool.svg',
     alt: 'Spool of copper-coated MIG welding wire',
     body: 'Solid wire for MIG/MAG with stable feeding and a uniform arc. Built for high-productivity industrial work.',
     count: countForm('W'),
@@ -154,7 +154,7 @@ const formCards = [
     id: 'electrode',
     es: 'ELECTRODO',
     en: 'Covered electrode',
-    art: '/ows/electrode.svg',
+    art: '/unibraze/electrode.svg',
     alt: 'Covered welding electrodes in an opened carton',
     body: 'Covered electrodes for SMAW with easy striking and excellent arc stability. Versatile across steel grades.',
     count: countForm('E'),

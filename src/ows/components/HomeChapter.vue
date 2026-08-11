@@ -76,7 +76,7 @@ const props = defineProps({
   flip: { type: Boolean, default: false },
 })
 
-const visual = computed(() => props.chapter.visual ?? { kind: 'still', src: '/ows/plate.svg', alt: '' })
+const visual = computed(() => props.chapter.visual ?? { kind: 'still', src: '/unibraze/plate.svg', alt: '' })
 
 const media = useParallax()
 const setMedia = (el) => (media.value = el)

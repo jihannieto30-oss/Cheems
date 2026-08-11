@@ -48,7 +48,7 @@ const props = defineProps({
   /** spool · rod · electrode */
   product: { type: String, default: 'spool' },
   /** Still shown before the scene is ready and on unsupported devices. */
-  fallbackSrc: { type: String, default: '/ows/spool.svg' },
+  fallbackSrc: { type: String, default: '/unibraze/spool.svg' },
   alt: { type: String, default: '' },
   /** 0–1 scroll progress through the host, drives the dolly. */
   scrollDriven: { type: Boolean, default: true },

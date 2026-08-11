@@ -3,6 +3,7 @@ import { getDetail } from './details'
 import { SOLUTIONS } from './solutions'
 import { TAXONOMY } from './taxonomy'
 import { CATALOG, SECTIONS, FORMS } from './catalog'
+import { aliasesFor, fold } from './synonyms'
 
 /*
   Single entry point for reading the corpus. Pages go through here so the
@@ -58,23 +59,63 @@ const CATALOG_RECORDS = CATALOG.filter((c) => !KNOWN_TITLES.has(c.designation.to
 /** Everything the search engine can return. */
 export const ALL_RECORDS = [...KNOWLEDGE, ...CATALOG_RECORDS]
 
-/** Pre-flattened match surface, built once at module load. */
-export const SEARCHABLE = ALL_RECORDS.map((record) => ({
-  record,
-  haystack: [
-    record.title,
-    record.kind,
-    record.spec ?? '',
-    record.summary,
-    record.path.join(' '),
-    record.tags.join(' '),
-    record.facets.map((f) => `${f.k} ${f.v}`).join(' '),
-  ]
-    .join(' ')
-    .toLowerCase(),
-  titleLower: record.title.toLowerCase(),
-  tagSet: new Set(record.tags.map((t) => t.toLowerCase())),
-}))
+/*
+  Pre-flattened match surface, built once at module load.
+
+  Two things happen here beyond flattening. Everything is accent-folded, so a
+  query typed with accents reaches a corpus written without them. And each
+  record's Spanish aliases are appended, so the Spanish interface can reach an
+  English corpus — see data/synonyms.js for why that is a translation of the
+  match surface and not of the content.
+*/
+export const SEARCHABLE = ALL_RECORDS.map((record) => {
+  const base = fold(
+    [
+      record.title,
+      record.kind,
+      record.spec ?? '',
+      record.summary,
+      record.path.join(' '),
+      record.tags.join(' '),
+      record.facets.map((f) => `${f.k} ${f.v}`).join(' '),
+    ].join(' '),
+  )
+
+  /*
+    Aliases are taken at two strengths, and the difference matters.
+
+    Strong ones come from the record's identity alone — title, kind, spec,
+    tags — and join the tag set, because a record titled "Porosity" genuinely
+    is the answer to "porosidad". Weak ones come from the whole flattened text
+    and only widen the haystack, so a passing mention stays reachable without
+    outranking the article the reader actually wanted.
+
+    Taking them all at tag strength is what made "porosidad" return a
+    structural aluminium code: every record whose summary happens to contain
+    the word scored as though it were the subject.
+  */
+  const identity = fold(
+    [record.title, record.kind, record.spec ?? '', record.tags.join(' ')].join(' '),
+  )
+  const strong = aliasesFor(identity)
+  const weak = aliasesFor(base)
+
+  /*
+    Strongest of all: the alias of the title itself. The English path already
+    treats an exact title hit as decisive, and the Spanish path has to mirror
+    that or it loses the tiebreak — "porosidad" scored POROSITY and ALUMINUM
+    equally, both merely tagged, and the alphabet decided it.
+  */
+  const titleAliases = aliasesFor(fold(record.title)).words
+
+  return {
+    record,
+    haystack: weak.phrases.size ? `${base} ${[...weak.phrases].join(' ')}` : base,
+    titleLower: fold(record.title),
+    titleAliasSet: titleAliases,
+    tagSet: new Set([...record.tags.map(fold), ...strong.words]),
+  }
+})
 
 const BY_ID = new Map(ALL_RECORDS.map((r) => [r.id, r]))
 const SOLUTION_BY_ID = new Map(SOLUTIONS.map((s) => [s.id, s]))

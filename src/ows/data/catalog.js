@@ -14,9 +14,9 @@
 */
 
 export const FORMS = {
-  R: { id: 'rod', es: 'Varilla', en: 'Rod', art: '/ows/rod.svg' },
-  W: { id: 'wire', es: 'Rollo', en: 'Spool', art: '/ows/spool.svg' },
-  E: { id: 'electrode', es: 'Electrodo', en: 'Electrode', art: '/ows/electrode.svg' },
+  R: { id: 'rod', es: 'Varilla', en: 'Rod', art: '/unibraze/rod.svg' },
+  W: { id: 'wire', es: 'Rollo', en: 'Spool', art: '/unibraze/spool.svg' },
+  E: { id: 'electrode', es: 'Electrodo', en: 'Electrode', art: '/unibraze/electrode.svg' },
 }
 
 export const SECTIONS = [

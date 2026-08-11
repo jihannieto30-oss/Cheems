@@ -3,8 +3,8 @@
     <p class="code ows-num">404</p>
     <h1 class="title">SIN REGISTRO</h1>
     <p class="body">
-      <template v-if="what">Nothing in the index matches “{{ what }}”.</template>
-      <template v-else>That address does not resolve to anything in the index.</template>
+      <template v-if="what">Nada en el índice coincide con “{{ what }}”.</template>
+      <template v-else>Esa dirección no corresponde a ningún registro del índice.</template>
     </p>
 
     <div class="field">

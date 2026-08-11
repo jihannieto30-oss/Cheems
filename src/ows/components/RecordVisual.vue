@@ -39,17 +39,17 @@ const live = computed(() => props.record.category === 'processes')
   on a device that cannot run WebGL.
 */
 const MAP = {
-  'FILLER METAL': ['spool', '/ows/spool.svg', 'Spool of copper-coated welding wire'],
-  ELECTRODE: ['electrode', '/ows/electrode.svg', 'Covered welding electrodes'],
-  'BRAZING ALLOY': ['rod', '/ows/rod.svg', 'Bundle of brazing filler rod'],
-  DEFECT: [null, '/ows/section.svg', 'Groove weld joint in section'],
-  COMPARISON: [null, '/ows/stock.svg', 'Bar stock stacked end-on'],
-  MATERIAL: [null, '/ows/stock.svg', 'Bar stock stacked end-on'],
-  METALLURGY: [null, '/ows/section.svg', 'Groove weld joint in section'],
-  PROCEDURE: [null, '/ows/plate.svg', 'Brushed steel plate'],
+  'FILLER METAL': ['spool', '/unibraze/spool.svg', 'Spool of copper-coated welding wire'],
+  ELECTRODE: ['electrode', '/unibraze/electrode.svg', 'Covered welding electrodes'],
+  'BRAZING ALLOY': ['rod', '/unibraze/rod.svg', 'Bundle of brazing filler rod'],
+  DEFECT: [null, '/unibraze/section.svg', 'Groove weld joint in section'],
+  COMPARISON: [null, '/unibraze/stock.svg', 'Bar stock stacked end-on'],
+  MATERIAL: [null, '/unibraze/stock.svg', 'Bar stock stacked end-on'],
+  METALLURGY: [null, '/unibraze/section.svg', 'Groove weld joint in section'],
+  PROCEDURE: [null, '/unibraze/plate.svg', 'Brushed steel plate'],
 }
 
-const pick = computed(() => MAP[props.record.kind] ?? [null, '/ows/plate.svg', 'Brushed steel plate'])
+const pick = computed(() => MAP[props.record.kind] ?? [null, '/unibraze/plate.svg', 'Brushed steel plate'])
 
 // A rod-form catalogue entry should show a rod even when it is filed as a
 // filler metal, so the form on the record beats the record's class.
@@ -63,8 +63,8 @@ const model = computed(() => {
 })
 
 const src = computed(() => {
-  if (model.value === 'rod') return '/ows/rod.svg'
-  if (model.value === 'electrode') return '/ows/electrode.svg'
+  if (model.value === 'rod') return '/unibraze/rod.svg'
+  if (model.value === 'electrode') return '/unibraze/electrode.svg'
   return pick.value[1]
 })
 const alt = computed(() => pick.value[2])
