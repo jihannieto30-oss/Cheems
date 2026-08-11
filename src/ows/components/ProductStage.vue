@@ -288,36 +288,49 @@ const onVisibility = () => (document.hidden ? stop() : start())
 let io = null
 let ro = null
 
+/*
+  Deferred until the stage is first seen.
+
+  Building means creating a WebGL context and prefiltering an environment
+  through PMREM, and a page can carry several of these. Doing that for all of
+  them at mount costs a visible stall on load for scenes the reader may never
+  scroll to; doing it on first intersection costs nothing, because the still is
+  already in the frame and cross-fades out when the scene is ready.
+*/
+function ensureBuilt() {
+  if (renderer || !supported.value) return
+  try {
+    build()
+  } catch {
+    // A context can still fail to create on a constrained device; the still is
+    // already in the DOM, so failing here degrades rather than breaks.
+    supported.value = false
+    return
+  }
+  onScroll()
+  draw(0)
+  ready.value = true
+  ro = new ResizeObserver(resize)
+  ro.observe(host.value)
+}
+
 onMounted(() => {
   supported.value = detect()
   if (!supported.value) return
 
   reduced = prefersReducedMotion()
 
-  try {
-    build()
-  } catch {
-    // A context can still fail to create on a constrained device; the still
-    // is already in the DOM, so failing here degrades rather than breaks.
-    supported.value = false
-    return
-  }
-
-  onScroll()
-  draw(0)
-  ready.value = true
-
   io = new IntersectionObserver(
     ([entry]) => {
       visible = entry.isIntersecting
+      if (visible) ensureBuilt()
       visible ? start() : stop()
     },
-    { threshold: 0 },
+    // Built a little before it is reached, so the scene is already drawn by
+    // the time the frame is actually on screen.
+    { threshold: 0, rootMargin: '20% 0px' },
   )
   io.observe(host.value)
-
-  ro = new ResizeObserver(resize)
-  ro.observe(host.value)
 
   window.addEventListener('scroll', onScroll, { passive: true })
   document.addEventListener('visibilitychange', onVisibility)

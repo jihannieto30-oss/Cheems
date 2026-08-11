@@ -120,7 +120,7 @@ export const CHAPTERS = [
     label: 'SOLDADURA',
     title: 'El arco funde dos historias en una sola.',
     body: 'Amperaje, polaridad, gas de protección, velocidad de avance. El proceso no perdona la improvisación: cada parámetro deja su firma en el cordón.',
-    visual: { kind: 'arc', mode: 'arc' },
+    visual: { kind: 'product', product: 'electrode', src: '/ows/electrode.svg', alt: 'Electrodos revestidos' },
     to: PAGES.welding.to,
     cta: 'Los procesos',
   },
@@ -143,5 +143,31 @@ export const CHAPTERS = [
     visual: { kind: 'still', src: '/ows/plate.svg', alt: 'Placa de acero cepillado' },
     to: PAGES.company.to,
     cta: 'Quiénes somos',
+  },
+]
+
+/*
+  The scrubbed weld section on the home page.
+
+  Four stages across the travel of the arc: strike, puddle, deposit, result.
+  The scene is the argument; these are its captions, and they are also the
+  screen-reader text for anyone who never sees the canvas.
+*/
+export const WELD_STAGES = [
+  {
+    title: 'Se ceba el arco',
+    body: 'Entre el electrodo y la pieza se abre una columna de plasma a más de cinco mil grados. A partir de aquí el metal ya no es sólido.',
+  },
+  {
+    title: 'Se forma el baño',
+    body: 'El metal base y el de aporte se funden en un mismo charco. Lo que se decidió en la composición del consumible se está decidiendo aquí, otra vez, en segundos.',
+  },
+  {
+    title: 'Avanza el depósito',
+    body: 'Velocidad, amperaje y ángulo dejan su firma en cada rizo. Un cordón se lee como una firma: dice exactamente cómo se hizo.',
+  },
+  {
+    title: 'Enfría y queda',
+    body: 'Al solidificar, la microestructura se fija. Nada de lo que pase después la cambia — salvo un tratamiento térmico, y eso ya es otra decisión.',
   },
 ]

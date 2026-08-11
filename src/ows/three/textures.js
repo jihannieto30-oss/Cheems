@@ -167,6 +167,57 @@ export function fluxTexture({ size = 512 } = {}) {
   })
 }
 
+/**
+ * Weld bead ripples — the stacked-dime pattern a weave leaves behind.
+ *
+ * The ripples run across the bead, so on a shape extruded along the seam they
+ * are arcs repeating along V. They are the single detail that makes a bead
+ * read as deposited rather than as a moulded strip of plastic.
+ */
+export function beadTexture({ size = 512, ripples = 26 } = {}) {
+  return memo(`bead-${size}-${ripples}`, () => {
+    const c = canvas(size)
+    const ctx = c.getContext('2d')
+    const r = rng(1717)
+    const pitch = size / ripples
+
+    ctx.fillStyle = '#8f8f8f'
+    ctx.fillRect(0, 0, size, size)
+
+    ctx.lineCap = 'round'
+    for (let i = 0; i <= ripples; i++) {
+      const y = i * pitch
+      // Each ripple is a frozen crescent of the puddle: bright on the crest
+      // that faces the arc, dark in the trough behind it.
+      for (const [offset, color, width] of [
+        [-pitch * 0.16, `rgba(0,0,0,${0.32 + r() * 0.12})`, pitch * 0.42],
+        [pitch * 0.1, `rgba(255,255,255,${0.3 + r() * 0.14})`, pitch * 0.3],
+      ]) {
+        ctx.strokeStyle = color
+        ctx.lineWidth = width
+        ctx.beginPath()
+        // Bowed toward the direction of travel, with a little variation so the
+        // pattern does not tile visibly.
+        ctx.moveTo(-size * 0.05, y + offset)
+        ctx.quadraticCurveTo(size / 2, y + offset - pitch * (0.5 + r() * 0.25), size * 1.05, y + offset)
+        ctx.stroke()
+      }
+    }
+
+    // Fine granular noise on top — solidified metal is never smooth.
+    for (let i = 0; i < 9000; i++) {
+      const v = r() > 0.5 ? 255 : 0
+      ctx.fillStyle = `rgba(${v},${v},${v},${0.02 + r() * 0.05})`
+      ctx.fillRect(r() * size, r() * size, 1 + r() * 2, 1 + r() * 2)
+    }
+
+    const t = new THREE.CanvasTexture(c)
+    t.wrapS = t.wrapT = THREE.RepeatWrapping
+    t.anisotropy = 8
+    return t
+  })
+}
+
 /** Soft radial falloff used as a contact shadow under a product. */
 export function contactShadowTexture({ size = 512 } = {}) {
   return memo(`contact-${size}`, () => {

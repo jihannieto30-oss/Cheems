@@ -56,10 +56,21 @@
        Six chapters, metal to result. Each carries its own visual, chosen by
        its data, so the narrative is edited in data/site.js and not here. -->
   <HomeChapter
-    v-for="(chapter, i) in CHAPTERS"
+    v-for="(chapter, i) in opening"
     :key="chapter.id"
     :chapter="chapter"
     :flip="i % 2 === 1"
+  />
+
+  <!-- The scene the reader scrolls through rather than past. It sits where
+       the argument turns from what the material is to what is done with it. -->
+  <WeldScene eyebrow="04 · EL ARCO" :stages="WELD_STAGES" />
+
+  <HomeChapter
+    v-for="(chapter, i) in closing"
+    :key="chapter.id"
+    :chapter="chapter"
+    :flip="(i + opening.length) % 2 === 1"
   />
 
   <!-- ── 03 · POSITION ─────────────────────────────────────────────────── -->
@@ -94,9 +105,17 @@ import SearchField from '../components/SearchField.vue'
 import OwsMark from '../components/OwsMark.vue'
 import HomeChapter from '../components/HomeChapter.vue'
 import NextPage from '../components/NextPage.vue'
-import { CHAPTERS, PAGES } from '../data/site'
+import WeldScene from '../components/WeldScene.vue'
+import { CHAPTERS, PAGES, WELD_STAGES } from '../data/site'
 import { CATALOG_TOTAL } from '../data/catalog'
 import { BRAND } from '../brand'
+
+// The spine is split around the weld scene: three chapters build up to the
+// arc, three follow from it. The flip pattern is carried across the break so
+// the alternation does not restart.
+const SPLIT = 3
+const opening = CHAPTERS.slice(0, SPLIT)
+const closing = CHAPTERS.slice(SPLIT)
 
 // The standards the index resolves against — the same set that falls in the
 // cascade behind the hero.
