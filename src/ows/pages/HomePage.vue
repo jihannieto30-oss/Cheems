@@ -5,8 +5,9 @@
        production build, so it fails invisibly. -->
   <div class="home">
     <!-- ── 01 · HERO ───────────────────────────────────────────────────────
-         One line, one field, the nomenclature it accepts. Nothing else: no
-         section links, no popular searches, no explanation of the product. -->
+         Laid out like a search engine's front door: the mark is the headline,
+         the field sits directly under it, and the only other thing on screen
+         is the nomenclature the field accepts. -->
     <section class="hero">
       <!--
         Order matters. ArcScene paints on an opaque canvas — it needs one for
@@ -25,7 +26,11 @@
       </div>
 
       <div class="hero__center">
-        <h1 class="hero__title">WELCOME TO A NEW WORLD</h1>
+        <h1 class="hero__mark">
+          <OwsMark size="hero" />
+          <span class="ows-sr">OWS — Online Welding Supply</span>
+        </h1>
+        <p class="hero__tagline">WELCOME TO A NEW WORLD</p>
 
         <div class="hero__field">
           <SearchField size="lg" placeholder="Enter welding designation…" />
@@ -102,6 +107,7 @@ import { RouterLink } from 'vue-router'
 import ArcScene from '../components/ArcScene.vue'
 import StandardsCascade from '../components/StandardsCascade.vue'
 import SearchField from '../components/SearchField.vue'
+import OwsMark from '../components/OwsMark.vue'
 
 // The standards the index resolves against — the same set that falls in the
 // cascade behind the hero.
@@ -155,31 +161,36 @@ const pillars = [
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.75rem;
+  gap: 1.5rem;
   margin-block: auto;
   width: 100%;
 }
 
-.hero__title {
-  font-family: var(--ows-display);
-  font-size: var(--ows-t-hero);
+.hero__mark {
+  display: block;
+  opacity: 0;
+  animation: rise 1.2s var(--ows-ease) 200ms forwards;
+}
+
+.hero__tagline {
+  margin-top: -0.5rem;
+  font-size: var(--ows-t-meta);
   font-weight: 400;
-  line-height: 1.04;
-  letter-spacing: var(--ows-track-hero);
+  letter-spacing: var(--ows-track-label);
   text-transform: uppercase;
-  color: var(--ows-ink);
+  color: var(--ows-ink-muted);
   text-align: center;
   /* Cancels the trailing space letter-spacing adds after the final glyph, so
      the line is optically centred rather than sitting slightly left. */
-  margin-right: calc(var(--ows-track-hero) * -1);
+  margin-right: calc(var(--ows-track-label) * -1);
   opacity: 0;
-  animation: rise 1.2s var(--ows-ease) 240ms forwards;
+  animation: rise 1.1s var(--ows-ease) 360ms forwards;
 }
 
 .hero__field {
   width: min(100%, 46rem);
   opacity: 0;
-  animation: rise 1.1s var(--ows-ease) 420ms forwards;
+  animation: rise 1.1s var(--ows-ease) 500ms forwards;
 }
 
 .hero__nomen {
@@ -188,7 +199,7 @@ const pillars = [
   align-items: center;
   gap: 0.75rem;
   opacity: 0;
-  animation: rise 1.1s var(--ows-ease) 600ms forwards;
+  animation: rise 1.1s var(--ows-ease) 660ms forwards;
 }
 
 .hero__nomen-label {
@@ -397,7 +408,7 @@ const pillars = [
   margin-top: 1.75rem;
   font-family: var(--ows-display);
   font-size: var(--ows-t-h2);
-  font-weight: 400;
+  font-weight: var(--ows-display-weight);
   line-height: 1.14;
   letter-spacing: var(--ows-track-display);
   color: var(--ows-ink);
@@ -470,7 +481,8 @@ const pillars = [
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero__title,
+  .hero__mark,
+  .hero__tagline,
   .hero__field,
   .hero__nomen,
   .hero__foot {

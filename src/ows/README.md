@@ -15,8 +15,7 @@ Taken from the brand sheets, not invented here.
 | Surfaces   | `#000` `#0A0A0A` `#111` `#1A1A1A` | page, panels, rows                   |
 | Ink        | `#FFF` `#9A9A9A` `#5A5A5A`     | title, body, meta                       |
 | Accent     | `#E10600`                      | direction and state only — never a fill  |
-| Display    | Instrument Serif 400           | headings only — self-hosted, SIL OFL     |
-| Text       | Inter Tight 300–700            | UI, body, tabular figures — SIL OFL      |
+| Type       | Space Grotesk 300–700          | self-hosted, `public/ows/fonts`, SIL OFL |
 
 The OWS mark stays white in every placement, per the identity sheet. Red marks
 arrows, active tabs, rail position, the section tick and defect bullets. It is
@@ -104,23 +103,20 @@ provider.query(text, { limit, signal })
 
 ## Typography
 
-Two families, latin subset only, ~78 kB total and nothing fetched at runtime.
+Space Grotesk in both roles, latin + latin-ext, ~41 kB, nothing fetched at
+runtime. Its wide-tracked caps give the headings their engineered look and its
+near-monospaced figures keep the composition and property tables aligned.
 
-**Instrument Serif** carries every heading. A high-contrast didone at large
-sizes does the executive work a grotesque cannot — but only in display: at text
-sizes its thin strokes disappear on black. Tracking is near zero; wide-tracked
-serif caps read as decoration, not authority.
-
-**Inter Tight** carries everything else. Its tabular figures are what keep the
-composition and mechanical-property tables aligned.
-
-Both are token-level (`--ows-display`, `--ows-sans`), so swapping either is a
-two-line change in `tokens.css` plus the woff2 files.
+Display and text stay separate tokens (`--ows-display` / `--ows-display-weight`
+and `--ows-sans`) even though they resolve to the same family, so either role
+can be swapped without touching a single component. A serif display pairing was
+tried and reverted — it read editorial rather than technical.
 
 ## The hero
 
-One line — WELCOME TO A NEW WORLD — the field, and the nomenclature it accepts.
-Behind it, `StandardsCascade` drops AWS, EN ISO, DIN, JIS, CN, W.Nr, AISI, CWB,
+Laid out like a search engine's front door: the OWS mark is the headline, the
+field sits directly under it, and the only other thing on screen is the
+nomenclature the field accepts. Behind it, `StandardsCascade` drops AWS, EN ISO, DIN, JIS, CN, W.Nr, AISI, CWB,
 ASME SFA and ASTM in three parallax planes. Alphas are deliberately low: it is
 texture a welder recognises in passing, not something to be read.
 
@@ -128,6 +124,19 @@ Layer order in the hero is load-bearing. `ArcScene` paints on an **opaque**
 canvas — it needs one for the frame-fade that draws the spark trails — so it
 must render first or it blacks out anything beneath it. The cascade's canvas is
 transparent and clears each frame, so it goes second.
+
+## Results
+
+`/search` is not a flat ranked list. A query like `316L` legitimately returns a
+consumable, a base metal, a HAZ article and a defect, and those answer different
+questions — so results are bucketed by `groupResults()` in `data/index.js` into
+consumables, processes, selection, diagnosis, inspection and standards, in that
+order: what you can buy, then how to run it, then what goes wrong.
+
+The strongest hit is lifted out as a TOP RESULT card carrying the product visual
+and the specification strip, so an exact designation match is answered without a
+second click. It only appears on the unfiltered tab — under a tab filter the
+"top" result is an artefact of the filter, not of the query.
 
 ## Catalogue
 

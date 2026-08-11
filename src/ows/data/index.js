@@ -161,4 +161,71 @@ export const RESULT_TABS = [
   { id: 'docs', label: 'Docs', match: (r) => r.category === 'standards' },
 ]
 
+/*
+  Result grouping.
+
+  A flat ranked list is the wrong shape for this corpus: a query like "316L"
+  legitimately returns a consumable, a base metal, a HAZ article and a defect,
+  and they answer different questions. Grouping lets the reader jump straight
+  to the kind of answer they came for. Order is deliberate — what you can buy
+  first, then how to run it, then what goes wrong.
+*/
+const CONSUMABLE_KINDS = new Set(['FILLER METAL', 'ELECTRODE', 'BRAZING ALLOY'])
+
+export const RESULT_GROUPS = [
+  {
+    id: 'consumables',
+    label: 'Filler metals & consumables',
+    note: 'Wire, rod and covered electrode',
+    match: (r) => CONSUMABLE_KINDS.has(r.kind),
+  },
+  {
+    id: 'processes',
+    label: 'Processes & parameters',
+    note: 'Arc processes and their operating windows',
+    match: (r) => r.category === 'processes',
+  },
+  {
+    id: 'selection',
+    label: 'Materials & selection',
+    note: 'Base metals and grade comparisons',
+    match: (r) => r.category === 'materials' && !CONSUMABLE_KINDS.has(r.kind),
+  },
+  {
+    id: 'diagnosis',
+    label: 'Defects & metallurgy',
+    note: 'Cause, diagnosis and resolution',
+    match: (r) => ['problems', 'metallurgy'].includes(r.category),
+  },
+  {
+    id: 'inspection',
+    label: 'Inspection',
+    note: 'Method selection and acceptance',
+    match: (r) => r.category === 'inspection',
+  },
+  {
+    id: 'standards',
+    label: 'Standards & documentation',
+    note: 'Codes, procedures and symbols',
+    match: (r) => r.category === 'standards',
+  },
+]
+
+/**
+ * Bucket ranked hits into the groups above, preserving score order inside each
+ * and dropping empties. Every hit lands in exactly one group — the first that
+ * claims it — so nothing is shown twice and nothing disappears.
+ */
+export function groupResults(hits) {
+  const seen = new Set()
+  return RESULT_GROUPS.map((group) => {
+    const items = hits.filter((hit) => {
+      if (seen.has(hit.record.id) || !group.match(hit.record)) return false
+      seen.add(hit.record.id)
+      return true
+    })
+    return { ...group, items }
+  }).filter((group) => group.items.length > 0)
+}
+
 export { KNOWLEDGE, SOLUTIONS, TAXONOMY }

@@ -68,7 +68,9 @@ async function run(text) {
 
   try {
     const { results, total, took } = await provider.query(text, {
-      limit: 8,
+      // Deep enough that the results page can group meaningfully; the
+      // type-ahead slices this down to six itself.
+      limit: 30,
       signal: controller.signal,
     })
     state.results = results

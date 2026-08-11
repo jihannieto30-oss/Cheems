@@ -228,7 +228,7 @@ const formCards = [
   margin-top: 1.5rem;
   font-family: var(--ows-display);
   font-size: var(--ows-t-h2);
-  font-weight: 400;
+  font-weight: var(--ows-display-weight);
   letter-spacing: var(--ows-track-display);
   color: var(--ows-ink);
 }
@@ -307,7 +307,7 @@ const formCards = [
   margin-top: 1rem;
   font-family: var(--ows-display);
   font-size: 1.75rem;
-  font-weight: 400;
+  font-weight: var(--ows-display-weight);
   letter-spacing: 0.03em;
   color: var(--ows-ink);
 }
@@ -376,8 +376,8 @@ const formCards = [
 .sec__en {
   font-family: var(--ows-display);
   font-size: clamp(1.25rem, 2.6vw, 1.875rem);
-  font-weight: 400;
-  letter-spacing: 0.02em;
+  font-weight: var(--ows-display-weight);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ows-ink);
 }

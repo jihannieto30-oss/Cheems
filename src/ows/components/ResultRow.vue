@@ -95,7 +95,7 @@ const subtitle = computed(() => getDetail(props.record.id)?.subtitle ?? '')
   margin-top: 0.625rem;
   font-family: var(--ows-display);
   font-size: 1.75rem;
-  font-weight: 400;
+  font-weight: var(--ows-display-weight);
   letter-spacing: 0.02em;
   line-height: 1.15;
   color: var(--ows-ink);

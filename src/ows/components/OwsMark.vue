@@ -20,7 +20,7 @@
 
 <script setup>
 defineProps({
-  size: { type: String, default: 'md' }, // sm | md | lg
+  size: { type: String, default: 'md' }, // sm | md | lg | hero
   orientation: { type: String, default: 'h' }, // h | v
   wordmark: { type: Boolean, default: true },
   tagline: { type: Boolean, default: false },
@@ -69,5 +69,11 @@ defineProps({
 }
 .mark--lg {
   font-size: clamp(2.25rem, 6vw, 3.5rem);
+}
+
+/* Google-scale: the mark is the headline on the home page. */
+.mark--hero {
+  font-size: clamp(2.75rem, 9vw, 5.5rem);
+  gap: 0.4em;
 }
 </style>

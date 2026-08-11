@@ -419,7 +419,7 @@ onUnmounted(() => {
   margin-top: 0.75rem;
   font-family: var(--ows-display);
   font-size: var(--ows-t-h3);
-  font-weight: 400;
+  font-weight: var(--ows-display-weight);
   letter-spacing: var(--ows-track-display);
   line-height: 1;
   color: var(--ows-ink);

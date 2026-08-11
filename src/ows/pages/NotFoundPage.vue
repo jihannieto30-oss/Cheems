@@ -45,7 +45,7 @@ defineProps({
   margin-top: 1rem;
   font-family: var(--ows-display);
   font-size: var(--ows-t-h2);
-  font-weight: 400;
+  font-weight: var(--ows-display-weight);
   letter-spacing: var(--ows-track-display);
   color: var(--ows-ink);
 }
