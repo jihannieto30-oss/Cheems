@@ -6,6 +6,7 @@ import {
   contactShadowTexture,
   ownedClone,
 } from './textures'
+import { cartonFaceTexture, cartonEndTexture, cartonPlainTexture } from './labels'
 
 /*
   The three product forms, built as real geometry.
@@ -209,40 +210,55 @@ export function buildSpool() {
 /* ---------------------------------------------------------------- VARILLA */
 export function buildRod() {
   const group = new THREE.Group()
-  const rodR = 0.075
-  const len = 3.0
-  const packed = packRows([4, 5, 6, 5, 4], rodR)
+  /*
+    Real filler rod is slender — 2.4 mm over 900 mm — and bare. The earlier
+    model was a short fat copper bundle, which is a spool of MIG wire cut up,
+    not a rod. Bare steel, a much longer span against the diameter, and enough
+    of them that the bundle reads as a bundle rather than as a handful.
+  */
+  /*
+    Slenderness has a limit on screen. Modelled at true proportion the bundle
+    is seven times longer than it is wide, and once the frame is fitted to the
+    length the cross-section is a few pixels — it reads as scratches, not as
+    rod. Held at about four to one it still reads as slender stock while
+    keeping enough mass to be a product.
+  */
+  const rodR = 0.062
+  const len = 3.8
+  const packed = packRows([6, 7, 8, 7, 6], rodR)
   const { halfV } = packed[0]
 
-  const copper = metal({ color: COPPER, roughness: 0.24, repeat: [1, 5] })
-  // Sheared steel: no coating, duller, and it scatters rather than mirrors.
-  const cut = metal({ color: STEEL, roughness: 0.55, repeat: [1, 1] })
+  // Drawn bright bar: no coating, so it is a mirror interrupted by drawing
+  // lines rather than the satin of a copper-flashed wire.
+  const bar = metal({ color: 0xd6d8db, roughness: 0.22, repeat: [1, 9] })
+  const cut = metal({ color: STEEL, roughness: 0.5, repeat: [1, 1] })
 
   const shafts = new THREE.InstancedMesh(
-    new THREE.CylinderGeometry(rodR, rodR, len, 22, 1, true),
-    copper,
+    new THREE.CylinderGeometry(rodR, rodR, len, 18, 1, true),
+    bar,
     packed.length,
   )
-  const caps = new THREE.InstancedMesh(new THREE.CircleGeometry(rodR, 22), cut, packed.length)
+  const caps = new THREE.InstancedMesh(new THREE.CircleGeometry(rodR, 18), cut, packed.length)
 
   const m = new THREE.Matrix4()
   const s = new THREE.Vector3(1, 1, 1)
-  // The cylinder is built along Y; a quarter turn about Z lays it along X.
-  const along = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, Math.PI / 2))
-  const facing = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -Math.PI / 2, 0))
   const pos = new THREE.Vector3()
+  const euler = new THREE.Euler()
+  const q = new THREE.Quaternion()
+  const facing = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -Math.PI / 2, 0))
 
   packed.forEach(({ y, z }, i) => {
-    // The cross-section spreads across Y and Z; X is the rod's own length, so
-    // the only variation along it is the stagger of a hand-gathered bundle.
-    const stagger = wobble(i, 1) * rodR * 2.2
-    const cy = y + wobble(i, 2) * rodR * 0.12
-    const cz = z + wobble(i, 3) * rodR * 0.12
+    // A loose bundle fans: each rod picks up a fraction of a degree, which is
+    // what stops the ends reading as a single machined face.
+    const splay = wobble(i, 4) * 0.012
+    q.setFromEuler(euler.set(splay * 0.6, splay, Math.PI / 2))
 
-    m.compose(pos.set(stagger, cy, cz), along, s)
+    const stagger = wobble(i, 1) * rodR * 3.4
+    const cy = y + wobble(i, 2) * rodR * 0.1
+    const cz = z + wobble(i, 3) * rodR * 0.1
+
+    m.compose(pos.set(stagger, cy, cz), q, s)
     shafts.setMatrixAt(i, m)
-
-    // Cut face sits on the near end of its shaft, normal along -X.
     m.compose(pos.set(stagger - len / 2 - 0.001, cy, cz), facing, s)
     caps.setMatrixAt(i, m)
   })
@@ -250,62 +266,94 @@ export function buildRod() {
   caps.instanceMatrix.needsUpdate = true
   group.add(shafts, caps)
 
-  // Strap. Two of them, because a single band reads as decoration while a pair
-  // reads as packaging — and they give the eye a scale reference on the length.
-  const strapMat = new THREE.MeshPhysicalMaterial({
-    color: 0x121316,
-    metalness: 0,
-    roughness: 0.62,
-    clearcoat: 0.3,
-    envMapIntensity: 0.9,
-  })
-  for (const x of [-len * 0.24, len * 0.26]) {
-    const strap = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.026, 10, 56), strapMat)
-    strap.rotation.y = Math.PI / 2 // hole along X, around the bundle
-    strap.scale.set(1, 0.78, 1)
-    strap.position.x = x
-    group.add(strap)
-  }
-
-  group.add(contactShadow(len * 0.4, -halfV - 0.01))
-  // Shot part-way down its own axis: a bundle seen square-on is a set of lines,
-  // but turned toward the ends the cut faces catch the key and it reads solid.
-  group.userData.view = new THREE.Vector3(0.95, 0.34, 0.72)
-  group.userData.yaw = -0.34
+  group.add(contactShadow(len * 0.34, -halfV - 0.01))
+  // Shot part-way down its own axis: a bundle seen square-on is a set of
+  // lines, but turned toward the ends the cut faces catch the key.
+  group.userData.view = new THREE.Vector3(0.86, 0.38, 0.84)
+  group.userData.yaw = -0.4
   return group
 }
 
 /* -------------------------------------------------------------- ELECTRODO */
 export function buildElectrode() {
   const group = new THREE.Group()
-  const eR = 0.085
-  const len = 2.7
-  const bare = 0.34
-  const packed = packRows([4, 5, 4], eR, 2.25, 1.95)
-  const { halfV } = packed[0]
 
-  const fluxTex = ownedClone(fluxTexture(), { repeat: [2, 5] })
+  /*
+    A covered electrode is sold in a printed carton, and the carton is what the
+    buyer actually recognises on a shelf — so the product here is the pack:
+    tray open at one end with the sticks sliding out, lid set behind it.
 
-  // Pressed mineral covering: fully dielectric and very rough, which is what
-  // separates it visually from the bare core sticking out of the end.
+    The tray is built from four plates rather than one box because it has to be
+    genuinely open at the top and at one end; a closed box with electrodes
+    floating in front of it does not survive being turned.
+  */
+  const L = 3.2 // tray length
+  const Wd = 1.0 // tray width
+  const Ht = 0.52 // tray height
+  const t = 0.035 // board thickness
+
+  const face = new THREE.MeshPhysicalMaterial({
+    map: cartonFaceTexture({ text: 'E7018' }),
+    metalness: 0,
+    roughness: 0.62,
+    clearcoat: 0.35,
+    clearcoatRoughness: 0.45,
+    envMapIntensity: 0.95,
+  })
+  const plain = new THREE.MeshPhysicalMaterial({
+    map: cartonPlainTexture(),
+    metalness: 0,
+    roughness: 0.68,
+    envMapIntensity: 0.85,
+  })
+  const end = new THREE.MeshPhysicalMaterial({
+    map: cartonEndTexture(),
+    metalness: 0,
+    roughness: 0.66,
+    envMapIntensity: 0.85,
+  })
+  const board = new THREE.MeshStandardMaterial({ color: 0x8a7f74, roughness: 0.94 })
+
+  const plate = (w, h, d, x, y, z, mats) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats)
+    mesh.position.set(x, y, z)
+    return mesh
+  }
+
+  // BoxGeometry material order is +X, -X, +Y, -Y, +Z, -Z.
+  const sideMats = [board, board, board, board, face, plain]
+  const tray = new THREE.Group()
+  tray.add(plate(L, t, Wd, 0, -Ht / 2 + t / 2, 0, plain)) // floor
+  tray.add(plate(L, Ht, t, 0, 0, Wd / 2 - t / 2, sideMats)) // near wall, printed
+  tray.add(plate(L, Ht, t, 0, 0, -Wd / 2 + t / 2, sideMats)) // far wall
+  tray.add(plate(t, Ht, Wd, -L / 2 + t / 2, 0, 0, end)) // closed end
+  group.add(tray)
+
+  // ---- the sticks -------------------------------------------------------
+  const eR = 0.058
+  const eLen = 4.0
+  const bare = 0.3
+  const packed = packRows([7, 6, 7], eR, 2.12, 1.82)
+
+  const flux = ownedClone(fluxTexture(), { repeat: [2, 6] })
   const covering = new THREE.MeshPhysicalMaterial({
     color: FLUX,
     metalness: 0,
-    roughness: 0.94,
-    roughnessMap: fluxTex,
-    bumpMap: fluxTex,
-    bumpScale: 0.005,
+    roughness: 0.93,
+    roughnessMap: flux,
+    bumpMap: flux,
+    bumpScale: 0.004,
     envMapIntensity: 1,
   })
-  const core = metal({ color: STEEL, roughness: 0.42, repeat: [1, 2] })
+  const core = metal({ color: STEEL, roughness: 0.38, repeat: [1, 2] })
 
   const covered = new THREE.InstancedMesh(
-    new THREE.CylinderGeometry(eR, eR, len - bare, 20),
+    new THREE.CylinderGeometry(eR, eR, eLen - bare, 16),
     covering,
     packed.length,
   )
   const tips = new THREE.InstancedMesh(
-    new THREE.CylinderGeometry(eR * 0.44, eR * 0.44, bare, 16),
+    new THREE.CylinderGeometry(eR * 0.46, eR * 0.46, bare, 12),
     core,
     packed.length,
   )
@@ -316,28 +364,38 @@ export function buildElectrode() {
   const euler = new THREE.Euler()
   const q = new THREE.Quaternion()
 
+  // Sticks rest on the tray floor and slide out past the open end.
+  const floor = -Ht / 2 + t + eR
+  const slide = 0.62
+
   packed.forEach(({ y, z }, i) => {
-    // A small yaw per stick fans the ends apart, the way a handful dropped into
-    // a box never lies parallel.
-    const splay = wobble(i, 5) * 0.045
+    const splay = wobble(i, 5) * 0.03
     q.setFromEuler(euler.set(0, splay, Math.PI / 2))
+    const cy = floor + y + packed[0].halfV + wobble(i, 6) * eR * 0.08
+    const cz = z + wobble(i, 7) * eR * 0.1
+    const stagger = wobble(i, 8) * eR * 1.6
 
-    const cy = y + wobble(i, 6) * eR * 0.1
-    const cz = z + wobble(i, 7) * eR * 0.12
-    const stagger = wobble(i, 8) * eR * 1.1
-
-    m.compose(pos.set(stagger + bare / 2, cy, cz), q, s)
+    m.compose(pos.set(stagger + slide + bare / 2, cy, cz), q, s)
     covered.setMatrixAt(i, m)
-    m.compose(pos.set(stagger - (len - bare) / 2, cy, cz), q, s)
+    m.compose(pos.set(stagger + slide - (eLen - bare) / 2, cy, cz), q, s)
     tips.setMatrixAt(i, m)
   })
   covered.instanceMatrix.needsUpdate = true
   tips.instanceMatrix.needsUpdate = true
   group.add(covered, tips)
 
-  group.add(contactShadow(len * 0.4, -halfV - 0.01))
-  group.userData.view = new THREE.Vector3(0.9, 0.36, 0.78)
-  group.userData.yaw = -0.28
+  // ---- the lid, set behind ----------------------------------------------
+  const lid = new THREE.Mesh(
+    new THREE.BoxGeometry(L + 0.12, Ht * 0.72, Wd + 0.06),
+    [end, end, plain, plain, face, face],
+  )
+  lid.position.set(-0.28, Ht * 0.95, -Wd * 1.05)
+  lid.rotation.y = 0.13
+  group.add(lid)
+
+  group.add(contactShadow(L * 0.62, -Ht / 2 - 0.01))
+  group.userData.view = new THREE.Vector3(0.82, 0.46, 0.86)
+  group.userData.yaw = -0.42
   return group
 }
 

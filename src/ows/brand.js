@@ -20,7 +20,7 @@ export const BRAND = {
   descriptor: 'Metales de aporte y soldaduras especiales',
 
   // Voice. These are the only sentences the brand repeats.
-  welcome: 'WELCOME TO A NEW WORLD',
+  welcome: 'WELCOME TO UNIBRAZE',
   creed: 'KNOWLEDGE IS POWER',
   promise: 'BUILT TO JOIN. BUILT TO LAST.',
   claim: 'CONOCIMIENTO QUE UNE. SOLUCIONES QUE PERDURAN.',

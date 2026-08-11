@@ -5,22 +5,14 @@
        production build, so it fails invisibly. -->
   <div class="home">
     <!-- ── 01 · HERO ───────────────────────────────────────────────────────
-         Laid out like a search engine's front door: the mark is the headline,
-         the field sits directly under it, and the only other thing on screen
-         is the nomenclature the field accepts. -->
+         Four things and a weld. The mark is the headline, one line names the
+         place, the field is the only control, and the seam runs along the
+         bottom edge. Everything else that used to be here was subtracted. -->
     <section class="hero">
-      <!--
-        Order matters. ArcScene paints on an opaque canvas — it needs one for
-        the frame-fade that draws the spark trails — so it must sit at the
-        back, or it blacks out anything layered beneath it. The cascade's
-        canvas is transparent and clears each frame, so it goes on top: the
-        standards fall through the arc light rather than behind it.
-      -->
-      <ArcScene mode="cut" :depth="10" :density="5" :origin-y="0.88" :intensity="0.86" />
-      <StandardsCascade :depth="16" />
+      <SeamScene :seam-y="0.8" :intensity="0.95" />
 
-      <!-- A soft ground under the centre. The cascade and the arc are both
-           live behind it, and without this the mark competes with them. -->
+      <!-- A soft ground under the centre, so the mark is not competing with
+           the light coming off the arc. -->
       <span class="hero__veil" aria-hidden="true" />
 
       <div class="hero__center">
@@ -39,12 +31,6 @@
             placeholder-short="Escriba una designación…"
           />
         </div>
-
-        <!-- The nomenclature line is the whole proposition: one field, every
-             standard. It replaces any sentence explaining what this is. -->
-        <ul class="hero__nomen">
-          <li v-for="s in standards" :key="s">{{ s }}</li>
-        </ul>
       </div>
 
       <!-- A button rather than an anchor: in the single-file build the router
@@ -102,8 +88,7 @@
 </template>
 
 <script setup>
-import ArcScene from '../components/ArcScene.vue'
-import StandardsCascade from '../components/StandardsCascade.vue'
+import SeamScene from '../components/SeamScene.vue'
 import SearchField from '../components/SearchField.vue'
 import OwsMark from '../components/OwsMark.vue'
 import HomeChapter from '../components/HomeChapter.vue'
@@ -125,10 +110,6 @@ const closing = CHAPTERS.slice(SPLIT)
 function toContent() {
   document.getElementById(CHAPTERS[0].id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
-
-// The standards the index resolves against — the same set that falls in the
-// cascade behind the hero.
-const standards = ['AWS', 'EN ISO', 'DIN', 'JIS', 'CN', 'W.Nr', 'AISI', 'CWB', 'ASME SFA', 'ASTM']
 
 </script>
 
@@ -212,32 +193,6 @@ const standards = ['AWS', 'EN ISO', 'DIN', 'JIS', 'CN', 'W.Nr', 'AISI', 'CWB', '
   box-shadow:
     0 1.5rem 3.5rem rgb(0 0 0 / 0.6),
     0 0 0 1px var(--ows-red-dim);
-}
-
-/* One quiet line of the standards the field resolves against — separated by
-   middots rather than rules, which at this size read as debris. */
-.hero__nomen {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem 1.25rem;
-  max-width: 44rem;
-  opacity: 0;
-  animation: rise 1.1s var(--ows-ease) 660ms forwards;
-}
-
-.hero__nomen li {
-  position: relative;
-  font-size: var(--ows-t-micro);
-  letter-spacing: 0.2em;
-  color: var(--ows-ink-faint);
-}
-
-.hero__nomen li:not(:last-child)::after {
-  content: '·';
-  position: absolute;
-  right: -0.78rem;
-  color: var(--ows-line-strong);
 }
 
 @keyframes rise {

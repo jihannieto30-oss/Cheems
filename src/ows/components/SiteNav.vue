@@ -1,7 +1,7 @@
 <template>
   <header class="nav" :class="{ 'nav--lifted': lifted, 'nav--open': open }">
     <RouterLink class="nav__brand" to="/" @click="open = false">
-      <OwsMark size="sm" />
+      <OwsMark variant="mark" size="sm" />
     </RouterLink>
 
     <nav class="nav__links" aria-label="Principal">
@@ -11,7 +11,7 @@
     </nav>
 
     <button class="nav__toggle" :aria-expanded="open" aria-controls="ows-menu" @click="open = !open">
-      <span class="ows-sr">{{ open ? 'Close menu' : 'Open menu' }}</span>
+      <span class="ows-sr">{{ open ? 'Cerrar menú' : 'Abrir menú' }}</span>
       <span class="nav__bars" aria-hidden="true"><i /><i /><i /></span>
     </button>
   </header>

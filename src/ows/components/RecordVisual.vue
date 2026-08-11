@@ -39,17 +39,17 @@ const live = computed(() => props.record.category === 'processes')
   on a device that cannot run WebGL.
 */
 const MAP = {
-  'FILLER METAL': ['spool', '/unibraze/spool.svg', 'Spool of copper-coated welding wire'],
-  ELECTRODE: ['electrode', '/unibraze/electrode.svg', 'Covered welding electrodes'],
-  'BRAZING ALLOY': ['rod', '/unibraze/rod.svg', 'Bundle of brazing filler rod'],
-  DEFECT: [null, '/unibraze/section.svg', 'Groove weld joint in section'],
-  COMPARISON: [null, '/unibraze/stock.svg', 'Bar stock stacked end-on'],
-  MATERIAL: [null, '/unibraze/stock.svg', 'Bar stock stacked end-on'],
-  METALLURGY: [null, '/unibraze/section.svg', 'Groove weld joint in section'],
-  PROCEDURE: [null, '/unibraze/plate.svg', 'Brushed steel plate'],
+  'FILLER METAL': ['spool', '/unibraze/spool.svg', 'Rollo de alambre de soldadura'],
+  ELECTRODE: ['electrode', '/unibraze/electrode.svg', 'Caja de electrodos revestidos Unibraze'],
+  'BRAZING ALLOY': ['rod', '/unibraze/rod.svg', 'Atado de varilla de aporte'],
+  DEFECT: [null, '/unibraze/section.svg', 'Junta soldada en corte'],
+  COMPARISON: [null, '/unibraze/stock.svg', 'Barras de acero apiladas de canto'],
+  MATERIAL: [null, '/unibraze/stock.svg', 'Barras de acero apiladas de canto'],
+  METALLURGY: [null, '/unibraze/section.svg', 'Junta soldada en corte'],
+  PROCEDURE: [null, '/unibraze/plate.svg', 'Placa de acero cepillado'],
 }
 
-const pick = computed(() => MAP[props.record.kind] ?? [null, '/unibraze/plate.svg', 'Brushed steel plate'])
+const pick = computed(() => MAP[props.record.kind] ?? [null, '/unibraze/plate.svg', 'Placa de acero cepillado'])
 
 // A rod-form catalogue entry should show a rod even when it is filed as a
 // filler metal, so the form on the record beats the record's class.

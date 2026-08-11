@@ -3,7 +3,7 @@
     <header class="head">
       <ArcScene :depth="8" :density="3" :origin-y="0.82" :intensity="0.8" />
       <div class="head__inner ows-shell">
-        <OwsMark size="lg" orientation="v" />
+        <OwsMark size="lg" />
         <p class="head__claim">{{ BRAND.creed }}</p>
       </div>
     </header>
