@@ -2,11 +2,16 @@
   <div class="page">
     <!-- ── Query bar ──────────────────────────────────────────────────── -->
     <header class="head ows-shell">
+      <!-- The field is the page's title here, and it is not a heading element.
+           Without this the results page is the one document in the site with
+           no h1, which breaks heading navigation for a screen reader. -->
+      <h1 class="ows-sr">{{ q ? `Resultados para ${q}` : 'Búsqueda' }}</h1>
+
       <div class="head__field">
         <SearchField size="md" inline :initial="q" @submit="onSubmit" />
       </div>
 
-      <nav class="tabs" aria-label="Filter results">
+      <nav class="tabs" aria-label="Filtrar resultados">
         <button
           v-for="tab in RESULT_TABS"
           :key="tab.id"
@@ -22,9 +27,9 @@
 
       <p v-if="q" class="status">
         <span class="status__n ows-num">{{ shown.length }}</span>
-        result{{ shown.length === 1 ? '' : 's' }} for
+        resultado{{ shown.length === 1 ? '' : 's' }} para
         <span class="status__q">{{ q }}</span>
-        <span class="status__t">· {{ state.took.toFixed(1) }} ms · {{ state.provider }} index</span>
+        <span class="status__t">· {{ state.took.toFixed(1) }} ms · índice {{ state.provider }}</span>
       </p>
     </header>
 
@@ -34,8 +39,8 @@
            specification strip, so an exact designation match is answered
            without a second click. -->
       <section v-if="top" class="top" v-reveal>
-        <p class="ows-label top__label">TOP RESULT</p>
-        <RouterLink class="top__card" :to="{ name: 'record', params: { id: top.record.id } }">
+        <p class="ows-label top__label">MEJOR RESULTADO</p>
+        <RouterLink class="top__card" :to="{ name: 'product', params: { id: top.record.id } }">
           <figure class="top__media">
             <RecordVisual :record="top.record" />
           </figure>
@@ -89,7 +94,7 @@
 
       <!-- ── Empty states ─────────────────────────────────────────────── -->
       <div v-if="q && !shown.length && state.status !== 'pending'" class="empty">
-        <p class="empty__title">NO MATCH IN INDEX</p>
+        <p class="empty__title">SIN COINCIDENCIAS</p>
         <p class="empty__body">
           Nothing matched “{{ q }}”. Try a classification, an alloy family, a process
           or a defect.
@@ -98,7 +103,7 @@
       </div>
 
       <div v-else-if="!q" class="empty">
-        <p class="empty__title">SEARCH {{ total }} RECORDS</p>
+        <p class="empty__title">BUSQUE ENTRE {{ total }} REGISTROS</p>
         <p class="empty__body">
           Enter a designation in any standard — AWS, EN ISO, DIN, JIS, W.Nr — or a
           process, a material or a defect.

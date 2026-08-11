@@ -11,6 +11,8 @@
     "standalone": "node scripts/ows-standalone.mjs"
   },
   "dependencies": {
+    "gsap": "^3.15.0",
+    "three": "^0.185.1",
     "vue": "^3.5.34",
     "vue-router": "^5.2.0"
   },

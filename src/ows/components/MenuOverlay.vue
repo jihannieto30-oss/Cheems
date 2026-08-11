@@ -1,20 +1,23 @@
 <template>
-  <nav class="menu" aria-label="All sections" @keydown.esc="emit('close')">
+  <nav class="menu" aria-label="Todas las secciones" @keydown.esc="emit('close')">
     <div class="menu__inner ows-shell">
-      <ul class="menu__list">
-        <li v-for="(item, i) in items" :key="item.to" :style="{ '--i': i }">
-          <RouterLink class="menu__link" :to="item.to" @click="emit('close')">
-            <span class="menu__label">{{ item.label }}</span>
-            <svg class="menu__chevron" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M9 5 L16 12 L9 19" />
-            </svg>
-          </RouterLink>
-        </li>
-      </ul>
+      <section v-for="group in groups" :key="group.title" class="menu__group">
+        <h2 class="menu__group-title">{{ group.title }}</h2>
+        <ul class="menu__list">
+          <li v-for="item in group.items" :key="item.to" :style="{ '--i': item.order }">
+            <RouterLink class="menu__link" :to="item.to" @click="emit('close')">
+              <span class="menu__label">{{ item.label }}</span>
+              <svg class="menu__chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 5 L16 12 L9 19" />
+              </svg>
+            </RouterLink>
+          </li>
+        </ul>
+      </section>
 
       <footer class="menu__foot">
-        <p class="menu__claim">KNOWLEDGE IS POWER</p>
-        <p class="ows-meta">CONOCIMIENTO QUE UNE. SOLUCIONES QUE PERDURAN.</p>
+        <p class="menu__claim">{{ BRAND.creed }}</p>
+        <p class="ows-meta">{{ BRAND.claim }}</p>
       </footer>
     </div>
   </nav>
@@ -22,15 +25,21 @@
 
 <script setup>
 import { RouterLink } from 'vue-router'
-import { FACETS } from '../data'
+import { MENU } from '../data/site'
+import { BRAND } from '../brand'
 
 const emit = defineEmits(['close'])
 
-const items = [
-  { label: 'Catalogue', to: '/catalog' },
-  ...FACETS.map((f) => ({ label: f.label, to: `/browse/${f.slug}` })),
-  { label: 'About', to: '/about' },
-]
+/*
+  The entrance stagger has to count across the whole overlay, not restart in
+  each group, or the second column animates in ahead of the first row it sits
+  beside. The order is baked once here rather than tracked in the template.
+*/
+let order = 0
+const groups = MENU.map((group) => ({
+  title: group.title,
+  items: group.items.map((item) => ({ ...item, order: order++ })),
+}))
 </script>
 
 <style scoped>
@@ -41,12 +50,27 @@ const items = [
   background: var(--ows-void);
   overflow-y: auto;
   display: flex;
-  align-items: center;
+  /* `safe` so a menu taller than the viewport starts at the top instead of
+     centring and putting its first rows above the scrollable area. */
+  align-items: flex-start;
+  align-items: safe center;
 }
 
 .menu__inner {
   width: 100%;
   padding-block: calc(var(--ows-nav-h) + 2rem) 3rem;
+}
+
+.menu__group + .menu__group {
+  margin-top: clamp(1.75rem, 5vh, 3rem);
+}
+
+.menu__group-title {
+  font-size: var(--ows-t-micro);
+  letter-spacing: var(--ows-track-meta);
+  text-transform: uppercase;
+  color: var(--ows-ink-faint);
+  margin-bottom: 0.75rem;
 }
 
 .menu__list {
@@ -79,7 +103,7 @@ const items = [
 
 .menu__label {
   font-family: var(--ows-display);
-  font-size: clamp(1.625rem, 5vw, 3rem);
+  font-size: clamp(1.25rem, 3.4vw, 2.25rem);
   font-weight: var(--ows-display-weight);
   letter-spacing: 0.1em;
   text-transform: uppercase;

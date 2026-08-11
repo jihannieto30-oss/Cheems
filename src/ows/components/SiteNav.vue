@@ -4,9 +4,10 @@
       <OwsMark size="sm" />
     </RouterLink>
 
-    <nav class="nav__links" aria-label="Primary">
-      <RouterLink class="nav__link" to="/search">Search</RouterLink>
-      <RouterLink class="nav__link" to="/catalog">Catalogue</RouterLink>
+    <nav class="nav__links" aria-label="Principal">
+      <RouterLink v-for="item in PRIMARY" :key="item.to" class="nav__link" :to="item.to">
+        {{ item.label }}
+      </RouterLink>
     </nav>
 
     <button class="nav__toggle" :aria-expanded="open" aria-controls="ows-menu" @click="open = !open">
@@ -25,6 +26,7 @@ import { ref, watch, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import OwsMark from './OwsMark.vue'
 import MenuOverlay from './MenuOverlay.vue'
+import { PRIMARY } from '../data/site'
 
 const open = ref(false)
 const lifted = ref(false)

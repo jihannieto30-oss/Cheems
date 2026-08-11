@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local verification scripts (Playwright harnesses, not part of the build)
+.t*.mjs
+.chk.mjs

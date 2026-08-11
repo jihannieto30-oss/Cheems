@@ -114,32 +114,32 @@ export function relatedTo(record, limit = 5) {
 export const FACETS = [
   {
     slug: 'materials',
-    label: 'Materials',
-    blurb: 'Base metals, filler metals, electrodes and the specifications that bind them.',
+    label: 'Materiales',
+    blurb: 'Metales base, metales de aporte, electrodos y las especificaciones que los rigen.',
     match: (r) => r.category === 'materials',
   },
   {
     slug: 'processes',
-    label: 'Processes',
-    blurb: 'Arc processes, transfer modes and the parameter windows that govern them.',
+    label: 'Procesos',
+    blurb: 'Procesos de arco, modos de transferencia y las ventanas de parámetros que los gobiernan.',
     match: (r) => r.category === 'processes',
   },
   {
     slug: 'standards',
-    label: 'Standards',
-    blurb: 'Codes, procedure documentation and welding symbols.',
+    label: 'Normas',
+    blurb: 'Códigos, documentación de procedimiento y simbología de soldadura.',
     match: (r) => r.category === 'standards',
   },
   {
     slug: 'documents',
-    label: 'Documents',
-    blurb: 'Data sheets and certificates attached to catalogue records.',
+    label: 'Documentos',
+    blurb: 'Fichas técnicas y certificados asociados a los registros del catálogo.',
     match: (r) => Boolean(getDetail(r.id)?.documents?.length),
   },
   {
     slug: 'guides',
-    label: 'Guides',
-    blurb: 'Defect diagnosis, metallurgy and inspection method selection.',
+    label: 'Guías',
+    blurb: 'Diagnóstico de defectos, metalurgia y selección de método de inspección.',
     match: (r) => ['problems', 'metallurgy', 'inspection'].includes(r.category),
   },
 ]
@@ -155,10 +155,10 @@ export function recordsInFacet(slug) {
 
 /** Result-page tabs. `all` is not a filter, it is the absence of one. */
 export const RESULT_TABS = [
-  { id: 'all', label: 'All', match: () => true },
-  { id: 'materials', label: 'Materials', match: (r) => r.category === 'materials' },
-  { id: 'processes', label: 'Processes', match: (r) => r.category === 'processes' },
-  { id: 'docs', label: 'Docs', match: (r) => r.category === 'standards' },
+  { id: 'all', label: 'Todo', match: () => true },
+  { id: 'materials', label: 'Materiales', match: (r) => r.category === 'materials' },
+  { id: 'processes', label: 'Procesos', match: (r) => r.category === 'processes' },
+  { id: 'docs', label: 'Normas', match: (r) => r.category === 'standards' },
 ]
 
 /*
@@ -175,38 +175,38 @@ const CONSUMABLE_KINDS = new Set(['FILLER METAL', 'ELECTRODE', 'BRAZING ALLOY'])
 export const RESULT_GROUPS = [
   {
     id: 'consumables',
-    label: 'Filler metals & consumables',
-    note: 'Wire, rod and covered electrode',
+    label: 'Metales de aporte y consumibles',
+    note: 'Alambre, varilla y electrodo revestido',
     match: (r) => CONSUMABLE_KINDS.has(r.kind),
   },
   {
     id: 'processes',
-    label: 'Processes & parameters',
-    note: 'Arc processes and their operating windows',
+    label: 'Procesos y parámetros',
+    note: 'Procesos de arco y sus ventanas de operación',
     match: (r) => r.category === 'processes',
   },
   {
     id: 'selection',
-    label: 'Materials & selection',
-    note: 'Base metals and grade comparisons',
+    label: 'Materiales y selección',
+    note: 'Metales base y comparación de grados',
     match: (r) => r.category === 'materials' && !CONSUMABLE_KINDS.has(r.kind),
   },
   {
     id: 'diagnosis',
-    label: 'Defects & metallurgy',
-    note: 'Cause, diagnosis and resolution',
+    label: 'Defectos y metalurgia',
+    note: 'Causa, diagnóstico y solución',
     match: (r) => ['problems', 'metallurgy'].includes(r.category),
   },
   {
     id: 'inspection',
-    label: 'Inspection',
-    note: 'Method selection and acceptance',
+    label: 'Inspección',
+    note: 'Selección de método y criterios de aceptación',
     match: (r) => r.category === 'inspection',
   },
   {
     id: 'standards',
-    label: 'Standards & documentation',
-    note: 'Codes, procedures and symbols',
+    label: 'Normas y documentación',
+    note: 'Códigos, procedimientos y simbología',
     match: (r) => r.category === 'standards',
   },
 ]

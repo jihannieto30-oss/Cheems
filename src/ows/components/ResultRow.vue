@@ -1,5 +1,5 @@
 <template>
-  <RouterLink class="row" :to="{ name: 'record', params: { id: record.id } }">
+  <RouterLink class="row" :to="{ name: 'product', params: { id: record.id } }">
     <span class="row__bar" aria-hidden="true" />
 
     <div class="row__head">

@@ -1,6 +1,6 @@
 <template>
   <div class="pop">
-    <span class="pop__label">Popular searches:</span>
+    <span class="pop__label">Búsquedas frecuentes:</span>
     <ul class="pop__list">
       <li v-for="term in terms" :key="term">
         <RouterLink class="pop__chip" :to="{ name: 'search', query: { q: term } }">

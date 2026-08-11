@@ -5,11 +5,11 @@
       <div class="bar__inner ows-shell">
         <button class="bar__back" @click="back">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5 L7.5 12 L14.5 19" /></svg>
-          BACK TO RESULTS
+          VOLVER A RESULTADOS
         </button>
         <span class="bar__title">{{ record.title }}</span>
         <button class="bar__share" @click="share">
-          {{ copied ? 'LINK COPIED' : 'SHARE' }}
+          {{ copied ? 'ENLACE COPIADO' : 'COMPARTIR' }}
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M8.5 13 L15.5 9" /><path d="M8.5 11 L15.5 15" />
             <circle cx="6" cy="12" r="2.4" /><circle cx="18" cy="7.5" r="2.4" />
@@ -22,7 +22,7 @@
     <div class="sheet ows-shell">
       <!-- Section rail -->
       <aside class="rail">
-        <nav aria-label="Sections of this record">
+        <nav aria-label="Secciones de este registro">
           <a
             v-for="s in sections"
             :key="s.id"
@@ -86,7 +86,7 @@
 
         <!-- ── WELDING PARAMETERS ── -->
         <section v-if="parameters.length" :id="ids.parameters" class="block">
-          <h2 class="block__title">WELDING PARAMETERS</h2>
+          <h2 class="block__title">PARÁMETROS DE SOLDADURA</h2>
           <dl class="rows">
             <div v-for="p in parameters" :key="p.k" class="rows__row">
               <dt>{{ p.k }}</dt>
@@ -97,7 +97,7 @@
 
         <!-- ── DIAGNOSIS — defects only ── -->
         <section v-if="record.solution" :id="ids.diagnosis" class="block">
-          <h2 class="block__title">DIAGNOSIS</h2>
+          <h2 class="block__title">DIAGNÓSTICO</h2>
           <p class="block__lead">{{ record.solution.premise }}</p>
           <div class="vectors">
             <article v-for="v in record.solution.vectors" :key="v.label" class="vector">
@@ -107,7 +107,7 @@
               </ul>
             </article>
           </div>
-          <h3 class="block__sub">RESOLUTION</h3>
+          <h3 class="block__sub">SOLUCIÓN</h3>
           <ol class="steps">
             <li v-for="(s, i) in record.solution.resolution" :key="s">
               <span class="steps__n ows-num">{{ String(i + 1).padStart(2, '0') }}</span>
@@ -118,7 +118,7 @@
 
         <!-- ── APPLICATIONS ── -->
         <section v-if="detail?.applications" :id="ids.applications" class="block">
-          <h2 class="block__title">APPLICATIONS</h2>
+          <h2 class="block__title">APLICACIONES</h2>
           <ul class="apps">
             <li v-for="a in detail.applications" :key="a">{{ a }}</li>
           </ul>
@@ -126,7 +126,7 @@
 
         <!-- ── DOCUMENTS ── -->
         <section v-if="detail?.documents" :id="ids.documents" class="block">
-          <h2 class="block__title">DOCUMENTS</h2>
+          <h2 class="block__title">DOCUMENTOS</h2>
           <ul class="docs">
             <li v-for="d in detail.documents" :key="d.label">
               <!-- Deliberately inert: no file exists yet, and a dead link that
@@ -134,7 +134,7 @@
               <span class="doc" aria-disabled="true">
                 <span class="doc__label">{{ d.label }}</span>
                 <span class="doc__kind">{{ d.kind }}</span>
-                <span class="doc__state">NOT PUBLISHED</span>
+                <span class="doc__state">NO PUBLICADO</span>
               </span>
             </li>
           </ul>
@@ -142,10 +142,10 @@
 
         <!-- ── RELATED ── -->
         <section v-if="related.length" :id="ids.related" class="block">
-          <h2 class="block__title">RELATED TOPICS</h2>
+          <h2 class="block__title">TEMAS RELACIONADOS</h2>
           <ul class="related">
             <li v-for="r in related" :key="r.id">
-              <RouterLink class="related__link" :to="{ name: 'record', params: { id: r.id } }">
+              <RouterLink class="related__link" :to="{ name: 'product', params: { id: r.id } }">
                 <span class="related__title">{{ r.title }}</span>
                 <span class="related__kind">{{ r.kind }}</span>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 L16 12 L9 19" /></svg>
@@ -194,14 +194,14 @@ const ids = {
 }
 
 const sections = computed(() => {
-  const out = [{ id: ids.overview, label: 'OVERVIEW' }]
-  if (detail.value?.chemistry) out.push({ id: ids.chemistry, label: 'CHEMICAL COMPOSITION' })
-  if (detail.value?.mechanical) out.push({ id: ids.mechanical, label: 'MECHANICAL PROPERTIES' })
-  if (parameters.value.length) out.push({ id: ids.parameters, label: 'WELDING PARAMETERS' })
-  if (record.value?.solution) out.push({ id: ids.diagnosis, label: 'DIAGNOSIS' })
-  if (detail.value?.applications) out.push({ id: ids.applications, label: 'APPLICATIONS' })
-  if (detail.value?.documents) out.push({ id: ids.documents, label: 'DOCUMENTS' })
-  if (related.value.length) out.push({ id: ids.related, label: 'RELATED TOPICS' })
+  const out = [{ id: ids.overview, label: 'RESUMEN' }]
+  if (detail.value?.chemistry) out.push({ id: ids.chemistry, label: 'COMPOSICIÓN QUÍMICA' })
+  if (detail.value?.mechanical) out.push({ id: ids.mechanical, label: 'PROPIEDADES MECÁNICAS' })
+  if (parameters.value.length) out.push({ id: ids.parameters, label: 'PARÁMETROS DE SOLDADURA' })
+  if (record.value?.solution) out.push({ id: ids.diagnosis, label: 'DIAGNÓSTICO' })
+  if (detail.value?.applications) out.push({ id: ids.applications, label: 'APLICACIONES' })
+  if (detail.value?.documents) out.push({ id: ids.documents, label: 'DOCUMENTOS' })
+  if (related.value.length) out.push({ id: ids.related, label: 'TEMAS RELACIONADOS' })
   return out
 })
 

@@ -129,6 +129,9 @@ a {
   display: block;
   width: 2.5rem;
   height: 2px;
+  /* The rule is an <hr>, and the UA gives that `margin-inline: auto` — which
+     silently centres the tick in any container wider than 2.5rem. */
+  margin-inline: 0;
   background: var(--ows-red);
   border: 0;
 }

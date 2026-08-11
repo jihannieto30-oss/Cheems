@@ -6,7 +6,7 @@
         <path d="M15.4 15.4 L20.5 20.5" />
       </svg>
 
-      <label class="ows-sr" :for="id">Search the OWS knowledge index</label>
+      <label class="ows-sr" :for="id">Buscar en el índice técnico</label>
       <input
         :id="id"
         ref="input"
@@ -29,7 +29,7 @@
         @keydown="onKeydown"
       />
 
-      <button class="field__go" type="submit" :aria-label="`Search for ${text || 'anything'}`">
+      <button class="field__go" type="submit" :aria-label="`Buscar ${text || 'en el índice'}`">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="M4 12 H19.5" />
           <path d="M13.5 6 L19.5 12 L13.5 18" />
@@ -111,7 +111,7 @@ function go(record) {
   const chosen = record ?? (active.value >= 0 ? state.results[active.value]?.record : null)
   if (chosen) {
     input.value?.blur()
-    router.push({ name: 'record', params: { id: chosen.id } })
+    router.push({ name: 'product', params: { id: chosen.id } })
     return
   }
   const q = text.value.trim()

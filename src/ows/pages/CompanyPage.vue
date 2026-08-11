@@ -4,26 +4,26 @@
       <ArcScene :depth="8" :density="3" :origin-y="0.82" :intensity="0.8" />
       <div class="head__inner ows-shell">
         <OwsMark size="lg" orientation="v" />
-        <p class="head__claim">KNOWLEDGE IS POWER</p>
+        <p class="head__claim">{{ BRAND.creed }}</p>
       </div>
     </header>
 
     <section class="ows-shell body">
       <hr class="ows-tick" />
       <h1 class="body__title">
-        BUILT FOR WELDERS.<br />DRIVEN BY PRECISION.<br />FOCUSED ON SOLUTIONS.
+        HECHO PARA SOLDADORES.<br />MOVIDO POR LA PRECISIÓN.<br />ENFOCADO EN SOLUCIONES.
       </h1>
 
       <div class="body__cols">
         <p>
-          OWS — Online Welding Supply — is a technical search engine for welding, fabrication
-          and metallurgy. It exists for the person who already knows what they are looking
-          for and wants the answer without wading through a catalogue.
+          {{ BRAND.code }} — {{ BRAND.name }} — es un índice técnico de soldadura,
+          fabricación y metalurgia. Existe para quien ya sabe qué está buscando y quiere
+          la respuesta sin atravesar un catálogo entero para llegar a ella.
         </p>
         <p>
-          Every record is a working document: classification, composition, mechanical
-          properties, parameters and the applications the consumable was actually designed
-          for. Defects carry their diagnosis — cause vectors first, resolution second.
+          Cada registro es un documento de trabajo: clasificación, composición, propiedades
+          mecánicas, parámetros y las aplicaciones para las que el consumible fue realmente
+          diseñado. Los defectos traen su diagnóstico — primero la causa, después la solución.
         </p>
       </div>
 
@@ -34,21 +34,31 @@
         </div>
       </dl>
 
-      <p class="body__sign ows-meta">CONOCIMIENTO QUE UNE. SOLUCIONES QUE PERDURAN.</p>
+      <p class="body__sign ows-meta">{{ BRAND.claim }}</p>
     </section>
+    <NextPage
+      eyebrow="Siguiente"
+      title="Hablemos del trabajo"
+      lead="Lo que resuelve un problema no es el catálogo, es la conversación sobre la junta."
+      :to="PAGES.contact.to"
+    />
   </div>
 </template>
 
 <script setup>
 import ArcScene from '../components/ArcScene.vue'
+import NextPage from '../components/NextPage.vue'
+import { PAGES } from '../data/site'
 import OwsMark from '../components/OwsMark.vue'
 import { KNOWLEDGE, FACETS, SOLUTIONS } from '../data'
+import { CATALOG_TOTAL } from '../data/catalog'
+import { BRAND } from '../brand'
 
 const facts = [
-  { k: 'Records indexed', v: String(KNOWLEDGE.length).padStart(3, '0') },
-  { k: 'Sections', v: String(FACETS.length).padStart(2, '0') },
-  { k: 'Defects diagnosed', v: String(SOLUTIONS.length).padStart(2, '0') },
-  { k: 'Established', v: '2024' },
+  { k: 'Designaciones', v: String(CATALOG_TOTAL) },
+  { k: 'Registros indexados', v: String(KNOWLEDGE.length).padStart(3, '0') },
+  { k: 'Secciones', v: String(FACETS.length).padStart(2, '0') },
+  { k: 'Defectos diagnosticados', v: String(SOLUTIONS.length).padStart(2, '0') },
 ]
 </script>
 

@@ -3,13 +3,13 @@
     <div class="foot__top ows-shell">
       <div class="foot__brand">
         <OwsMark size="md" />
-        <p class="foot__claim">BUILT TO JOIN. BUILT TO LAST.</p>
+        <p class="foot__claim">{{ BRAND.promise }}</p>
       </div>
 
-      <nav v-for="col in columns" :key="col.title" class="foot__col" :aria-label="col.title">
+      <nav v-for="col in FOOTER" :key="col.title" class="foot__col" :aria-label="col.title">
         <h2 class="foot__col-title">{{ col.title }}</h2>
         <ul>
-          <li v-for="link in col.links" :key="link.label">
+          <li v-for="link in col.items" :key="link.to">
             <RouterLink class="foot__link" :to="link.to">{{ link.label }}</RouterLink>
           </li>
         </ul>
@@ -17,8 +17,10 @@
     </div>
 
     <div class="foot__bottom ows-shell">
-      <p class="ows-meta">© {{ year }} OWS · ONLINE WELDING SUPPLY</p>
-      <p class="ows-meta foot__sign">CONOCIMIENTO QUE UNE. SOLUCIONES QUE PERDURAN.</p>
+      <p class="ows-meta">
+        © {{ year }} {{ BRAND.code }} · {{ BRAND.name.toUpperCase() }}
+      </p>
+      <p class="ows-meta foot__sign">{{ BRAND.claim }}</p>
     </div>
   </footer>
 </template>
@@ -26,30 +28,8 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import OwsMark from './OwsMark.vue'
-
-const columns = [
-  {
-    title: 'Index',
-    links: [
-      { label: 'Catalogue', to: '/catalog' },
-      { label: 'Materials', to: '/browse/materials' },
-      { label: 'Processes', to: '/browse/processes' },
-      { label: 'Standards', to: '/browse/standards' },
-    ],
-  },
-  {
-    title: 'Resources',
-    links: [
-      { label: 'Documents', to: '/browse/documents' },
-      { label: 'Guides', to: '/browse/guides' },
-      { label: 'Search', to: '/search' },
-    ],
-  },
-  {
-    title: 'Company',
-    links: [{ label: 'About', to: '/about' }],
-  },
-]
+import { FOOTER } from '../data/site'
+import { BRAND } from '../brand'
 
 const year = new Date().getFullYear()
 </script>

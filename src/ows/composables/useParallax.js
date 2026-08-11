@@ -18,6 +18,16 @@ import { prefersReducedMotion } from './useReducedMotion'
   Writing a scalar and letting CSS do the transform keeps the JS cost at one
   property write per visible element per frame, and lets every displacement
   scale off --ows-parallax (which prefers-reduced-motion zeroes) for free.
+
+  useScene() registers against the same loop but writes `--s` instead: the
+  element's own scroll span, 0 → 1, which is what a tall section needs to drive
+  a scrubbed sequence rather than a drift.
+
+       0  element's top is level with the viewport top
+       1  element's bottom is level with the viewport bottom
+
+  A 300vh section therefore has 200vh of travel between 0 and 1, and whatever
+  is sticky inside it can be posed off `--s` as a camera move.
 */
 
 const targets = new Map()
@@ -36,13 +46,24 @@ function update() {
   for (const [el, state] of targets) {
     if (!state.visible) continue
     const rect = el.getBoundingClientRect()
-    const centre = rect.top + rect.height / 2
-    // Distance from viewport centre, normalised by a full viewport of travel.
-    const raw = (centre - viewportH / 2) / viewportH
-    const p = Math.max(-1.5, Math.min(1.5, raw))
-    if (state.last === null || Math.abs(p - state.last) > 0.0005) {
-      state.last = p
-      el.style.setProperty('--p', p.toFixed(4))
+    let value
+
+    if (state.prop === '--s') {
+      // Travel is the element's own overflow past the viewport. A section no
+      // taller than the viewport has no scrub span, so it reports 0 rather
+      // than dividing by nothing.
+      const travel = rect.height - viewportH
+      value = travel > 1 ? Math.max(0, Math.min(1, -rect.top / travel)) : 0
+    } else {
+      const centre = rect.top + rect.height / 2
+      // Distance from viewport centre, normalised by a full viewport of travel.
+      const raw = (centre - viewportH / 2) / viewportH
+      value = Math.max(-1.5, Math.min(1.5, raw))
+    }
+
+    if (state.last === null || Math.abs(value - state.last) > 0.0005) {
+      state.last = value
+      el.style.setProperty(state.prop, value.toFixed(4))
     }
   }
 }
@@ -97,17 +118,13 @@ function teardownIfIdle() {
   frame = 0
 }
 
-/**
- * Attach the returned ref to any element to have `--p` maintained on it.
- * Returns a plain template ref; no other wiring is needed.
- */
-export function useParallax() {
+function track(prop) {
   const el = ref(null)
 
   onMounted(() => {
     if (!el.value || prefersReducedMotion()) return
     ensureRunning()
-    targets.set(el.value, { visible: false, last: null })
+    targets.set(el.value, { visible: false, last: null, prop })
     observer.observe(el.value)
     schedule()
   })
@@ -121,3 +138,15 @@ export function useParallax() {
 
   return el
 }
+
+/**
+ * Attach the returned ref to any element to have `--p` maintained on it.
+ * Returns a plain template ref; no other wiring is needed.
+ */
+export const useParallax = () => track('--p')
+
+/**
+ * Attach the returned ref to a section taller than the viewport to have `--s`
+ * maintained on it: 0 → 1 across the section's own scroll span.
+ */
+export const useScene = () => track('--s')

@@ -2,7 +2,7 @@
   <div v-if="facet" class="page">
     <header class="head ows-shell">
       <nav class="crumb">
-        <RouterLink to="/">OWS</RouterLink>
+        <RouterLink to="/">{{ BRAND.code }}</RouterLink>
         <span aria-hidden="true">/</span>
         <span>{{ facet.label.toUpperCase() }}</span>
       </nav>
@@ -10,7 +10,7 @@
       <h1 class="head__title">{{ facet.label.toUpperCase() }}</h1>
       <p class="head__blurb">{{ facet.blurb }}</p>
       <p class="head__count ows-meta">
-        <span class="ows-num">{{ records.length }}</span> RECORDS
+        <span class="ows-num">{{ records.length }}</span> REGISTROS
       </p>
     </header>
 
@@ -21,7 +21,7 @@
         </li>
       </ul>
 
-      <nav class="siblings" aria-label="Other sections">
+      <nav class="siblings" aria-label="Otras secciones">
         <RouterLink
           v-for="f in others"
           :key="f.slug"
@@ -44,6 +44,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import ResultRow from '../components/ResultRow.vue'
 import NotFoundPage from './NotFoundPage.vue'
 import { FACETS, facetBySlug, recordsInFacet } from '../data'
+import { BRAND } from '../brand'
 
 const route = useRoute()
 const slug = computed(() => route.params.facet?.toString() ?? '')

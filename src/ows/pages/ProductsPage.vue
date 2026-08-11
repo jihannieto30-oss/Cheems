@@ -15,39 +15,45 @@
 
       <div class="band__inner ows-shell">
         <nav class="crumb">
-          <RouterLink to="/">OWS</RouterLink>
+          <RouterLink to="/">{{ BRAND.code }}</RouterLink>
           <span aria-hidden="true">/</span>
-          <span>CATALOGUE</span>
+          <span>PRODUCTOS</span>
         </nav>
         <hr class="ows-tick" />
-        <h1 class="band__title">CATALOGUE</h1>
+        <h1 class="band__title">PRODUCTOS</h1>
         <p class="band__lead">
-          {{ SECTIONS.length }} sections, {{ CATALOG_TOTAL }} designations. Filler metals, covered electrodes
-          and brazing alloys across every alloy family Unibraze sections its range by.
+          {{ SECTIONS.length }} secciones, {{ CATALOG_TOTAL }} designaciones. Metales de aporte, electrodos
+          revestidos y aleaciones de latón, ordenados por familia de aleación.
         </p>
 
         <p class="band__status">
           <span class="band__dot" aria-hidden="true" />
-          IN PROGRESS — {{ SHEET_TOTAL }} of {{ CATALOG_TOTAL }} technical sheets published.
-          The remainder are catalogued with specification pending.
+          EN PROCESO — {{ SHEET_TOTAL }} de {{ CATALOG_TOTAL }} fichas técnicas publicadas.
+          El resto está catalogado con especificación pendiente.
         </p>
       </div>
     </header>
 
     <!-- ── Product forms ──────────────────────────────────────────────── -->
     <section class="forms ows-shell">
-      <p class="ows-label forms__label">PRODUCT FORMS</p>
+      <p class="ows-label forms__label">FORMAS DE PRODUCTO</p>
       <div class="forms__grid">
         <article v-for="(f, i) in formCards" :key="f.id" class="form" v-reveal="{ delay: i * 110 }">
           <figure class="form__media">
-            <ParallaxImage :src="f.art" :alt="f.alt" :depth="6" :scale="1.14" :scrim="0.06" :hairlines="false" :mono="false" />
+            <ProductStage
+              :product="f.id"
+              :fallback-src="f.art"
+              :alt="f.alt"
+              :distance="1.15"
+              :spin="0.12"
+            />
           </figure>
           <hr class="ows-tick form__tick" />
           <h2 class="form__title">{{ f.es }}</h2>
           <p class="form__en">{{ f.en }}</p>
           <p class="form__body">{{ f.body }}</p>
           <p class="form__count ows-meta">
-            <span class="ows-num">{{ f.count }}</span> DESIGNATIONS
+            <span class="ows-num">{{ f.count }}</span> DESIGNACIONES
           </p>
         </article>
       </div>
@@ -55,7 +61,7 @@
 
     <!-- ── Sections ───────────────────────────────────────────────────── -->
     <section class="sections ows-shell">
-      <p class="ows-label sections__label">SECTIONS</p>
+      <p class="ows-label sections__label">SECCIONES</p>
 
       <article v-for="(s, i) in SECTIONS" :key="s.slug" class="sec" v-reveal="{ delay: Math.min(i, 5) * 70 }">
         <button class="sec__head" :aria-expanded="open === s.slug" @click="toggle(s.slug)">
@@ -76,14 +82,14 @@
           <div class="sec__drawer-inner">
             <ul class="items">
               <li v-for="item in itemsInSection(s.slug)" :key="item.id">
-                <RouterLink class="item" :to="{ name: 'record', params: { id: item.id } }">
+                <RouterLink class="item" :to="{ name: 'product', params: { id: item.id } }">
                   <span class="item__name">{{ item.designation }}</span>
                   <span class="item__forms">
                     <i v-for="f in item.forms" :key="f" :title="FORMS[f].es">{{ FORMS[f].es }}</i>
                   </span>
                   <span class="item__spec">{{ item.spec }}</span>
                   <span class="item__sheet" :class="{ 'is-on': item.sheet }">
-                    {{ item.sheet ? 'SHEET' : 'PENDING' }}
+                    {{ item.sheet ? 'FICHA' : 'PENDIENTE' }}
                   </span>
                 </RouterLink>
               </li>
@@ -92,6 +98,12 @@
         </div>
       </article>
     </section>
+    <NextPage
+      eyebrow="Siguiente"
+      title="Cómo se especifica"
+      lead="Detrás de cada designación de esta lista hay una química controlada y un depósito ensayado."
+      :to="PAGES.technology.to"
+    />
   </div>
 </template>
 
@@ -99,6 +111,10 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import ParallaxImage from '../components/ParallaxImage.vue'
+import NextPage from '../components/NextPage.vue'
+import { PAGES } from '../data/site'
+import { BRAND } from '../brand'
+import ProductStage from '../components/ProductStage.vue'
 import StandardsCascade from '../components/StandardsCascade.vue'
 import {
   SECTIONS,
@@ -295,6 +311,11 @@ const formCards = [
 }
 
 .form__media :deep(.pxi) {
+  position: absolute;
+  inset: 0;
+}
+
+.form__media :deep(.stage) {
   position: absolute;
   inset: 0;
 }

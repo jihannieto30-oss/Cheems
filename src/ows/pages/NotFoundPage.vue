@@ -1,7 +1,7 @@
 <template>
   <div class="page ows-shell">
     <p class="code ows-num">404</p>
-    <h1 class="title">NO RECORD</h1>
+    <h1 class="title">SIN REGISTRO</h1>
     <p class="body">
       <template v-if="what">Nothing in the index matches “{{ what }}”.</template>
       <template v-else>That address does not resolve to anything in the index.</template>
