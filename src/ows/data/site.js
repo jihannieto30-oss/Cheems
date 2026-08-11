@@ -78,76 +78,7 @@ export const FOOTER = [
 ]
 
 /*
-  The narrative spine of the home page.
-
-  Six chapters, in the order the brief sets them: raw metal becomes a specified
-  material, precision turns it into a joint, and the joint is the result. Each
-  one is a section on the home page and, where it has a `to`, the door into the
-  page that covers it properly.
-*/
-export const CHAPTERS = [
-  {
-    id: 'metal',
-    index: '01',
-    label: 'METAL',
-    title: 'Todo empieza como metal.',
-    body: 'Un lingote no sabe para qué sirve. No tiene grado, no tiene norma, no tiene garantía. Sólo tiene composición — y la composición lo decide todo.',
-    visual: { kind: 'still', src: '/unibraze/stock.svg', alt: 'Barras de acero apiladas de canto' },
-  },
-  {
-    id: 'material',
-    index: '02',
-    label: 'MATERIAL',
-    title: 'El metal se convierte en material cuando se puede nombrar.',
-    body: 'Una designación AWS no es una etiqueta. Es un contrato: qué contiene, cómo se comporta, qué resiste. A partir de ese momento el metal es predecible.',
-    visual: { kind: 'product', product: 'spool', src: '/unibraze/spool.svg', alt: 'Rollo de alambre de soldadura' },
-    to: PAGES.products.to,
-    cta: 'Ver el catálogo',
-  },
-  {
-    id: 'precision',
-    index: '03',
-    label: 'PRECISIÓN',
-    title: 'La precisión es la diferencia entre unir y parecer unido.',
-    body: 'Diámetro, tolerancia, recubrimiento, humedad del revestimiento. Variables que nadie ve en la pieza terminada y que deciden si aguanta.',
-    visual: { kind: 'product', product: 'rod', src: '/unibraze/rod.svg', alt: 'Atado de varilla de aporte' },
-    to: PAGES.technology.to,
-    cta: 'Cómo se controla',
-  },
-  {
-    id: 'welding',
-    index: '04',
-    label: 'SOLDADURA',
-    title: 'El arco funde dos historias en una sola.',
-    body: 'Amperaje, polaridad, gas de protección, velocidad de avance. El proceso no perdona la improvisación: cada parámetro deja su firma en el cordón.',
-    visual: { kind: 'product', product: 'electrode', src: '/unibraze/electrode.svg', alt: 'Electrodos revestidos' },
-    to: PAGES.welding.to,
-    cta: 'Los procesos',
-  },
-  {
-    id: 'technology',
-    index: '05',
-    label: 'TECNOLOGÍA',
-    title: 'Lo que no se mide, no se puede repetir.',
-    body: 'Ensayo de tracción, impacto Charpy, análisis químico por colada. La tecnología es lo que convierte un buen resultado en un resultado garantizado.',
-    visual: { kind: 'still', src: '/unibraze/section.svg', alt: 'Junta soldada en corte' },
-    to: PAGES.technology.to,
-    cta: 'Control de calidad',
-  },
-  {
-    id: 'result',
-    index: '06',
-    label: 'RESULTADO',
-    title: 'Una unión que dura más que quien la hizo.',
-    body: 'Ese es el único indicador que importa. Todo lo anterior existe para eso.',
-    visual: { kind: 'still', src: '/unibraze/plate.svg', alt: 'Placa de acero cepillado' },
-    to: PAGES.company.to,
-    cta: 'Quiénes somos',
-  },
-]
-
-/*
-  The scrubbed weld section on the home page.
+  The scrubbed weld section on the Soldadura page.
 
   Four stages across the travel of the arc: strike, puddle, deposit, result.
   The scene is the argument; these are its captions, and they are also the

@@ -7,16 +7,37 @@
       :aria-label="BRAND.name"
       fill-rule="evenodd"
     >
+      <defs v-if="tone === 'metal'">
+        <!-- Polished dark metal. The brand's dark elements are black, and black
+             on black is nothing — so on this site they are given a surface
+             instead of a colour: a steep light-to-dark ramp with one specular
+             band, which is what a black anodised part looks like under a strip
+             light. It reads as the black mark, and it is visible. -->
+        <linearGradient :id="`${uid}-steel`" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff" />
+          <stop offset="0.16" stop-color="#c2c8d0" />
+          <stop offset="0.34" stop-color="#7d848d" />
+          <stop offset="0.5" stop-color="#eef1f5" />
+          <stop offset="0.68" stop-color="#8d949d" />
+          <stop offset="1" stop-color="#b6bcc4" />
+        </linearGradient>
+        <linearGradient :id="`${uid}-red`" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0" stop-color="#ff4038" />
+          <stop offset="0.42" stop-color="#e10600" />
+          <stop offset="1" stop-color="#7d0400" />
+        </linearGradient>
+      </defs>
+
       <g :transform="art.transform || undefined">
-        <path class="mark__a" :d="art.a" />
-        <path class="mark__b" :d="art.b" />
+        <path class="mark__a" :d="art.a" :fill="tone === 'metal' ? `url(#${uid}-red)` : undefined" />
+        <path class="mark__b" :d="art.b" :fill="tone === 'metal' ? `url(#${uid}-steel)` : undefined" />
       </g>
     </svg>
   </span>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, useId } from 'vue'
 import { BRAND } from '../brand'
 import { LOCKUP, MARK } from '../brandMark'
 
@@ -37,9 +58,17 @@ const props = defineProps({
   variant: { type: String, default: 'lockup' },
   /** sm · md · lg · hero */
   size: { type: String, default: 'md' },
-  /** brand · mono */
+  /** brand · mono · metal */
   tone: { type: String, default: 'brand' },
 })
+
+/*
+  Gradients live in <defs> and are referenced by id, and ids are global to the
+  document — two marks on one page would otherwise share whichever definition
+  rendered last. useId gives a per-instance one; a module counter cannot,
+  because <script setup> runs once per instance and would reset it.
+*/
+const uid = useId()
 
 const art = computed(() => (props.variant === 'mark' ? MARK : LOCKUP))
 </script>
@@ -71,6 +100,11 @@ const art = computed(() => (props.variant === 'mark' ? MARK : LOCKUP))
 .mark--mono .mark__a,
 .mark--mono .mark__b {
   fill: currentColor;
+}
+
+/* A dark object on a dark ground needs an edge to sit against. */
+.mark--metal .mark__svg {
+  filter: drop-shadow(0 0 22px rgb(255 255 255 / 0.07)) drop-shadow(0 2px 1px rgb(0 0 0 / 0.6));
 }
 
 .mark--sm {

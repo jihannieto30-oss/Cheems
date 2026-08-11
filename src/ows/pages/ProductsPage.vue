@@ -131,32 +131,42 @@ const toggle = (slug) => (open.value = open.value === slug ? null : slug)
 
 const countForm = (key) => CATALOG.filter((c) => c.forms.includes(key)).length
 
+/*
+  The three forms, defined the way the standard defines them.
+
+  The distinction that matters and is most often got wrong: in GTAW the
+  electrode is the tungsten and it is not consumed — the varilla is filler fed
+  in by hand, alongside the arc, carrying no current. In GMAW the rollo is both
+  the filler and the electrode at once, which is why it is fed continuously.
+  The electrodo is a core wire under a pressed mineral covering that burns with
+  it, producing the shielding gas and the slag.
+*/
 const formCards = [
   {
     id: 'rod',
     es: 'VARILLA',
-    en: 'Cut length rod',
+    en: 'Cut length rod · AWS "R"',
     art: '/unibraze/rod.svg',
-    alt: 'Bundle of copper-coated welding rods',
-    body: 'High quality filler rod for GTAW and brazing, with excellent flow and penetration. Available across alloys and diameters.',
+    alt: 'Atado de varilla de aporte desnuda',
+    body: 'Aporte cortado a medida, alimentado a mano. No conduce corriente: en GTAW el electrodo es el tungsteno y la varilla entra por separado al baño. Longitud típica de 914 mm.',
     count: countForm('R'),
   },
   {
     id: 'wire',
     es: 'ROLLO',
-    en: 'Spooled wire',
+    en: 'Spooled wire · AWS "E"',
     art: '/unibraze/spool.svg',
-    alt: 'Spool of copper-coated MIG welding wire',
-    body: 'Solid wire for MIG/MAG with stable feeding and a uniform arc. Built for high-productivity industrial work.',
+    alt: 'Rollo de alambre de soldadura',
+    body: 'Alambre continuo devanado en carrete. Es el aporte y el electrodo a la vez — se consume a medida que avanza — y por eso se alimenta sin parar en GMAW, FCAW y arco sumergido.',
     count: countForm('W'),
   },
   {
     id: 'electrode',
     es: 'ELECTRODO',
-    en: 'Covered electrode',
+    en: 'Covered electrode · AWS "E"',
     art: '/unibraze/electrode.svg',
-    alt: 'Covered welding electrodes in an opened carton',
-    body: 'Covered electrodes for SMAW with easy striking and excellent arc stability. Versatile across steel grades.',
+    alt: 'Caja de electrodos revestidos Unibraze',
+    body: 'Núcleo metálico bajo un revestimiento mineral prensado. El revestimiento se consume con el arco: genera el gas que protege el baño y la escoria que lo cubre al enfriar. Para SMAW.',
     count: countForm('E'),
   },
 ]

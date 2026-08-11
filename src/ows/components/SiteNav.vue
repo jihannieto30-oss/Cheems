@@ -1,7 +1,8 @@
 <template>
   <header class="nav" :class="{ 'nav--lifted': lifted, 'nav--open': open }">
     <RouterLink class="nav__brand" to="/" @click="open = false">
-      <OwsMark variant="mark" size="sm" />
+      <OwsMark variant="mark" size="sm" tone="mono" />
+      <span class="nav__word">{{ BRAND.code }}</span>
     </RouterLink>
 
     <nav class="nav__links" aria-label="Principal">
@@ -27,6 +28,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import OwsMark from './OwsMark.vue'
 import MenuOverlay from './MenuOverlay.vue'
 import { PRIMARY } from '../data/site'
+import { BRAND } from '../brand'
 
 const open = ref(false)
 const lifted = ref(false)
@@ -82,8 +84,31 @@ onUnmounted(() => {
 
 .nav__brand {
   display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
   padding-block: 0.5rem;
   margin-block: -0.5rem;
+  /* The monogram alone does not say whose site this is, and this brand is not
+     famous enough for that to be a stylistic choice. The name is set beside
+     it rather than using the lockup, whose own wordmark would be four pixels
+     tall at this height. */
+  color: var(--ows-ink);
+}
+
+.nav__word {
+  font-size: var(--ows-t-meta);
+  font-weight: 500;
+  letter-spacing: 0.34em;
+  /* Cancels the trailing space the tracking adds after the final glyph. */
+  margin-right: -0.34em;
+}
+
+/* Dropped only where the bar genuinely runs out of room; 390px phones keep
+   the name. */
+@media (max-width: 22rem) {
+  .nav__word {
+    display: none;
+  }
 }
 
 .nav__links {

@@ -9,8 +9,19 @@
   and are marked `sheet: true`; everything else renders as catalogued with its
   specification pending, which is honest and obvious to the reader.
 
-  Forms follow the product photography: R = varilla (cut length rod),
-  W = rollo (spool), E = electrodo (covered electrode).
+  Forms are the ones the AWS classification itself covers, not a stock list:
+
+    R  varilla   cut-length rod, fed by hand into a GTAW or oxyfuel flame —
+                 it is not the electrode, the tungsten is
+    W  rollo     spooled wire, continuously fed and consumed as the electrode
+                 in GMAW/FCAW/SAW
+    E  electrodo core wire under a pressed mineral covering, for SMAW
+
+  The prefix decides it. AWS A5.x defines E as an arc welding electrode, R as
+  a rod heated by something other than current through it, and ER as a filler
+  supplied in either form — the same alloy, drawn to wire or cut to rod. So
+  every ER designation carries WR here. Which of the two a given supplier
+  actually stocks is a different question, and not one this file answers.
 */
 
 export const FORMS = {
@@ -105,22 +116,22 @@ export const SECTIONS = [
 */
 const RAW = {
   'carbon-steel': [
-    ['ER70S-2', 'R', 'AWS A5.18', 'GTAW', 'Triple deoxidised — root passes over mill scale'],
-    ['ER70S-3', 'W', 'AWS A5.18', 'GMAW', 'Clean-plate general purpose'],
-    ['ER70S-4', 'W', 'AWS A5.18', 'GMAW', 'Higher Si for wetting'],
+    ['ER70S-2', 'WR', 'AWS A5.18', 'GTAW', 'Triple deoxidised — root passes over mill scale'],
+    ['ER70S-3', 'WR', 'AWS A5.18', 'GMAW', 'Clean-plate general purpose'],
+    ['ER70S-4', 'WR', 'AWS A5.18', 'GMAW', 'Higher Si for wetting'],
     ['ER70S-6', 'WR', 'AWS A5.18', 'GMAW · SAW', 'Highest Mn/Si — the default shop wire'],
-    ['ER70S-7', 'W', 'AWS A5.18', 'GMAW', 'High Mn, smooth bead'],
+    ['ER70S-7', 'WR', 'AWS A5.18', 'GMAW', 'High Mn, smooth bead'],
     ['ER80S-B2', 'WR', 'AWS A5.28', 'GMAW · GTAW', '1¼Cr-½Mo creep service'],
-    ['ER80S-D2', 'W', 'AWS A5.28', 'GMAW', 'C-Mn-Mo, high deposition'],
+    ['ER80S-D2', 'WR', 'AWS A5.28', 'GMAW', 'C-Mn-Mo, high deposition'],
     ['ER80S-Ni1', 'WR', 'AWS A5.28', 'GMAW · GTAW', '1 % Ni for low-temperature toughness'],
     ['ER80S-Ni2', 'WR', 'AWS A5.28', 'GMAW · GTAW', '2½ % Ni, CVN to −60 °C'],
     ['ER80S-Ni3', 'WR', 'AWS A5.28', 'GMAW · GTAW', '3½ % Ni cryogenic'],
     ['ER90S-B3', 'WR', 'AWS A5.28', 'GMAW · GTAW', '2¼Cr-1Mo, P22 piping'],
-    ['ER90S-D2', 'W', 'AWS A5.28', 'GMAW', '90 ksi C-Mn-Mo'],
-    ['ER90S-G', 'W', 'AWS A5.28', 'GMAW', 'General 90 ksi, agreed analysis'],
-    ['ER100S-1', 'W', 'AWS A5.28', 'GMAW', 'HY-80 and quenched-tempered plate'],
-    ['ER110S-1', 'W', 'AWS A5.28', 'GMAW', 'HY-100 class'],
-    ['ER120S-1', 'W', 'AWS A5.28', 'GMAW', 'Highest strength solid wire'],
+    ['ER90S-D2', 'WR', 'AWS A5.28', 'GMAW', '90 ksi C-Mn-Mo'],
+    ['ER90S-G', 'WR', 'AWS A5.28', 'GMAW', 'General 90 ksi, agreed analysis'],
+    ['ER100S-1', 'WR', 'AWS A5.28', 'GMAW', 'HY-80 and quenched-tempered plate'],
+    ['ER110S-1', 'WR', 'AWS A5.28', 'GMAW', 'HY-100 class'],
+    ['ER120S-1', 'WR', 'AWS A5.28', 'GMAW', 'Highest strength solid wire'],
     ['ER90S-B9', 'WR', 'AWS A5.28', 'GMAW · GTAW', 'Grade 91 — creep strength enhanced ferritic'],
     ['EM12K', 'W', 'AWS A5.17', 'SAW', 'Submerged arc, medium manganese'],
     ['EH14', 'W', 'AWS A5.17', 'SAW', 'High manganese, multi-pass'],
@@ -154,23 +165,23 @@ const RAW = {
     ['ER308', 'WR', 'AWS A5.9', 'GTAW · GMAW', 'For 304 base metal'],
     ['ER308L', 'WR', 'AWS A5.9', 'GTAW · GMAW · SAW', 'Low carbon, resists sensitisation'],
     ['ER308H', 'WR', 'AWS A5.9', 'GTAW · GMAW', 'Controlled high carbon, creep service'],
-    ['ER308LSi', 'W', 'AWS A5.9', 'GMAW', 'Added silicon for wetting'],
+    ['ER308LSi', 'WR', 'AWS A5.9', 'GMAW', 'Added silicon for wetting'],
     ['ER309', 'WR', 'AWS A5.9', 'GTAW · GMAW', 'Heat resistant, 309 base'],
     ['ER309L', 'WR', 'AWS A5.9', 'GTAW · GMAW', 'Dissimilar joints and cladding'],
-    ['ER309LSi', 'W', 'AWS A5.9', 'GMAW', 'Dissimilar, improved wetting'],
+    ['ER309LSi', 'WR', 'AWS A5.9', 'GMAW', 'Dissimilar, improved wetting'],
     ['ER309LMo', 'WR', 'AWS A5.9', 'GTAW · GMAW', 'Molybdenum-bearing transition layer'],
     ['ER310', 'WR', 'AWS A5.9', 'GTAW · GMAW', '25Cr-20Ni, furnace parts'],
     ['ER312', 'WR', 'AWS A5.9', 'GTAW · GMAW', 'High ferrite, dissimilar and unknown steels'],
     ['ER316', 'WR', 'AWS A5.9', 'GTAW · GMAW', 'Molybdenum, 316 base'],
     ['ER316L', 'WR', 'AWS A5.9', 'GTAW · GMAW · SAW', 'Low carbon Mo — chloride service'],
-    ['ER316LSi', 'W', 'AWS A5.9', 'GMAW', 'Mo with silicon'],
+    ['ER316LSi', 'WR', 'AWS A5.9', 'GMAW', 'Mo with silicon'],
     ['ER317L', 'WR', 'AWS A5.9', 'GTAW · GMAW', 'Higher Mo, severe corrosion'],
     ['ER318', 'WR', 'AWS A5.9', 'GTAW · GMAW', 'Niobium stabilised Mo grade'],
     ['ER320LR', 'WR', 'AWS A5.9', 'GTAW · GMAW', 'Alloy 20, sulphuric acid'],
-    ['ER321', 'R', 'AWS A5.9', 'GTAW', 'Titanium stabilised'],
+    ['ER321', 'WR', 'AWS A5.9', 'GTAW', 'Titanium stabilised'],
     ['ER330', 'WR', 'AWS A5.9', 'GTAW · GMAW', '35Ni-15Cr heat resistant'],
     ['ER347', 'WR', 'AWS A5.9', 'GTAW · GMAW', 'Niobium stabilised, 321/347 base'],
-    ['ER347Si', 'W', 'AWS A5.9', 'GMAW', 'Stabilised with silicon'],
+    ['ER347Si', 'WR', 'AWS A5.9', 'GMAW', 'Stabilised with silicon'],
     ['ER385', 'WR', 'AWS A5.9', 'GTAW · GMAW', '904L, high alloy corrosion'],
     ['ER410', 'WR', 'AWS A5.9', 'GTAW · GMAW', '12Cr martensitic overlay'],
     ['ER410NiMo', 'WR', 'AWS A5.9', 'GTAW · GMAW', 'Soft martensitic, hydro turbine'],
@@ -215,8 +226,8 @@ const RAW = {
     ['ENiCu-A', 'E', 'AWS A5.15', 'SMAW', 'Nickel-copper, low dilution'],
     ['ENiCu-B', 'E', 'AWS A5.15', 'SMAW', 'Higher copper variant'],
     ['ESt', 'E', 'AWS A5.15', 'SMAW', 'Steel core, non-machinable repair'],
-    ['ERNi-CI', 'R', 'AWS A5.15', 'GTAW', 'Nickel rod for cast iron'],
-    ['ERNiFe-CI', 'R', 'AWS A5.15', 'GTAW', 'Nickel-iron rod'],
+    ['ERNi-CI', 'WR', 'AWS A5.15', 'GTAW', 'Nickel rod for cast iron'],
+    ['ERNiFe-CI', 'WR', 'AWS A5.15', 'GTAW', 'Nickel-iron rod'],
     // RBCuZn-C is also used to braze-weld iron, but it is filed once, under
     // Silver Brazing. Listing a designation twice collides its record id.
   ],
@@ -236,21 +247,21 @@ const RAW = {
     ['ER5654', 'WR', 'AWS A5.10', 'GTAW · GMAW', 'Al-Mg, hydrogen peroxide service'],
   ],
   titanium: [
-    ['ERTi-1', 'R', 'AWS A5.16', 'GTAW', 'CP grade 1, most ductile'],
-    ['ERTi-2', 'R', 'AWS A5.16', 'GTAW', 'CP grade 2 — general purpose'],
-    ['ERTi-3', 'R', 'AWS A5.16', 'GTAW', 'CP grade 3, higher strength'],
-    ['ERTi-4', 'R', 'AWS A5.16', 'GTAW', 'CP grade 4, highest CP strength'],
-    ['ERTi-5', 'R', 'AWS A5.16', 'GTAW', 'Ti-6Al-4V, aerospace'],
-    ['ERTi-7', 'R', 'AWS A5.16', 'GTAW', 'Palladium bearing, corrosion'],
-    ['ERTi-9', 'R', 'AWS A5.16', 'GTAW', 'Ti-3Al-2.5V tubing'],
-    ['ERTi-12', 'R', 'AWS A5.16', 'GTAW', 'Ti-Mo-Ni, crevice corrosion'],
-    ['ERTi-23', 'R', 'AWS A5.16', 'GTAW', 'Ti-6Al-4V ELI, medical'],
+    ['ERTi-1', 'WR', 'AWS A5.16', 'GTAW', 'CP grade 1, most ductile'],
+    ['ERTi-2', 'WR', 'AWS A5.16', 'GTAW', 'CP grade 2 — general purpose'],
+    ['ERTi-3', 'WR', 'AWS A5.16', 'GTAW', 'CP grade 3, higher strength'],
+    ['ERTi-4', 'WR', 'AWS A5.16', 'GTAW', 'CP grade 4, highest CP strength'],
+    ['ERTi-5', 'WR', 'AWS A5.16', 'GTAW', 'Ti-6Al-4V, aerospace'],
+    ['ERTi-7', 'WR', 'AWS A5.16', 'GTAW', 'Palladium bearing, corrosion'],
+    ['ERTi-9', 'WR', 'AWS A5.16', 'GTAW', 'Ti-3Al-2.5V tubing'],
+    ['ERTi-12', 'WR', 'AWS A5.16', 'GTAW', 'Ti-Mo-Ni, crevice corrosion'],
+    ['ERTi-23', 'WR', 'AWS A5.16', 'GTAW', 'Ti-6Al-4V ELI, medical'],
   ],
   cobalt: [
-    ['ERCoCr-A', 'R', 'AWS A5.21', 'GTAW', 'Stellite 6 — valve seats, 40 HRC'],
-    ['ERCoCr-B', 'R', 'AWS A5.21', 'GTAW', 'Stellite 12, higher hardness'],
-    ['ERCoCr-C', 'R', 'AWS A5.21', 'GTAW', 'Stellite 1, maximum abrasion'],
-    ['ERCoCr-E', 'R', 'AWS A5.21', 'GTAW', 'Stellite 21, impact and thermal shock'],
+    ['ERCoCr-A', 'WR', 'AWS A5.21', 'GTAW', 'Stellite 6 — valve seats, 40 HRC'],
+    ['ERCoCr-B', 'WR', 'AWS A5.21', 'GTAW', 'Stellite 12, higher hardness'],
+    ['ERCoCr-C', 'WR', 'AWS A5.21', 'GTAW', 'Stellite 1, maximum abrasion'],
+    ['ERCoCr-E', 'WR', 'AWS A5.21', 'GTAW', 'Stellite 21, impact and thermal shock'],
     ['ECoCr-A', 'E', 'AWS A5.13', 'SMAW', 'Stellite 6 electrode'],
     ['ECoCr-B', 'E', 'AWS A5.13', 'SMAW', 'Stellite 12 electrode'],
     ['ECoCr-C', 'E', 'AWS A5.13', 'SMAW', 'Stellite 1 electrode'],
@@ -259,22 +270,22 @@ const RAW = {
     ['EFeMn-A', 'E', 'AWS A5.13', 'SMAW', 'Austenitic manganese, work hardening'],
     ['EFeMn-B', 'E', 'AWS A5.13', 'SMAW', 'Manganese with molybdenum'],
     ['EFeCr-A1', 'E', 'AWS A5.13', 'SMAW', 'Chromium carbide, severe abrasion'],
-    ['ERFeCr-A1', 'R', 'AWS A5.21', 'GTAW', 'Chromium carbide rod'],
+    ['ERFeCr-A1', 'WR', 'AWS A5.21', 'GTAW', 'Chromium carbide rod'],
     ['EFe5-A', 'E', 'AWS A5.13', 'SMAW', 'Martensitic build-up, tool steel type'],
     ['EFe5-B', 'E', 'AWS A5.13', 'SMAW', 'Higher alloy martensitic'],
     ['EFe2', 'E', 'AWS A5.13', 'SMAW', 'Pearlitic build-up under overlay'],
     ['EFe3', 'E', 'AWS A5.13', 'SMAW', 'Austenitic build-up'],
     ['EWC', 'E', 'AWS A5.13', 'SMAW', 'Tungsten carbide composite, extreme wear'],
-    ['ERCuAl-A2', 'R', 'AWS A5.7', 'GTAW', 'Aluminium bronze, metal-to-metal wear'],
+    ['ERCuAl-A2', 'WR', 'AWS A5.7', 'GTAW', 'Aluminium bronze, metal-to-metal wear'],
     ['ECuAl-A2', 'E', 'AWS A5.6', 'SMAW', 'Aluminium bronze electrode'],
   ],
   copper: [
-    ['ERCu', 'R', 'AWS A5.7', 'GTAW · GMAW', 'Deoxidised copper'],
+    ['ERCu', 'WR', 'AWS A5.7', 'GTAW · GMAW', 'Deoxidised copper'],
     ['ERCuSi-A', 'WR', 'AWS A5.7', 'GTAW · GMAW', 'Silicon bronze — braze-weld galvanised'],
-    ['ERCuSn-A', 'R', 'AWS A5.7', 'GTAW', 'Phosphor bronze, bearing surfaces'],
-    ['ERCuAl-A1', 'R', 'AWS A5.7', 'GTAW', 'Aluminium bronze, iron-free'],
+    ['ERCuSn-A', 'WR', 'AWS A5.7', 'GTAW', 'Phosphor bronze, bearing surfaces'],
+    ['ERCuAl-A1', 'WR', 'AWS A5.7', 'GTAW', 'Aluminium bronze, iron-free'],
     ['ERCuNi', 'WR', 'AWS A5.7', 'GTAW · GMAW', '70/30 cupronickel, marine'],
-    ['ERCuMnNiAl', 'R', 'AWS A5.7', 'GTAW', 'Manganese-nickel-aluminium bronze, propellers'],
+    ['ERCuMnNiAl', 'WR', 'AWS A5.7', 'GTAW', 'Manganese-nickel-aluminium bronze, propellers'],
     ['ECuSi', 'E', 'AWS A5.6', 'SMAW', 'Silicon bronze electrode'],
     ['ECuNi', 'E', 'AWS A5.6', 'SMAW', 'Cupronickel electrode'],
   ],

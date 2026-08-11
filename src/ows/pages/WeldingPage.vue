@@ -7,6 +7,10 @@
       :stats="stats"
     />
 
+    <!-- The scene the reader scrolls through rather than past. It was on the
+         home page; it belongs here, against the processes it illustrates. -->
+    <WeldScene eyebrow="EL ARCO" :stages="WELD_STAGES" />
+
     <SectionBlock
       id="procesos"
       index="01"
@@ -109,8 +113,9 @@ import PageHeader from '../components/PageHeader.vue'
 import SectionBlock from '../components/SectionBlock.vue'
 import SpecList from '../components/SpecList.vue'
 import NextPage from '../components/NextPage.vue'
+import WeldScene from '../components/WeldScene.vue'
 import { PROCESSES, SELECTION, DEFECTS } from '../data/welding'
-import { PAGES } from '../data/site'
+import { PAGES, WELD_STAGES } from '../data/site'
 import { getRecord } from '../data'
 
 /*
