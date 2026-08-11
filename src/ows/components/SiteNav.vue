@@ -5,12 +5,6 @@
       <span class="nav__word">{{ BRAND.code }}</span>
     </RouterLink>
 
-    <nav class="nav__links" aria-label="Principal">
-      <RouterLink v-for="item in PRIMARY" :key="item.to" class="nav__link" :to="item.to">
-        {{ item.label }}
-      </RouterLink>
-    </nav>
-
     <button class="nav__toggle" :aria-expanded="open" aria-controls="ows-menu" @click="open = !open">
       <span class="ows-sr">{{ open ? 'Cerrar menú' : 'Abrir menú' }}</span>
       <span class="nav__bars" aria-hidden="true"><i /><i /><i /></span>
@@ -27,7 +21,6 @@ import { ref, watch, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import OwsMark from './OwsMark.vue'
 import MenuOverlay from './MenuOverlay.vue'
-import { PRIMARY } from '../data/site'
 import { BRAND } from '../brand'
 
 const open = ref(false)

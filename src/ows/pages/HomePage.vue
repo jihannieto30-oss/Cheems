@@ -5,23 +5,25 @@
        production build, so it fails invisibly. -->
   <div class="home">
     <section class="hero">
-      <!-- The standards, falling. They are the only thing behind the mark and
-           they are held almost to the threshold of visibility: read as weather,
-           not as text. -->
-      <StandardsCascade :depth="14" :density="0.45" :intensity="0.5" />
+      <!-- Three planes, each moving at its own rate against the pointer and
+           the scroll. The parallax is what turns a flat black frame into a
+           place you are standing in. -->
+      <div :ref="setFar" class="hero__far" aria-hidden="true">
+        <StandardsCascade :depth="20" :density="0.5" :intensity="0.55" />
+      </div>
+
+      <!-- The arc, burning behind the mark. It is not decoration: the logo is
+           black and needs something bright to be a silhouette against. -->
+      <HeroScene :seam-y="0.63" :bloom-y="0.44" :key-light="0.5" :parallax="30" />
 
       <span class="hero__vignette" aria-hidden="true" />
       <span class="hero__horizon" aria-hidden="true" />
 
       <div class="hero__center">
         <h1 class="hero__mark">
-          <OwsMark size="hero" tone="metal" />
+          <OwsMark size="hero" tone="ink" />
           <span class="ows-sr">{{ BRAND.code }} — {{ BRAND.descriptor }}</span>
         </h1>
-
-        <!-- The one bright thing on the page. An anamorphic streak under the
-             mark, the way a lens renders a light source just out of frame. -->
-        <span class="hero__flare" aria-hidden="true" />
 
         <div class="hero__field">
           <SearchField
@@ -43,9 +45,14 @@
 
 <script setup>
 import StandardsCascade from '../components/StandardsCascade.vue'
+import HeroScene from '../components/HeroScene.vue'
 import SearchField from '../components/SearchField.vue'
 import OwsMark from '../components/OwsMark.vue'
 import { BRAND } from '../brand'
+import { useParallax } from '../composables/useParallax'
+
+const far = useParallax()
+const setFar = (el) => (far.value = el)
 
 /*
   One screen, and nothing under it.
@@ -118,45 +125,11 @@ import { BRAND } from '../brand'
   animation: rise 1.4s var(--ows-ease) 240ms forwards;
 }
 
-.hero__flare {
-  position: relative;
-  display: block;
-  width: min(52vw, 21rem);
-  height: 1px;
-  margin-top: clamp(1.75rem, 4.5vh, 2.75rem);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgb(255 255 255 / 0.16) 22%,
-    rgb(255 255 255 / 0.9) 50%,
-    rgb(255 255 255 / 0.16) 78%,
-    transparent
-  );
-  opacity: 0;
-  animation: flare 1.8s var(--ows-ease) 700ms forwards;
-}
-
-/*
-  The bloom is a separate element rather than a box-shadow on the line. A
-  shadow on a one-pixel box spreads in every direction equally and the streak
-  reads as a soft grey bar; the glow has to be wide and flat to read as light
-  coming off a line.
-*/
-.hero__flare::after {
-  content: '';
+/* The far plane drifts the least, and against the scroll rather than with it. */
+.hero__far {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 46%;
-  height: 5rem;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(
-    closest-side,
-    rgb(255 255 255 / 0.3),
-    rgb(210 226 255 / 0.09) 45%,
-    transparent 75%
-  );
-  pointer-events: none;
+  inset: -8%;
+  transform: translate3d(0, calc(var(--p, 0) * var(--ows-parallax) * -3vh), 0);
 }
 
 .hero__field {
@@ -241,17 +214,6 @@ import { BRAND } from '../brand'
   }
 }
 
-@keyframes flare {
-  from {
-    opacity: 0;
-    transform: scaleX(0.4);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 @keyframes fade {
   to {
     opacity: 1;
@@ -266,7 +228,6 @@ import { BRAND } from '../brand'
 
 @media (prefers-reduced-motion: reduce) {
   .hero__mark,
-  .hero__flare,
   .hero__field,
   .hero__rail {
     opacity: 1;

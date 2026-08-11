@@ -58,7 +58,7 @@ const props = defineProps({
   variant: { type: String, default: 'lockup' },
   /** sm · md · lg · hero */
   size: { type: String, default: 'md' },
-  /** brand · mono · metal */
+  /** brand · mono · metal · ink */
   tone: { type: String, default: 'brand' },
 })
 
@@ -100,6 +100,22 @@ const art = computed(() => (props.variant === 'mark' ? MARK : LOCKUP))
 .mark--mono .mark__a,
 .mark--mono .mark__b {
   fill: currentColor;
+}
+
+/*
+  The artwork as drawn — black elements, brand red U, nothing reversed.
+
+  It only works where something bright is behind it. On this site that is the
+  arc: the mark is placed against the flash so it reads as a silhouette, which
+  is the one way a black logo survives a black page without being turned into
+  a white one.
+*/
+.mark--ink .mark__b {
+  fill: #070707;
+}
+
+.mark--ink .mark__a {
+  fill: var(--ows-red);
 }
 
 /* A dark object on a dark ground needs an edge to sit against. */
