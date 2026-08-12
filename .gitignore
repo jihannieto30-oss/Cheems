@@ -25,4 +25,5 @@ dist-ssr
 
 # Local verification scripts (Playwright harnesses, not part of the build)
 .t*.mjs
+.z*.mjs
 .chk.mjs

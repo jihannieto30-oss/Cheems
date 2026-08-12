@@ -28,9 +28,52 @@
         </linearGradient>
       </defs>
 
+      <defs v-else-if="tone === 'ink'">
+        <!--
+          One light, three materials.
+
+          Every ramp here runs the same way — brighter at the top, falling off
+          below — because they are all standing in the same wash the scene
+          behind them is lit by. That shared direction is the whole trick: it
+          is what stops the mark reading as a flat sticker laid over a
+          photograph and makes it read as an object inside the frame.
+        -->
+
+        <!-- The wordmark. White, as asked — but ramped, not flat. A flat #fff
+             is brighter than anything else on the page and that alone is
+             enough to detach it from the scene. -->
+        <linearGradient :id="`${uid}-word`" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff" />
+          <stop offset="0.5" stop-color="#f0f3f8" />
+          <stop offset="1" stop-color="#ccd3dd" />
+        </linearGradient>
+
+        <!-- The pole blocks and the ®. Black in the artwork, and black on
+             black is a hole — so they keep the value of black and are given a
+             surface: graphite, lit from above, dark enough to still read as
+             the black elements of the logo. -->
+        <linearGradient :id="`${uid}-block`" x1="0" y1="0" x2="0.14" y2="1">
+          <stop offset="0" stop-color="#4e5561" />
+          <stop offset="0.38" stop-color="#2f343d" />
+          <stop offset="1" stop-color="#171a1f" />
+        </linearGradient>
+
+        <!--
+          The U. Brand red at the middle, lifted at the top and dropped below —
+          but over a narrow range. A wide one is what makes a shape look
+          lacquered, and nothing else in this frame is lacquered.
+        -->
+        <linearGradient :id="`${uid}-red`" x1="0" y1="0" x2="0.2" y2="1">
+          <stop offset="0" stop-color="#f2231a" />
+          <stop offset="0.5" stop-color="#e10600" />
+          <stop offset="1" stop-color="#a00300" />
+        </linearGradient>
+      </defs>
+
       <g :transform="art.transform || undefined">
-        <path class="mark__a" :d="art.a" :fill="tone === 'metal' ? `url(#${uid}-red)` : undefined" />
-        <path class="mark__b" :d="art.b" :fill="tone === 'metal' ? `url(#${uid}-steel)` : undefined" />
+        <path class="mark__a" :d="art.a" :fill="fills.a" />
+        <path class="mark__b" :d="art.b" :fill="fills.b" />
+        <path v-if="art.c" class="mark__c" :d="art.c" :fill="fills.c" />
       </g>
     </svg>
   </span>
@@ -48,10 +91,14 @@ import { LOCKUP, MARK } from '../brandMark'
   alone and is the only thing that survives at navigation scale, `lockup`
   carries the wordmark and is used wherever there is room to read it.
 
-  Tone decides the ink. `brand` keeps the red U and knocks the dark elements
-  out to white, which is the reversed form of the artwork and the only one
-  that works on this site's black. `mono` runs the whole mark in one colour
-  for places where a second colour would be noise.
+  Tone decides the ink.
+
+    brand  red U, dark elements knocked out to white — the reversed artwork,
+           which is what works anywhere the mark is small and unlit
+    mono   the whole mark in one colour, for places where a second would be noise
+    metal  the dark elements given an anodised surface instead of a colour
+    ink    the hero treatment: white letters, graphite blocks, red U, all three
+           ramped by one light so the mark sits in the scene rather than on it
 */
 const props = defineProps({
   /** lockup · mark */
@@ -71,6 +118,25 @@ const props = defineProps({
 const uid = useId()
 
 const art = computed(() => (props.variant === 'mark' ? MARK : LOCKUP))
+
+/*
+  Which ink each of the three paths takes.
+
+  Bound here rather than in the stylesheet because the gradient ids are
+  per-instance: scoped CSS can only name a literal id, and a literal id is the
+  collision this component exists to avoid. Tones with no gradients return
+  nothing and fall through to the CSS fills below.
+*/
+const fills = computed(() => {
+  if (props.tone === 'metal') {
+    const steel = `url(#${uid}-steel)`
+    return { a: `url(#${uid}-red)`, b: steel, c: steel }
+  }
+  if (props.tone === 'ink') {
+    return { a: `url(#${uid}-red)`, b: `url(#${uid}-block)`, c: `url(#${uid}-word)` }
+  }
+  return {}
+})
 </script>
 
 <style scoped>
@@ -93,29 +159,31 @@ const art = computed(() => (props.variant === 'mark' ? MARK : LOCKUP))
   fill: var(--ows-red);
 }
 
-.mark--brand .mark__b {
+/* Blocks and wordmark together: in the reversed lockup they are one colour,
+   and both must be named — an unfilled SVG path is black, which on this site
+   is the same as not being drawn. */
+.mark--brand .mark__b,
+.mark--brand .mark__c {
   fill: var(--ows-ink);
 }
 
 .mark--mono .mark__a,
-.mark--mono .mark__b {
+.mark--mono .mark__b,
+.mark--mono .mark__c {
   fill: currentColor;
 }
 
 /*
-  The artwork as drawn — black elements, brand red U, nothing reversed.
+  The artwork as drawn — black elements, brand red U — with the one departure
+  the brand asked for: the letters are set white while the blocks stay black.
 
-  It only works where something bright is behind it. On this site that is the
-  arc: the mark is placed against the flash so it reads as a silhouette, which
-  is the one way a black logo survives a black page without being turned into
-  a white one.
+  The fills come from the gradients above. What is left here is the contact:
+  a shadow the mark casts on the ground behind it, tight and low-contrast. An
+  object that casts nothing is an object that is not in the room, and this is
+  the cheapest honest way to put it there without lighting it from behind.
 */
-.mark--ink .mark__b {
-  fill: #070707;
-}
-
-.mark--ink .mark__a {
-  fill: var(--ows-red);
+.mark--ink .mark__svg {
+  filter: drop-shadow(0 0.02em 0.05em rgb(0 0 0 / 0.85));
 }
 
 /* A dark object on a dark ground needs an edge to sit against. */

@@ -196,8 +196,18 @@ defineExpose({ focus: () => input.value?.focus() })
   border: 1px solid rgb(255 255 255 / 0.13);
   /* Matte, not glass. A high-gloss panel throws a hard specular and reads as
      plastic; anodised black scatters, so the top edge is a thin line rather
-     than a highlight and the body stays flat. */
-  background: linear-gradient(180deg, rgb(21 22 24 / 0.9), rgb(9 9 10 / 0.94));
+     than a highlight and the body stays flat.
+
+     Over it, one broad reflection that slides with the head — --mx comes from
+     whatever scene the field is standing in, and is simply absent (0, centred)
+     on pages that do not run one. */
+  background:
+    radial-gradient(
+      52% 190% at calc(50% + var(--mx, 0) * var(--ows-parallax) * 34%) -10%,
+      rgb(255 255 255 / 0.05),
+      transparent 68%
+    ),
+    linear-gradient(180deg, rgb(21 22 24 / 0.9), rgb(9 9 10 / 0.94));
   backdrop-filter: blur(14px);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.1),
