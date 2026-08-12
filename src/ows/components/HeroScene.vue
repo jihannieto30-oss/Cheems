@@ -148,11 +148,16 @@ function draw(now, dt) {
   ctx.translate(bx, by)
   ctx.scale(1, 0.62)
   const bloom = ctx.createRadialGradient(0, 0, 0, 0, 0, bw)
-  bloom.addColorStop(0, `rgba(255,252,246,${0.62 * key})`)
-  bloom.addColorStop(0.1, `rgba(255,236,205,${0.42 * key})`)
-  bloom.addColorStop(0.26, `rgba(255,186,116,${0.2 * key})`)
-  bloom.addColorStop(0.5, `rgba(196,110,58,${0.08 * key})`)
-  bloom.addColorStop(0.78, `rgba(96,66,110,${0.028 * key})`)
+  /*
+    Neutral, and matte. The earlier ramp ran through amber and violet, which
+    is what a real arc throws — but it also painted the whole screen a colour,
+    and the direction here is black only. Grey carries the same information
+    about where the light is without tinting anything it falls on.
+  */
+  bloom.addColorStop(0, `rgba(238,240,244,${0.56 * key})`)
+  bloom.addColorStop(0.14, `rgba(196,200,206,${0.34 * key})`)
+  bloom.addColorStop(0.34, `rgba(130,134,140,${0.14 * key})`)
+  bloom.addColorStop(0.64, `rgba(66,68,72,${0.045 * key})`)
   bloom.addColorStop(1, 'rgba(0,0,0,0)')
   ctx.fillStyle = bloom
   ctx.fillRect(-bw, -bw, bw * 2, bw * 2)

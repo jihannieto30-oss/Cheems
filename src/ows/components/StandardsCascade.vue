@@ -33,47 +33,29 @@ const props = defineProps({
 })
 
 const TOKENS = [
-  'AWS A5.18',
-  'AWS A5.1',
-  'AWS A5.9',
-  'AWS A5.28',
-  'EN ISO 14341',
-  'EN ISO 2560',
-  'EN ISO 636',
-  'ASME SFA-5.18',
-  'ASME IX',
-  'ASTM A240',
-  'ASTM A36',
-  'NOM-027-STPS',
-  'DIN 8559',
-  'JIS Z3312',
-  'W.Nr 1.4404',
-  'AISI 316L',
-  'CWB W47.1',
-  'ER70S-6',
-  'E7018',
-  'E6013',
-  'ER308L',
-  'BAg-3',
-  '0.9 mm',
-  '3.2 mm',
-  '480 MPa',
-  '27 J −20 °C',
-  'H4',
-  'DC+',
-  'Ar/CO₂',
+  'AWS',
+  'EN ISO',
+  'DIN',
+  'JIS',
+  'CN',
+  'W.Nr',
+  'AISI',
+  'CWB',
+  'ASME SFA',
+  'ASTM',
 ]
 
 // Three planes. Near ones are bigger, brighter and fall faster.
 /*
-  Alphas are low on purpose. This is texture, not content: present enough that
-  a welder recognises the designations in passing, quiet enough that it never
-  competes with the headline or the field.
+  These are meant to be read, not merely sensed. Earlier passes held them near
+  the threshold of visibility and the screen simply looked empty; the point of
+  the wall is that a welder recognises the designations falling behind the
+  mark. Bright enough to see, still well under the mark and the field.
 */
 const PLANES = [
-  { size: 8, speed: 0.1, alpha: 0.045, gap: 58 },
-  { size: 10, speed: 0.2, alpha: 0.075, gap: 74 },
-  { size: 12, speed: 0.38, alpha: 0.115, gap: 96 },
+  { size: 9, speed: 0.16, alpha: 0.14, gap: 64 },
+  { size: 11, speed: 0.3, alpha: 0.22, gap: 82 },
+  { size: 13, speed: 0.52, alpha: 0.34, gap: 104 },
 ]
 
 const cv = ref(null)

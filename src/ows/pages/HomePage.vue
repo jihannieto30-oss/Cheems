@@ -9,20 +9,31 @@
            the scroll. The parallax is what turns a flat black frame into a
            place you are standing in. -->
       <div :ref="setFar" class="hero__far" aria-hidden="true">
-        <StandardsCascade :depth="20" :density="1" :intensity="0.3" />
+        <StandardsCascade :depth="20" :density="1" :intensity="0.62" />
       </div>
+
+      <!--
+        A pocket of black punched through the cascade, behind the mark only.
+
+        Turning the standards up far enough to be read turns them up far
+        enough to swallow the logo — the wall and the silhouette want opposite
+        things from the same pixels. This sits between the two so the columns
+        keep falling everywhere except where the mark needs clean ground, and
+        it goes under the key light rather than over it so the bloom survives.
+      -->
+      <span class="hero__pocket" aria-hidden="true" />
 
       <!-- Key light only. The mark is metal now and reads on its own, so the
            scene here is the lighting the object sits in — the arc itself is
            held back for the search transition, where it is the whole point. -->
-      <HeroScene :arc="false" :bloom-y="0.4" :bloom-w="720" :key-light="0.62" :parallax="30" />
+      <HeroScene :arc="false" :bloom-y="0.4" :bloom-w="720" :key-light="0.95" :parallax="30" />
 
       <span class="hero__vignette" aria-hidden="true" />
       <span class="hero__horizon" aria-hidden="true" />
 
       <div class="hero__center">
         <h1 class="hero__mark">
-          <OwsMark size="hero" tone="metal" />
+          <OwsMark size="hero" tone="ink" />
           <span class="ows-sr">{{ BRAND.code }} — {{ BRAND.descriptor }}</span>
         </h1>
 
@@ -117,6 +128,18 @@ function onLaunch(q) {
   overflow: hidden;
   isolation: isolate;
   background: var(--ows-void);
+}
+
+.hero__pocket {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    42% 34% at 50% 42%,
+    rgb(0 0 0 / 0.9) 22%,
+    rgb(0 0 0 / 0.74) 46%,
+    transparent 76%
+  );
 }
 
 /* Closes the corners down so the centre is the only lit part of the frame. */

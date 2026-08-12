@@ -194,13 +194,15 @@ defineExpose({ focus: () => input.value?.focus() })
   padding-inline: 1.5rem;
   border-radius: 999px;
   border: 1px solid rgb(255 255 255 / 0.13);
-  background:
-    linear-gradient(180deg, rgb(28 29 33 / 0.72), rgb(6 6 8 / 0.86));
-  backdrop-filter: blur(18px) saturate(1.1);
+  /* Matte, not glass. A high-gloss panel throws a hard specular and reads as
+     plastic; anodised black scatters, so the top edge is a thin line rather
+     than a highlight and the body stays flat. */
+  background: linear-gradient(180deg, rgb(21 22 24 / 0.9), rgb(9 9 10 / 0.94));
+  backdrop-filter: blur(14px);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.16),
-    inset 0 -1px 0 rgb(0 0 0 / 0.6),
-    0 1.5rem 3.5rem rgb(0 0 0 / 0.75);
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    inset 0 -1px 0 rgb(0 0 0 / 0.7),
+    0 1.5rem 3.5rem rgb(0 0 0 / 0.8);
   overflow: hidden;
   transition:
     border-color var(--ows-base) var(--ows-ease),
@@ -217,9 +219,9 @@ defineExpose({ focus: () => input.value?.focus() })
   background: linear-gradient(
     104deg,
     transparent 40%,
-    rgb(255 255 255 / 0.05) 47%,
-    rgb(255 255 255 / 0.11) 50%,
-    rgb(255 255 255 / 0.05) 53%,
+    rgb(255 255 255 / 0.025) 47%,
+    rgb(255 255 255 / 0.055) 50%,
+    rgb(255 255 255 / 0.025) 53%,
     transparent 60%
   );
   transform: translateX(-40%);
@@ -273,6 +275,19 @@ defineExpose({ focus: () => input.value?.focus() })
   font-size: var(--ows-t-meta);
   letter-spacing: var(--ows-track-label);
   text-transform: uppercase;
+}
+
+/* The prompt is the only instruction on the screen. Held at the faint ink it
+   inherits it was invisible against the panel, which left the field reading
+   as an empty slot rather than as something to type into. */
+.field--luxe .field__input::placeholder {
+  color: rgb(255 255 255 / 0.46);
+  opacity: 1;
+}
+
+.field--luxe .field__form:hover .field__input::placeholder,
+.field--luxe.is-focused .field__input::placeholder {
+  color: rgb(255 255 255 / 0.62);
 }
 
 .field--luxe .field__icon {

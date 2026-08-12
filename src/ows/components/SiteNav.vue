@@ -1,7 +1,7 @@
 <template>
   <header class="nav" :class="{ 'nav--lifted': lifted, 'nav--open': open }">
     <RouterLink class="nav__brand" to="/" @click="open = false">
-      <OwsMark variant="mark" size="sm" tone="mono" />
+      <OwsMark variant="mark" size="sm" tone="brand" />
       <span class="nav__word">{{ BRAND.code }}</span>
     </RouterLink>
 
