@@ -6,7 +6,7 @@
   <div class="home">
     <section :ref="setStage" class="hero">
       <!-- Every plane takes a different share of the head's movement: the
-           standards and the horizon drift with it, everything in front pulls
+           standards drift with it, the seam and everything in front of it pull
            against it, and the two solid objects turn on their own axes as
            well. That spread is the whole of what turns a flat black frame
            into a place you are standing in. -->
@@ -14,14 +14,19 @@
         <StandardsCascade :depth="20" :density="0.42" :intensity="0.5" />
       </div>
 
-      <!-- The light the mark is standing in, and it is placed on the mark
-           rather than in the middle of the frame: the artwork is ramped as
-           though lit from above, and that only reads as one layer if the wash
-           behind it actually is above. The weld is separate, low and close. -->
-      <HeroScene :seam-y="0.82" :bloom-y="0.32" :key-light="1" :parallax="34" />
-
       <span class="hero__vignette" aria-hidden="true" />
-      <span class="hero__horizon" aria-hidden="true" />
+
+      <!--
+        The light, and the joint under it. After the vignette rather than
+        before it, because the vignette's business is the standards falling at
+        the back of the room — the seam is in the room, and closing the corners
+        down on it would put the one thing happening on this screen in shadow.
+
+        The bloom sits on the mark rather than in the middle of the frame: the
+        artwork is ramped as though lit from above, and that only reads as one
+        layer if the wash behind it actually is above.
+      -->
+      <HeroScene :apex="0.78" :bloom-y="0.32" :key-light="1" :parallax="34" />
 
       <div class="hero__center">
         <h1 class="hero__mark">
@@ -140,33 +145,11 @@ function onLaunch(q) {
 }
 
 /*
-  The horizon: one enormous circle sitting mostly below the fold, so only the
-  top of its arc is in frame. It is what gives the black a floor and a scale —
-  without it the page is a void rather than a place.
+  The horizon used to be a CSS element here — one enormous circle sitting
+  mostly below the fold. It is drawn in the scene canvas now, because it stopped
+  being a horizon: it is the seam being welded, and a line that has to be white
+  behind the arc and two dim edges ahead of it is not something a border can be.
 */
-.hero__horizon {
-  position: absolute;
-  left: 50%;
-  /* The circle is three viewport-widths across, so its top has to be placed
-     against the bottom edge explicitly — left to its own height it lands far
-     above the fold and nothing is drawn on screen at all. */
-  width: 300vw;
-  aspect-ratio: 1;
-  bottom: calc(22vh - 300vw);
-  /* The room. Barely moves — it is the thing everything else moves against. */
-  transform: translateX(-50%)
-    translate3d(
-      calc(var(--mx, 0) * var(--ows-parallax) * 9px),
-      calc(var(--my, 0) * var(--ows-parallax) * 5px),
-      0
-    );
-  border-radius: 50%;
-  border-top: 1px solid rgb(255 255 255 / 0.14);
-  box-shadow:
-    0 -1px 90px rgb(255 255 255 / 0.055),
-    inset 0 2px 60px rgb(255 255 255 / 0.02);
-  pointer-events: none;
-}
 
 .hero__center {
   position: relative;

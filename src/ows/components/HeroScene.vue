@@ -7,38 +7,40 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { prefersReducedMotion } from '../composables/useReducedMotion'
 
 /*
-  The arc, burning behind the mark.
+  The hero's scene: a light, and a joint being closed under it.
 
-  This exists to solve a real constraint rather than for decoration. The logo
-  is black — blocks, wordmark, keyline — and a black mark on a black page is
-  nothing. Reversing it to white is the usual answer and is the one thing that
-  was ruled out. So the page gives it something bright to sit in front of: the
-  weld itself, blooming from behind, with the mark reading as a silhouette
-  against it. That is also why the bloom never fully dies between passes — it
-  is not an effect, it is the light the mark is lit by.
+  The line across the lower frame is not decoration. It is a seam, and it is
+  being welded — left to right, one pass, over and over. Ahead of the arc the
+  line is two edges with a root gap between them: two parts, not yet one.
+  Behind it there is a single bead, white at the arc, cooling back through the
+  blue an oxide leaves on steel until it settles into the hairline that gives
+  the black its floor. That is the whole idea. The frame is not a picture of
+  welding; it is the moment where two things become one, held on a loop.
 
-  Everything is drawn in additive mode over black, which is how light behaves
-  and why no layer needs to know about any other.
+  Everything is drawn additively over black, which is how light behaves and why
+  no layer needs to know about any other. Cold throughout: the arc column
+  really is blue-white, and the spatter is held at steel rather than orange so
+  nothing warm enters the frame.
 */
 
 const props = defineProps({
-  /** Where the seam runs, as a fraction of height. */
-  seamY: { type: Number, default: 0.62 },
+  /** Where the top of the seam sits, as a fraction of height. */
+  apex: { type: Number, default: 0.78 },
+  /** Seam radius as a multiple of width. Large is nearly flat. */
+  curve: { type: Number, default: 1.5 },
   /** Where the key bloom sits — on the mark, not on the seam. */
-  bloomY: { type: Number, default: 0.45 },
-  /** Bloom size relative to the mark it has to backlight, in px. */
-  bloomW: { type: Number, default: 560 },
-  /** Seconds for one pass of the arc. */
-  period: { type: Number, default: 13 },
-  /** Floor under the bloom, so the mark is always backlit. 0–1. */
-  keyLight: { type: Number, default: 0.42 },
+  bloomY: { type: Number, default: 0.32 },
+  /** Seconds for one full cycle: the pass, then the bead cooling. */
+  period: { type: Number, default: 19 },
+  /** Share of the cycle the arc is travelling. The rest is cooling. */
+  travel: { type: Number, default: 0.72 },
+  /** Root gap between the two edges ahead of the arc, in px. */
+  gap: { type: Number, default: 5 },
+  /** Floor under the bloom, so the mark is always lit. 0–1. */
+  keyLight: { type: Number, default: 1 },
   /** Pointer/scroll parallax strength in pixels. */
   parallax: { type: Number, default: 26 },
-  /*
-    Whether the arc runs. Off, the scene is only the key light and the floor —
-    which is what the hero wants, because a travelling arc there is a fifth
-    element competing with four, and the weld belongs to the search transition.
-  */
+  /** Whether the arc runs at all. Off, the scene is the light and the seam. */
   arc: { type: Boolean, default: true },
 })
 
@@ -59,10 +61,21 @@ let scrollY = 0
 const aim = { x: 0, y: 0 }
 const eye = { x: 0, y: 0 }
 
+/* How far behind the arc the bead takes to come down to the base hairline. */
+const COOL = 260
+/* Ripple pitch. A bead is laid in pulses, and the pulses are what make a weld
+   look welded rather than drawn — they stay put on the metal while the arc
+   moves away from them. */
+const PITCH = 13
+const RIPPLES = 22
+
 const SPARKS = 300
 const sparks = new Float32Array(SPARKS * 5)
 let cursor = 0
 const rand = (a, b) => a + Math.random() * (b - a)
+/* Hot values relax toward the base value rather than toward nothing, so the
+   bead cools into the hairline instead of erasing it. */
+const mix = (base, hot, k) => base + (hot - base) * k
 
 function resize() {
   if (!cv.value) return
@@ -119,13 +132,33 @@ function drawSparks(dt, ox, oy) {
   ctx.globalAlpha = 1
 }
 
-function draw(now, dt) {
-  const p = reduced ? 0.5 : ((now - start) / 1000 / props.period) % 1
-  const y = h * props.seamY
-  const head = -w * 0.15 + w * 1.3 * p
+/*
+  The seam is the top of one enormous circle, so only a shallow arc of it is
+  ever in frame — which is what gives the black a floor and a scale. Every
+  point on it is addressed by x, and the outward normal is the radius, which
+  is what the two edges are offset along.
+*/
+function seamPath(from, to, cx, cy, R, off) {
+  ctx.beginPath()
+  const step = 5
+  const begin = Math.max(from, -step)
+  const end = Math.min(to, w + step)
+  for (let x = begin; x <= end; x += step) {
+    const dx = x - cx
+    const r = Math.sqrt(Math.max(1, R * R - dx * dx))
+    // `off` may be a function of x — the two edges close on the arc rather
+    // than meeting it at full gap, which is the parts being drawn together.
+    const o = typeof off === 'function' ? off(x) : off
+    const px = o ? x + (dx / R) * o : x
+    const py = o ? cy - r - (r / R) * o : cy - r
+    if (x <= begin) ctx.moveTo(px, py)
+    else ctx.lineTo(px, py)
+  }
+}
 
-  // Parallax. Each layer takes a different share, which is the whole of what
-  // makes a flat canvas read as having depth.
+const seamY = (x, cx, cy, R) => cy - Math.sqrt(Math.max(1, R * R - (x - cx) * (x - cx)))
+
+function draw(now, dt) {
   const px = eye.x * props.parallax
   const py = eye.y * props.parallax + scrollY * 0.12
 
@@ -140,9 +173,6 @@ function draw(now, dt) {
     something to sit against. A concentrated bloom made the logo look lit from
     behind, which is exactly what it must not look like — the mark has to be
     level with the ground, not floating in front of a lamp.
-
-    Cold throughout. The greys are blue-shifted, which is what keeps the frame
-    reading as cold rolled steel rather than as a warm room.
   */
   const breath = 0.97 + Math.sin(now * 0.0009) * 0.03
   const key = props.keyLight * breath
@@ -163,33 +193,128 @@ function draw(now, dt) {
   ctx.fillRect(-gw, -gw, gw * 2, gw * 2)
   ctx.restore()
 
-  const sy = h * props.seamY + py * 0.5
+  // ---- the joint ---------------------------------------------------------
+  // Held a little in front of the wash, so it pulls against the head while the
+  // light behind stays put. That difference is the depth.
+  const R = props.curve * w
+  const cx = w / 2 - px * 0.5
+  const cy = props.apex * h + R - py * 0.5
+
+  const cycle = ((now - start) / 1000) % props.period
+  const running = props.period * props.travel
+  // The pass, then the hold. During the hold the arc is off the right edge and
+  // the bead behind it comes the rest of the way down to the base hairline, so
+  // the loop closes on a state identical to the one it opened on.
+  const u = reduced ? 0.55 : Math.min(1, cycle / running)
+  const heat = reduced ? 1 : cycle <= running ? 1 : 1 - (cycle - running) / (props.period - running)
+  const head = -0.08 * w + u * 1.16 * w
+  const hy = seamY(head, cx, cy, R)
+
+  ctx.lineCap = 'round'
 
   /*
-    The weld, low in the frame and close to the camera.
-
-    Not a scene being watched from across a shop — the spatter is thrown
-    toward the lens and grows as it comes, which is the whole of why it reads
-    as standing over the work rather than looking at a picture of it. Cold:
-    the arc column really is blue-white, and the spatter is held at steel
-    rather than orange so nothing warm enters the frame.
+    Ahead of the arc: two edges with a root gap between them. The gap closes
+    over the last stretch before the arc rather than meeting it at full width,
+    which is the two parts being drawn together — the whole point of the frame,
+    and the one detail that makes the line read as a joint instead of a rule.
   */
-  if (props.arc) {
-    const flick = 0.86 + Math.sin(now * 0.055) * 0.09 + Math.random() * 0.06
-    const hx = w / 2 + Math.sin(now * 0.00016) * w * 0.3 + px * 0.8
-    const r = Math.max(46, h * 0.1) * flick
+  const TAPER = 110
+  /*
+    The gap also opens over the first couple of seconds of a cycle. Without
+    that, the loop wraps from a finished single bead straight to two separated
+    edges and the whole seam appears to split at once. Opening from zero means
+    the two lines start superimposed — which is exactly the cooled bead — and
+    part while the arc is still off the left edge.
+  */
+  const open = reduced ? 1 : Math.min(1, cycle / 2.2)
+  const edge = (s) => (x) => (props.gap / 2) * s * open * Math.min(1, (x - head) / TAPER)
 
-    const core = ctx.createRadialGradient(hx, sy, 0, hx, sy, r)
+  const lit = ctx.createLinearGradient(head, 0, head + 240, 0)
+  lit.addColorStop(0, `rgba(214,228,250,${mix(0.07, 0.26, heat)})`)
+  lit.addColorStop(0.35, `rgba(180,196,222,${mix(0.07, 0.13, heat)})`)
+  lit.addColorStop(1, 'rgba(158,172,196,0.07)')
+  ctx.strokeStyle = lit
+  ctx.lineWidth = 1
+  seamPath(head, w, cx, cy, R, edge(1))
+  ctx.stroke()
+  seamPath(head, w, cx, cy, R, edge(-1))
+  ctx.stroke()
+
+  /*
+    Behind it: one bead. The gradient is the cooling curve — white at the arc,
+    down through the blue an oxide leaves on steel, to the hairline the frame
+    keeps. Short and steep, because that is how fast a bead actually cools and
+    because a long bright trail would outrank the search field, which is third
+    in this screen's order and must stay there.
+  */
+  const bead = ctx.createLinearGradient(head - COOL, 0, head, 0)
+  bead.addColorStop(0, 'rgba(190,204,226,0.13)')
+  bead.addColorStop(0.5, `rgba(150,178,232,${mix(0.13, 0.2, heat)})`)
+  bead.addColorStop(0.84, `rgba(196,216,248,${mix(0.13, 0.34, heat)})`)
+  bead.addColorStop(0.95, `rgba(234,243,255,${mix(0.13, 0.6, heat)})`)
+  bead.addColorStop(1, `rgba(255,255,255,${mix(0.13, 0.85, heat)})`)
+
+  // The heat around it first, wide and weak, then the bead itself.
+  const halo = ctx.createLinearGradient(head - COOL * 0.55, 0, head, 0)
+  halo.addColorStop(0, 'rgba(120,150,200,0)')
+  halo.addColorStop(1, `rgba(150,182,238,${0.055 * heat})`)
+  ctx.strokeStyle = halo
+  ctx.lineWidth = 10
+  seamPath(-10, head, cx, cy, R, 0)
+  ctx.stroke()
+
+  ctx.strokeStyle = bead
+  ctx.lineWidth = 1.5
+  seamPath(-10, head, cx, cy, R, 0)
+  ctx.stroke()
+
+  /*
+    The ripples. A bead is laid in pulses, and the pulses are locked to the
+    metal — they are placed on a fixed pitch in world coordinates, not measured
+    back from the arc, so they stay where they were deposited while the arc
+    walks away from them.
+  */
+  const firstRipple = Math.floor(head / PITCH) * PITCH
+  for (let i = 0; i < RIPPLES; i++) {
+    const rx = firstRipple - i * PITCH
+    if (rx < -PITCH) break
+    const age = (head - rx) / (RIPPLES * PITCH)
+    const a = (1 - age) * (1 - age) * 0.5 * heat
+    if (a < 0.01) continue
+    ctx.globalAlpha = a
+    ctx.strokeStyle = '#dce8ff'
+    ctx.lineWidth = 2
+    seamPath(rx - PITCH * 0.28, rx + PITCH * 0.28, cx, cy, R, 0)
+    ctx.stroke()
+  }
+  ctx.globalAlpha = 1
+
+  // ---- the arc -----------------------------------------------------------
+  /*
+    The arc. Small and blue-white, because that is what an arc is: a point, not
+    a lamp. No electrode is drawn above it — a rod leaning out of the frame was
+    tried and read as a stray diagonal, and the thing that actually says
+    somebody is holding this is the spatter coming at the lens.
+  */
+  // Reduced motion holds one frame mid-pass, so the arc is always on there —
+  // otherwise a resize redraw lands wherever the clock happens to be and the
+  // arc disappears from a still image that is supposed to be fixed.
+  if (props.arc && (reduced || cycle <= running)) {
+    const flick = 0.86 + Math.sin(now * 0.055) * 0.09 + Math.random() * 0.06
+    const r = Math.max(30, h * 0.062) * flick
+
+    const core = ctx.createRadialGradient(head, hy, 0, head, hy, r)
     core.addColorStop(0, 'rgba(255,255,255,0.9)')
-    core.addColorStop(0.08, 'rgba(216,232,255,0.5)')
-    core.addColorStop(0.3, 'rgba(150,180,225,0.12)')
+    core.addColorStop(0.09, 'rgba(216,232,255,0.44)')
+    core.addColorStop(0.32, 'rgba(150,180,225,0.1)')
     core.addColorStop(1, 'rgba(90,120,180,0)')
     ctx.fillStyle = core
-    ctx.fillRect(hx - r, sy - r, r * 2, r * 2)
+    ctx.fillRect(head - r, hy - r, r * 2, r * 2)
 
-    if (!reduced) spawn(hx, sy, Math.round(dt * 90))
-    drawSparks(reduced ? 0 : dt, px, py)
+    if (!reduced) spawn(head, hy, Math.round(dt * 90))
   }
+
+  drawSparks(reduced ? 0 : dt, px, py)
 
   ctx.globalCompositeOperation = 'source-over'
 }
@@ -263,10 +388,6 @@ onUnmounted(() => {
   window.removeEventListener('scroll', onScroll)
   document.removeEventListener('visibilitychange', onVisibility)
 })
-
-// The mark needs to know how hard the light behind it is pushing, so it can
-// hold its own edge when the arc is at the far end of the seam.
-defineExpose({})
 </script>
 
 <style scoped>
