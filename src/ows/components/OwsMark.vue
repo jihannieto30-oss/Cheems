@@ -195,6 +195,16 @@ const fills = computed(() => {
   --h: 1.5rem;
 }
 
+/*
+  The navigation bar. Larger than a monogram would need to be, because this is
+  the full lockup and the wordmark inside it has to survive: at 1.5rem the
+  letters set at four pixels and turn to mush, and the bar is 4.5rem tall, so
+  there is room to give them the height they need.
+*/
+.mark--nav {
+  --h: clamp(2rem, 3.6vw, 2.625rem);
+}
+
 .mark--md {
   --h: 2.25rem;
 }

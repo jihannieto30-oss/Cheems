@@ -3,7 +3,7 @@
     <!-- The same world as the home screen, held much further back: the door
          should feel like it opens onto somewhere, not like a form. -->
     <div class="gate__field" aria-hidden="true">
-      <StandardsCascade :depth="8" :density="0.26" :intensity="0.28" />
+      <StandardsCascade :depth="8" :density="0.62" :intensity="0.4" />
     </div>
     <span class="gate__vignette" aria-hidden="true" />
 

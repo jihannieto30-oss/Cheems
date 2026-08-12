@@ -1,8 +1,10 @@
 <template>
   <header class="nav" :class="{ 'nav--lifted': lifted, 'nav--open': open }">
     <RouterLink class="nav__brand" to="/" @click="open = false">
-      <OwsMark variant="mark" size="sm" tone="brand" />
-      <span class="nav__word">{{ BRAND.code }}</span>
+      <!-- The full lockup, in the same ink as the hero: white letters,
+           graphite blocks, the red U. One mark on the whole site. -->
+      <OwsMark size="nav" tone="ink" />
+      <span class="ows-sr">{{ BRAND.code }}</span>
     </RouterLink>
 
     <!--
@@ -84,71 +86,9 @@ onUnmounted(() => {
 .nav__brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
   padding-block: 0.5rem;
   margin-block: -0.5rem;
-  /* The monogram alone does not say whose site this is, and this brand is not
-     famous enough for that to be a stylistic choice. The name is set beside
-     it rather than using the lockup, whose own wordmark would be four pixels
-     tall at this height. */
   color: var(--ows-ink);
-}
-
-.nav__word {
-  font-size: var(--ows-t-meta);
-  font-weight: 500;
-  letter-spacing: 0.34em;
-  /* Cancels the trailing space the tracking adds after the final glyph. */
-  margin-right: -0.34em;
-}
-
-/* Dropped only where the bar genuinely runs out of room; 390px phones keep
-   the name. */
-@media (max-width: 22rem) {
-  .nav__word {
-    display: none;
-  }
-}
-
-.nav__links {
-  display: flex;
-  align-items: center;
-  gap: 2.25rem;
-  margin-left: auto;
-  margin-right: 0.5rem;
-}
-
-.nav__link {
-  position: relative;
-  padding-block: 0.5rem;
-  font-size: var(--ows-t-meta);
-  letter-spacing: var(--ows-track-label);
-  text-transform: uppercase;
-  color: var(--ows-ink-muted);
-  transition: color var(--ows-base) var(--ows-ease);
-}
-
-.nav__link::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: 0.125rem;
-  width: 100%;
-  height: 1px;
-  background: var(--ows-red);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform var(--ows-base) var(--ows-ease);
-}
-
-.nav__link:hover,
-.nav__link.router-link-active {
-  color: var(--ows-ink);
-}
-
-.nav__link:hover::after,
-.nav__link.router-link-active::after {
-  transform: scaleX(1);
 }
 
 .nav__toggle {
@@ -227,9 +167,4 @@ onUnmounted(() => {
   opacity: 0;
 }
 
-@media (max-width: 46rem) {
-  .nav__links {
-    display: none;
-  }
-}
 </style>

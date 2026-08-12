@@ -11,7 +11,7 @@
            well. That spread is the whole of what turns a flat black frame
            into a place you are standing in. -->
       <div :ref="setFar" class="hero__far" aria-hidden="true">
-        <StandardsCascade :depth="20" :density="0.42" :intensity="0.5" />
+        <StandardsCascade :depth="20" :density="0.95" :intensity="0.78" />
       </div>
 
       <span class="hero__vignette" aria-hidden="true" />
