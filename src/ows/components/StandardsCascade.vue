@@ -53,9 +53,9 @@ const TOKENS = [
   mark. Bright enough to see, still well under the mark and the field.
 */
 const PLANES = [
-  { size: 9, speed: 0.16, alpha: 0.14, gap: 64 },
-  { size: 11, speed: 0.3, alpha: 0.22, gap: 82 },
-  { size: 13, speed: 0.52, alpha: 0.34, gap: 104 },
+  { size: 7, speed: 0.05, alpha: 0.1, gap: 150 },
+  { size: 8, speed: 0.09, alpha: 0.16, gap: 190 },
+  { size: 9, speed: 0.15, alpha: 0.24, gap: 240 },
 ]
 
 const cv = ref(null)
@@ -82,7 +82,7 @@ function build() {
     rather than a scatter of words — at the earlier spacing the individual
     tokens read as labels on the page instead of as texture behind it.
   */
-  const count = Math.max(6, Math.round((w / 62) * props.density))
+  const count = Math.max(4, Math.round((w / 116) * props.density))
   for (let i = 0; i < count; i++) {
     const plane = PLANES[i % PLANES.length]
     const items = []
@@ -134,7 +134,8 @@ function paint() {
       if (edge <= 0) continue
 
       const a = plane.alpha * edge * props.intensity
-      ctx.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`
+      // Blue-shifted rather than pure white: the frame is cold throughout.
+      ctx.fillStyle = `rgba(206,216,232,${a.toFixed(3)})`
       ctx.fillText(item.token, col.x, y)
     }
   }

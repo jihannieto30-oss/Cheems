@@ -9,24 +9,13 @@
            the scroll. The parallax is what turns a flat black frame into a
            place you are standing in. -->
       <div :ref="setFar" class="hero__far" aria-hidden="true">
-        <StandardsCascade :depth="20" :density="1" :intensity="0.62" />
+        <StandardsCascade :depth="20" :density="0.42" :intensity="0.5" />
       </div>
-
-      <!--
-        A pocket of black punched through the cascade, behind the mark only.
-
-        Turning the standards up far enough to be read turns them up far
-        enough to swallow the logo — the wall and the silhouette want opposite
-        things from the same pixels. This sits between the two so the columns
-        keep falling everywhere except where the mark needs clean ground, and
-        it goes under the key light rather than over it so the bloom survives.
-      -->
-      <span class="hero__pocket" aria-hidden="true" />
 
       <!-- Key light only. The mark is metal now and reads on its own, so the
            scene here is the lighting the object sits in — the arc itself is
            held back for the search transition, where it is the whole point. -->
-      <HeroScene :arc="false" :bloom-y="0.4" :bloom-w="720" :key-light="0.95" :parallax="30" />
+      <HeroScene :seam-y="0.82" :bloom-y="0.46" :key-light="1" :parallax="34" />
 
       <span class="hero__vignette" aria-hidden="true" />
       <span class="hero__horizon" aria-hidden="true" />
@@ -40,12 +29,15 @@
         <p class="hero__welcome">{{ BRAND.welcome }}</p>
 
         <div class="hero__field">
+          <!-- No prompt. The field is the only control on the screen and it
+               is shaped like one; a line of instruction inside it is the kind
+               of thing the rest of this page was stripped of. -->
           <SearchField
             luxe
             launch
             size="lg"
-            placeholder="Escriba su destinación…"
-            placeholder-short="Escriba su destinación…"
+            placeholder=""
+            placeholder-short=""
             @launch="onLaunch"
           />
         </div>
@@ -64,10 +56,6 @@
 
       <!-- The bridge. Mounted always, inert until a search is launched. -->
       <SearchLaunch ref="launcher" />
-
-      <p class="hero__creed" aria-hidden="true">
-        <span>CALIDAD</span><i /><span>PRECISIÓN</span><i /><span>INNOVACIÓN</span>
-      </p>
 
     </section>
   </div>
@@ -130,26 +118,13 @@ function onLaunch(q) {
   background: var(--ows-void);
 }
 
-.hero__pocket {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    42% 34% at 50% 42%,
-    rgb(0 0 0 / 0.9) 22%,
-    rgb(0 0 0 / 0.74) 46%,
-    transparent 76%
-  );
-}
-
 /* Closes the corners down so the centre is the only lit part of the frame. */
 .hero__vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(58% 48% at 50% 44%, rgb(255 255 255 / 0.045), transparent 70%),
-    radial-gradient(110% 82% at 50% 42%, transparent 22%, rgb(0 0 0 / 0.93) 100%);
+    radial-gradient(115% 86% at 50% 44%, transparent 26%, rgb(0 0 0 / 0.9) 100%);
 }
 
 /*
@@ -256,32 +231,6 @@ function onLaunch(q) {
   background: linear-gradient(to right, rgb(255 255 255 / 0.24), transparent);
 }
 
-.hero__creed {
-  position: absolute;
-  left: 50%;
-  bottom: clamp(2rem, 6vh, 3.5rem);
-  transform: translateX(-50%);
-  z-index: var(--ows-z-content);
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  white-space: nowrap;
-  font-size: var(--ows-t-micro);
-  font-weight: 300;
-  letter-spacing: 0.42em;
-  color: var(--ows-ink-faint);
-  opacity: 0;
-  animation: fade 1.8s var(--ows-ease) 1.8s forwards;
-}
-
-.hero__creed i {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--ows-red);
-  opacity: 0.85;
-}
-
 @keyframes rise {
   from {
     opacity: 0;
@@ -299,18 +248,9 @@ function onLaunch(q) {
   }
 }
 
-@media (max-width: 62rem) {
-  /* The index and the creed share the same line; below this they would
-     collide, and the index is the one that can be spared. */
+@media (max-width: 46rem) {
   .hero__rail {
     display: none;
-  }
-}
-
-@media (max-width: 32rem) {
-  .hero__creed {
-    gap: 0.75rem;
-    letter-spacing: 0.24em;
   }
 }
 
@@ -319,7 +259,6 @@ function onLaunch(q) {
   .hero__welcome,
   .hero__field,
   .hero__pool,
-  .hero__creed,
   .hero__rail {
     opacity: 1;
     animation: none;

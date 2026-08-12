@@ -5,7 +5,12 @@
       <span class="nav__word">{{ BRAND.code }}</span>
     </RouterLink>
 
-    <button class="nav__toggle" :aria-expanded="open" aria-controls="ows-menu" @click="open = !open">
+    <!--
+      Not on the home screen. That screen is one object and one control, and a
+      menu button is a third thing competing with both. Every other page keeps
+      it, so nothing becomes unreachable once the reader is past the door.
+    -->
+    <button v-if="route.name !== 'home'" class="nav__toggle" :aria-expanded="open" aria-controls="ows-menu" @click="open = !open">
       <span class="ows-sr">{{ open ? 'Cerrar menú' : 'Abrir menú' }}</span>
       <span class="nav__label" aria-hidden="true">MENÚ</span>
       <span class="nav__bars" aria-hidden="true"><i /><i /><i /></span>

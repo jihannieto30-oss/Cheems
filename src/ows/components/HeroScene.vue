@@ -84,34 +84,37 @@ function spawn(x, y, n) {
     const a = k * 5
     sparks[a] = x + rand(-3, 3)
     sparks[a + 1] = y + rand(-3, 3)
-    sparks[a + 2] = rand(-260, 210)
-    sparks[a + 3] = rand(-210, -30)
-    sparks[a + 4] = rand(0.3, 1.05)
+    // Two of the components are screen velocity; the third is approach. A
+    // spark coming at the lens is the one thing a flat particle field cannot
+    // fake, and it is what puts the viewer over the work.
+    sparks[a + 2] = rand(-150, 150)
+    sparks[a + 3] = rand(-130, 30)
+    sparks[a + 4] = rand(0.5, 1.5)
   }
 }
 
-function drawSparks(dt, y, ox, oy) {
+function drawSparks(dt, ox, oy) {
   for (let i = 0; i < SPARKS; i++) {
     const a = i * 5
     if (sparks[a + 4] <= 0) continue
     sparks[a + 4] -= dt
     if (sparks[a + 4] <= 0) continue
 
-    sparks[a + 3] += 430 * dt
-    sparks[a] += sparks[a + 2] * dt
-    sparks[a + 1] += sparks[a + 3] * dt
-    if (sparks[a + 1] > y) {
-      sparks[a + 1] = y
-      sparks[a + 3] *= -0.32
-      sparks[a + 2] *= 0.7
-    }
-
     const life = sparks[a + 4]
-    ctx.globalAlpha = Math.min(1, life * 2)
-    ctx.fillStyle = life > 0.62 ? '#fff6e8' : life > 0.32 ? '#ffb45c' : '#d94f08'
-    const s = life > 0.55 ? 1.8 : 1.2
-    // Spatter sits nearest the camera, so it takes the full parallax.
-    ctx.fillRect(sparks[a] + ox, sparks[a + 1] + oy, s, s)
+    // Age doubles as depth: 1.5 is far, 0 is at the lens.
+    const near = 1 - Math.min(1, life / 1.5)
+    const grow = 1 + near * near * 7
+
+    sparks[a + 3] += 150 * dt
+    sparks[a] += sparks[a + 2] * dt * grow * 0.4
+    sparks[a + 1] += sparks[a + 3] * dt * grow * 0.4
+
+    // Nearest sparks take the most parallax, which is what separates the
+    // planes when the pointer moves.
+    ctx.globalAlpha = Math.min(0.9, life * 0.8) * (1 - near * 0.35)
+    ctx.fillStyle = near > 0.6 ? '#eef4ff' : near > 0.3 ? '#c6d4e8' : '#8fa2bd'
+    const sz = 0.9 + near * 2.6
+    ctx.fillRect(sparks[a] + ox * (0.4 + near), sparks[a + 1] + oy * (0.4 + near), sz, sz)
   }
   ctx.globalAlpha = 1
 }
@@ -129,106 +132,65 @@ function draw(now, dt) {
   ctx.clearRect(0, 0, w, h)
   ctx.globalCompositeOperation = 'lighter'
 
-  // ---- key light: the furnace the mark is lit by ---------------------------
   /*
-    An ellipse sized to the mark rather than a circle sized to the viewport.
-    A viewport-sized glow spreads its energy over the whole frame and leaves
-    the middle at mid-grey, which is not enough for black type to read against
-    — the light has to be concentrated where the silhouette is.
-  */
-  const near = 1 - Math.min(1, Math.abs(head - w / 2) / (w * 0.45))
-  const breath = 0.95 + Math.sin(now * 0.0011) * 0.05
-  const key = Math.min(1.15, (props.keyLight + near * 0.42) * breath)
+    The ground the mark sits on.
 
-  const bx = w / 2 + px * 0.22
-  const by = h * props.bloomY + py * 0.22
-  const bw = Math.min(props.bloomW, w * 0.82)
+    Not a light source and not a spotlight: a single wide, flat wash that lifts
+    the whole middle of the frame by a few values so black artwork has
+    something to sit against. A concentrated bloom made the logo look lit from
+    behind, which is exactly what it must not look like — the mark has to be
+    level with the ground, not floating in front of a lamp.
+
+    Cold throughout. The greys are blue-shifted, which is what keeps the frame
+    reading as cold rolled steel rather than as a warm room.
+  */
+  const breath = 0.97 + Math.sin(now * 0.0009) * 0.03
+  const key = props.keyLight * breath
+
+  const gx = w / 2 + px * 0.16
+  const gy = h * props.bloomY + py * 0.16
+  const gw = Math.max(w, h) * 0.92
 
   ctx.save()
-  ctx.translate(bx, by)
-  ctx.scale(1, 0.62)
-  const bloom = ctx.createRadialGradient(0, 0, 0, 0, 0, bw)
-  /*
-    Neutral, and matte. The earlier ramp ran through amber and violet, which
-    is what a real arc throws — but it also painted the whole screen a colour,
-    and the direction here is black only. Grey carries the same information
-    about where the light is without tinting anything it falls on.
-  */
-  bloom.addColorStop(0, `rgba(238,240,244,${0.56 * key})`)
-  bloom.addColorStop(0.14, `rgba(196,200,206,${0.34 * key})`)
-  bloom.addColorStop(0.34, `rgba(130,134,140,${0.14 * key})`)
-  bloom.addColorStop(0.64, `rgba(66,68,72,${0.045 * key})`)
-  bloom.addColorStop(1, 'rgba(0,0,0,0)')
-  ctx.fillStyle = bloom
-  ctx.fillRect(-bw, -bw, bw * 2, bw * 2)
+  ctx.translate(gx, gy)
+  ctx.scale(1, 0.7)
+  const ground = ctx.createRadialGradient(0, 0, 0, 0, 0, gw)
+  ground.addColorStop(0, `rgba(168,176,190,${0.115 * key})`)
+  ground.addColorStop(0.3, `rgba(132,140,154,${0.075 * key})`)
+  ground.addColorStop(0.62, `rgba(76,82,94,${0.032 * key})`)
+  ground.addColorStop(1, 'rgba(0,0,0,0)')
+  ctx.fillStyle = ground
+  ctx.fillRect(-gw, -gw, gw * 2, gw * 2)
   ctx.restore()
 
-  const sy = y + py * 0.5
+  const sy = h * props.seamY + py * 0.5
 
-  // ---- the seam, the bead and the arc -------------------------------------
+  /*
+    The weld, low in the frame and close to the camera.
+
+    Not a scene being watched from across a shop — the spatter is thrown
+    toward the lens and grows as it comes, which is the whole of why it reads
+    as standing over the work rather than looking at a picture of it. Cold:
+    the arc column really is blue-white, and the spatter is held at steel
+    rather than orange so nothing warm enters the frame.
+  */
   if (props.arc) {
-    const trail = Math.max(200, w * 0.4)
-    const from = Math.max(-w * 0.2, head - trail)
+    const flick = 0.86 + Math.sin(now * 0.055) * 0.09 + Math.random() * 0.06
+    const hx = w / 2 + Math.sin(now * 0.00016) * w * 0.3 + px * 0.8
+    const r = Math.max(46, h * 0.1) * flick
 
-    ctx.globalAlpha = 0.42
-    const seam = ctx.createLinearGradient(0, 0, w, 0)
-    seam.addColorStop(0, 'rgba(255,255,255,0)')
-    seam.addColorStop(0.5, 'rgba(255,255,255,0.13)')
-    seam.addColorStop(1, 'rgba(255,255,255,0)')
-    ctx.fillStyle = seam
-    ctx.fillRect(0, sy, w, 1)
-    ctx.globalAlpha = 1
+    const core = ctx.createRadialGradient(hx, sy, 0, hx, sy, r)
+    core.addColorStop(0, 'rgba(255,255,255,0.9)')
+    core.addColorStop(0.08, 'rgba(216,232,255,0.5)')
+    core.addColorStop(0.3, 'rgba(150,180,225,0.12)')
+    core.addColorStop(1, 'rgba(90,120,180,0)')
+    ctx.fillStyle = core
+    ctx.fillRect(hx - r, sy - r, r * 2, r * 2)
 
-    if (head > 0) {
-      const bead = ctx.createLinearGradient(from, 0, head, 0)
-      bead.addColorStop(0, 'rgba(24,8,3,0)')
-      bead.addColorStop(0.4, 'rgba(150,44,8,0.42)')
-      bead.addColorStop(0.72, 'rgba(238,116,22,0.72)')
-      bead.addColorStop(0.93, 'rgba(255,208,138,0.92)')
-      bead.addColorStop(1, 'rgba(255,248,238,1)')
-      ctx.fillStyle = bead
-      ctx.fillRect(from, sy - 1.5, Math.min(head, w) - from, 3)
-
-      ctx.strokeStyle = bead
-      ctx.lineWidth = 1
-      for (let x = Math.ceil(from / 8) * 8; x < Math.min(head, w); x += 8) {
-        ctx.globalAlpha = ((x - from) / trail) * 0.42
-        ctx.beginPath()
-        ctx.arc(x, sy + 2.4, 3.6, Math.PI * 1.14, Math.PI * 1.86)
-        ctx.stroke()
-      }
-      ctx.globalAlpha = 1
-    }
-
-    // ---- the arc itself ------------------------------------------------------
-    if (head > -w * 0.04 && head < w * 1.04) {
-      const flick = 0.84 + Math.sin(now * 0.05) * 0.1 + Math.random() * 0.08
-      const r = Math.max(72, h * 0.2) * flick
-      const hx = head + px * 0.7
-
-      const core = ctx.createRadialGradient(hx, sy, 0, hx, sy, r)
-      core.addColorStop(0, 'rgba(255,255,255,0.98)')
-      core.addColorStop(0.05, 'rgba(232,244,255,0.78)')
-      core.addColorStop(0.2, 'rgba(130,178,255,0.22)')
-      core.addColorStop(0.52, 'rgba(64,116,225,0.07)')
-      core.addColorStop(1, 'rgba(20,60,180,0)')
-      ctx.fillStyle = core
-      ctx.fillRect(hx - r, sy - r, r * 2, r * 2)
-
-      // The wash the arc throws sideways along the plate.
-      const wash = ctx.createLinearGradient(hx - r * 3, 0, hx + r * 3, 0)
-      wash.addColorStop(0, 'rgba(120,150,220,0)')
-      wash.addColorStop(0.5, 'rgba(190,212,255,0.12)')
-      wash.addColorStop(1, 'rgba(120,150,220,0)')
-      ctx.fillStyle = wash
-      ctx.fillRect(hx - r * 3, sy - 2, r * 6, 4)
-
-      if (!reduced) spawn(head, sy, Math.round(dt * 170))
-    }
-
+    if (!reduced) spawn(hx, sy, Math.round(dt * 90))
+    drawSparks(reduced ? 0 : dt, px, py)
   }
 
-  if (props.arc) drawSparks(reduced ? 0 : dt, sy, px, py * 0.8)
   ctx.globalCompositeOperation = 'source-over'
 }
 
