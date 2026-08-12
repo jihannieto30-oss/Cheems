@@ -33,16 +33,35 @@ const props = defineProps({
 })
 
 const TOKENS = [
-  'AWS',
-  'EN ISO',
-  'DIN',
-  'JIS',
-  'CN',
-  'W.Nr',
-  'AISI',
-  'CWB',
-  'ASME SFA',
-  'ASTM',
+  'AWS A5.18',
+  'AWS A5.1',
+  'AWS A5.9',
+  'AWS A5.28',
+  'EN ISO 14341',
+  'EN ISO 2560',
+  'EN ISO 636',
+  'ASME SFA-5.18',
+  'ASME IX',
+  'ASTM A240',
+  'ASTM A36',
+  'NOM-027-STPS',
+  'DIN 8559',
+  'JIS Z3312',
+  'W.Nr 1.4404',
+  'AISI 316L',
+  'CWB W47.1',
+  'ER70S-6',
+  'E7018',
+  'E6013',
+  'ER308L',
+  'BAg-3',
+  '0.9 mm',
+  '3.2 mm',
+  '480 MPa',
+  '27 J −20 °C',
+  'H4',
+  'DC+',
+  'Ar/CO₂',
 ]
 
 // Three planes. Near ones are bigger, brighter and fall faster.
@@ -52,9 +71,9 @@ const TOKENS = [
   competes with the headline or the field.
 */
 const PLANES = [
-  { size: 9, speed: 0.14, alpha: 0.05, gap: 92 },
-  { size: 11, speed: 0.26, alpha: 0.09, gap: 116 },
-  { size: 12, speed: 0.44, alpha: 0.15, gap: 148 },
+  { size: 8, speed: 0.1, alpha: 0.045, gap: 58 },
+  { size: 10, speed: 0.2, alpha: 0.075, gap: 74 },
+  { size: 12, speed: 0.38, alpha: 0.115, gap: 96 },
 ]
 
 const cv = ref(null)
@@ -76,8 +95,12 @@ let visible = true
 
 function build() {
   columns = []
-  // Sparse: roughly one column every 170px, spread across the three planes.
-  const count = Math.max(3, Math.round((w / 170) * props.density))
+  /*
+    One column every ~62px. Dense enough to read as a wall of specification
+    rather than a scatter of words — at the earlier spacing the individual
+    tokens read as labels on the page instead of as texture behind it.
+  */
+  const count = Math.max(6, Math.round((w / 62) * props.density))
   for (let i = 0; i < count; i++) {
     const plane = PLANES[i % PLANES.length]
     const items = []

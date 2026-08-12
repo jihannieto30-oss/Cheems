@@ -9,36 +9,55 @@
            the scroll. The parallax is what turns a flat black frame into a
            place you are standing in. -->
       <div :ref="setFar" class="hero__far" aria-hidden="true">
-        <StandardsCascade :depth="20" :density="0.5" :intensity="0.55" />
+        <StandardsCascade :depth="20" :density="1" :intensity="0.3" />
       </div>
 
-      <!-- The arc, burning behind the mark. It is not decoration: the logo is
-           black and needs something bright to be a silhouette against. -->
-      <HeroScene :seam-y="0.63" :bloom-y="0.44" :key-light="0.5" :parallax="30" />
+      <!-- Key light only. The mark is metal now and reads on its own, so the
+           scene here is the lighting the object sits in — the arc itself is
+           held back for the search transition, where it is the whole point. -->
+      <HeroScene :arc="false" :bloom-y="0.4" :bloom-w="720" :key-light="0.62" :parallax="30" />
 
       <span class="hero__vignette" aria-hidden="true" />
       <span class="hero__horizon" aria-hidden="true" />
 
       <div class="hero__center">
         <h1 class="hero__mark">
-          <OwsMark size="hero" tone="ink" />
+          <OwsMark size="hero" tone="metal" />
           <span class="ows-sr">{{ BRAND.code }} — {{ BRAND.descriptor }}</span>
         </h1>
 
+        <p class="hero__welcome">{{ BRAND.welcome }}</p>
+
         <div class="hero__field">
           <SearchField
+            luxe
+            launch
             size="lg"
-            placeholder="Escriba una designación"
-            placeholder-short="Escriba una designación"
+            placeholder="Escriba su destinación…"
+            placeholder-short="Escriba su destinación…"
+            @launch="onLaunch"
           />
         </div>
+
+        <!-- The light the field throws on the floor. A separate plane, because
+             the pool is cast on the ground and does not move with the object. -->
+        <span class="hero__pool" aria-hidden="true" />
       </div>
 
-      <!-- A single index in the margin, the whole of the interface furniture. -->
+      <!-- Furniture: an index at one corner, three words at the foot. Nothing
+           else, and both set to disappear until looked for. -->
       <div class="hero__rail" aria-hidden="true">
         <span class="ows-num">01</span>
         <span class="hero__rail-line" />
       </div>
+
+      <!-- The bridge. Mounted always, inert until a search is launched. -->
+      <SearchLaunch ref="launcher" />
+
+      <p class="hero__creed" aria-hidden="true">
+        <span>CALIDAD</span><i /><span>PRECISIÓN</span><i /><span>INNOVACIÓN</span>
+      </p>
+
     </section>
   </div>
 </template>
@@ -48,11 +67,34 @@ import StandardsCascade from '../components/StandardsCascade.vue'
 import HeroScene from '../components/HeroScene.vue'
 import SearchField from '../components/SearchField.vue'
 import OwsMark from '../components/OwsMark.vue'
-import { BRAND } from '../brand'
+import SearchLaunch from '../components/SearchLaunch.vue'
+import { BRAND, resolveDestination } from '../brand'
 import { useParallax } from '../composables/useParallax'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const far = useParallax()
 const setFar = (el) => (far.value = el)
+
+const router = useRouter()
+const launcher = ref(null)
+
+/*
+  A search leaves through the transition, not through a route change.
+
+  Where the query resolves to an external destination the page is handed over
+  to it; where it does not — which is every query today, because no
+  destinations are configured — it lands on the internal index. Either way the
+  navigation happens after the screen has gone black.
+*/
+function onLaunch(q) {
+  const dest = resolveDestination(q)
+  const go = () =>
+    dest ? window.location.assign(dest.url) : router.push({ name: 'search', query: { q } })
+
+  if (launcher.value?.play) launcher.value.play(dest?.label ?? q, go)
+  else go()
+}
 
 /*
   One screen, and nothing under it.
@@ -84,7 +126,7 @@ const setFar = (el) => (far.value = el)
   pointer-events: none;
   background:
     radial-gradient(58% 48% at 50% 44%, rgb(255 255 255 / 0.045), transparent 70%),
-    radial-gradient(120% 90% at 50% 45%, transparent 30%, rgb(0 0 0 / 0.85) 100%);
+    radial-gradient(110% 82% at 50% 42%, transparent 22%, rgb(0 0 0 / 0.93) 100%);
 }
 
 /*
@@ -122,7 +164,21 @@ const setFar = (el) => (far.value = el)
 .hero__mark {
   display: block;
   opacity: 0;
-  animation: rise 1.4s var(--ows-ease) 240ms forwards;
+  animation: rise 1.6s var(--ows-ease) 280ms forwards;
+}
+
+/* The only sentence on the screen. */
+.hero__welcome {
+  margin-top: clamp(1.75rem, 4.5vh, 2.75rem);
+  font-size: var(--ows-t-micro);
+  font-weight: 300;
+  letter-spacing: 0.62em;
+  text-transform: uppercase;
+  color: var(--ows-ink-muted);
+  /* Cancels the trailing space wide tracking leaves after the last glyph. */
+  margin-right: -0.62em;
+  opacity: 0;
+  animation: rise 1.4s var(--ows-ease) 700ms forwards;
 }
 
 /* The far plane drifts the least, and against the scroll rather than with it. */
@@ -133,74 +189,74 @@ const setFar = (el) => (far.value = el)
 }
 
 .hero__field {
-  width: min(100%, 27rem);
-  margin-top: clamp(2.5rem, 7vh, 4.5rem);
+  width: min(100%, 46rem);
+  margin-top: clamp(2.25rem, 6vh, 3.5rem);
   opacity: 0;
-  animation: rise 1.2s var(--ows-ease) 1s forwards;
+  animation: rise 1.3s var(--ows-ease) 1s forwards;
 }
 
 /*
-  The field loses its box here. A bordered control is the right shape on the
-  results page, where it sits in a working interface; on this screen it is the
-  only object beside the mark, and a rule under it is enough.
+  The floor. A wide, very flat ellipse of light under the field, with a
+  hairline at its top edge — the object is sitting on a polished surface and
+  this is what the surface does with the light above it.
 */
-.hero__field :deep(.field__form) {
-  /* The height moves from the wrapper onto the input itself. The shared
-     control sets `height: 100%` on its input, which collapses to a 14px line
-     the moment the wrapper stops declaring one — and a 14px tap target is not
-     a control anyone can hit. */
-  height: auto;
-  padding: 0.15rem 0.25rem;
-  background: transparent;
-  backdrop-filter: none;
-  border: 0;
-  border-bottom: 1px solid rgb(255 255 255 / 0.16);
-  gap: 0.875rem;
-}
-
-.hero__field :deep(.field__form:hover) {
-  border-bottom-color: rgb(255 255 255 / 0.3);
-}
-
-.hero__field :deep(.is-focused .field__form) {
-  background: transparent;
-  border-bottom-color: rgb(255 255 255 / 0.55);
-}
-
-.hero__field :deep(.field__input) {
-  height: 2.75rem;
-  font-size: var(--ows-t-meta);
-  letter-spacing: var(--ows-track-label);
-  text-transform: uppercase;
-  text-align: center;
-}
-
-.hero__field :deep(.field__icon) {
-  width: 1rem;
-  height: 1rem;
+.hero__pool {
+  width: min(84vw, 62rem);
+  height: clamp(6rem, 16vh, 11rem);
+  margin-top: clamp(1.5rem, 4vh, 3rem);
+  pointer-events: none;
+  background:
+    radial-gradient(50% 42% at 50% 0%, rgb(255 255 255 / 0.11), transparent 72%),
+    radial-gradient(28% 100% at 50% 0%, rgb(255 255 255 / 0.07), transparent 70%);
+  opacity: 0;
+  animation: fade 2s var(--ows-ease) 1.3s forwards;
 }
 
 .hero__rail {
   position: absolute;
   left: var(--ows-gutter);
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: clamp(2rem, 6vh, 3.5rem);
   z-index: var(--ows-z-content);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.875rem;
+  gap: 1rem;
   font-size: var(--ows-t-micro);
   letter-spacing: var(--ows-track-meta);
   color: var(--ows-ink-faint);
   opacity: 0;
-  animation: fade 1.6s var(--ows-ease) 1.3s forwards;
+  animation: fade 1.8s var(--ows-ease) 1.6s forwards;
 }
 
 .hero__rail-line {
-  width: 1px;
-  height: clamp(3rem, 12vh, 7rem);
-  background: linear-gradient(to bottom, rgb(255 255 255 / 0.22), transparent);
+  width: clamp(2.5rem, 6vw, 5rem);
+  height: 1px;
+  background: linear-gradient(to right, rgb(255 255 255 / 0.24), transparent);
+}
+
+.hero__creed {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(2rem, 6vh, 3.5rem);
+  transform: translateX(-50%);
+  z-index: var(--ows-z-content);
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  white-space: nowrap;
+  font-size: var(--ows-t-micro);
+  font-weight: 300;
+  letter-spacing: 0.42em;
+  color: var(--ows-ink-faint);
+  opacity: 0;
+  animation: fade 1.8s var(--ows-ease) 1.8s forwards;
+}
+
+.hero__creed i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ows-red);
+  opacity: 0.85;
 }
 
 @keyframes rise {
@@ -220,15 +276,27 @@ const setFar = (el) => (far.value = el)
   }
 }
 
-@media (max-width: 46rem) {
+@media (max-width: 62rem) {
+  /* The index and the creed share the same line; below this they would
+     collide, and the index is the one that can be spared. */
   .hero__rail {
     display: none;
   }
 }
 
+@media (max-width: 32rem) {
+  .hero__creed {
+    gap: 0.75rem;
+    letter-spacing: 0.24em;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero__mark,
+  .hero__welcome,
   .hero__field,
+  .hero__pool,
+  .hero__creed,
   .hero__rail {
     opacity: 1;
     animation: none;

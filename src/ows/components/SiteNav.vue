@@ -7,6 +7,7 @@
 
     <button class="nav__toggle" :aria-expanded="open" aria-controls="ows-menu" @click="open = !open">
       <span class="ows-sr">{{ open ? 'Cerrar menú' : 'Abrir menú' }}</span>
+      <span class="nav__label" aria-hidden="true">MENÚ</span>
       <span class="nav__bars" aria-hidden="true"><i /><i /><i /></span>
     </button>
   </header>
@@ -146,13 +147,32 @@ onUnmounted(() => {
 }
 
 .nav__toggle {
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
   height: 2.75rem;
+  padding-inline: 0.75rem;
   margin-right: -0.75rem;
   position: relative;
   z-index: calc(var(--ows-z-menu) + 1);
+}
+
+.nav__label {
+  font-size: var(--ows-t-micro);
+  font-weight: 300;
+  letter-spacing: 0.34em;
+  color: var(--ows-ink-muted);
+  transition: color var(--ows-fast) var(--ows-ease);
+}
+
+.nav__toggle:hover .nav__label {
+  color: var(--ows-ink);
+}
+
+@media (max-width: 30rem) {
+  .nav__label {
+    display: none;
+  }
 }
 
 .nav__bars {

@@ -34,6 +34,12 @@ const props = defineProps({
   keyLight: { type: Number, default: 0.42 },
   /** Pointer/scroll parallax strength in pixels. */
   parallax: { type: Number, default: 26 },
+  /*
+    Whether the arc runs. Off, the scene is only the key light and the floor —
+    which is what the hero wants, because a travelling arc there is a fifth
+    element competing with four, and the weld belongs to the search transition.
+  */
+  arc: { type: Boolean, default: true },
 })
 
 const cv = ref(null)
@@ -152,68 +158,72 @@ function draw(now, dt) {
   ctx.fillRect(-bw, -bw, bw * 2, bw * 2)
   ctx.restore()
 
-  // ---- the seam and the bead it leaves -------------------------------------
   const sy = y + py * 0.5
-  const trail = Math.max(200, w * 0.4)
-  const from = Math.max(-w * 0.2, head - trail)
 
-  ctx.globalAlpha = 0.42
-  const seam = ctx.createLinearGradient(0, 0, w, 0)
-  seam.addColorStop(0, 'rgba(255,255,255,0)')
-  seam.addColorStop(0.5, 'rgba(255,255,255,0.13)')
-  seam.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.fillStyle = seam
-  ctx.fillRect(0, sy, w, 1)
-  ctx.globalAlpha = 1
+  // ---- the seam, the bead and the arc -------------------------------------
+  if (props.arc) {
+    const trail = Math.max(200, w * 0.4)
+    const from = Math.max(-w * 0.2, head - trail)
 
-  if (head > 0) {
-    const bead = ctx.createLinearGradient(from, 0, head, 0)
-    bead.addColorStop(0, 'rgba(24,8,3,0)')
-    bead.addColorStop(0.4, 'rgba(150,44,8,0.42)')
-    bead.addColorStop(0.72, 'rgba(238,116,22,0.72)')
-    bead.addColorStop(0.93, 'rgba(255,208,138,0.92)')
-    bead.addColorStop(1, 'rgba(255,248,238,1)')
-    ctx.fillStyle = bead
-    ctx.fillRect(from, sy - 1.5, Math.min(head, w) - from, 3)
-
-    ctx.strokeStyle = bead
-    ctx.lineWidth = 1
-    for (let x = Math.ceil(from / 8) * 8; x < Math.min(head, w); x += 8) {
-      ctx.globalAlpha = ((x - from) / trail) * 0.42
-      ctx.beginPath()
-      ctx.arc(x, sy + 2.4, 3.6, Math.PI * 1.14, Math.PI * 1.86)
-      ctx.stroke()
-    }
+    ctx.globalAlpha = 0.42
+    const seam = ctx.createLinearGradient(0, 0, w, 0)
+    seam.addColorStop(0, 'rgba(255,255,255,0)')
+    seam.addColorStop(0.5, 'rgba(255,255,255,0.13)')
+    seam.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = seam
+    ctx.fillRect(0, sy, w, 1)
     ctx.globalAlpha = 1
+
+    if (head > 0) {
+      const bead = ctx.createLinearGradient(from, 0, head, 0)
+      bead.addColorStop(0, 'rgba(24,8,3,0)')
+      bead.addColorStop(0.4, 'rgba(150,44,8,0.42)')
+      bead.addColorStop(0.72, 'rgba(238,116,22,0.72)')
+      bead.addColorStop(0.93, 'rgba(255,208,138,0.92)')
+      bead.addColorStop(1, 'rgba(255,248,238,1)')
+      ctx.fillStyle = bead
+      ctx.fillRect(from, sy - 1.5, Math.min(head, w) - from, 3)
+
+      ctx.strokeStyle = bead
+      ctx.lineWidth = 1
+      for (let x = Math.ceil(from / 8) * 8; x < Math.min(head, w); x += 8) {
+        ctx.globalAlpha = ((x - from) / trail) * 0.42
+        ctx.beginPath()
+        ctx.arc(x, sy + 2.4, 3.6, Math.PI * 1.14, Math.PI * 1.86)
+        ctx.stroke()
+      }
+      ctx.globalAlpha = 1
+    }
+
+    // ---- the arc itself ------------------------------------------------------
+    if (head > -w * 0.04 && head < w * 1.04) {
+      const flick = 0.84 + Math.sin(now * 0.05) * 0.1 + Math.random() * 0.08
+      const r = Math.max(72, h * 0.2) * flick
+      const hx = head + px * 0.7
+
+      const core = ctx.createRadialGradient(hx, sy, 0, hx, sy, r)
+      core.addColorStop(0, 'rgba(255,255,255,0.98)')
+      core.addColorStop(0.05, 'rgba(232,244,255,0.78)')
+      core.addColorStop(0.2, 'rgba(130,178,255,0.22)')
+      core.addColorStop(0.52, 'rgba(64,116,225,0.07)')
+      core.addColorStop(1, 'rgba(20,60,180,0)')
+      ctx.fillStyle = core
+      ctx.fillRect(hx - r, sy - r, r * 2, r * 2)
+
+      // The wash the arc throws sideways along the plate.
+      const wash = ctx.createLinearGradient(hx - r * 3, 0, hx + r * 3, 0)
+      wash.addColorStop(0, 'rgba(120,150,220,0)')
+      wash.addColorStop(0.5, 'rgba(190,212,255,0.12)')
+      wash.addColorStop(1, 'rgba(120,150,220,0)')
+      ctx.fillStyle = wash
+      ctx.fillRect(hx - r * 3, sy - 2, r * 6, 4)
+
+      if (!reduced) spawn(head, sy, Math.round(dt * 170))
+    }
+
   }
 
-  // ---- the arc itself ------------------------------------------------------
-  if (head > -w * 0.04 && head < w * 1.04) {
-    const flick = 0.84 + Math.sin(now * 0.05) * 0.1 + Math.random() * 0.08
-    const r = Math.max(72, h * 0.2) * flick
-    const hx = head + px * 0.7
-
-    const core = ctx.createRadialGradient(hx, sy, 0, hx, sy, r)
-    core.addColorStop(0, 'rgba(255,255,255,0.98)')
-    core.addColorStop(0.05, 'rgba(232,244,255,0.78)')
-    core.addColorStop(0.2, 'rgba(130,178,255,0.22)')
-    core.addColorStop(0.52, 'rgba(64,116,225,0.07)')
-    core.addColorStop(1, 'rgba(20,60,180,0)')
-    ctx.fillStyle = core
-    ctx.fillRect(hx - r, sy - r, r * 2, r * 2)
-
-    // The wash the arc throws sideways along the plate.
-    const wash = ctx.createLinearGradient(hx - r * 3, 0, hx + r * 3, 0)
-    wash.addColorStop(0, 'rgba(120,150,220,0)')
-    wash.addColorStop(0.5, 'rgba(190,212,255,0.12)')
-    wash.addColorStop(1, 'rgba(120,150,220,0)')
-    ctx.fillStyle = wash
-    ctx.fillRect(hx - r * 3, sy - 2, r * 6, 4)
-
-    if (!reduced) spawn(head, sy, Math.round(dt * 170))
-  }
-
-  drawSparks(reduced ? 0 : dt, sy, px, py * 0.8)
+  if (props.arc) drawSparks(reduced ? 0 : dt, sy, px, py * 0.8)
   ctx.globalCompositeOperation = 'source-over'
 }
 

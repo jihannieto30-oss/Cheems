@@ -1,6 +1,17 @@
 <template>
-  <div class="field" :class="[`field--${size}`, { 'is-focused': focused, 'is-open': open }]">
+  <div
+    class="field"
+    :class="[`field--${size}`, { 'is-focused': focused, 'is-open': open, 'field--luxe': luxe }]"
+  >
     <form class="field__form" role="search" @submit.prevent="go()">
+      <!-- The luxe skin. Two inert layers: a specular band that travels across
+           the surface, and the light the object throws on the floor under it.
+           Both sit behind the controls and never take a pointer event. -->
+      <template v-if="luxe">
+        <span class="field__sheen" aria-hidden="true" />
+        <span class="field__floor" aria-hidden="true" />
+      </template>
+
       <svg class="field__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <circle cx="10.5" cy="10.5" r="6.5" />
         <path d="M15.4 15.4 L20.5 20.5" />
@@ -64,6 +75,10 @@ import { useSearch } from '../composables/useSearch'
 
 const props = defineProps({
   size: { type: String, default: 'lg' }, // lg (hero) | md | sm (nav)
+  /** Premium treatment: pill, glass, travelling specular, floor light. */
+  luxe: { type: Boolean, default: false },
+  /** Emit `launch` instead of navigating, so the caller can play a transition. */
+  launch: { type: Boolean, default: false },
   placeholder: {
     type: String,
     default: 'Busque una designación, un proceso o una norma…',
@@ -77,7 +92,7 @@ const props = defineProps({
   inline: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['submit'])
+const emit = defineEmits(['submit', 'launch'])
 
 const router = useRouter()
 const { state, setQuery, submit } = useSearch()
@@ -119,6 +134,9 @@ function go(record) {
   submit(q)
   input.value?.blur()
   if (props.inline) emit('submit', q)
+  // `launch` hands the navigation to the caller so a transition can play
+  // first. The field still runs the query, so results are ready on arrival.
+  else if (props.launch) emit('launch', q)
   else router.push({ name: 'search', query: { q } })
 }
 
@@ -161,6 +179,122 @@ defineExpose({ focus: () => input.value?.focus() })
 </script>
 
 <style scoped>
+/*
+  ---- luxe -----------------------------------------------------------------
+
+  The field asked to stop being an input and start being an object. What makes
+  that read is not the radius, it is the light: a hairline top edge catching a
+  source above, a specular band travelling slowly across the surface, and the
+  pool the whole thing throws onto the floor beneath it. Take any one of the
+  three away and it collapses back into a rounded rectangle.
+*/
+.field--luxe .field__form {
+  position: relative;
+  height: clamp(3.25rem, 6.4vh, 4.25rem);
+  padding-inline: 1.5rem;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.13);
+  background:
+    linear-gradient(180deg, rgb(28 29 33 / 0.72), rgb(6 6 8 / 0.86));
+  backdrop-filter: blur(18px) saturate(1.1);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    inset 0 -1px 0 rgb(0 0 0 / 0.6),
+    0 1.5rem 3.5rem rgb(0 0 0 / 0.75);
+  overflow: hidden;
+  transition:
+    border-color var(--ows-base) var(--ows-ease),
+    box-shadow var(--ows-base) var(--ows-ease),
+    transform var(--ows-base) var(--ows-ease);
+}
+
+/* Travels once every twelve seconds. Slow enough that it is noticed rather
+   than watched — a faster sweep reads as a loading bar. */
+.field--luxe .field__sheen {
+  position: absolute;
+  inset: -50% -30%;
+  pointer-events: none;
+  background: linear-gradient(
+    104deg,
+    transparent 40%,
+    rgb(255 255 255 / 0.05) 47%,
+    rgb(255 255 255 / 0.11) 50%,
+    rgb(255 255 255 / 0.05) 53%,
+    transparent 60%
+  );
+  transform: translateX(-40%);
+  animation: sheen 12s linear infinite;
+}
+
+@keyframes sheen {
+  to {
+    transform: translateX(40%);
+  }
+}
+
+.field--luxe .field__floor {
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  width: 82%;
+  height: 1px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / 0.22) 30%,
+    rgb(255 255 255 / 0.4) 50%,
+    rgb(255 255 255 / 0.22) 70%,
+    transparent
+  );
+}
+
+.field--luxe .field__form:hover,
+.field--luxe.is-focused .field__form {
+  border-color: rgb(255 255 255 / 0.26);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    inset 0 -1px 0 rgb(0 0 0 / 0.6),
+    0 1.75rem 4.5rem rgb(0 0 0 / 0.85);
+}
+
+/* The identity's one appearance in the interface: the accent picks out the
+   trailing edge on focus, and nowhere else. */
+.field--luxe.is-focused .field__form {
+  border-right-color: var(--ows-red-dim);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    inset -12px 0 24px -18px var(--ows-red),
+    0 1.75rem 4.5rem rgb(0 0 0 / 0.85);
+}
+
+.field--luxe .field__input {
+  font-size: var(--ows-t-meta);
+  letter-spacing: var(--ows-track-label);
+  text-transform: uppercase;
+}
+
+.field--luxe .field__icon {
+  width: 1.0625rem;
+  height: 1.0625rem;
+  stroke-width: 1.2;
+}
+
+.field--luxe .field__go svg {
+  stroke-width: 1.1;
+}
+
+.field--luxe .field__form:hover .field__go svg {
+  transform: translateX(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field--luxe .field__sheen {
+    animation: none;
+  }
+}
+
 .field {
   position: relative;
   width: 100%;

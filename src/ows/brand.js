@@ -66,6 +66,37 @@ export const BRAND = {
   },
 }
 
+/*
+  External destinations.
+
+  A query typed into the hero can lead off this site. Nothing is listed here
+  because no destination URLs have been supplied — and inventing them would
+  send people to addresses that do not exist. Until this table has entries,
+  every search resolves to the internal index, which is the behaviour that
+  already works.
+
+  Each entry is { match, url, label }. `match` is compared against the folded,
+  lowercased query: a string matches on inclusion, a RegExp on test.
+
+    { match: 'catalogo', url: 'https://…', label: 'Catálogo Unibraze' }
+*/
+export const DESTINATIONS = []
+
+/** The external destination a query resolves to, or null for the index. */
+export function resolveDestination(query) {
+  const q = String(query ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+  if (!q) return null
+  return (
+    DESTINATIONS.find((d) =>
+      d.match instanceof RegExp ? d.match.test(q) : q.includes(String(d.match).toLowerCase()),
+    ) ?? null
+  )
+}
+
 /** `TÍTULO — UNIBRAZE`, or the brand line when a page has no title of its own. */
 export function pageTitle(title) {
   return title ? `${title} — ${BRAND.code}` : `${BRAND.code} — ${BRAND.descriptor}`
