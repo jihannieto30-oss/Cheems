@@ -39,9 +39,11 @@ BLOQUES = [
     '67_catalog.css', '68_catalog.js', '69_names.js', '70_names.css',
     '64_logos.css', '71_pens.css', '41_label.css', '51_profile.css',
     '52_card.css', '62_dive.css', '71_search.css', '72_nav.css',
-    '30_motion.css', '65_mobile.css', '82_door.css', '83_lineplx.css', '85_extras.css', '86_pago.css', '87_banderas.css',
+    '30_motion.css', '65_mobile.css', '82_door.css', '83_lineplx.css', '85_extras.css', '86_pago.css', '87_banderas.css', '88_hero.css',
     '50_profile.js', '31_motion.js', '63_dive.js', '70_search.js',
     '66_mobile.js', '82_door.js', '83_lineplx.js', '84_sinpepx.js', '85_extras.js', '86_pago.js', '87_banderas.js',
+    # `head_` = va en el <head>, fuera del módulo. Ver la inserción abajo.
+    'head_arranque.js',
 ]
 
 # La copia de referencia: lo que había en el fichero construido la última vez
@@ -90,9 +92,18 @@ def main() -> int:
             # mismo sitio donde lo pondría el build.
             nuevos.append(nombre)
             if not solo_revisa:
-                marca = '</style>' if nombre.endswith('.css') else '</script>'
-                i = html.rindex(marca)
-                html = html[:i] + '\n/* ' + nombre + ' */\n' + nuevo + '\n' + html[i:]
+                if nombre.startswith('head_'):
+                    # Los `head_` van ANTES del módulo, como script clásico.
+                    # El resto se concatena dentro del módulo, y ahí un
+                    # vigilante de arranque no sirve: cuando el módulo no
+                    # arranca, tampoco arranca lo que lleva dentro.
+                    i = html.index('</head>')
+                    html = (html[:i] + '<script>/* ' + nombre + ' */\n' +
+                            nuevo + '\n</script>\n' + html[i:])
+                else:
+                    marca = '</style>' if nombre.endswith('.css') else '</script>'
+                    i = html.rindex(marca)
+                    html = html[:i] + '\n/* ' + nombre + ' */\n' + nuevo + '\n' + html[i:]
                 with open(viejo_p, 'w', encoding='utf-8') as f:
                     f.write(nuevo)
             continue

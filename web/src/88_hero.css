@@ -1,0 +1,61 @@
+/* ============================================================================
+   EL HERO: QUE EL REFLEJO NO LE DISPUTE EL SITIO AL TEXTO
+
+   QUÉ SE MIDIÓ ANTES DE TOCAR NADA
+
+   Se montó el hero con su marcado y su CSS reales y se midieron las cajas a
+   320, 390, 429, 768 y 1280. En los cinco, `.sub` empieza entre 34 y 40px por
+   debajo del borde inferior del reflejo: **no hay solape de maquetación**. Así
+   que esto no arregla una caja mal puesta, porque no la hay.
+
+   LO QUE SÍ PASA
+
+   El reflejo es el logotipo entero, invertido, a opacidad .12 y desvanecido
+   por máscara al 55 %. Ocupa su altura completa aunque su mitad de abajo sea
+   transparente, y su parte visible acaba muy cerca del texto. En una pantalla
+   de portátil, con el logotipo grande, la frase queda leyéndose SOBRE la zona
+   donde el reflejo todavía tiene tinta — y como el logotipo es una estructura
+   molecular, lo que se ve es texto gris encima de esferas y varillas.
+
+   No es un fallo de posición: es falta de aire y un desvanecido demasiado
+   tardío. Se corrigen las dos cosas, y ninguna mueve nada de sitio.
+   ============================================================================ */
+
+/* La máscara se apaga antes: la tinta del reflejo termina donde termina la
+   parte que de verdad aporta —el arranque del logotipo invertido— y no a
+   media altura. Menos reflejo, pero el que queda se lee como reflejo y no
+   como una segunda imagen. */
+#home-hero .lreflect{
+  -webkit-mask-image:linear-gradient(180deg, #000, transparent 34%) !important;
+          mask-image:linear-gradient(180deg, #000, transparent 34%) !important;
+  opacity:.09;
+}
+
+/* NO se le pone margen negativo al reflejo, y esto se probó al revés primero.
+   La idea era que dejara de ocupar el alto que su máscara ya no pinta. El
+   efecto real fue subir la frase: la holgura entre el reflejo visible y el
+   texto pasó de 106px a 51px — justo lo contrario de lo que se buscaba.
+   Medido, revertido, y anotado para no volver a intentarlo. */
+
+/* Aire de verdad entre la marca y la frase. 34px era lo que había; a 56 la
+   frase deja de leerse como un pie del logotipo y pasa a ser una línea
+   propia, que es lo que es. */
+#home-hero .sub{
+  margin-top:56px;
+  position:relative; z-index:5;   /* por encima de cualquier lienzo del fondo */
+}
+
+/* En pantallas cortas el hero va apretado y ese aire no cabe: ahí se recorta
+   el reflejo más todavía en vez de empujar la frase fuera de la pantalla. */
+@media (max-height:720px){
+  #home-hero .lreflect{
+    -webkit-mask-image:linear-gradient(180deg, #000, transparent 22%) !important;
+            mask-image:linear-gradient(180deg, #000, transparent 22%) !important;
+  }
+  #home-hero .sub{margin-top:38px;}
+}
+
+/* El hero crea su propio contexto de apilado. Así ningún lienzo de fondo
+   —el de la molécula, el `#bgfx`— puede colarse por encima del texto aunque
+   alguien le suba el z-index en el futuro. */
+#home-hero{isolation:isolate;}

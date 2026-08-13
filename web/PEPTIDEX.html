@@ -3856,6 +3856,70 @@ html.lp-on .pcard.lp-tilt .lp-glow{opacity:1;}
   #co .co-mbox{transition:none;}
 }
 
+
+/* 88_hero.css */
+/* ============================================================================
+   EL HERO: QUE EL REFLEJO NO LE DISPUTE EL SITIO AL TEXTO
+
+   QUÉ SE MIDIÓ ANTES DE TOCAR NADA
+
+   Se montó el hero con su marcado y su CSS reales y se midieron las cajas a
+   320, 390, 429, 768 y 1280. En los cinco, `.sub` empieza entre 34 y 40px por
+   debajo del borde inferior del reflejo: **no hay solape de maquetación**. Así
+   que esto no arregla una caja mal puesta, porque no la hay.
+
+   LO QUE SÍ PASA
+
+   El reflejo es el logotipo entero, invertido, a opacidad .12 y desvanecido
+   por máscara al 55 %. Ocupa su altura completa aunque su mitad de abajo sea
+   transparente, y su parte visible acaba muy cerca del texto. En una pantalla
+   de portátil, con el logotipo grande, la frase queda leyéndose SOBRE la zona
+   donde el reflejo todavía tiene tinta — y como el logotipo es una estructura
+   molecular, lo que se ve es texto gris encima de esferas y varillas.
+
+   No es un fallo de posición: es falta de aire y un desvanecido demasiado
+   tardío. Se corrigen las dos cosas, y ninguna mueve nada de sitio.
+   ============================================================================ */
+
+/* La máscara se apaga antes: la tinta del reflejo termina donde termina la
+   parte que de verdad aporta —el arranque del logotipo invertido— y no a
+   media altura. Menos reflejo, pero el que queda se lee como reflejo y no
+   como una segunda imagen. */
+#home-hero .lreflect{
+  -webkit-mask-image:linear-gradient(180deg, #000, transparent 34%) !important;
+          mask-image:linear-gradient(180deg, #000, transparent 34%) !important;
+  opacity:.09;
+}
+
+/* NO se le pone margen negativo al reflejo, y esto se probó al revés primero.
+   La idea era que dejara de ocupar el alto que su máscara ya no pinta. El
+   efecto real fue subir la frase: la holgura entre el reflejo visible y el
+   texto pasó de 106px a 51px — justo lo contrario de lo que se buscaba.
+   Medido, revertido, y anotado para no volver a intentarlo. */
+
+/* Aire de verdad entre la marca y la frase. 34px era lo que había; a 56 la
+   frase deja de leerse como un pie del logotipo y pasa a ser una línea
+   propia, que es lo que es. */
+#home-hero .sub{
+  margin-top:56px;
+  position:relative; z-index:5;   /* por encima de cualquier lienzo del fondo */
+}
+
+/* En pantallas cortas el hero va apretado y ese aire no cabe: ahí se recorta
+   el reflejo más todavía en vez de empujar la frase fuera de la pantalla. */
+@media (max-height:720px){
+  #home-hero .lreflect{
+    -webkit-mask-image:linear-gradient(180deg, #000, transparent 22%) !important;
+            mask-image:linear-gradient(180deg, #000, transparent 22%) !important;
+  }
+  #home-hero .sub{margin-top:38px;}
+}
+
+/* El hero crea su propio contexto de apilado. Así ningún lienzo de fondo
+   —el de la molécula, el `#bgfx`— puede colarse por encima del texto aunque
+   alguien le suba el z-index en el futuro. */
+#home-hero{isolation:isolate;}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest"/>
@@ -3878,6 +3942,142 @@ if('serviceWorker' in navigator && window.isSecureContext){
     navigator.serviceWorker.register('sw.js').catch(function(){});
   });
 }
+</script>
+<script>/* head_arranque.js */
+/* ============================================================================
+   POR QUÉ A VECES LA PÁGINA SALE EN BLANCO
+
+   Todo lo que se ve en la tienda lo dibuja JavaScript dentro de
+   `<div id="app">`. Ese JavaScript es un `<script type="module">`, y lo
+   primero que hace es:
+
+       import * as THREE from 'three'
+
+   El mapa de importación manda «three» a **unpkg.com**. GSAP y Lenis vienen
+   del mismo sitio, y además como `<script src>` bloqueantes.
+
+   Si unpkg tarda, limita peticiones o tiene un tropiezo —y lo tiene, es un CDN
+   gratuito— el módulo NO LLEGA A EJECUTARSE. No hay error visible, no hay
+   mensaje: `#app` se queda vacío y la página sale blanca. Al recargar
+   funciona porque la segunda vez los ficheros ya están en la caché del
+   navegador.
+
+   Y hay un segundo agravante. La cabecera registra un trabajador de servicio,
+   `sw.js`, que **no existe en el repositorio**. Cuando falta, el registro
+   falla y no pasa nada. Pero si en algún despliegue anterior sí existió, los
+   navegadores que lo registraron lo siguen teniendo, con alcance sobre TODO el
+   dominio, sirviendo copias guardadas. Esa combinación —una copia vieja
+   servida a un módulo que necesita red— es exactamente una pantalla en blanco
+   que se arregla recargando.
+
+   QUÉ HACE ESTE FICHERO
+
+   Corre ANTES del módulo, que es donde tiene que estar. Si esto viviera al
+   final del módulo —como el resto de las capas— no serviría de nada: cuando el
+   módulo no arranca, tampoco arranca lo que hay dentro.
+
+     1. Retira cualquier trabajador de servicio de la raíz, ya.
+     2. Vigila el arranque. Si a los 6,5 s `#app` sigue vacío, recarga UNA vez.
+     3. Si tras esa recarga sigue vacío, deja de recargar y muestra un aviso de
+        verdad con un botón, en vez de una pantalla blanca.
+
+   Lo que NO hace: reintentar en bucle. Una página que se recarga sola sin
+   parar es peor que una que se queda quieta y lo dice.
+   ============================================================================ */
+(function(){
+'use strict';
+
+var MARCA = 'px-reintento';
+var ESPERA = 6500;   /* ms — generoso: en 3G lenta el módulo tarda de verdad */
+
+/* --------------------------------------------------------------------------
+   1 · Fuera el trabajador de servicio de la raíz
+
+   El de `/pepx/` es de la aplicación y no se toca: se distingue por el
+   alcance, que es lo que decide de verdad qué peticiones intercepta.
+   -------------------------------------------------------------------------- */
+try{
+  if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
+    navigator.serviceWorker.getRegistrations().then(function(rs){
+      for(var i = 0; i < rs.length; i++){
+        var r = rs[i];
+        if(r.scope && r.scope.indexOf('/pepx/') === -1){
+          try{ r.unregister(); }catch(e){}
+        }
+      }
+    }).catch(function(){});
+  }
+}catch(e){}
+
+/* --------------------------------------------------------------------------
+   2 · El vigilante de arranque
+   -------------------------------------------------------------------------- */
+function vacia(){
+  var a = document.getElementById('app');
+  /* Vacío de verdad: sin hijos Y sin alto. Comprobar sólo una de las dos daba
+     falsos positivos con el velo de entrada, que ocupa sitio sin contenido. */
+  return !a || (a.children.length === 0 && a.offsetHeight < 8);
+}
+
+function yaSeReintento(){
+  try{ return sessionStorage.getItem(MARCA) === '1'; }catch(e){ return false; }
+}
+function marcaReintento(){
+  try{ sessionStorage.setItem(MARCA, '1'); }catch(e){}
+}
+function limpiaMarca(){
+  try{ sessionStorage.removeItem(MARCA); }catch(e){}
+}
+
+function aviso(){
+  if(document.getElementById('px-caido')) return;
+  var d = document.createElement('div');
+  d.id = 'px-caido';
+  d.setAttribute('style',
+    'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;' +
+    'justify-content:center;background:#fff;padding:28px;' +
+    'font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;color:#111');
+  d.innerHTML =
+    '<div style="max-width:380px;text-align:center">' +
+      '<div style="font-size:11px;letter-spacing:.22em;color:#8A8F98;margin-bottom:18px">PEPTIDEX</div>' +
+      '<div style="font-size:19px;font-weight:600;margin-bottom:10px">La página no terminó de cargar</div>' +
+      '<p style="color:#6B7078;margin:0 0 22px">Suele ser la conexión. Vuelve a intentarlo.</p>' +
+      '<button id="px-reint" style="font:inherit;font-weight:600;padding:13px 26px;border:0;' +
+        'border-radius:999px;background:#111;color:#fff;cursor:pointer">Reintentar</button>' +
+    '</div>';
+  document.body.appendChild(d);
+  var b = document.getElementById('px-reint');
+  if(b) b.onclick = function(){ limpiaMarca(); location.reload(); };
+}
+
+function vigila(){
+  if(!vacia()){ limpiaMarca(); return; }   /* cargó bien: se olvida el intento */
+
+  if(yaSeReintento()){
+    /* Ya se recargó una vez y sigue vacía. No se insiste: se dice. */
+    aviso();
+    return;
+  }
+  marcaReintento();
+  /* `location.reload()` puede servirse de la misma caché que falló. Se añade
+     un parámetro que cambia para forzar una petición nueva de verdad. */
+  var u = location.href.split('#')[0];
+  u += (u.indexOf('?') === -1 ? '?' : '&') + 'px=' + Date.now();
+  location.replace(u + (location.hash || ''));
+}
+
+/* Se cuenta desde que la ventana termina de cargar, no desde ya: si se midiera
+   desde el principio, una conexión lenta pero sana contaría como caída. */
+if(document.readyState === 'complete') setTimeout(vigila, ESPERA);
+else addEventListener('load', function(){ setTimeout(vigila, ESPERA); });
+
+/* Si el módulo arranca bien antes de tiempo, se cancela el aviso pendiente. */
+addEventListener('px-listo', function(){ limpiaMarca(); });
+
+window.__pxArranque = {vacia: vacia, vigila: vigila};
+
+})();
+
 </script>
 </head>
 <body>
