@@ -55,11 +55,12 @@ checkoutBodyHTML = function(){
                                   'Te enviamos los datos de la cuenta y el monto exacto por correo.') + '</span></label>' +
     '<div class="co-mbox" id="co-mbox-wire"></div>');
 
-  /* Zelle se queda: ya estaba, es una transferencia igual, y lleva su 5 %. */
-  h = h.replace('<span class="co-m-s">' + T('Fast &amp; secure', 'Rápido y seguro') + '</span>',
-                '<span class="co-m-s">' + T('We email you a payment link.',
-                                            'Te enviamos un enlace de pago por correo.') + '</span>');
-  h = h.replace(/<span class="co-m-s">Fast &amp; secure<\/span>|<span class="co-m-s">Rápido y seguro<\/span>/,
+  /* Zelle se queda: ya estaba, es una transferencia igual, y lleva su 5 %.
+     El texto de PayPal decía «Rápido y seguro», que no dice nada de lo que va a
+     pasar. Se busca el ampersand SIN escapar: la cadena la construye el propio
+     sitio con `t()`, así que llega como `&` y no como `&amp;`. Con `&amp;` la
+     sustitución no casaba y el texto viejo se quedaba puesto. */
+  h = h.replace(/<span class="co-m-s">(Fast &(?:amp;)? secure|Rápido y seguro)<\/span>/,
                 '<span class="co-m-s">' + T('We email you a payment link.',
                                             'Te enviamos un enlace de pago por correo.') + '</span>');
 
@@ -130,13 +131,23 @@ if(_wire){
     var co = document.getElementById('co-form');
     if(!co) return;
 
+    /* Escribe el contenido si hace falta y abre o cierra con la clase. */
+    function abre(caja, si, hazContenido){
+      if(!caja) return;
+      if(si && !caja.firstElementChild) caja.innerHTML = hazContenido();
+      caja.classList.toggle('px-abierta', !!si);
+    }
+
     function pinta(){
       var sel = co.querySelector('input[name=pay]:checked');
       var v = sel ? sel.value : 'Wire';
       var w = document.getElementById('co-mbox-wire');
       var pp = document.getElementById('co-mbox-paypal');
-      if(w)  w.innerHTML  = (v === 'Wire')   ? cajaWire(window.__coNo) : '';
-      if(pp) pp.innerHTML = (v === 'PayPal') ? cajaPayPal() : '';
+      /* El contenido se escribe SIEMPRE y lo que cambia es la clase que la
+         abre. Vaciar la caja al cerrarla mataba la animación de salida: se
+         quedaba sin nada que encoger y desaparecía de golpe. */
+      abre(w,  v === 'Wire',   function(){ return cajaWire(window.__coNo); });
+      abre(pp, v === 'PayPal', cajaPayPal);
       /* Que el estado del sitio conozca el método nuevo: lo usa el resumen y
          viaja en el pedido. */
       try{ if(typeof coState === 'function') coState().method = v; }catch(e){}

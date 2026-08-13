@@ -3704,6 +3704,139 @@ html.lp-on .pcard.lp-tilt .lp-glow{opacity:1;}
   font-size:11px; line-height:1.4; white-space:normal;
 }
 
+
+/* 87_banderas.css */
+/* ============================================================================
+   BANDERAS Y CHECKOUT FLUIDO EN EL MÓVIL
+
+   Aquí hay dos cosas y la segunda importa más de lo que parece.
+   ============================================================================ */
+
+/* --------------------------------------------------------------------------
+   1 · Las banderas
+   -------------------------------------------------------------------------- */
+.px-bnd{
+  display:inline-block; width:1.15em; height:auto;
+  vertical-align:-0.16em; border-radius:1.5px;
+  /* Un filo tenue: sobre fondo blanco, la franja blanca de las dos banderas
+     se funde con la página y la bandera parece recortada. */
+  box-shadow:0 0 0 .5px rgba(0,0,0,.18);
+  flex:none;
+}
+.reg-badge.px-con-bnd{
+  display:inline-flex; align-items:center; gap:.45em;
+}
+
+/* El país, con su bandera dentro del campo */
+.px-pais{position:relative; display:block;}
+.px-pais .px-bnd{
+  position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  width:19px; pointer-events:none; z-index:1;
+}
+.px-pais input{padding-left:40px !important;}
+
+/* --------------------------------------------------------------------------
+   2 · EL ZOOM DE iOS — la causa de que el checkout se sienta roto
+
+   Safari en iPhone hace zoom automático sobre cualquier campo cuya letra mida
+   menos de 16px. Los del checkout medían 14. Resultado: tocas «Correo», la
+   página entera salta y se acerca; rellenas; tocas «Nombre», vuelve a saltar.
+   Entre campo y campo la pantalla se mueve sola media docena de veces, y al
+   final el usuario está en un formulario más ancho que la ventana.
+
+   No hay forma de desactivarlo. La única manera es no bajar de 16px, y por eso
+   este bloque existe. Sólo se aplica bajo 820px: en escritorio 14px está bien
+   y subirlo desequilibraría la columna.
+   -------------------------------------------------------------------------- */
+@media (max-width:820px){
+  #co .co-form input,
+  #co .co-form select,
+  #co .co-form textarea{
+    font-size:16px !important;
+    line-height:1.35;
+  }
+
+  /* Los renglones que explican cada método son los que de verdad hay que leer
+     —dicen qué va a pasar después de pagar— y estaban en 11,5px. */
+  #co .co-m .co-m-s{font-size:12.5px;}
+  #co .co-sub2{font-size:12.5px;}
+
+  /* LA FILA DEL MÉTODO, APILADA.
+
+     El sitio compone la fila en horizontal: radio, nombre, y la descripción
+     empujada a la derecha. En escritorio cabe. En un móvil de 390 no: «Bank
+     transfer (wire)» se partía en TRES renglones mientras su descripción se
+     apretaba en la columna de al lado, alineada a la derecha y sin relación
+     visible con el nombre.
+
+     Aquí pasa a rejilla de dos columnas —el radio, y todo lo demás— con el
+     nombre arriba y la descripción debajo. Se lee en el orden en que se
+     necesita: qué es, y después qué va a pasar. */
+  #co .co-m{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    align-items:start;
+    column-gap:11px; row-gap:2px;
+    padding:14px 13px;
+  }
+  #co .co-m input[type=radio]{grid-row:1 / span 2; margin-top:2px;}
+  /* `justify-self` y el margen a cero: el sitio empuja la descripción a la
+     derecha con `margin-left:auto`, y contra eso `text-align` no puede. Con la
+     descripción a la derecha, el nombre y su explicación quedaban en esquinas
+     opuestas de la fila y no se leían como una sola cosa. */
+  #co .co-m .co-m-t{
+    grid-column:2; justify-self:start; text-align:left;
+    margin-left:0 !important; font-size:15px;
+  }
+  #co .co-m .co-m-s{
+    grid-column:2; justify-self:start; text-align:left;
+    margin-left:0 !important; margin-right:0 !important;
+  }
+  /* El «Ahorra 5 %» va pegado a su nombre, no flotando en otra columna. */
+  #co .co-m .co-m-t em{margin-left:.5em; white-space:nowrap;}
+
+  /* El botón, ancho completo y separado del borde inferior: en un móvil se
+     pulsa con el pulgar y esa franja es la más difícil de acertar. */
+  #co .co-place{width:100%; margin-top:6px;}
+  #co .co-form{padding:22px 18px 26px;}
+}
+
+/* --------------------------------------------------------------------------
+   3 · Que el cambio de método no dé un salto
+
+   Al elegir otro método, su caja aparecía de golpe y empujaba todo lo de
+   abajo. Ahora entra abriéndose. `grid-template-rows` de 0fr a 1fr es lo que
+   permite animar hasta una altura que no se conoce de antemano — con
+   `max-height` habría que adivinarla, y adivinar de más hace que la animación
+   parezca que se para a mitad.
+   -------------------------------------------------------------------------- */
+#co .co-mbox{
+  /* `0fr` a secas NO cierra: es la forma corta de `minmax(auto, 0fr)`, y ese
+     mínimo automático vale la altura mínima del contenido — treinta píxeles
+     aquí. Hay que escribir el `minmax` entero para que el suelo sea cero. */
+  display:grid; grid-template-rows:minmax(0, 0fr);
+  transition:grid-template-rows .34s cubic-bezier(.22,1,.36,1),
+             opacity .26s ease;
+  opacity:0;
+}
+/* El margen del hijo NO colapsa dentro de una fila a `0fr`: la caja cerrada
+   se quedaba en treinta píxeles de aire, y entre método y método el formulario
+   daba un saltito. El margen se le quita al hijo y se le pone a la caja, que
+   sólo lo tiene cuando está abierta. */
+#co .co-mbox > *{overflow:hidden; min-height:0; margin:0 !important;}
+#co .co-mbox{margin:0; padding:0;}
+#co .co-mbox.px-abierta{grid-template-rows:minmax(0, 1fr); opacity:1; margin-top:8px;}
+
+/* El método elegido se distingue sin leer: la fila entera se marca. */
+#co .co-m:has(input:checked){
+  border-color:var(--accent);
+  background:rgba(30,94,255,.045);
+}
+
+@media (prefers-reduced-motion:reduce){
+  #co .co-mbox{transition:none;}
+}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest"/>
@@ -11871,11 +12004,12 @@ checkoutBodyHTML = function(){
                                   'Te enviamos los datos de la cuenta y el monto exacto por correo.') + '</span></label>' +
     '<div class="co-mbox" id="co-mbox-wire"></div>');
 
-  /* Zelle se queda: ya estaba, es una transferencia igual, y lleva su 5 %. */
-  h = h.replace('<span class="co-m-s">' + T('Fast &amp; secure', 'Rápido y seguro') + '</span>',
-                '<span class="co-m-s">' + T('We email you a payment link.',
-                                            'Te enviamos un enlace de pago por correo.') + '</span>');
-  h = h.replace(/<span class="co-m-s">Fast &amp; secure<\/span>|<span class="co-m-s">Rápido y seguro<\/span>/,
+  /* Zelle se queda: ya estaba, es una transferencia igual, y lleva su 5 %.
+     El texto de PayPal decía «Rápido y seguro», que no dice nada de lo que va a
+     pasar. Se busca el ampersand SIN escapar: la cadena la construye el propio
+     sitio con `t()`, así que llega como `&` y no como `&amp;`. Con `&amp;` la
+     sustitución no casaba y el texto viejo se quedaba puesto. */
+  h = h.replace(/<span class="co-m-s">(Fast &(?:amp;)? secure|Rápido y seguro)<\/span>/,
                 '<span class="co-m-s">' + T('We email you a payment link.',
                                             'Te enviamos un enlace de pago por correo.') + '</span>');
 
@@ -11946,13 +12080,23 @@ if(_wire){
     var co = document.getElementById('co-form');
     if(!co) return;
 
+    /* Escribe el contenido si hace falta y abre o cierra con la clase. */
+    function abre(caja, si, hazContenido){
+      if(!caja) return;
+      if(si && !caja.firstElementChild) caja.innerHTML = hazContenido();
+      caja.classList.toggle('px-abierta', !!si);
+    }
+
     function pinta(){
       var sel = co.querySelector('input[name=pay]:checked');
       var v = sel ? sel.value : 'Wire';
       var w = document.getElementById('co-mbox-wire');
       var pp = document.getElementById('co-mbox-paypal');
-      if(w)  w.innerHTML  = (v === 'Wire')   ? cajaWire(window.__coNo) : '';
-      if(pp) pp.innerHTML = (v === 'PayPal') ? cajaPayPal() : '';
+      /* El contenido se escribe SIEMPRE y lo que cambia es la clase que la
+         abre. Vaciar la caja al cerrarla mataba la animación de salida: se
+         quedaba sin nada que encoger y desaparecía de golpe. */
+      abre(w,  v === 'Wire',   function(){ return cajaWire(window.__coNo); });
+      abre(pp, v === 'PayPal', cajaPayPal);
       /* Que el estado del sitio conozca el método nuevo: lo usa el resumen y
          viaja en el pedido. */
       try{ if(typeof coState === 'function') coState().method = v; }catch(e){}
@@ -12006,6 +12150,120 @@ if(_place){
 }
 
 window.__pxPago = {caja: cajaWire, activo: true};
+
+})();
+
+
+/* 87_banderas.js */
+/* ============================================================================
+   LAS BANDERAS
+
+   POR QUÉ SVG Y NO EMOJI
+
+   El conmutador de región ya usa 🇺🇸 y 🇲🇽, y en un iPhone o en un Mac se ven
+   perfectas. En Windows no: Windows no trae fuente de banderas, así que el
+   emoji se degrada a las dos letras del código —«US», «MX»— en un recuadro. En
+   una marca que se vende por acabado, eso es peor que no poner nada.
+
+   Estas van dibujadas. Se ven igual en todas partes, escalan sin romperse y
+   pesan menos que un carácter de fuente que hay que descargar.
+
+   DÓNDE VAN
+
+     · el distintivo «PEPTIDEX USA / MÉXICO» de cada catálogo y del checkout
+     · el campo de país del formulario, que hasta ahora era texto plano
+
+   El conmutador de la barra NO se toca: ahí el emoji ya funciona en el móvil,
+   que es donde más se usa, y cambiarlo obligaría a rehacer su medida.
+   ============================================================================ */
+(function(){
+'use strict';
+
+/* Dibujadas a 3:2, la proporción real de las dos. */
+var MX =
+  '<svg class="px-bnd" viewBox="0 0 24 16" aria-hidden="true" focusable="false">' +
+    '<rect width="8" height="16" fill="#006847"/>' +
+    '<rect x="8" width="8" height="16" fill="#fff"/>' +
+    '<rect x="16" width="8" height="16" fill="#CE1126"/>' +
+    /* El escudo real es un águila sobre un nopal: a catorce píxeles sería una
+       mancha. Se pone una marca circular en su sitio, que es lo que el ojo
+       espera ahí y lo que separa esta bandera de la italiana. */
+    '<circle cx="12" cy="8" r="2.4" fill="none" stroke="#8B5A2B" stroke-width="1.1"/>' +
+  '</svg>';
+
+var US =
+  '<svg class="px-bnd" viewBox="0 0 24 16" aria-hidden="true" focusable="false">' +
+    '<rect width="24" height="16" fill="#fff"/>' +
+    /* Siete franjas rojas de las trece: las blancas son el fondo. */
+    '<g fill="#B22234">' +
+      '<rect y="0"     width="24" height="1.23"/><rect y="2.46"  width="24" height="1.23"/>' +
+      '<rect y="4.92"  width="24" height="1.23"/><rect y="7.38"  width="24" height="1.23"/>' +
+      '<rect y="9.84"  width="24" height="1.23"/><rect y="12.30" width="24" height="1.23"/>' +
+      '<rect y="14.76" width="24" height="1.23"/>' +
+    '</g>' +
+    '<rect width="9.6" height="8.6" fill="#3C3B6E"/>' +
+    /* Las cincuenta estrellas a este tamaño son ruido gris. Seis puntos
+       sugieren el cantón y se leen limpios a catorce píxeles. */
+    '<g fill="#fff">' +
+      '<circle cx="2.2" cy="2.1" r=".62"/><circle cx="4.8" cy="2.1" r=".62"/><circle cx="7.4" cy="2.1" r=".62"/>' +
+      '<circle cx="3.5" cy="4.3" r=".62"/><circle cx="6.1" cy="4.3" r=".62"/>' +
+      '<circle cx="2.2" cy="6.5" r=".62"/><circle cx="4.8" cy="6.5" r=".62"/><circle cx="7.4" cy="6.5" r=".62"/>' +
+    '</g>' +
+  '</svg>';
+
+function bandera(k){ return k === 'usa' ? US : MX; }
+
+/* --------------------------------------------------------------------------
+   1 · Los distintivos de región
+
+   Se identifican por su clase `.reg-badge`, que ya trae `usa` o `mex`. No hace
+   falta adivinar nada y no se toca ningún otro elemento.
+   -------------------------------------------------------------------------- */
+function ponEnDistintivos(){
+  document.querySelectorAll('.reg-badge').forEach(function(b){
+    if(b.querySelector('.px-bnd')) return;         /* ya la tiene */
+    var k = b.classList.contains('usa') ? 'usa' : 'mex';
+    b.insertAdjacentHTML('afterbegin', bandera(k));
+    b.classList.add('px-con-bnd');
+  });
+}
+
+/* --------------------------------------------------------------------------
+   2 · El campo de país del checkout
+
+   Es un `input` de sólo lectura con «United States» dentro. Un input no puede
+   llevar un SVG, así que la bandera va al lado, dentro de un envoltorio, y el
+   campo se aparta lo justo para dejarle sitio.
+   -------------------------------------------------------------------------- */
+function ponEnPais(){
+  var f = document.querySelector('#co-form input[name="country"]');
+  if(!f || f.__bnd) return;
+  f.__bnd = true;
+
+  var v = (f.value || '').toLowerCase();
+  var k = /m[eé]xico|mexico/.test(v) ? 'mex' : 'usa';
+
+  var env = document.createElement('span');
+  env.className = 'px-pais';
+  f.parentNode.insertBefore(env, f);
+  env.appendChild(f);
+  env.insertAdjacentHTML('afterbegin', bandera(k));
+}
+
+function pinta(){ ponEnDistintivos(); ponEnPais(); }
+
+pinta();
+if(typeof render === 'function'){
+  var _r = render;
+  render = function(a, b){ var r = _r(a, b); requestAnimationFrame(pinta); return r; };
+}
+if(typeof wireCheckout === 'function'){
+  var _w = wireCheckout;
+  wireCheckout = function(){ var r = _w(); requestAnimationFrame(pinta); return r; };
+}
+addEventListener('hashchange', function(){ requestAnimationFrame(pinta); });
+
+window.__pxBanderas = {pinta: pinta, mx: MX, us: US};
 
 })();
 
