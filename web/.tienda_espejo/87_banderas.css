@@ -19,6 +19,25 @@
   display:inline-flex; align-items:center; gap:.45em;
 }
 
+/* El conmutador de la barra. Comparte estilo con el de idioma, así que la
+   bandera tiene que caber sin cambiarle la medida al botón — si crece, la
+   fila de la barra se recoloca y el carrito se mueve de sitio. */
+.regtog.px-con-bnd{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  line-height:1;
+}
+.regtog.px-con-bnd .px-bnd{width:17px;}
+.regtog .px-rg{
+  font-weight:700; letter-spacing:.06em; font-size:.92em;
+}
+/* En pantallas estrechas la barra va justa: se queda la bandera, que es lo que
+   se reconoce de un vistazo, y se va el código de dos letras. */
+@media (max-width:520px){
+  .regtog .px-rg{display:none;}
+  .regtog.px-con-bnd{gap:0;}
+  .regtog.px-con-bnd .px-bnd{width:19px;}
+}
+
 /* El país, con su bandera dentro del campo */
 .px-pais{position:relative; display:block;}
 .px-pais .px-bnd{

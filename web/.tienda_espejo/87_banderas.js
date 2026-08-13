@@ -13,11 +13,15 @@
 
    DÓNDE VAN
 
+     · el conmutador de la barra, que es donde se cambia de país
      · el distintivo «PEPTIDEX USA / MÉXICO» de cada catálogo y del checkout
      · el campo de país del formulario, que hasta ahora era texto plano
 
-   El conmutador de la barra NO se toca: ahí el emoji ya funciona en el móvil,
-   que es donde más se usa, y cambiarlo obligaría a rehacer su medida.
+   Sobre el conmutador: en la primera versión de este fichero se decidió NO
+   tocarlo, dando por hecho que el emoji funcionaría donde más se usa. Estaba
+   mal. En la captura que llegó de la barra, el botón sale VACÍO — ni bandera
+   ni letras. Un botón en blanco al lado de «ES» no parece un selector de país;
+   parece algo roto. Así que también se dibuja.
    ============================================================================ */
 (function(){
 'use strict';
@@ -93,7 +97,41 @@ function ponEnPais(){
   env.insertAdjacentHTML('afterbegin', bandera(k));
 }
 
-function pinta(){ ponEnDistintivos(); ponEnPais(); }
+/* --------------------------------------------------------------------------
+   3 · El conmutador de la barra
+
+   `updateRegionUI()` le reescribe el `innerHTML` cada vez que se cambia de
+   país, así que no basta con pintarlo una vez: hay que volver a pintarlo
+   DESPUÉS de que el sitio haya escrito lo suyo. Por eso se envuelve la función
+   en lugar de engancharse al clic — el clic no es la única vía: la región
+   también se restaura de `localStorage` al abrir.
+   -------------------------------------------------------------------------- */
+function ponEnConmutador(){
+  var esUSA = (typeof REGION !== 'undefined') ? (REGION === 'usa') : false;
+  document.querySelectorAll('[data-region-tog]').forEach(function(b){
+    var k = esUSA ? 'usa' : 'mex';
+    /* Si ya está la bandera correcta, no se toca: reescribir el nodo en cada
+       repintado haría parpadear el botón.
+
+       Pero la marca sola NO basta como prueba, y esto costó un fallo: al
+       arrancar, esta función pintaba primero y el sitio llamaba después a
+       `updateRegionUI()`, que reescribe el `innerHTML` con el emoji. La marca
+       seguía puesta, así que se salía por aquí y el botón se quedaba con el
+       emoji vacío hasta que alguien hacía clic. Hay que comprobar que el SVG
+       siga ahí de verdad. */
+    if(b.getAttribute('data-bnd') === k && b.querySelector('svg.px-bnd')) return;
+    b.setAttribute('data-bnd', k);
+    b.innerHTML = bandera(k) + '<span class="px-rg">' + (esUSA ? 'US' : 'MX') + '</span>';
+    b.classList.add('px-con-bnd');
+  });
+}
+
+function pinta(){ ponEnConmutador(); ponEnDistintivos(); ponEnPais(); }
+
+if(typeof updateRegionUI === 'function'){
+  var _uri = updateRegionUI;
+  updateRegionUI = function(){ var r = _uri(); ponEnConmutador(); return r; };
+}
 
 pinta();
 if(typeof render === 'function'){
