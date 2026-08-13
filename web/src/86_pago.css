@@ -1,0 +1,34 @@
+/* ============================================================================
+   EL CHECKOUT QUE PIDE EN VEZ DE COBRAR
+
+   Un detalle que no es decorativo: el tick verde de «pedido realizado» decía
+   que la operación había terminado. No ha terminado — falta el pago. Se pasa a
+   ámbar, que es el color de «tuyo es el siguiente paso», y así el cliente no
+   cierra la pestaña pensando que ya está.
+   ============================================================================ */
+
+#co .co-done.px-solicitud .co-check{
+  background:linear-gradient(180deg,#D8A54A,#B8862E);
+}
+
+/* La explicación del método pesa lo mismo que el nombre del método: es la
+   parte que de verdad hay que leer, porque dice qué va a pasar después. */
+#co .co-m .co-m-s{
+  display:block; margin-top:3px;
+  font-size:11.5px; line-height:1.45; color:var(--muted);
+}
+
+/* La línea bajo «Pago» pasó de una frase corta a dos renglones. Sin esto se
+   pega al primer método y parece su encabezado. */
+#co .co-sub2{
+  line-height:1.5; margin-bottom:12px;
+}
+
+/* Los tres sellos ya no son iconos con una palabra, sino tres afirmaciones.
+   Se les da aire y se permite que envuelvan en pantallas estrechas. */
+#co .co-badges{
+  flex-wrap:wrap; gap:8px 16px;
+}
+#co .co-badges span{
+  font-size:11px; line-height:1.4; white-space:normal;
+}
