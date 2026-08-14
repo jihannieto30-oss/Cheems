@@ -1,6 +1,6 @@
 import { reactive, computed } from 'vue'
-import { SHEETS, skeletonSheet } from './data/sheets'
-import { CATALOG, FORMS } from './data/catalog'
+import { SHEETS, skeletonSheet } from './sheets'
+import { CATALOG, FORMS } from '../ows/data/catalog'
 
 /*
   The editable layer over the datasheets.

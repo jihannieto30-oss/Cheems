@@ -96,6 +96,8 @@ import { LOCKUP, MARK } from '../brandMark'
     brand  red U, dark elements knocked out to white — the reversed artwork,
            which is what works anywhere the mark is small and unlit
     mono   the whole mark in one colour, for places where a second would be noise
+    print  the artwork exactly as drawn — red U, black blocks, black letters,
+           which is the form that belongs on white and needs no help there
     metal  the dark elements given an anodised surface instead of a colour
     ink    the hero treatment: white letters, graphite blocks, red U, all three
            ramped by one light so the mark sits in the scene rather than on it
@@ -105,7 +107,7 @@ const props = defineProps({
   variant: { type: String, default: 'lockup' },
   /** sm · md · lg · hero */
   size: { type: String, default: 'md' },
-  /** brand · mono · metal · ink */
+  /** brand · mono · metal · ink · print */
   tone: { type: String, default: 'brand' },
 })
 
@@ -165,6 +167,17 @@ const fills = computed(() => {
 .mark--brand .mark__b,
 .mark--brand .mark__c {
   fill: var(--ows-ink);
+}
+
+/* On paper the logo needs nothing done to it: black is black and red is red,
+   which is the whole reason the artwork is drawn that way. */
+.mark--print .mark__a {
+  fill: #d10500;
+}
+
+.mark--print .mark__b,
+.mark--print .mark__c {
+  fill: #101114;
 }
 
 .mark--mono .mark__a,

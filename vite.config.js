@@ -11,27 +11,32 @@ const entry = (path) => fileURLToPath(new URL(path, import.meta.url))
   multi-page build that silently hands /unibraze/search to the Cheems app instead of
   to Unibraze — a 200 with entirely the wrong page.
 
-  This rewrites extension-less requests under /unibraze/ to the Unibraze shell, for both
-  the dev and preview servers, and emits dist/unibraze/404.html so static hosts that
-  honour a per-directory 404 behave the same way.
+  This rewrites extension-less requests under each listed base to that base's own
+  shell, for both the dev and preview servers, and emits <base>/404.html so static
+  hosts that honour a per-directory 404 behave the same way.
 
   Deploying elsewhere needs the equivalent one-line rule, e.g.
       Netlify   /unibraze/*  /unibraze/index.html  200
       nginx     location /unibraze/ { try_files $uri $uri/ /unibraze/index.html; }
 */
-function unibrazeSpaFallback() {
+function spaFallback(bases) {
   const middleware = (req, _res, next) => {
     const url = (req.url ?? '').split('?')[0]
-    if (url === '/unibraze') {
-      req.url = '/unibraze/'
-    } else if (url.startsWith('/unibraze/') && !extname(url)) {
-      req.url = '/unibraze/index.html'
+    for (const base of bases) {
+      if (url === `/${base}`) {
+        req.url = `/${base}/`
+        break
+      }
+      if (url.startsWith(`/${base}/`) && !extname(url)) {
+        req.url = `/${base}/index.html`
+        break
+      }
     }
     next()
   }
 
   return {
-    name: 'unibraze-spa-fallback',
+    name: 'mpa-spa-fallback',
     // Registered directly, not from a returned callback, so it runs before
     // Vite's own static and fallback middlewares get a chance to answer.
     configureServer(server) {
@@ -42,15 +47,17 @@ function unibrazeSpaFallback() {
     },
     writeBundle(options) {
       const dir = options.dir ?? 'dist'
-      const shell = `${dir}/unibraze/index.html`
-      if (existsSync(shell)) writeFileSync(`${dir}/unibraze/404.html`, readFileSync(shell))
+      for (const base of bases) {
+        const shell = `${dir}/${base}/index.html`
+        if (existsSync(shell)) writeFileSync(`${dir}/${base}/404.html`, readFileSync(shell))
+      }
     },
   }
 }
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), unibrazeSpaFallback()],
+  plugins: [vue(), spaFallback(['unibraze', 'fichas'])],
   build: {
     rollupOptions: {
       input: {
@@ -58,6 +65,8 @@ export default defineConfig({
         main: entry('./index.html'),
         // Unibraze — served at /unibraze/
         unibraze: entry('./unibraze/index.html'),
+        // Fichas técnicas — a separate site on white, served at /fichas/
+        fichas: entry('./fichas/index.html'),
       },
     },
   },

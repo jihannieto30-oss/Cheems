@@ -1,0 +1,233 @@
+/*
+  Fichas técnicas — the white system.
+
+  This is a separate site from unibraze/ and it is white on purpose: a datasheet
+  is a document, it gets printed, and every reference sheet in this trade is
+  black ink on white paper. The dark system next door is for the front of the
+  house; this is the back.
+
+  The trick that keeps the two from diverging is that this file redefines the
+  same custom properties the components already read. DataSheet.vue was written
+  against --ows-ink, --ows-line and the rest, so it renders here unchanged —
+  the tokens invert and the component does not know it moved. Nothing was
+  reworked to get it onto white.
+*/
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/unibraze/fonts/space-grotesk-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/unibraze/fonts/space-grotesk-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  /* ---- surfaces: paper ---- */
+  --ows-void: #ffffff;
+  --ows-surface: #fafafa;
+  --ows-panel: #f4f4f5;
+  --ows-raised: #ececee;
+
+  /* ---- ink: ink ---- */
+  --ows-ink: #101114;
+  --ows-ink-muted: #4a4d54;
+  --ows-ink-faint: #85888f;
+
+  /* ---- accent ---- */
+  --ows-red: #d10500;
+  --ows-red-bright: #e10600;
+  --ows-red-dim: rgba(209, 5, 0, 0.4);
+  --ows-red-wash: rgba(209, 5, 0, 0.055);
+
+  /* ---- rules ---- */
+  --ows-line: rgba(16, 17, 20, 0.16);
+  --ows-line-soft: rgba(16, 17, 20, 0.09);
+  --ows-line-strong: rgba(16, 17, 20, 0.34);
+
+  /* ---- type ---- */
+  --ows-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, Arial, sans-serif;
+  --ows-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, Arial, sans-serif;
+  --ows-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  --ows-t-h2: clamp(1.25rem, 2.6vw, 1.75rem);
+  --ows-t-body: 0.875rem;
+  --ows-t-meta: 0.6875rem;
+  --ows-t-micro: 0.625rem;
+
+  --ows-track-label: 0.24em;
+  --ows-track-meta: 0.16em;
+  --ows-track-display: 0.02em;
+
+  --ows-gutter: clamp(1.25rem, 3.5vw, 2.5rem);
+  --ows-max: 74rem;
+  --ows-rail: 17rem;
+
+  --ows-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ows-fast: 160ms;
+  --ows-base: 260ms;
+  --ows-parallax: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ows-fast: 1ms;
+    --ows-base: 1ms;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--ows-void);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ows-void);
+  color: var(--ows-ink-muted);
+  font-family: var(--ows-sans);
+  font-size: var(--ows-t-body);
+  line-height: 1.6;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+p,
+dl,
+dd,
+ul,
+ol,
+figure {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ows-red);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--ows-red);
+  color: #fff;
+}
+
+/* Screen-reader only, shared with the dark site. */
+.ows-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ows-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+  Anything that is a link but sets at label size needs its target padded out to
+  a real one. The negative margin gives the space back to the layout, so a
+  44px-tall control still sits on a 16px-tall line.
+*/
+.ows-tap {
+  display: inline-block;
+  padding-block: 0.875rem;
+  margin-block: -0.875rem;
+}
+
+.ows-meta {
+  font-size: var(--ows-t-micro);
+  letter-spacing: var(--ows-track-meta);
+  text-transform: uppercase;
+  color: var(--ows-ink-faint);
+}
+
+/*
+  Print. The one output this site actually exists to produce, alongside the
+  generated PDF — the furniture goes, the paper margins take over, and a table
+  is never allowed to break across a page.
+*/
+@page {
+  margin: 14mm 12mm;
+}
+
+@media print {
+  :root {
+    --ows-gutter: 0;
+  }
+
+  body {
+    color: #000;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  a {
+    color: #000;
+  }
+}

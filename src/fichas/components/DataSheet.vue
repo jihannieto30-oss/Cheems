@@ -11,7 +11,7 @@
           {{ sheet.designation }}
         </p>
       </div>
-      <OwsMark size="md" tone="ink" class="ds__mark" />
+      <OwsMark size="md" tone="print" class="ds__mark" />
     </header>
 
     <!--
@@ -185,7 +185,7 @@
 </template>
 
 <script setup>
-import OwsMark from './OwsMark.vue'
+import OwsMark from '../../ows/components/OwsMark.vue'
 
 /*
   The datasheet, laid out the way the trade lays them out.
