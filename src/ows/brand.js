@@ -26,15 +26,16 @@ export const BRAND = {
   claim: 'CONOCIMIENTO QUE UNE. SOLUCIONES QUE PERDURAN.',
 
   /*
-    Contact block. These are placeholders — no real address, line or inbox has
-    been supplied for this build, and inventing one that looks real would be
-    worse than leaving it obviously unset. Fill them in and the contact page
-    picks them up; leave one empty and its row is not rendered at all.
+    Contact block. Taken from the footer of the company's own product
+    datasheet — the only source for these that is not a guess. `email` stays
+    empty because no inbox has been supplied, and an invented one that looks
+    real would be worse than an obviously unset one; leave a field empty and
+    its row is not rendered at all.
   */
   contact: {
     email: '',
-    phone: '',
-    address: '',
+    phone: '+1 713 869 6000',
+    address: '1050 Pennercrest St, Houston, TX 77055, Estados Unidos',
     hours: 'LUN – VIE · 08:00 – 18:00',
     /*
       Where the contact form posts. With no endpoint the form still validates

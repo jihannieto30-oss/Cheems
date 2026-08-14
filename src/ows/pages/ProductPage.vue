@@ -19,7 +19,38 @@
       </div>
     </div>
 
-    <div class="sheet ows-shell">
+    <!--
+      Filler metals get the datasheet, which is the document the trade actually
+      reads and the one this catalogue exists to publish. Everything else here
+      — processes, defects, procedures — is written material and keeps the
+      reading layout below; a diagnosis is not a specification and forcing it
+      into a specification's shape would help nobody.
+    -->
+    <div v-if="isMaterial" class="ows-shell dsheet">
+      <DataSheet :sheet="sheet" />
+
+      <div class="dsheet__actions">
+        <button class="dsheet__edit" @click="editing = true">
+          {{ edited ? 'EDITAR FICHA · MODIFICADA' : 'EDITAR FICHA' }}
+        </button>
+        <button class="dsheet__print" @click="print">IMPRIMIR</button>
+      </div>
+
+      <section v-if="related.length" class="dsheet__related">
+        <h2 class="block__title">TEMAS RELACIONADOS</h2>
+        <ul class="related">
+          <li v-for="r in related" :key="r.id">
+            <RouterLink class="related__link" :to="{ name: 'product', params: { id: r.id } }">
+              <span class="related__title">{{ r.title }}</span>
+              <span class="related__kind">{{ r.kind }}</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 L16 12 L9 19" /></svg>
+            </RouterLink>
+          </li>
+        </ul>
+      </section>
+    </div>
+
+    <div v-else class="sheet ows-shell">
       <!-- Section rail -->
       <aside class="rail">
         <nav aria-label="Secciones de este registro">
@@ -158,14 +189,19 @@
   </div>
 
   <NotFoundPage v-else :what="route.params.id" />
+
+  <SheetEditor v-if="editing && sheet" :id="sheet.id" @close="editing = false" @saved="bump++" />
 </template>
 
 <script setup>
 import { computed, ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import RecordVisual from '../components/RecordVisual.vue'
+import DataSheet from '../components/DataSheet.vue'
+import SheetEditor from '../components/SheetEditor.vue'
 import NotFoundPage from './NotFoundPage.vue'
 import { getRecord, relatedTo } from '../data'
+import { getSheet, isEdited } from '../sheetStore'
 
 const route = useRoute()
 const router = useRouter()
@@ -173,6 +209,23 @@ const router = useRouter()
 const record = computed(() => getRecord(route.params.id?.toString() ?? ''))
 const detail = computed(() => record.value?.detail ?? null)
 const related = computed(() => (record.value ? relatedTo(record.value) : []))
+
+/*
+  The datasheet, and the one number that makes an edit show up immediately.
+
+  getSheet reads a reactive store, but it is called inside a computed that also
+  depends on the route — and Vue only re-runs a computed when a dependency it
+  actually touched changes. `bump` is that dependency: the editor increments it
+  on save, which is the cheapest correct way to have the page repaint without
+  the store having to know anything about who is reading it.
+*/
+const bump = ref(0)
+const editing = ref(false)
+const isMaterial = computed(() => record.value?.category === 'materials')
+const sheet = computed(() => (bump.value, isMaterial.value ? getSheet(record.value.id) : null))
+const edited = computed(() => (bump.value, record.value ? isEdited(record.value.id) : false))
+
+const print = () => window.print()
 
 // Filler metals carry a parameters table; processes already hold theirs as
 // facets on the search record, so reuse those rather than duplicating data.
@@ -263,6 +316,52 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ---- datasheet layout ---- */
+
+.dsheet {
+  padding-bottom: clamp(4rem, 10vh, 7rem);
+}
+
+.dsheet__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: clamp(2rem, 5vw, 3rem);
+}
+
+.dsheet__edit,
+.dsheet__print {
+  height: 2.75rem;
+  padding-inline: 1.125rem;
+  border: 1px solid var(--ows-line);
+  font-size: var(--ows-t-micro);
+  letter-spacing: var(--ows-track-meta);
+  color: var(--ows-ink-muted);
+  transition:
+    color var(--ows-fast) var(--ows-ease),
+    border-color var(--ows-fast) var(--ows-ease);
+}
+
+.dsheet__edit:hover,
+.dsheet__print:hover {
+  color: var(--ows-ink);
+  border-color: var(--ows-ink-faint);
+}
+
+.dsheet__related {
+  margin-top: clamp(3rem, 8vw, 5rem);
+}
+
+/* The furniture is for the screen; the sheet is for the page. */
+@media print {
+  .bar,
+  .dsheet__actions,
+  .dsheet__related {
+    display: none;
+  }
+}
+
+
 .page {
   padding-top: var(--ows-nav-h);
   padding-bottom: clamp(4rem, 12vh, 8rem);

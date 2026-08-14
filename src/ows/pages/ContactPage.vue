@@ -516,7 +516,15 @@ select.field__input option {
   color: var(--ows-ink);
 }
 
+/*
+  A phone number is a tap target, and a line of body text is 18px tall — under
+  every guideline there is. Padded out to reach 44px and pulled back by the
+  same amount, so the row it sits in does not grow to accommodate it.
+*/
 .aside__row a {
+  display: inline-block;
+  padding-block: 0.8125rem;
+  margin-block: -0.8125rem;
   color: inherit;
   transition: color var(--ows-fast) var(--ows-ease);
 }

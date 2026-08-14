@@ -331,8 +331,17 @@ const RAW = {
   ],
 }
 
-/** Records that already carry a full technical sheet in details.js. */
+/*
+  Records that carry a published technical sheet.
+
+  Two sources, and the difference is worth knowing. E81T1-Ni1 is transcribed
+  from a Unibraze datasheet — every number on its page came off that document.
+  The rest carry the older long-form entries in details.js, which are written
+  to the classification rather than to a certificate. Both are more than a
+  catalogue row; only the first is a measurement.
+*/
 const WITH_SHEET = new Set([
+  'E81T1-Ni1',
   'ER70S-6',
   'ER70S-2',
   'ER308L',

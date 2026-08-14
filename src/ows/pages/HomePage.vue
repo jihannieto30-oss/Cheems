@@ -55,8 +55,20 @@
         <span class="hero__pool" aria-hidden="true" />
       </div>
 
-      <!-- The only furniture left: a section index in one corner, set to
-           disappear until it is looked for. -->
+      <!--
+        The standards, named in full, once.
+
+        The wall falling behind is recognition — you catch A5.18 going past. This
+        is the statement: every system this index resolves between, all ten, in
+        one line at the foot of the screen. It is the shortest honest answer to
+        "what is in here", and it is why the line is set at the size of a
+        footnote rather than a headline: it has to be complete, not loud.
+      -->
+      <ul class="hero__bodies">
+        <li v-for="s in STANDARDS" :key="s.body">{{ bodyLabel(s) }}</li>
+      </ul>
+
+      <!-- A section index in one corner, set to disappear until looked for. -->
       <div class="hero__rail" aria-hidden="true">
         <span class="ows-num">01</span>
         <span class="hero__rail-line" />
@@ -76,6 +88,7 @@ import SearchField from '../components/SearchField.vue'
 import OwsMark from '../components/OwsMark.vue'
 import SearchLaunch from '../components/SearchLaunch.vue'
 import { BRAND, resolveDestination } from '../brand'
+import { STANDARDS, bodyLabel } from '../data/standards'
 import { useParallax } from '../composables/useParallax'
 import { usePointerDepth } from '../composables/usePointerDepth'
 import { ref } from 'vue'
@@ -246,6 +259,49 @@ function onLaunch(q) {
   animation: fade 2s var(--ows-ease) 1.3s forwards;
 }
 
+/*
+  The ten systems, across the foot of the screen. One wrapped row, hairline
+  separators, and the same pull against the head that everything else in front
+  of the standards takes — it belongs to the near plane, not to the wall.
+*/
+.hero__bodies {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(2rem, 6vh, 3.5rem);
+  z-index: var(--ows-z-content);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.375rem;
+  width: min(100%, 64rem);
+  padding-inline: var(--ows-gutter);
+  font-size: var(--ows-t-micro);
+  letter-spacing: var(--ows-track-meta);
+  color: var(--ows-ink-faint);
+  transform: translateX(-50%)
+    translate3d(
+      calc(var(--mx, 0) * var(--ows-parallax) * -20px),
+      calc(var(--my, 0) * var(--ows-parallax) * -12px),
+      0
+    );
+  opacity: 0;
+  animation: fade 1.8s var(--ows-ease) 1.5s forwards;
+}
+
+.hero__bodies li {
+  position: relative;
+}
+
+.hero__bodies li + li::before {
+  content: '';
+  position: absolute;
+  left: -0.6875rem;
+  top: 0.3em;
+  bottom: 0.3em;
+  width: 1px;
+  background: var(--ows-line);
+}
+
 .hero__rail {
   position: absolute;
   left: var(--ows-gutter);
@@ -307,6 +363,14 @@ function onLaunch(q) {
   .hero__rail {
     display: none;
   }
+
+  /* Ten names will not sit on one line here, and three stacked rows of them
+     at the foot of a phone screen is a paragraph. Tightened rather than cut:
+     the point of the row is that it is complete. */
+  .hero__bodies {
+    gap: 0.375rem 0.875rem;
+    letter-spacing: 0.12em;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -314,6 +378,7 @@ function onLaunch(q) {
   .hero__welcome,
   .hero__field,
   .hero__pool,
+  .hero__bodies,
   .hero__rail {
     opacity: 1;
     animation: none;

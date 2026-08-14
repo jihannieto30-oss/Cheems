@@ -23,7 +23,7 @@ export const STANDARDS = [
   // The ASME Boiler & Pressure Vessel Code, Section II Part C: the A5 series
   // adopted verbatim, which is why the numbers match after the prefix. Written
   // SFA-5.18, not "SFA 5.18" — the hyphen is part of the designation.
-  { body: 'ASME', specs: ['SFA-5.1', 'SFA-5.4', 'SFA-5.9', 'SFA-5.18', 'SFA-5.20', 'SFA-5.28'] },
+  { body: 'ASME', label: 'ASME SFA', specs: ['SFA-5.1', 'SFA-5.4', 'SFA-5.9', 'SFA-5.18', 'SFA-5.20', 'SFA-5.28'] },
 
   // The European system, now the international one for most of these.
   { body: 'EN ISO', specs: ['636', '2560', '3581', '14341', '14343', '17632', '18274'] },
@@ -51,6 +51,9 @@ export const STANDARDS = [
   // classification is actually verified.
   { body: 'ASTM', specs: ['A751', 'E353'] },
 ]
+
+/** What to call a body where it is named on its own, without a number. */
+export const bodyLabel = (s) => s.label ?? s.body
 
 /**
  * Every body/spec pair as a flat list, which is what a display wants.
