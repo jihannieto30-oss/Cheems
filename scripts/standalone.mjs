@@ -1,14 +1,19 @@
 /*
-  Bundles Unibraze into one portable HTML file.
+  Bundles a site into one portable HTML file.
 
-      node scripts/unibraze-standalone.mjs        # → unibraze.html
+      node scripts/standalone.mjs                 # → both
+      node scripts/standalone.mjs fichas          # → fichas.html
 
   Everything is inlined — styles, the whole app as a single module, and the
   artwork as data URIs — so the result opens from disk, an email attachment or
   any static host with no server, no build step and no network access.
 
-  This is a distribution artefact, not the source of truth. The app lives in
-  src/unibraze/; regenerate this file rather than editing it.
+  Both sites are handled by the same script because both are built the same
+  way: one entry, no dynamic imports, and a router that falls back to hash mode
+  on a file:// origin. Everything that differs between them is the base name.
+
+  These are distribution artefacts, not the source of truth. The apps live in
+  src/ows/ and src/fichas/; regenerate these files rather than editing them.
 */
 
 import { build } from 'vite'
@@ -18,7 +23,21 @@ import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const OUT = resolve(ROOT, 'unibraze.html')
+
+/*
+  Which sites can be bundled. `mark` is the file used as the favicon; both sites
+  carry the same one, and both read their typeface out of public/unibraze.
+*/
+const SITES = {
+  unibraze: { base: 'unibraze', mark: '/unibraze/mark.svg' },
+  fichas: { base: 'fichas', mark: '/unibraze/mark.svg' },
+}
+
+const wanted = process.argv.slice(2).filter((a) => !a.startsWith('-'))
+const targets = wanted.length ? wanted : Object.keys(SITES)
+for (const name of targets) {
+  if (!SITES[name]) throw new Error(`unknown site "${name}" — try: ${Object.keys(SITES).join(', ')}`)
+}
 
 // ---- assets → data URIs --------------------------------------------------
 // Artwork and the self-hosted typeface both live under public/unibraze and are
@@ -43,7 +62,8 @@ const inlineArt = (text) => {
   return out
 }
 
-// ---- build the unibraze entry as a single chunk ---------------------------
+async function bundle(site) {
+// ---- build the entry as a single chunk ------------------------------------
 // One entry and no dynamic imports in the app, so Rollup emits a single module
 // with no `import` statements — the only form that runs from a file:// page.
 // The assertion below is the guard: if a lazy route ever creeps back in, this
@@ -58,7 +78,7 @@ const result = await build({
     cssCodeSplit: false,
     assetsInlineLimit: 0,
     rollupOptions: {
-      input: resolve(ROOT, 'unibraze/index.html'),
+      input: resolve(ROOT, `${site.base}/index.html`),
     },
   },
 })
@@ -90,11 +110,17 @@ const page = html.source
   .replace(/\s*<link[^>]*rel="preload"[^>]*>/g, '')
   .replace(
     /<link rel="icon"[^>]*>/,
-    () => `<link rel="icon" type="image/svg+xml" href="${art.get('/unibraze/mark.svg')}" />`,
+    () => `<link rel="icon" type="image/svg+xml" href="${art.get(site.mark)}" />`,
   )
   .replace('</head>', () => `  <style>\n${styles}\n  </style>\n  </head>`)
   .replace('</body>', () => `  <script type="module">\n${code}\n  </script>\n  </body>`)
 
-writeFileSync(OUT, page)
-console.log(`unibraze.html  ${(page.length / 1024).toFixed(0)} kB`)
-console.log(`  styles ${(styles.length / 1024).toFixed(0)} kB · script ${(code.length / 1024).toFixed(0)} kB · art ${art.size} files inlined`)
+  const out = resolve(ROOT, `${site.base}.html`)
+  writeFileSync(out, page)
+  console.log(`${site.base}.html  ${(page.length / 1024).toFixed(0)} kB`)
+  console.log(
+    `  styles ${(styles.length / 1024).toFixed(0)} kB · script ${(code.length / 1024).toFixed(0)} kB · art ${art.size} files inlined`,
+  )
+}
+
+for (const name of targets) await bundle(SITES[name])
