@@ -25,3 +25,6 @@ dist-ssr
 
 # Sinapsis se genera: cerebro/sinapsis/build.py
 cerebro/sinapsis/index.html
+
+# node_modules de la raíz: `docx` se instala para generar el catálogo.
+node_modules/
